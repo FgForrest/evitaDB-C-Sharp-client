@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package io.evitadb.externalApi.grpc.generated;
+option java_multiple_files = true;
+option csharp_namespace = "EvitaDB";
+
+import "GrpcEvitaDataTypes.proto";
+
+message GrpcLocalizedAssociatedData {
+  map<string, GrpcEvitaAssociatedDataValue> associatedData = 1;
+}

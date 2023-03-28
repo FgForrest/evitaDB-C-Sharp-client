@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package io.evitadb.externalApi.grpc.generated;
+option java_multiple_files = true;
+option csharp_namespace = "EvitaDB";
+
+import "GrpcEvitaDataTypes.proto";
+
+message GrpcUpsertAssociatedDataMutation {
+  string associatedDataName = 1;
+  GrpcLocale associatedDataLocale = 2;
+  GrpcEvitaAssociatedDataValue associatedDataValue = 3;
+}
+
+message GrpcRemoveAssociatedDataMutation {
+  string associatedDataName = 1;
+  GrpcLocale associatedDataLocale = 2;
+}

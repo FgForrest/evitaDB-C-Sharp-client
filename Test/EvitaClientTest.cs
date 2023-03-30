@@ -18,7 +18,7 @@ namespace Test;
 
 public class EvitaClientTest
 {
-    private EvitaClient? _client;
+    private static EvitaClient? _client;
     private static EvitaClientConfiguration EvitaClientConfiguration { get; }
 
     private const string ExistingCatalogWithData = "moda";
@@ -40,7 +40,7 @@ public class EvitaClientTest
     }
 
     [SetUp]
-    public void Setup()
+    public static void Setup()
     {
         // create a new evita client with the specified configuration
         _client = new EvitaClient(EvitaClientConfiguration);

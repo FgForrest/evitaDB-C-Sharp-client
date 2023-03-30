@@ -7,7 +7,8 @@ namespace Client.Certificate;
 
 public class ClientCertificateManager
 {
-    private static readonly string DefaultClientCertificateFolderPath = Path.GetTempPath() + "evita-client-certificates";
+    private static readonly string DefaultClientCertificateFolderPath =
+        Path.GetTempPath() + "evita-client-certificates";
 
     private string ClientCertificateFolderPath { get; }
     private string? ClientCertificatePath { get; }
@@ -15,6 +16,7 @@ public class ClientCertificateManager
     private string? ClientCertificateKeyPassword { get; }
     private bool UseGeneratedCertificate { get; } = true;
     private bool TrustedServerCertificate { get; }
+
     ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
         string? clientCertificateKeyPath, string? clientCertificateKeyPassword, bool useGeneratedCertificate,
         bool trustedServerCertificate)
@@ -44,7 +46,8 @@ public class ClientCertificateManager
         public ClientCertificateManager Build()
         {
             return new ClientCertificateManager(ClientCertificateFolderPath, ClientCertificatePath,
-                ClientCertificateKeyPath, ClientCertificateKeyPassword, UseGeneratedCertificate, TrustedServerCertificate);
+                ClientCertificateKeyPath, ClientCertificateKeyPassword, UseGeneratedCertificate,
+                TrustedServerCertificate);
         }
 
         public Builder SetClientCertificateFolderPath(string? clientCertificateFolderPath)
@@ -70,13 +73,13 @@ public class ClientCertificateManager
             ClientCertificateKeyPassword = clientCertificateKeyPassword;
             return this;
         }
-        
+
         public Builder SetUseGeneratedCertificate(bool useGeneratedCertificate)
         {
             UseGeneratedCertificate = useGeneratedCertificate;
             return this;
         }
-        
+
         public Builder SetTrustedServerCertificate(bool trustedServerCertificate)
         {
             TrustedServerCertificate = trustedServerCertificate;
@@ -84,35 +87,39 @@ public class ClientCertificateManager
         }
     }
 
-    public async void GetCertificatesFromServer(string host, int systemApiPort)
+    public void GetCertificatesFromServer(string host, int systemApiPort)
     {
         var apiEndpoint = $"http://{host}:{systemApiPort}/system/";
         if (!Directory.Exists(ClientCertificateFolderPath))
         {
             Directory.CreateDirectory(DefaultClientCertificateFolderPath);
         }
-        else
+        try
         {
-            try
-            {
-                await DownloadFile(apiEndpoint, CertificateUtils.GeneratedRootCaCertificateFileName);
-                await DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateFileName);
-                await DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateKeyFileName);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw new EvitaInvalidUsageException(ex.Message,"Failed to download certificates from the server", ex);
-            }
+            DownloadFile(apiEndpoint, CertificateUtils.GeneratedCertificateFileName);
+            DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateFileName);
+            DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateKeyFileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw new EvitaInvalidUsageException(ex.Message, "Failed to download certificates from the server", ex);
         }
     }
 
-    private async Task DownloadFile(string apiEndpoint, string fileName)
+    private void DownloadFile(string apiEndpoint, string fileName)
     {
-        using var client = new HttpClient();
-        await using var stream = await client.GetStreamAsync(apiEndpoint + fileName);
-        await using var fileStream = new FileStream($"{ClientCertificateFolderPath}{Path.DirectorySeparatorChar}{fileName}", FileMode.Create);
-        await stream.CopyToAsync(fileStream);
+        using (var client = new HttpClient())
+        {
+            var response = client.GetAsync(apiEndpoint + fileName).GetAwaiter().GetResult();
+            response.EnsureSuccessStatusCode();
+            using (Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
+                   stream = new FileStream($"{ClientCertificateFolderPath}{Path.DirectorySeparatorChar}{fileName}",
+                       FileMode.Create))
+            {
+                contentStream.CopyTo(stream);
+            }
+        }
     }
 
     public HttpClientHandler BuildHttpClientHandler()
@@ -122,13 +129,16 @@ public class ClientCertificateManager
         {
             handler.ServerCertificateCustomValidationCallback = RemoteCertificateValidationCallback;
         }
+
         return handler;
     }
 
     private bool RemoteCertificateValidationCallback(
         HttpRequestMessage message, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors errors)
     {
-        var usedCert = new X509Certificate2(File.ReadAllBytes($"{ClientCertificateFolderPath}/{CertificateUtils.GeneratedCertificateFileName}"));
+        var usedCert =
+            new X509Certificate2(
+                File.ReadAllBytes($"{ClientCertificateFolderPath}/{CertificateUtils.GeneratedCertificateFileName}"));
         if (cert == null)
             return false;
         return cert.Thumbprint == usedCert.Thumbprint;

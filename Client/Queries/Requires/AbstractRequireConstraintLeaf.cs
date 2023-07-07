@@ -4,6 +4,10 @@ public abstract class AbstractRequireConstraintLeaf : ConstraintLeaf, IRequireCo
 {
     protected AbstractRequireConstraintLeaf(params object[] arguments) : base(arguments) {
     }
+    
+    protected AbstractRequireConstraintLeaf(string name, params object[] arguments) : base(name, arguments) 
+    {
+    }
 
     public override Type Type => typeof(IRequireConstraint);
     public override bool Applicable => true;

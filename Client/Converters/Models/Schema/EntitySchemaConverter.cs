@@ -6,7 +6,7 @@ using EvitaDB;
 
 namespace Client.Converters.Models.Schema;
 
-public class EntitySchemaConverter
+public static class EntitySchemaConverter
 {
     public static EntitySchema Convert(GrpcEntitySchema entitySchema)
     {

@@ -6,8 +6,9 @@ namespace Client.Queries;
 
 public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContainer<T>, IEnumerable<T> where T : IConstraint
 {
-	private static readonly object[] NoArguments = Array.Empty<object>();
-	private static readonly IConstraint[] NoAdditionalChildren = Array.Empty<IConstraint>();
+	protected static readonly object[] NoArguments = Array.Empty<object>();
+	protected static readonly IRequireConstraint[] NoChildren = Array.Empty<IRequireConstraint>();
+	protected static readonly IConstraint[] NoAdditionalChildren = Array.Empty<IConstraint>();
 	public T[] Children { get; }
 	public IConstraint[] AdditionalChildren { get; }
 	
@@ -100,7 +101,7 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         return Children.ToList().GetEnumerator();
     }
     
-    public abstract T GetCopyWithNewChildren(T[] children, IConstraint[] additionalChildren);
+    public abstract T GetCopyWithNewChildren(T?[] children, IConstraint[] additionalChildren);
     
     protected ConstraintContainer(object[] arguments, T?[] children, params IConstraint[] additionalChildren) : base(arguments) {
 	    Children = ValidateAndFilterChildren(children);
@@ -115,6 +116,11 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
 
     protected ConstraintContainer(T[] children, params IConstraint[] additionalChildren) : this(NoArguments, children, additionalChildren) {
     }
+    
+    protected ConstraintContainer(string? name, object[] arguments, T[] children, params IConstraint[] additionalChildren) : base(name, arguments) {
+	    Children = ValidateAndFilterChildren(children);
+	    AdditionalChildren = ValidateAndFilterAdditionalChildren(additionalChildren);
+	}
 
     IEnumerator IEnumerable.GetEnumerator()
     {

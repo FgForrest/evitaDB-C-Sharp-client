@@ -6,6 +6,9 @@ public abstract class AbstractFilterConstraintContainer : ConstraintContainer<IF
     
     protected AbstractFilterConstraintContainer(object[] arguments, params IFilterConstraint[] children) : base(arguments, children) {
     }
+    
+    protected AbstractFilterConstraintContainer(object[] arguments, IFilterConstraint[] children, params IConstraint[] additionalChildren) : base(arguments, children) {
+    }
 
     protected AbstractFilterConstraintContainer(object argument, params IFilterConstraint[] children) : base(new [] {argument}, children) {
     }

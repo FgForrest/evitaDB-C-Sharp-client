@@ -25,6 +25,11 @@ enum GrpcOrderDirection {
   DESC = 1;
 }
 
+enum GrpcOrderBehaviour {
+    NULLS_FIRST = 0;
+    NULLS_LAST = 1;
+}
+
 enum GrpcAttributeSpecialValue {
   NULL = 0;
   NOT_NULL = 1;
@@ -33,6 +38,21 @@ enum GrpcAttributeSpecialValue {
 enum GrpcFacetStatisticsDepth {
   COUNTS = 0;
   IMPACT = 1;
+}
+
+enum GrpcEmptyHierarchicalEntityBehaviour {
+  LEAVE_EMPTY = 0;
+  REMOVE_EMPTY = 1;
+}
+
+enum GrpcStatisticsBase {
+  COMPLETE_FILTER = 0;
+  WITHOUT_USER_FILTER = 1;
+}
+
+enum GrpcStatisticsType {
+  CHILDREN_COUNT = 0;
+  QUERIED_ENTITY_COUNT = 1;
 }
 
 enum GrpcPriceInnerRecordHandling {
@@ -66,6 +86,10 @@ enum GrpcEvolutionMode {
   ADDING_LOCALES = 5;
   ADDING_CURRENCIES = 6;
   ADDING_HIERARCHY = 7;
+}
+
+enum GrpcCatalogEvolutionMode {
+  ADDING_ENTITY_TYPES = 0;
 }
 
 enum GrpcEvitaDataType {
@@ -170,11 +194,13 @@ enum GrpcQueryPhase {
   EXECUTION = 11;
   EXECUTION_PREFETCH = 12;
   EXECUTION_FILTER = 13;
-  EXECUTION_SORT_AND_SLICE = 14;
-  EXTRA_RESULTS_FABRICATION = 15;
-  EXTRA_RESULT_ITEM_FABRICATION = 16;
-  FETCHING = 17;
-  FETCHING_REFERENCES = 18;
+  EXECUTION_FILTER_NESTED_QUERY = 14;
+  EXECUTION_SORT_AND_SLICE = 15;
+  EXTRA_RESULTS_FABRICATION = 16;
+  EXTRA_RESULT_ITEM_FABRICATION = 17;
+  FETCHING = 18;
+  FETCHING_REFERENCES = 19;
+  FETCHING_PARENTS = 20;
 }
 
 enum GrpcEntityExistence {

@@ -7,7 +7,7 @@ namespace Client.Models.Data;
 public interface IEntity : IEntityClassifier, IAttributes, IAssociatedData, IPrices, IVersioned
 {
     EntitySchema Schema { get; }
-    HierarchicalPlacement? HierarchicalPlacement { get; }
+    int? Parent { get; }
     ICollection<Reference> GetReferences();
     Reference? GetReference(string referenceName, int referencedEntityId);
     Reference? GetReference(ReferenceKey referenceKey);

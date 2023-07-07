@@ -9,12 +9,11 @@ using Client.Models.Schemas.Mutations;
 using Client.Models.Schemas.Mutations.Catalog;
 using Client.Pooling;
 using Client.Session;
+using EvitaDB;
 using Google.Protobuf.WellKnownTypes;
 using Enum = System.Enum;
 
 namespace Client;
-
-using EvitaDB;
 
 public delegate void EvitaSessionTerminationCallback(EvitaClientSession session);
 
@@ -34,7 +33,7 @@ public class EvitaClient : IDisposable
     {
         var certificateManager = new ClientCertificateManager.Builder()
             .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
-            .SetClientCertificatePath(configuration.CertificateKeyFileName)
+            .SetClientCertificatePath(configuration.CertificateFileName)
             .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
             .SetClientCertificateKeyPassword(configuration.CertificateKeyPassword)
             .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate)

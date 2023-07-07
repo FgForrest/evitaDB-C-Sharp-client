@@ -1,4 +1,5 @@
 ﻿using Client.Converters.Models;
+using Client.Converters.Models.Data;
 using Client.Converters.Models.Data.Mutations;
 using Client.Converters.Models.Schema;
 using Client.Converters.Models.Schema.Mutations;
@@ -85,22 +86,20 @@ public class EvitaClientSession : IDisposable
             PositionalQueryParams = {stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam)}
         };
         GrpcQueryResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.Query(request));
-
+        IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(query, grpcResponse);
+        
         if (typeof(EntityReference).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<EntityReference> recordPage = QueryConverter.ConvertToDataChunk(
+            IDataChunk<EntityReference> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
                 grpcRecordPage => EntityConverter.ToEntityReferences(grpcRecordPage.EntityReferences)
             );
-            IEvitaResponseExtraResult[] extraResults = grpcResponse.ExtraResults is not null
-                ? QueryConverter.ToExtraResults(grpcResponse.ExtraResults)
-                : Array.Empty<IEvitaResponseExtraResult>();
             return (new EvitaEntityReferenceResponse(query, recordPage, extraResults) as T)!;
         }
 
         if (typeof(SealedEntity).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<SealedEntity> recordPage = QueryConverter.ConvertToDataChunk(
+            IDataChunk<SealedEntity> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
                 grpcRecordPage => EntityConverter.ToSealedEntities(
                     grpcRecordPage.SealedEntities.ToList(),
@@ -109,9 +108,6 @@ public class EvitaClientSession : IDisposable
                     )
                 )
             );
-            IEvitaResponseExtraResult[] extraResults = grpcResponse.ExtraResults is not null
-                ? QueryConverter.ToExtraResults(grpcResponse.ExtraResults)
-                : Array.Empty<IEvitaResponseExtraResult>();
             return (new EvitaEntityResponse(query, recordPage, extraResults) as T)!;
         }
 
@@ -145,21 +141,19 @@ public class EvitaClientSession : IDisposable
         GrpcQueryResponse grpcResponse =
             await ExecuteWithEvitaSessionService(async session => await session.QueryAsync(request));
 
+        IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(query, grpcResponse);
         if (typeof(EntityReference).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<EntityReference> recordPage = QueryConverter.ConvertToDataChunk(
+            IDataChunk<EntityReference> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
                 grpcRecordPage => EntityConverter.ToEntityReferences(grpcRecordPage.EntityReferences)
             );
-            IEvitaResponseExtraResult[] extraResults = grpcResponse.ExtraResults is not null
-                ? QueryConverter.ToExtraResults(grpcResponse.ExtraResults)
-                : Array.Empty<IEvitaResponseExtraResult>();
             return (new EvitaEntityReferenceResponse(query, recordPage, extraResults) as T)!;
         }
 
         if (typeof(SealedEntity).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<SealedEntity> recordPage = QueryConverter.ConvertToDataChunk(
+            IDataChunk<SealedEntity> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
                 grpcRecordPage => EntityConverter.ToSealedEntities(
                     grpcRecordPage.SealedEntities.ToList(),
@@ -168,9 +162,6 @@ public class EvitaClientSession : IDisposable
                     )
                 )
             );
-            IEvitaResponseExtraResult[] extraResults = grpcResponse.ExtraResults is not null
-                ? QueryConverter.ToExtraResults(grpcResponse.ExtraResults)
-                : Array.Empty<IEvitaResponseExtraResult>();
             return (new EvitaEntityResponse(query, recordPage, extraResults) as T)!;
         }
 
@@ -420,6 +411,18 @@ public class EvitaClientSession : IDisposable
             return updatedCatalogSchema;
         });
     }
+    
+    private IEvitaResponseExtraResult[] GetEvitaResponseExtraResults(Query query, GrpcQueryResponse grpcResponse) {
+        return grpcResponse.ExtraResults is not null ?
+            ResponseConverter.ToExtraResults(
+                sealedEntity => _schemaCache.GetEntitySchemaOrThrow(
+                    sealedEntity.EntityType, sealedEntity.SchemaVersion,
+                    FetchEntitySchema, GetCatalogSchema
+                ),
+                query,
+                grpcResponse.ExtraResults
+            ) : Array.Empty<IEvitaResponseExtraResult>();
+    }
 
     public CatalogSchema GetCatalogSchema()
     {
@@ -484,7 +487,7 @@ public class EvitaClientSession : IDisposable
         IEntityMutation? mutation = entityBuilder.ToMutation();
         return mutation is not null
             ? UpsertAndFetchEntity(mutation, require)
-            : GetEntityOrThrow(entityBuilder.EntityType, entityBuilder.PrimaryKey.Value, require);
+            : GetEntityOrThrow(entityBuilder.EntityType, entityBuilder.PrimaryKey!.Value, require);
     }
 
     public SealedEntity UpsertAndFetchEntity(IEntityMutation entityMutation, params IEntityContentRequire[] require)

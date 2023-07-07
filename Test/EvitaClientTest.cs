@@ -13,6 +13,7 @@ using Client.Models.Schemas.Mutations.Attributes;
 using Client.Models.Schemas.Mutations.Catalog;
 using Client.Queries.Order;
 using static Client.Queries.IQueryConstraints;
+using static NUnit.Framework.Assert;
 
 namespace Test;
 
@@ -54,17 +55,17 @@ public class EvitaClientTest
 
         // define new catalog
         CatalogSchema catalogSchema = await _client.DefineCatalogAsync(TestCatalog);
-        Assert.AreEqual(TestCatalog, catalogSchema.Name);
+        That(catalogSchema.Name, Is.EqualTo(TestCatalog));
 
         using (var rwSession = _client.CreateReadWriteSession(TestCatalog))
         {
             // create a new entity schema
             catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new CreateEntitySchemaMutation(TestCollection));
 
-            Assert.IsNotNull(catalogSchema.GetEntitySchema(TestCollection));
-            Assert.AreEqual(1, catalogSchema.GetEntitySchema(TestCollection)!.Version);
-            Assert.AreEqual(2, catalogSchema.Version);
-            
+            That(catalogSchema.GetEntitySchema(TestCollection), Is.Not.Null);
+            That(catalogSchema.GetEntitySchema(TestCollection)!.Version, Is.EqualTo(1));
+            That(catalogSchema.Version, Is.EqualTo(2));
+
             // create two attributes schema mutations
             CreateAttributeSchemaMutation createAttributeDateTime = new CreateAttributeSchemaMutation(
                 AttributeDateTime, nameof(AttributeDateTime), null, false, true, true, false, true,
@@ -78,18 +79,18 @@ public class EvitaClientTest
             // add the two attributes to the entity schema
             catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new ModifyEntitySchemaMutation(TestCollection,
                 createAttributeDateTime, createAttributeDecimalRange));
-            Assert.AreEqual(2, catalogSchema.Version);
-            Assert.AreEqual(3, catalogSchema.GetEntitySchema(TestCollection)!.Version);
+            That(catalogSchema.Version, Is.EqualTo(2));
+            That(catalogSchema.GetEntitySchema(TestCollection)!.Version, Is.EqualTo(3));
 
             // check if the entity schema has the two attributes
             var entitySchema = rwSession.GetEntitySchema(TestCollection);
-            Assert.IsNotNull(entitySchema);
-            Assert.AreEqual(2, entitySchema!.Attributes.Count);
-            Assert.AreEqual(3, entitySchema.Version);
-            Assert.IsTrue(entitySchema.Attributes.ContainsKey(AttributeDateTime));
-            Assert.AreEqual(typeof(DateTimeOffset), entitySchema.Attributes[AttributeDateTime].Type);
-            Assert.IsTrue(entitySchema.Attributes.ContainsKey(AttributeDecimalRange));
-            Assert.AreEqual(typeof(DecimalNumberRange), entitySchema.Attributes[AttributeDecimalRange].Type);
+            That(entitySchema, Is.Not.Null);
+            That(entitySchema!.Attributes.Count, Is.EqualTo(2));
+            That(entitySchema.Version, Is.EqualTo(3));
+            IsTrue(entitySchema.Attributes.ContainsKey(AttributeDateTime));
+            That(entitySchema.Attributes[AttributeDateTime].Type, Is.EqualTo(typeof(DateTimeOffset)));
+            IsTrue(entitySchema.Attributes.ContainsKey(AttributeDecimalRange));
+            That(entitySchema.Attributes[AttributeDecimalRange].Type, Is.EqualTo(typeof(DecimalNumberRange)));
 
             // close the session and switch catalog to the alive state
             rwSession.GoLiveAndClose();
@@ -109,12 +110,12 @@ public class EvitaClientTest
             AttributeContent()
         );
 
-        Assert.AreEqual(2, newEntity.Schema.Attributes.Count);
-        Assert.IsTrue(newEntity.Attributes.GetAttributeNames().Contains(AttributeDateTime));
-        Assert.AreEqual(
-            dateTimeNow.ToString("h:mm:ss tt zz"), 
-            (newEntity.GetAttribute(AttributeDateTime) as DateTimeOffset?)?.ToString("h:mm:ss tt zz")
-            );
+        That(newEntity.Schema.Attributes.Count, Is.EqualTo(2));
+        That(newEntity.Attributes.GetAttributeNames().Contains(AttributeDateTime), Is.True);
+        That(
+            (newEntity.GetAttribute(AttributeDateTime) as DateTimeOffset?)?.ToString("h:mm:ss tt zz"), 
+            Is.EqualTo(dateTimeNow.ToString("h:mm:ss tt zz"))
+        );
 
         // insert a new entity with attribute that is not defined in the entity schema
         var notInAttributeSchemaEntity = newSession.UpsertAndFetchEntity(
@@ -128,17 +129,18 @@ public class EvitaClientTest
         );
 
         // schema of the entity should have 3 attributes
-        Assert.AreEqual(3, notInAttributeSchemaEntity.Schema.Attributes.Count);
-        Assert.IsTrue(notInAttributeSchemaEntity.Attributes.GetAttributeNames().Contains(NonExistingAttribute));
-        Assert.AreEqual(true, notInAttributeSchemaEntity.GetAttribute(NonExistingAttribute));
+        That(notInAttributeSchemaEntity.Schema.Attributes.Count, Is.EqualTo(3));
+        That(notInAttributeSchemaEntity.Attributes.GetAttributeNames().Contains(NonExistingAttribute), Is.True);
+        That(notInAttributeSchemaEntity.GetAttribute(NonExistingAttribute), Is.EqualTo(true));
     }
 
     [Test]
-    public async Task ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_EntityReferences()
+    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_EntityReferences()
     {
-        EvitaEntityReferenceResponse referenceResponse = await _client!.QueryCatalogAsync(ExistingCatalogWithData,
+        EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
             session =>
-                session.Query<EvitaEntityReferenceResponse, EntityReference>(
+            {
+                return session.Query<EvitaEntityReferenceResponse, EntityReference>(
                     Query(
                         Collection("Product"),
                         FilterBy(
@@ -166,12 +168,14 @@ public class EvitaClientTest
                             QueryTelemetry()
                         )
                     )
-                ));
+                );
+            }
+        );
 
-        Assert.AreEqual(20, referenceResponse.RecordPage.Data!.Count);
-        Assert.IsTrue(referenceResponse.RecordPage.Data.All(x => x.EntityType == "Product" && x.PrimaryKey > 0));
-        Assert.AreEqual(1, referenceResponse.ExtraResults.Count);
-        Assert.AreEqual(typeof(QueryTelemetry), referenceResponse.ExtraResults.Values.ToList()[0].GetType());
+        That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
+        That(referenceResponse.RecordPage.Data.All(x => x is {EntityType: "Product", PrimaryKey: > 0}), Is.True);
+        That(referenceResponse.ExtraResults.Count, Is.EqualTo(1));
+        That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
     }
 
     [Test]
@@ -209,12 +213,12 @@ public class EvitaClientTest
                 )
             ));
 
-        Assert.AreEqual(20, entityResponse.RecordPage.Data!.Count);
-        Assert.IsTrue(entityResponse.RecordPage.Data.Any(x => x.GetAttributeValues().Any()));
-        Assert.IsTrue(entityResponse.RecordPage.Data.Any(x => x.GetReferences().Any()));
-        Assert.IsTrue(entityResponse.RecordPage.Data.Any(x => x.GetPrices().Any()));
+        That(entityResponse.RecordPage.Data!.Count, Is.EqualTo(20));
+        That(entityResponse.RecordPage.Data.Any(x => x.GetAttributeValues().Any()), Is.True);
+        That(entityResponse.RecordPage.Data.Any(x => x.GetReferences().Any()), Is.True);
+        That(entityResponse.RecordPage.Data.Any(x => x.GetPrices().Any()), Is.True);
 
-        Assert.AreEqual(1, entityResponse.ExtraResults.Count);
-        Assert.AreEqual(typeof(QueryTelemetry), entityResponse.ExtraResults.Values.ToList()[0].GetType());
+        That(entityResponse.ExtraResults.Count, Is.EqualTo(1));
+        That(entityResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
     }
 }

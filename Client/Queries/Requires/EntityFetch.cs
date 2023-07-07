@@ -1,6 +1,6 @@
 ﻿namespace Client.Queries.Requires;
 
-public class EntityFetch : AbstractRequireConstraintContainer, IEntityFetchRequirements
+public class EntityFetch : AbstractRequireConstraintContainer, IEntityFetchRequire
 {
     protected EntityFetch(IRequireConstraint[] requireConstraints) : base(requireConstraints)
     {

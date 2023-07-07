@@ -14,7 +14,7 @@ public class Attributes : IAttributes
     private ISet<CultureInfo>? AttributeLocales { get; set; }
     public bool Empty => AttributeValues.Count == 0;
 
-    public Attributes(EntitySchema entitySchema, ICollection<AttributeValue?> attributeValues,
+    public Attributes(EntitySchema entitySchema, IEnumerable<AttributeValue?> attributeValues,
         Dictionary<string, AttributeSchema> attributeTypes)
     {
         EntitySchema = entitySchema;

@@ -6,6 +6,7 @@ option csharp_namespace = "EvitaDB";
 
 import "GrpcEnums.proto";
 import "GrpcAttributeSchemaMutations.proto";
+import "GrpcSortableAttributeCompoundSchemaMutations.proto";
 import "google/protobuf/wrappers.proto";
 
 message GrpcCreateReferenceSchemaMutation {
@@ -24,6 +25,11 @@ message GrpcCreateReferenceSchemaMutation {
 message GrpcModifyReferenceAttributeSchemaMutation {
   string name = 1;
   GrpcAttributeSchemaMutation attributeSchemaMutation = 2;
+}
+
+message GrpcModifyReferenceSortableAttributeCompoundSchemaMutation {
+  string name = 1;
+  GrpcSortableAttributeCompoundSchemaMutation sortableAttributeCompoundSchemaMutation = 2;
 }
 
 message GrpcModifyReferenceSchemaCardinalityMutation {

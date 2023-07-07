@@ -2,7 +2,7 @@
 
 namespace Client.Converters.DataTypes;
 
-public class ComplexDataObjectConverter
+public static class ComplexDataObjectConverter
 {
     public static object ConvertJsonToComplexDataObject(string json)
     {

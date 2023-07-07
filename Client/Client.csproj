@@ -4,6 +4,9 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+<!--
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+-->
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -17,10 +20,6 @@
 
     <ItemGroup>
       <Protobuf ProtoRoot="Protos" Include="Protos\*.proto" GrpcServices="Client" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Converters\Models\Data" />
     </ItemGroup>
 
 </Project>

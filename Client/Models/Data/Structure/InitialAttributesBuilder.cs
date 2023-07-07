@@ -12,7 +12,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
 {
     private EntitySchema EntitySchema { get; }
     private bool SuppressVerification { get; }
-    private Dictionary<AttributeKey, AttributeValue> AttributeValues;
+    private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
 
     public InitialAttributesBuilder(EntitySchema entitySchema)
     {
@@ -321,9 +321,9 @@ public class InitialAttributesBuilder : IAttributeBuilder
     {
         public bool Equals(AttributeSchema? x, AttributeSchema? y)
         {
-            Assert.IsTrue(x.Name == y.Name,
+            Assert.IsTrue(x?.Name == y?.Name,
                 "Ambiguous situation - there are two attributes with the same name and different definition:\n" +
-                x.Name + " and " + y.Name);
+                x?.Name + " and " + y?.Name);
             return true;
         }
 

@@ -8,8 +8,9 @@ using Type = System.Type;
 
 namespace Client.Converters.DataTypes;
 
-public class EvitaDataTypesConverter
+public static class EvitaDataTypesConverter
 {
+
     public static object ToEvitaValue(GrpcEvitaValue value)
     {
         return value.Type switch

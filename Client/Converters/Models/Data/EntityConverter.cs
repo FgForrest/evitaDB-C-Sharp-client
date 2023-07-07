@@ -6,14 +6,19 @@ using Client.Models.Schemas.Dtos;
 using Client.Utils;
 using EvitaDB;
 
-namespace Client.Converters.Models;
+namespace Client.Converters.Models.Data;
 
-public class EntityConverter
+public static class EntityConverter
 {
     public static List<EntityReference> ToEntityReferences(IEnumerable<GrpcEntityReference> entityReferences)
     {
-        return entityReferences.Select(x => new EntityReference(x.EntityType, x.PrimaryKey)).ToList();
+        return entityReferences.Select(ToEntityReference).ToList();
     }
+    
+    public static EntityReference ToEntityReference(GrpcEntityReference entityReference)
+	{
+		return new EntityReference(entityReference.EntityType, entityReference.PrimaryKey);
+	}
 
     public static List<SealedEntity> ToSealedEntities(List<GrpcSealedEntity> sealedEntities,
         Func<string, int, EntitySchema> entitySchemaProvider)
@@ -33,7 +38,7 @@ public class EntityConverter
 		    grpcEntity.PrimaryKey,
 		    grpcEntity.Version,
 		    entitySchema,
-		    grpcEntity.HierarchicalPlacement is null ? null : ToHierarchicalPlacement(grpcEntity.HierarchicalPlacement),
+		    grpcEntity.Parent,
 		    grpcEntity.References
 			    .Select(it => ToReference(entitySchema, it))
 			    .ToList(),
@@ -184,17 +189,7 @@ public class EntityConverter
 			globalAttributes
 		);
 	}
-		
-	public static HierarchicalPlacement ToHierarchicalPlacement(
-		GrpcHierarchicalPlacement hierarchicalPlacement
-	) {
-		return new HierarchicalPlacement(
-			hierarchicalPlacement.Version,
-			hierarchicalPlacement.ParentPrimaryKey,
-			hierarchicalPlacement.OrderAmongSiblings
-		);
-	}
-	
+
 	public static Reference ToReference(
 		EntitySchema entitySchema,
 		GrpcReference grpcReference

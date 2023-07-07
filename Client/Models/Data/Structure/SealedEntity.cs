@@ -15,7 +15,7 @@ public class SealedEntity : IEntity
     public string EntityType { get; }
     public int? PrimaryKey { get; }
     public EntitySchema Schema { get; }
-    public HierarchicalPlacement? HierarchicalPlacement { get; }
+    public int? Parent { get; }
     public Dictionary<ReferenceKey, Reference> References { get; }
     public Attributes Attributes { get; }
     public AssociatedData AssociatedData { get; }
@@ -26,7 +26,7 @@ public class SealedEntity : IEntity
         int? primaryKey,
         int? version,
         EntitySchema entitySchema,
-        HierarchicalPlacement? hierarchicalPlacement,
+        int? parent,
         IEnumerable<Reference> references,
         Attributes attributes,
         AssociatedData associatedData,
@@ -37,7 +37,7 @@ public class SealedEntity : IEntity
             version ?? 1,
             entitySchema,
             primaryKey,
-            hierarchicalPlacement,
+            parent,
             references,
             attributes,
             associatedData,
@@ -51,7 +51,7 @@ public class SealedEntity : IEntity
         int? primaryKey,
         int? version,
         EntitySchema entitySchema,
-        HierarchicalPlacement? hierarchicalPlacement,
+        int? parent,
         IEnumerable<Reference>? references,
         Attributes? attributes,
         AssociatedData? associatedData,
@@ -62,7 +62,7 @@ public class SealedEntity : IEntity
             version ?? 1,
             entitySchema,
             primaryKey,
-            hierarchicalPlacement,
+            parent,
             references ?? entity.References.Values,
             attributes ?? entity.Attributes,
             associatedData ?? entity.AssociatedData,
@@ -75,7 +75,7 @@ public class SealedEntity : IEntity
         int version,
         EntitySchema schema,
         int? primaryKey,
-        HierarchicalPlacement? hierarchicalPlacement,
+        int? parent,
         IEnumerable<Reference> references,
         Attributes attributes,
         AssociatedData associatedData,
@@ -87,7 +87,7 @@ public class SealedEntity : IEntity
         EntityType = schema.Name;
         Schema = schema;
         PrimaryKey = primaryKey;
-        HierarchicalPlacement = hierarchicalPlacement;
+        Parent = parent;
         References = references.ToDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
@@ -101,7 +101,7 @@ public class SealedEntity : IEntity
         EntityType = type;
         Schema = EntitySchema.InternalBuild(type);
         PrimaryKey = primaryKey;
-        HierarchicalPlacement = null;
+        Parent = null;
         References = new Dictionary<ReferenceKey, Reference>();
         Attributes = new Attributes(Schema);
         AssociatedData = new AssociatedData(Schema);
@@ -115,7 +115,8 @@ public class SealedEntity : IEntity
         ICollection<ILocalMutation> localMutations
     )
     {
-        HierarchicalPlacement? newPlacement = null;
+        int? oldParent = entity?.Parent;
+        int? newParent = oldParent;
         PriceInnerRecordHandling? newPriceInnerRecordHandling = null;
         Dictionary<AttributeKey, AttributeValue> newAttributes =
             new Dictionary<AttributeKey, AttributeValue>(localMutations.Count);
@@ -175,7 +176,7 @@ public class SealedEntity : IEntity
         /*ISet<CultureInfo> entityLocales = new HashSet<>(newAttributeContainer.getAttributeLocales());
         entityLocales.addAll(newAssociatedDataContainer.getAssociatedDataLocales());*/
 
-        if (newPlacement != null || newPriceInnerRecordHandling != null ||
+        if (newParent != oldParent || newPriceInnerRecordHandling != null ||
             newAttributes.Any() || newAssociatedData.Any() || newPrices.Any() ||
             newReferences.Any())
         {
@@ -184,7 +185,7 @@ public class SealedEntity : IEntity
                 entity is null ? 1 : entity.Version + 1,
                 entitySchema,
                 entity?.PrimaryKey,
-                newPlacement ?? entity?.HierarchicalPlacement,
+                newParent,
                 entity?.GetReferences(),
                 newAttributeContainer,
                 entity?.AssociatedData,

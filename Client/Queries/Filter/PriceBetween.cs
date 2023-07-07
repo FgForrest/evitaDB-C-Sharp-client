@@ -12,5 +12,5 @@ public class PriceBetween : AbstractFilterConstraintLeaf
     
     public decimal? From => (decimal) Arguments[0]!;
     public decimal? To => (decimal) Arguments[1]!;
-    public new bool Applicable => Arguments.Length == 2 && From != null || To != null;
+    public new bool Applicable => Arguments.Length == 2 && (From != null || To != null);
 }

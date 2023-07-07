@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 using Client.Models.Schemas.Dtos;
-using Client.Queries;
+using Client.Utils;
 
 namespace Client.Models.Data.Structure;
 

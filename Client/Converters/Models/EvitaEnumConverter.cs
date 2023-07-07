@@ -11,7 +11,7 @@ using static Client.Models.ExtraResults.QueryTelemetry;
 
 namespace Client.Converters.Models;
 
-public class EvitaEnumConverter
+public static class EvitaEnumConverter
 {
     public static CatalogState ToCatalogState(GrpcCatalogState grpcCatalogState)
     {

@@ -5,7 +5,7 @@ public class FilterBy : AbstractFilterConstraintContainer
     private FilterBy() {
     }
     
-    public FilterBy(IFilterConstraint children) : base(children) {
+    public FilterBy(params IFilterConstraint[] children) : base(children) {
     }
 
     public bool IsNecessary => Applicable;

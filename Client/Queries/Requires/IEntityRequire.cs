@@ -1,6 +1,6 @@
 ﻿namespace Client.Queries.Requires;
 
-public interface IEntityRequire
+public interface IEntityRequire : IRequireConstraint
 { 
     IEntityContentRequire?[] Requirements { get; }
 }

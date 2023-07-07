@@ -63,22 +63,22 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         if (query.Entities is not null)
         {
             query.Entities.Accept(this);
-            _result.Append(",");
+            _result.Append(',');
         }
         if (query.FilterBy is not null)
         {
             query.FilterBy.Accept(this);
-            _result.Append(",");
+            _result.Append(',');
         }
         if (query.OrderBy is not null)
         {
             query.OrderBy.Accept(this);
-            _result.Append(",");
+            _result.Append(',');
         }
         if (query.Require is not null)
         {
             query.Require.Accept(this);
-            _result.Append(",");
+            _result.Append(',');
         }
         _result.Length -= ",".Length;
         _result.Append(NewLine()).Append(QueryUtils.ArgClosing);

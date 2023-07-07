@@ -14,7 +14,7 @@ public class InitialEntityBuilder : IEntityBuilder
     public int? PrimaryKey { get; }
     public int Version { get; }
     public EntitySchema Schema { get; }
-    public HierarchicalPlacement? HierarchicalPlacement { get; }
+    public int? Parent { get; }
     public IAttributeBuilder AttributesBuilder { get; }
     /*public AssociatedDataBuilder AssociatedDataBuilder;
     public PricesBuilder PricesBuilder;*/
@@ -297,17 +297,12 @@ public class InitialEntityBuilder : IEntityBuilder
         throw new NotImplementedException();
     }
 
-    public IEntityBuilder SetHierarchicalPlacement(int orderAmongSiblings)
+    public IEntityBuilder SetParent(int parentPrimaryKey)
     {
         throw new NotImplementedException();
     }
 
-    public IEntityBuilder SetHierarchicalPlacement(int parentPrimaryKey, int orderAmongSiblings)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IEntityBuilder RemoveHierarchicalPlacement()
+    public IEntityBuilder RemoveParent()
     {
         throw new NotImplementedException();
     }

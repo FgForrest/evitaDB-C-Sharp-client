@@ -23,7 +23,7 @@ public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
         }
     }
 
-    private FacetGroupsDisjunction(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
+    public FacetGroupsDisjunction(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
         NoChildren, filterBy)
     {
     }

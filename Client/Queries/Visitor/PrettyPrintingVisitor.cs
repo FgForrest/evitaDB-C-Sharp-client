@@ -130,6 +130,9 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             // print arguments
             for (int i = 0; i < argumentsLength; i++) {
                 object? argument = arguments[i];
+                if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument)) {
+                    continue;
+                }
                 if (argument is null) {
                     continue;
                 }
@@ -177,6 +180,9 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             var argument = arguments[i];
             if (argument is null)
                 continue;
+            if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument)) {
+                continue;
+            }
             if (_extractParameters) {
                 _result.Append('?');
                 _parameters?.AddLast(argument);
@@ -203,8 +209,6 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         constraint.Accept(visitor);
         return visitor.GetResult();
     }
-
-    public record StringWithParameters(string Query, IList<object> Parameters);
 
     public void Visit(IConstraint constraint)
     {
@@ -240,4 +244,6 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             PrintLeaf(leaf);
         }
     }
+    
+    public record StringWithParameters(string Query, IList<object> Parameters);
 }

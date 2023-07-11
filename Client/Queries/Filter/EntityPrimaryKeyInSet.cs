@@ -11,5 +11,5 @@ public class EntityPrimaryKeyInSet : AbstractFilterConstraintLeaf
     {
     }
 
-    public int[] GetPrimaryKey() => Arguments.Select(Convert.ToInt32).ToArray();
+    public int[] PrimaryKeys => Arguments.Select(Convert.ToInt32).ToArray();
 }

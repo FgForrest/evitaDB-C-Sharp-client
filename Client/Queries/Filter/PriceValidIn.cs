@@ -18,5 +18,5 @@ public class PriceValidIn : AbstractFilterConstraintLeaf, IConstraintWithSuffix
     }
 
     public string? SuffixIfApplied => Arguments.Length == 0 ? Suffix : null;
-    public bool ArgumentImplicitForSuffix => false;
+    bool IConstraintWithSuffix.ArgumentImplicitForSuffix(object argument) => false;
 }

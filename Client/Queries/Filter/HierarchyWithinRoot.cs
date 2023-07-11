@@ -3,7 +3,8 @@ using Client.Utils;
 
 namespace Client.Queries.Filter;
 
-public class HierarchyWithinRoot : AbstractFilterConstraintContainer
+public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateEntityScopeContainer,
+    IConstraintWithSuffix
 {
     private const string Suffix = "self";
 
@@ -41,8 +42,7 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer
     public new bool Necessary => true;
     public new bool Applicable => true;
     public string? SuffixIfApplied => ReferenceName ?? Suffix;
-    public bool ArgumentImplicitForSuffix => false;
-
+    public bool ArgumentImplicitForSuffix(object argument) => false;
     private HierarchyWithinRoot(object[] argument, IFilterConstraint[] fineGrainedConstraints,
         params IConstraint[] additionalChildren) : base(argument, fineGrainedConstraints, additionalChildren)
     {

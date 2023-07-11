@@ -26,7 +26,7 @@ public abstract class NumberRange<T> : Range<T?> where T : struct, IComparable<T
         return From <= valueToCompare && valueToCompare <= To;
     }
     
-    protected void AssertNotFloatingPointType(T from, string argName) {
+    protected void AssertNotFloatingPointType(T? from, string argName) {
         if (typeof(T) == typeof(float) || typeof(T) == typeof(double)) {
             throw new EvitaInvalidUsageException("For " + argName + " number with floating point use decimal that keeps the precision!");
         }

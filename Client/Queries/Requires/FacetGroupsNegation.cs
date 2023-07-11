@@ -23,7 +23,7 @@ public class FacetGroupsNegation : AbstractRequireConstraintContainer
         }
     }
 
-    private FacetGroupsNegation(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
+    public FacetGroupsNegation(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
         NoChildren, filterBy)
     {
     }

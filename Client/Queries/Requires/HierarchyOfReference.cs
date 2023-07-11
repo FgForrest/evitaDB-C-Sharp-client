@@ -69,6 +69,13 @@ public class HierarchyOfReference : AbstractRequireConstraintContainer, IRootHie
         requirements)
     {
     }
+    
+    public HierarchyOfReference(string referenceName,
+        EmptyHierarchicalEntityBehaviour? emptyHierarchicalEntityBehaviour,
+        OrderBy? orderBy, params IHierarchyRequireConstraint[] requirements) : base(
+        new object[]{referenceName, emptyHierarchicalEntityBehaviour ?? EmptyHierarchicalEntityBehaviour.RemoveEmpty}, requirements, orderBy)
+    {
+    }
 
     public HierarchyOfReference(string[] referenceNames,
         EmptyHierarchicalEntityBehaviour emptyHierarchicalEntityBehaviour,

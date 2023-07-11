@@ -12,7 +12,7 @@ using Client.Models.Schemas.Mutations.Catalog;
 using Client.Queries.Order;
 using static Client.Queries.IQueryConstraints;
 
-const string catalogName = "moda";
+const string catalogName = "evita";
 
 var clientConfiguration = new EvitaClientConfiguration.Builder()
     .SetHost("localhost")
@@ -78,7 +78,7 @@ EvitaEntityResponse entityResponse = await client.QueryCatalogAsync(catalogName,
             ),
             Require(
                 Page(1, 20),
-                EntityFetch(AttributeContent(), ReferenceContent(), PriceContent()),
+                EntityFetch(AttributeContentAll(), ReferenceContentAll(), PriceContentAll()),
                 DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
                 QueryTelemetry()
             )
@@ -95,7 +95,7 @@ EvitaEntityReferenceResponse test = await client.QueryCatalogAsync(catalogName, 
 );
 
 EvitaClientSession session = client.CreateReadOnlySession(catalogName);
-SealedEntity? entity = await session.GetEntityAsync("Product", 678, AttributeContent(), ReferenceContent(), PriceContent());
+SealedEntity? entity = await session.GetEntityAsync("Product", 678, AttributeContentAll(), ReferenceContentAll(), PriceContentAll());
 session.Close();
 
 

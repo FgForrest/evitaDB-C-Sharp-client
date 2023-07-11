@@ -29,12 +29,12 @@ public class HierarchyParents : AbstractRequireConstraintContainer, IHierarchyRe
         }
     }
 
-    public HierarchyParents(string outputName, EntityFetch entityFetch, params IHierarchyRequireConstraint[] requirements)
+    public HierarchyParents(string outputName, EntityFetch? entityFetch, params IHierarchyOutputRequireConstraint[] requirements)
         : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{entityFetch}.Concat(requirements).ToArray())
     {
     }
     
-    public HierarchyParents(string outputName, EntityFetch? entityFetch, HierarchySiblings? hierarchySiblings, params IHierarchyRequireConstraint[] requirements)
+    public HierarchyParents(string outputName, EntityFetch? entityFetch, HierarchySiblings? hierarchySiblings, params IHierarchyOutputRequireConstraint[] requirements)
         : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{entityFetch, hierarchySiblings}.Concat(requirements).ToArray())
     {
     }

@@ -4,9 +4,9 @@ namespace Client.DataTypes;
 
 public abstract class Range<T>
 {
-    protected string OpenChar => "[";
-    protected string CloseChar => "]";
-    protected string IntervalJoin => ",";
+    protected static string OpenChar => "[";
+    protected static string CloseChar => "]";
+    protected static string IntervalJoin => ",";
 
     protected long From { get; init; }
     protected long To { get; init; }

@@ -2,8 +2,8 @@
 
 namespace Client.Queries.Filter;
 
-public class AttributeInRange<T, TNumber> : AbstractAttributeFilterConstraintLeaf
-    where T : IComparable where TNumber : struct, IComparable
+public class AttributeInRange<T> : AbstractAttributeFilterConstraintLeaf
+    where T : IComparable
 {
     private AttributeInRange(params object?[] arguments) : base(arguments)
     {
@@ -48,7 +48,7 @@ public class AttributeInRange<T, TNumber> : AbstractAttributeFilterConstraintLea
 
     public DateTimeOffset? TheMoment => Arguments is [_, DateTimeOffset theMoment] ? theMoment : null;
 
-    public TNumber? TheValue => Arguments is [_, TNumber theValue and (byte or short or int or long or decimal)]
+    public TNumber? TheValue<TNumber>() where TNumber : struct, IComparable => Arguments is [_, TNumber theValue and (byte or short or int or long or decimal)]
         ? theValue
         : null;
 }

@@ -2,5 +2,4 @@
 
 public interface IEntityRequire : IRequireConstraint
 { 
-    IEntityContentRequire?[] Requirements { get; }
 }

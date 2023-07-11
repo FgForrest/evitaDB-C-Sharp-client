@@ -5,7 +5,7 @@ using Client.Utils;
 
 namespace Client.Queries.Requires;
 
-public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequireConstraint
+public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequireConstraint, ISeparateEntityContentRequireContainer
 {
     public FacetStatisticsDepth FacetStatisticsDepth => (FacetStatisticsDepth) Arguments[0]!;
 

@@ -22,7 +22,7 @@ public class EvitaClientTest
     private static EvitaClient? _client;
     private static EvitaClientConfiguration EvitaClientConfiguration { get; }
 
-    private const string ExistingCatalogWithData = "moda";
+    private const string ExistingCatalogWithData = "evita";
 
     private const string TestCatalog = "testingCatalog";
     private const string TestCollection = "testingCollection";
@@ -206,7 +206,7 @@ public class EvitaClientTest
                     ),
                     Require(
                         Page(1, 20),
-                        EntityFetch(AttributeContent(), ReferenceContent(), PriceContent()),
+                        EntityFetch(AttributeContentAll(), ReferenceContentAll(), PriceContentAll()),
                         DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
                         QueryTelemetry()
                     )

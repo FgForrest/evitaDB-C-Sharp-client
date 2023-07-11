@@ -622,17 +622,15 @@ public static class EvitaDataTypesConverter
 
     public static ShortNumberRange ToShortNumberRange(GrpcIntegerNumberRange grpcShortNumberRange)
     {
-        //TODO
-        /*bool fromSet = grpcShortNumberRange.From.IsInitialized();
-        bool toSet = grpcShortNumberRange.To.IsInitialized();
-        short from = ToShort(grpcShortNumberRange.From);
-        short to = ToShort(grpcShortNumberRange.To);
+        bool fromSet = grpcShortNumberRange.From.HasValue;
+        bool toSet = grpcShortNumberRange.To.HasValue;
+        short from = ToShort(grpcShortNumberRange.From!.Value);
+        short to = ToShort(grpcShortNumberRange.To!.Value);
         if (!fromSet && toSet)
-            return ShortNumberRange.Until(to);
+            return ShortNumberRange.To(to);
         if (fromSet && !toSet)
-            return ShortNumberRange.Since(from);
-        return ShortNumberRange.Between(from, to);*/
-        return null;
+            return ShortNumberRange.From(from);
+        return ShortNumberRange.Between(from, to);
     }
 
     public static ShortNumberRange[] ToShortNumberRangeArray(GrpcIntegerNumberRangeArray arrayValue)
@@ -642,17 +640,15 @@ public static class EvitaDataTypesConverter
 
     public static ByteNumberRange ToByteNumberRange(GrpcIntegerNumberRange grpcByteNumberRange)
     {
-        //TODO
-        /*bool fromSet = grpcByteNumberRange.From.IsInitialized();
-        bool toSet = grpcByteNumberRange.To.IsInitialized();
-        byte from = ToByte(grpcByteNumberRange.From);
-        byte to = ToByte(grpcByteNumberRange.To);
+        bool fromSet = grpcByteNumberRange.From.HasValue;
+        bool toSet = grpcByteNumberRange.To.HasValue;
+        byte from = ToByte(grpcByteNumberRange.From!.Value);
+        byte to = ToByte(grpcByteNumberRange.To!.Value);
         if (!fromSet && toSet)
-            return ByteNumberRange.Until(to);
+            return ByteNumberRange.To(to);
         if (fromSet && !toSet)
-            return ByteNumberRange.Since(from);
-        return ByteNumberRange.Between(from, to);*/
-        return null;
+            return ByteNumberRange.From(from);
+        return ByteNumberRange.Between(from, to);
     }
 
     public static ByteNumberRange[] ToByteNumberRangeArray(GrpcIntegerNumberRangeArray arrayValue)
@@ -662,8 +658,15 @@ public static class EvitaDataTypesConverter
 
     public static IntegerNumberRange ToIntegerNumberRange(GrpcIntegerNumberRange grpcIntegerNumberRange)
     {
-        //TODO
-        return null;
+        bool fromSet = grpcIntegerNumberRange.From.HasValue;
+        bool toSet = grpcIntegerNumberRange.To.HasValue;
+        int from = grpcIntegerNumberRange.From!.Value;
+        int to = grpcIntegerNumberRange.To!.Value;
+        if (!fromSet && toSet)
+            return IntegerNumberRange.To(to);
+        if (fromSet && !toSet)
+            return IntegerNumberRange.From(from);
+        return IntegerNumberRange.Between(from, to);
     }
 
     public static IntegerNumberRange[] ToIntegerNumberRangeArray(GrpcIntegerNumberRangeArray arrayValue)
@@ -673,8 +676,15 @@ public static class EvitaDataTypesConverter
 
     public static LongNumberRange ToLongNumberRange(GrpcLongNumberRange grpcLongNumberRange)
     {
-        //TODO
-        return null;
+        bool fromSet = grpcLongNumberRange.From.HasValue;
+        bool toSet = grpcLongNumberRange.To.HasValue;
+        long from = grpcLongNumberRange.From!.Value;
+        long to = grpcLongNumberRange.To!.Value;
+        if (!fromSet && toSet)
+            return LongNumberRange.To(to);
+        if (fromSet && !toSet)
+            return LongNumberRange.From(from);
+        return LongNumberRange.Between(from, to);
     }
 
     public static LongNumberRange[] ToLongNumberRangeArray(GrpcLongNumberRangeArray arrayValue)

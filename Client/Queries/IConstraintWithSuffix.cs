@@ -4,5 +4,5 @@ public interface IConstraintWithSuffix
 {
     string? SuffixIfApplied { get; }
 
-    bool ArgumentImplicitForSuffix { get; }
+    bool ArgumentImplicitForSuffix(object argument);
 }

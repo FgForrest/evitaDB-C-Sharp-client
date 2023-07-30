@@ -10,7 +10,17 @@ using Client.Models.Schemas.Dtos;
 using Client.Models.Schemas.Mutations.Attributes;
 using Client.Models.Schemas.Mutations.Catalog;
 using Client.Queries.Order;
+using Newtonsoft.Json;
 using static Client.Queries.IQueryConstraints;
+using static Client.Queries.Filter.AttributeSpecialValue;
+using static Client.Queries.Requires.StatisticsType;
+using static Client.Queries.Requires.StatisticsBase;
+using static Client.Queries.Query;
+using static Client.Queries.Order.OrderDirection;
+using static Client.Queries.Requires.PriceContentMode;
+using static Client.Queries.Requires.FacetStatisticsDepth;
+using static Client.Queries.Requires.QueryPriceMode;
+using static Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
 
 const string catalogName = "evita";
 
@@ -146,3 +156,5 @@ var shouldWorkAlso = newSession.UpsertAndFetchEntity(
 //entity schema it mutated
 
 Console.WriteLine();
+
+EvitaEntityResponse response = client.QueryCatalog("evita", session => session.Query<EvitaEntityResponse,SealedEntity>(Query(Collection("Product"), Require(EntityFetch(AttributeContentAll()),Page(1, 20))))); Console.WriteLine(JsonConvert.SerializeObject(response.RecordPage.Data, Formatting.Indented));

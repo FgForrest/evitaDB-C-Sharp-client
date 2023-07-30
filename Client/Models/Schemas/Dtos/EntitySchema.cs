@@ -184,7 +184,7 @@ public class EntitySchema : IEntitySchema
 		);
 	}
 
-	public static EntitySchema _internalBuild(
+	public static EntitySchema InternalBuild(
 		int version,
 		string name,
 		IDictionary<NamingConvention, string> nameVariants,

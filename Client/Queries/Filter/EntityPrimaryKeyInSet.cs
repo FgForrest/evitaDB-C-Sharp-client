@@ -7,7 +7,7 @@ public class EntityPrimaryKeyInSet : AbstractFilterConstraintLeaf
         
     }
 
-    public EntityPrimaryKeyInSet(params int[] primaryKeys) : base(primaryKeys)
+    public EntityPrimaryKeyInSet(params int[] primaryKeys) : base(primaryKeys.Cast<object>().ToArray())
     {
     }
 

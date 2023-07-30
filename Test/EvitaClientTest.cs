@@ -138,39 +138,35 @@ public class EvitaClientTest
     public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_EntityReferences()
     {
         EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
-            session =>
-            {
-                return session.Query<EvitaEntityReferenceResponse, EntityReference>(
-                    Query(
-                        Collection("Product"),
-                        FilterBy(
-                            And(
-                                Not(
-                                    AttributeContains("url", "bla")
-                                ),
-                                Or(
-                                    EntityPrimaryKeyInSet(677, 678, 679, 680),
-                                    And(
-                                        PriceBetween(1.2m, 1000),
-                                        PriceValidIn(DateTimeOffset.Now),
-                                        PriceInPriceLists("basic", "vip"),
-                                        PriceInCurrency(new Currency("CZK"))
-                                    )
+            session => session.Query<EvitaEntityReferenceResponse, EntityReference>(
+                Query(
+                    Collection("Product"),
+                    FilterBy(
+                        And(
+                            Not(
+                                AttributeContains("url", "bla")
+                            ),
+                            Or(
+                                EntityPrimaryKeyInSet(677, 678, 679, 680),
+                                And(
+                                    PriceBetween(1.2m, 1000),
+                                    PriceValidIn(DateTimeOffset.Now),
+                                    PriceInPriceLists("basic", "vip"),
+                                    PriceInCurrency(new Currency("CZK"))
                                 )
                             )
-                        ),
-                        OrderBy(
-                            PriceNatural(OrderDirection.Desc)
-                        ),
-                        Require(
-                            Page(1, 20),
-                            DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
-                            QueryTelemetry()
                         )
+                    ),
+                    OrderBy(
+                        PriceNatural(OrderDirection.Desc)
+                    ),
+                    Require(
+                        Page(1, 20),
+                        DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
+                        QueryTelemetry()
                     )
-                );
-            }
-        );
+                )
+            ));
 
         That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
         That(referenceResponse.RecordPage.Data.All(x => x is {EntityType: "Product", PrimaryKey: > 0}), Is.True);

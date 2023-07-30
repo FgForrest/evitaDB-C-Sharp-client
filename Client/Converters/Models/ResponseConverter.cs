@@ -82,20 +82,25 @@ public static class ResponseConverter
         {
             List<IRootHierarchyConstraint> hierarchyConstraints =
                 QueryUtils.FindRequires<IRootHierarchyConstraint>(query);
-            extraResultList.Add(new Hierarchy(
-                extraResults.SelfHierarchy is not null
-                    ? ToHierarchy(
-                        entitySchemaFetcher,
-                        hierarchyConstraints[0],
-                        extraResults.SelfHierarchy
+            extraResultList.Add(
+                new Hierarchy(
+                    extraResults.SelfHierarchy is not null
+                        ? ToHierarchy(
+                            entitySchemaFetcher,
+                            hierarchyConstraints[0],
+                            extraResults.SelfHierarchy
+                        )
+                        : null,
+                    extraResults.Hierarchy.ToDictionary(
+                        x => x.Key,
+                        x => ToHierarchy(
+                            entitySchemaFetcher,
+                            hierarchyConstraints
+                                .OfType<HierarchyOfReference>()
+                                .First(it => it.ReferenceNames.Any(name => name == x.Key)), 
+                            x.Value)
                     )
-                    : null,
-                extraResults.Hierarchy.ToDictionary(
-                    x => x.Key,
-                    x => ToHierarchy(entitySchemaFetcher,
-                        hierarchyConstraints
-                            .OfType<HierarchyOfReference>()
-                            .First(it => it.ReferenceNames.Any(name => name == x.Key)), x.Value)))
+                )
             );
         }
 
@@ -142,20 +147,15 @@ public static class ResponseConverter
         GrpcFacetGroupStatistics grpcFacetGroupStatistics
     )
     {
-        List<FacetStatistics> facetStatistics = grpcFacetGroupStatistics.FacetStatistics
-            .Select(x => ToFacetStatistics(entitySchemaFetcher, entityFetch, x)).ToList();
         return new FacetGroupStatistics(
             grpcFacetGroupStatistics.ReferenceName,
             grpcFacetGroupStatistics.GroupEntity is not null
                 ? EntityConverter.ToSealedEntity(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity)
                 : EntityConverter.ToEntityReference(grpcFacetGroupStatistics.GroupEntityReference),
             grpcFacetGroupStatistics.Count,
-            facetStatistics
-                .Where(x => x.FacetEntity.PrimaryKey.HasValue)
-                .ToDictionary(x => x.FacetEntity.PrimaryKey!.Value, x => x),
-            facetStatistics
-                .Where(x => !x.FacetEntity.PrimaryKey.HasValue)
-                .ToList()
+            grpcFacetGroupStatistics.FacetStatistics
+                .Select(x => ToFacetStatistics(entitySchemaFetcher, entityFetch, x))
+                .ToDictionary(x => x.FacetEntity.PrimaryKey!.Value, x => x)
         );
     }
 
@@ -193,7 +193,7 @@ public static class ResponseConverter
             .Hierarchy
             .ToDictionary(x => x.Key, x =>
             {
-                IConstraint? hierarchyConstraint = QueryUtils.FindConstraint<IRootHierarchyConstraint>(
+                IConstraint? hierarchyConstraint = QueryUtils.FindConstraint<IConstraint>(
                     rootHierarchyConstraint,
                     cnt => cnt is IHierarchyRequireConstraint hrc && x.Key == hrc.OutputName
                 );
@@ -220,34 +220,13 @@ public static class ResponseConverter
 
     private static QueryTelemetry ToQueryTelemetry(GrpcQueryTelemetry grpcQueryTelemetry)
     {
-        List<QueryTelemetry> queryTelemetrySteps = new List<QueryTelemetry>();
-
-        foreach (var step in grpcQueryTelemetry.Steps)
-        {
-            queryTelemetrySteps.AddRange(ToQueryTelemetrySteps(step));
-        }
-
-        return new QueryTelemetry(Enum.Parse<QueryTelemetry.QueryPhase>(grpcQueryTelemetry.Operation.ToString()),
-            grpcQueryTelemetry.Start, grpcQueryTelemetry.SpentTime, queryTelemetrySteps,
-            grpcQueryTelemetry.Arguments.Select(x => x.ToString()).ToArray());
-    }
-
-    private static List<QueryTelemetry> ToQueryTelemetrySteps(GrpcQueryTelemetry grpcQueryTelemetry)
-    {
-        List<QueryTelemetry> children = new List<QueryTelemetry>();
-        List<QueryTelemetry> steps = new List<QueryTelemetry>();
-        if (grpcQueryTelemetry.Steps.Any())
-        {
-            foreach (var step in grpcQueryTelemetry.Steps)
-            {
-                children.AddRange(ToQueryTelemetrySteps(step));
-            }
-        }
-
-        steps.Add(new QueryTelemetry(Enum.Parse<QueryTelemetry.QueryPhase>(grpcQueryTelemetry.Operation.ToString()),
-            grpcQueryTelemetry.Start, grpcQueryTelemetry.SpentTime, children,
-            grpcQueryTelemetry.Arguments.Select(x => x.ToString()).ToArray()));
-        return steps;
+        return new QueryTelemetry(
+            EvitaEnumConverter.ToQueryPhase(grpcQueryTelemetry.Operation),
+            grpcQueryTelemetry.Start,
+            grpcQueryTelemetry.SpentTime,
+            grpcQueryTelemetry.Steps.Select(ToQueryTelemetry).ToList(),
+            grpcQueryTelemetry.Arguments.Select(x => x.ToString()).ToArray()
+        );
     }
 
     private static IHistogramContract ToHistogram(GrpcHistogram grpcHistogram)

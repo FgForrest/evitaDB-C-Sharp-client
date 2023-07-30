@@ -95,6 +95,86 @@ public static class EvitaEnumConverter
             _ => throw new EvitaInternalError("Unrecognized order direction: " + orderDirection)
         };
     }
+    
+    public static OrderBehaviour ToOrderBehaviour(GrpcOrderBehaviour grpcOrderBehaviour)
+    {
+        return grpcOrderBehaviour switch
+        {
+            GrpcOrderBehaviour.NullsFirst => OrderBehaviour.NullsFirst,
+            GrpcOrderBehaviour.NullsLast => OrderBehaviour.NullsLast,
+            _ => throw new EvitaInternalError("Unrecognized remote order behaviour: " + grpcOrderBehaviour)
+        };
+    }
+
+    public static GrpcOrderBehaviour ToGrpcOrderBehaviour(OrderBehaviour orderBehaviour)
+    {
+        return orderBehaviour switch
+        {
+            OrderBehaviour.NullsFirst => GrpcOrderBehaviour.NullsFirst,
+            OrderBehaviour.NullsLast => GrpcOrderBehaviour.NullsLast,
+            _ => throw new EvitaInternalError("Unrecognized order behaviour: " + orderBehaviour)
+        };
+    }
+    
+    public static EmptyHierarchicalEntityBehaviour ToEmptyHierarchicalEntityBehaviour(GrpcEmptyHierarchicalEntityBehaviour grpcEmptyHierarchicalEntityBehaviour)
+    {
+        return grpcEmptyHierarchicalEntityBehaviour switch
+        {
+            GrpcEmptyHierarchicalEntityBehaviour.LeaveEmpty => EmptyHierarchicalEntityBehaviour.LeaveEmpty,
+            GrpcEmptyHierarchicalEntityBehaviour.RemoveEmpty => EmptyHierarchicalEntityBehaviour.RemoveEmpty,
+            _ => throw new EvitaInternalError("Unrecognized remote empty hierarchical entity behaviour: " + grpcEmptyHierarchicalEntityBehaviour)
+        };
+    }
+
+    public static GrpcEmptyHierarchicalEntityBehaviour ToGrpcEmptyHierarchicalEntityBehaviour(EmptyHierarchicalEntityBehaviour emptyHierarchicalEntityBehaviour)
+    {
+        return emptyHierarchicalEntityBehaviour switch
+        {
+            EmptyHierarchicalEntityBehaviour.LeaveEmpty => GrpcEmptyHierarchicalEntityBehaviour.LeaveEmpty,
+            EmptyHierarchicalEntityBehaviour.RemoveEmpty => GrpcEmptyHierarchicalEntityBehaviour.RemoveEmpty,
+            _ => throw new EvitaInternalError("Unrecognized empty hierarchical entity behaviour: " + emptyHierarchicalEntityBehaviour)
+        };
+    }
+    
+    public static StatisticsBase ToStatisticsBase(GrpcStatisticsBase grpcStatisticsBase)
+    {
+        return grpcStatisticsBase switch
+        {
+            GrpcStatisticsBase.CompleteFilter => StatisticsBase.CompleteFilter,
+            GrpcStatisticsBase.WithoutUserFilter => StatisticsBase.WithoutUserFilter,
+            _ => throw new EvitaInternalError("Unrecognized remote statistics base: " + grpcStatisticsBase)
+        };
+    }
+
+    public static GrpcStatisticsBase ToGrpcStatisticsBase(StatisticsBase statisticsBase)
+    {
+        return statisticsBase switch
+        {
+            StatisticsBase.CompleteFilter => GrpcStatisticsBase.CompleteFilter,
+            StatisticsBase.WithoutUserFilter => GrpcStatisticsBase.WithoutUserFilter,
+            _ => throw new EvitaInternalError("Unrecognized statistics base: " + statisticsBase)
+        };
+    }
+    
+    public static StatisticsType ToStatisticsType(GrpcStatisticsType grpcStatisticsType)
+    {
+        return grpcStatisticsType switch
+        {
+            GrpcStatisticsType.ChildrenCount => StatisticsType.ChildrenCount,
+            GrpcStatisticsType.QueriedEntityCount => StatisticsType.QueriedEntityCount,
+            _ => throw new EvitaInternalError("Unrecognized remote statistics type: " + grpcStatisticsType)
+        };
+    }
+
+    public static GrpcStatisticsType ToGrpcStatisticsType(StatisticsType statisticsType)
+    {
+        return statisticsType switch
+        {
+            StatisticsType.ChildrenCount => GrpcStatisticsType.ChildrenCount,
+            StatisticsType.QueriedEntityCount => GrpcStatisticsType.QueriedEntityCount,
+            _ => throw new EvitaInternalError("Unrecognized statistics type: " + statisticsType)
+        };
+    }
 
     public static AttributeSpecialValue ToAttributeSpecialValue(GrpcAttributeSpecialValue grpcAttributeSpecialValue)
     {
@@ -245,11 +325,13 @@ public static class EvitaEnumConverter
             GrpcQueryPhase.Execution => QueryPhase.Execution,
             GrpcQueryPhase.ExecutionPrefetch => QueryPhase.ExecutionPrefetch,
             GrpcQueryPhase.ExecutionFilter => QueryPhase.ExecutionFilter,
+            GrpcQueryPhase.ExecutionFilterNestedQuery => QueryPhase.ExecutionFilterNestedQuery,
             GrpcQueryPhase.ExecutionSortAndSlice => QueryPhase.ExecutionSortAndSlice,
             GrpcQueryPhase.ExtraResultsFabrication => QueryPhase.ExtraResultsFabrication,
             GrpcQueryPhase.ExtraResultItemFabrication => QueryPhase.ExtraResultItemFabrication,
             GrpcQueryPhase.Fetching => QueryPhase.Fetching,
             GrpcQueryPhase.FetchingReferences => QueryPhase.FetchingReferences,
+            GrpcQueryPhase.FetchingParents => QueryPhase.FetchingParents,
             _ => throw new EvitaInternalError("Unrecognized remote query phase: " + grpcQueryPhase)
         };
     }
@@ -273,11 +355,13 @@ public static class EvitaEnumConverter
             QueryPhase.Execution => GrpcQueryPhase.Execution,
             QueryPhase.ExecutionPrefetch => GrpcQueryPhase.ExecutionPrefetch,
             QueryPhase.ExecutionFilter => GrpcQueryPhase.ExecutionFilter,
+            QueryPhase.ExecutionFilterNestedQuery => GrpcQueryPhase.ExecutionFilterNestedQuery,
             QueryPhase.ExecutionSortAndSlice => GrpcQueryPhase.ExecutionSortAndSlice,
             QueryPhase.ExtraResultsFabrication => GrpcQueryPhase.ExtraResultsFabrication,
             QueryPhase.ExtraResultItemFabrication => GrpcQueryPhase.ExtraResultItemFabrication,
             QueryPhase.Fetching => GrpcQueryPhase.Fetching,
             QueryPhase.FetchingReferences => GrpcQueryPhase.FetchingReferences,
+            QueryPhase.FetchingParents => GrpcQueryPhase.FetchingParents,
             _ => throw new EvitaInternalError("Unrecognized local query phase: " + queryPhase)
         };
     }

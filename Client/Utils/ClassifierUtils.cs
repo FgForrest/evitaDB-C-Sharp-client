@@ -4,10 +4,10 @@ using Client.Exceptions;
 
 namespace Client.Utils;
 
-public class ClassifierUtils
+public static class ClassifierUtils
 {
     private const string CatalogNameRegex = @"^[A-Za-z0-9_-]{1,255}$";
-    private const string SupportedFormatPattern = @"(^[\p{Alpha}][\p{Alnum}_.:+\-@/\\|`~]*$)";
+    private const string SupportedFormatPattern = "(^[\\p{L}][\\w_.:+\\-@/\\\\|`~]*$)";
 
     public static void ValidateClassifierFormat(ClassifierType classifierType, string classifier)
     {
@@ -30,8 +30,7 @@ public class ClassifierUtils
         }
         else
         {
-            //Assert.IsTrue(Regex.IsMatch(classifier, SupportedFormatPattern),
-            Assert.IsTrue(true,
+            Assert.IsTrue(Regex.IsMatch(classifier, SupportedFormatPattern),
                 () => new InvalidClassifierFormatException(
                     classifierType, classifier,
                     "invalid name - only alphanumeric and these ASCII characters are allowed: _.:+-@/\\|`~"
@@ -47,21 +46,12 @@ public class ClassifierUtils
             return false;
         }
 
-        return false;
-        //TODO FIX THIS
-
-        return ReservedKeywords[classifierType]
-            .SelectMany(keyword => Enum.GetValues<NamingConvention>()
-                .Select(namingConvention => StringUtils.ToSpecificCase(keyword, namingConvention)
-                )
-            )
-            .Any(kw => kw == classifier ||
-                       kw.Equals(StringUtils.ToCamelCase(classifier)) ||
-                       kw.Equals(StringUtils.ToPascalCase(classifier)) ||
-                       kw.Equals(StringUtils.ToSnakeCase(classifier)) ||
-                       kw.Equals(StringUtils.ToUpperSnakeCase(classifier)) ||
-                       kw.Equals(StringUtils.ToKebabCase(classifier))
-            );
+        return ReservedKeywords.TryGetValue(classifierType, out var keywords) && keywords.Any(keyword =>
+            Enum.GetValues<NamingConvention>().Select(namingConvention => StringUtils.ToSpecificCase(keyword, namingConvention))
+                .Any(kw => kw == classifier || kw == StringUtils.ToCamelCase(classifier) ||
+                           kw == StringUtils.ToPascalCase(classifier) || kw == StringUtils.ToSnakeCase(classifier) ||
+                           kw == StringUtils.ToUpperSnakeCase(classifier) ||
+                           kw == StringUtils.ToKebabCase(classifier)));
     }
 
     private static readonly Dictionary<ClassifierType, ISet<string>> ReservedKeywords =

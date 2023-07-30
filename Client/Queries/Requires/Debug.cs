@@ -6,7 +6,7 @@ public class Debug : AbstractRequireConstraintLeaf
     {
     }
     
-    public Debug(params DebugMode[] debugModes) : base(debugModes)
+    public Debug(params DebugMode[] debugModes) : base(debugModes.Cast<object>().ToArray())
     {
     }
     

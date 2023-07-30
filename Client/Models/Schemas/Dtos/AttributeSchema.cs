@@ -132,4 +132,18 @@ public class AttributeSchema
     }
 
     public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+
+    public override string ToString()
+    {
+        return "AttributeSchema{" +
+               "name='" + Name + '\'' +
+               ", unique=" + Unique +
+               ", filterable=" + Filterable +
+               ", sortable=" + Sortable +
+               ", localized=" + Localized +
+               ", nullable=" + Nullable +
+               ", type=" + Type +
+               ", indexedDecimalPlaces=" + IndexedDecimalPlaces +
+               '}';
+    }
 }

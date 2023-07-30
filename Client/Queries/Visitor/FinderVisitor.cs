@@ -47,7 +47,7 @@ public class FinderVisitor : IConstraintVisitor
     {
         FinderVisitor visitor = new(matcher);
         constraint.Accept(visitor);
-        return visitor._result.Count > 0 ? (T?) visitor._result[0] : default;
+        return (T?) visitor.Result;
     }
 
     public static List<T> FindConstraints<T>(IConstraint constraint, Predicate<IConstraint> matcher, Predicate<IConstraint> stopper) where T : IConstraint
@@ -74,16 +74,16 @@ public class FinderVisitor : IConstraintVisitor
         {
             return;
         }
-        ConstraintContainer<IConstraint> cnt = (ConstraintContainer<IConstraint>) constraint;
-        if (_stopper.Invoke(cnt))
+        IConstraintContainer<IConstraint> constraintContainer = (IConstraintContainer<IConstraint>) constraint;
+        if (_stopper.Invoke(constraintContainer))
         {
             return;
         }
-        foreach (IConstraint child in cnt.Children)
+        foreach (IConstraint child in constraintContainer.Children)
         {
             child.Accept(this);
         }
-        foreach (IConstraint additionalChild in cnt.AdditionalChildren)
+        foreach (IConstraint additionalChild in constraintContainer.AdditionalChildren)
         {
             additionalChild.Accept(this);
         }

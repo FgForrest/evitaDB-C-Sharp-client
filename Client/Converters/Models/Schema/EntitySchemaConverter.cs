@@ -10,7 +10,7 @@ public static class EntitySchemaConverter
 {
     public static EntitySchema Convert(GrpcEntitySchema entitySchema)
     {
-        return EntitySchema._internalBuild(
+        return EntitySchema.InternalBuild(
             entitySchema.Version,
             entitySchema.Name,
             NamingConventionHelper.Generate(entitySchema.Name),

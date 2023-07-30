@@ -20,23 +20,28 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         visitor.Traverse(query);
         return visitor.GetResultWithExtractedParameters();
     }
-    
-    public static StringWithParameters ToStringWithParameterExtraction(string? indent = null, params IConstraint?[] constraints)
+
+    public static StringWithParameters ToStringWithParameterExtraction(string? indent = null,
+        params IConstraint?[] constraints)
     {
         PrettyPrintingVisitor visitor = new(indent, true);
         foreach (var constraint in constraints)
         {
             constraint?.Accept(visitor);
         }
+
         return visitor.GetResultWithExtractedParameters();
     }
-    
-    public static StringWithParameters ToStringWithParameterExtraction(params IConstraint[] constraints) {
+
+    public static StringWithParameters ToStringWithParameterExtraction(params IConstraint[] constraints)
+    {
         PrettyPrintingVisitor visitor = new PrettyPrintingVisitor(null, true);
-        foreach (IConstraint theConstraint in constraints) {
+        foreach (IConstraint theConstraint in constraints)
+        {
             visitor.NextConstraint();
             theConstraint.Accept(visitor);
         }
+
         return visitor.GetResultWithExtractedParameters();
     }
 
@@ -47,7 +52,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         _extractParameters = false;
         _parameters = null;
     }
-    
+
     private PrettyPrintingVisitor(string? indent, bool extractParameters)
     {
         Level = 0;
@@ -65,30 +70,36 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             query.Entities.Accept(this);
             _result.Append(',');
         }
+
         if (query.FilterBy is not null)
         {
             query.FilterBy.Accept(this);
             _result.Append(',');
         }
+
         if (query.OrderBy is not null)
         {
             query.OrderBy.Accept(this);
             _result.Append(',');
         }
+
         if (query.Require is not null)
         {
             query.Require.Accept(this);
             _result.Append(',');
         }
+
         _result.Length -= ",".Length;
         _result.Append(NewLine()).Append(QueryUtils.ArgClosing);
     }
-    
-    public string GetResult() {
+
+    public string GetResult()
+    {
         return _result.ToString();
     }
 
-    public StringWithParameters GetResultWithExtractedParameters() {
+    public StringWithParameters GetResultWithExtractedParameters()
+    {
         return new StringWithParameters(
             _result.ToString(),
             _parameters == null ? new List<object>() : _parameters.ToList().ToImmutableList()
@@ -111,13 +122,15 @@ public class PrettyPrintingVisitor : IConstraintVisitor
 
     private void PrintContainer(IConstraintContainer<IConstraint> constraint)
     {
-        if (constraint.Children.Length == 0) {
+        if (constraint.Children.Length == 0 && constraint.AdditionalChildren.Length == 0)
+        {
             PrintLeaf(constraint);
             return;
         }
 
         Level++;
-        if (constraint.Applicable) {
+        if (constraint.Applicable)
+        {
             IConstraint[] children = constraint.Children;
             int childrenLength = children.Length;
 
@@ -128,71 +141,95 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             int argumentsLength = arguments.Length;
 
             // print arguments
-            for (int i = 0; i < argumentsLength; i++) {
+            for (int i = 0; i < argumentsLength; i++)
+            {
                 object? argument = arguments[i];
-                if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument)) {
+                if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument))
+                {
                     continue;
                 }
-                if (argument is null) {
+
+                if (argument is null)
+                {
                     continue;
                 }
+
                 _result.Append(NewLine());
                 Indent(_indent, Level);
-                if (_extractParameters) {
+                if (_extractParameters)
+                {
                     _result.Append('?');
                     _parameters?.AddLast(argument);
-                } else {
+                }
+                else
+                {
                     _result.Append(EvitaDataTypes.FormatValue(argument));
                 }
-                if (i + 1 < childrenLength || additionalChildrenLength > 0 || childrenLength > 0) {
+
+                if (i + 1 < childrenLength || additionalChildrenLength > 0 || childrenLength > 0)
+                {
                     NextArgument();
                 }
             }
 
             // print additional children
-            for (int i = 0; i < additionalChildren.Length; i++) {
+            for (int i = 0; i < additionalChildren.Length; i++)
+            {
                 var additionalChild = additionalChildren[i];
                 additionalChild.Accept(this);
-                if (i + 1 < additionalChildren.Length || childrenLength > 0) {
+                if (i + 1 < additionalChildren.Length || childrenLength > 0)
+                {
                     NextConstraint();
                 }
             }
 
             // print children
-            for (int i = 0; i < childrenLength; i++) {
+            for (int i = 0; i < childrenLength; i++)
+            {
                 var child = children[i];
                 child.Accept(this);
-                if (i + 1 < childrenLength) {
+                if (i + 1 < childrenLength)
+                {
                     NextConstraint();
                 }
             }
         }
+
         Level--;
         _result.Append(NewLine());
         Indent(_indent, Level);
         _result.Append(QueryUtils.ArgClosing);
     }
-    
+
     private void PrintLeaf(IConstraint constraint)
     {
         var arguments = constraint.Arguments;
-        for (int i = 0; i < arguments.Length; i++) {
+        for (int i = 0; i < arguments.Length; i++)
+        {
             var argument = arguments[i];
             if (argument is null)
                 continue;
-            if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument)) {
+            if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument))
+            {
                 continue;
             }
-            if (_extractParameters) {
+
+            if (_extractParameters)
+            {
                 _result.Append('?');
                 _parameters?.AddLast(argument);
-            } else {
+            }
+            else
+            {
                 _result.Append(EvitaDataTypes.FormatValue(argument));
             }
-            if (i + 1 < arguments.Length) {
+
+            if (i + 1 < arguments.Length)
+            {
                 _result.Append(", ");
             }
         }
+
         _result.Append(QueryUtils.ArgClosing);
     }
 
@@ -220,6 +257,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         {
             _result.Append(NewLine());
         }
+
         Indent(_indent, Level);
         _result.Append(constraint.Name).Append(QueryUtils.ArgOpening);
         if (constraint.GetType().IsAssignableToGenericType(typeof(ConstraintContainer<>)))
@@ -244,6 +282,6 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             PrintLeaf(leaf);
         }
     }
-    
+
     public record StringWithParameters(string Query, IList<object> Parameters);
 }

@@ -32,7 +32,7 @@ public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilt
 
     public new bool Necessary => base.Necessary || Applicable;
     public new bool Applicable => Children.Length > 0;
-    public string? SuffixIfApplied => ReferenceName ?? Suffix;
+    public string? SuffixIfApplied => ReferenceName is not null ? null : Suffix;
     bool IConstraintWithSuffix.ArgumentImplicitForSuffix(object argument) => false;
     private HierarchyWithin(object[] argument, IFilterConstraint[] fineGrainedConstraints,
         IConstraint[] additionalChildren) : base(argument, fineGrainedConstraints)

@@ -6,7 +6,7 @@ public class AttributeInSet<T> : AbstractAttributeFilterConstraintLeaf
     {
     }
     
-    public AttributeInSet(string attributeName, params T[] attributeValues) : base(attributeName, attributeValues)
+    public AttributeInSet(string attributeName, params T[] attributeValues) : base(Concat(attributeName, attributeValues.Cast<object>().ToArray()))
     {
     }
     

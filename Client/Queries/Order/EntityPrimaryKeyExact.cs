@@ -6,7 +6,7 @@ public class EntityPrimaryKeyExact : AbstractOrderConstraintLeaf
     {
     }
     
-    public EntityPrimaryKeyExact(params int?[] primaryKeys) : base(primaryKeys)
+    public EntityPrimaryKeyExact(params int[] primaryKeys) : base(primaryKeys.Cast<object>().ToArray())
     {
     }
     

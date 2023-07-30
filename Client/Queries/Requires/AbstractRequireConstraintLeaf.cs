@@ -15,10 +15,9 @@ public abstract class AbstractRequireConstraintLeaf : ConstraintLeaf, IRequireCo
     {
         visitor.Visit(this);
     }
-
-    protected static object[] Concat(object firstArg, object[] rest)
-    {
-        object[] result = new object [rest.Length + 1];
+    
+    protected static object[] Concat(object firstArg, object[] rest) {
+        object[] result = new object[rest.Length + 1];
         result[0] = firstArg;
         Array.Copy(rest, 0, result, 1, rest.Length);
         return result;

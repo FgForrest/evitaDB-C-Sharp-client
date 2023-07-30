@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
 using Client.DataTypes;
 using Client.Queries.Filter;
 using Client.Queries.Head;
@@ -12,11 +11,12 @@ namespace Client.Queries;
 
 public interface IQueryConstraints
 {
+    /// <inheritdoc cref="Client.Queries.Head.Collection"/>
     static Collection Collection(string entityType) => new(entityType);
 
-    static FilterBy? FilterBy(IFilterConstraint? constraint) => constraint == null ? null : new FilterBy(constraint);
+    static FilterBy? FilterBy(params IFilterConstraint?[]? constraint) => constraint == null ? null : new FilterBy(constraint);
 
-    static FilterGroupBy? FilterGroupBy(params IFilterConstraint[]? constraints) =>
+    static FilterGroupBy? FilterGroupBy(params IFilterConstraint?[]? constraints) =>
         constraints == null ? null : new FilterGroupBy(constraints);
 
     static And? And(params IFilterConstraint?[]? constraints) => constraints is null ? null : new And(constraints);
@@ -86,14 +86,13 @@ public interface IQueryConstraints
         return new HierarchyWithin(ofParent, with);
     }
 
-    static HierarchyWithin? HierarchyWithinSelf(string referenceName, IFilterConstraint? ofParent,
+    static HierarchyWithin? HierarchyWithin(string referenceName, IFilterConstraint? ofParent,
         params IHierarchySpecificationFilterConstraint[]? with)
     {
         if (ofParent is null)
         {
             return null;
         }
-
         if (with is null)
         {
             return new HierarchyWithin(referenceName, ofParent);
@@ -102,7 +101,7 @@ public interface IQueryConstraints
         return new HierarchyWithin(referenceName, ofParent, with);
     }
 
-    static HierarchyWithinRoot HierarchyWithinRoot(params IHierarchySpecificationFilterConstraint[]? with) =>
+    static HierarchyWithinRoot HierarchyWithinRootSelf(params IHierarchySpecificationFilterConstraint[]? with) =>
         with is null ? new HierarchyWithinRoot() : new HierarchyWithinRoot(with);
 
     static HierarchyWithinRoot HierarchyWithinRoot(string referenceName,
@@ -213,7 +212,7 @@ public interface IQueryConstraints
     static EntityPrimaryKeyInFilter EntityPrimaryKeyInFilter() => new EntityPrimaryKeyInFilter();
 
     static EntityPrimaryKeyExact? EntityPrimaryKeyExact(params int[]? primaryKeys) =>
-        ArrayUtils.IsEmpty(primaryKeys) ? null : new EntityPrimaryKeyExact();
+        ArrayUtils.IsEmpty(primaryKeys) ? null : new EntityPrimaryKeyExact(primaryKeys);
 
     static AttributeSetInFilter? AttributeSetInFilter(string? attributeName) =>
         string.IsNullOrEmpty(attributeName) ? null : new AttributeSetInFilter(attributeName);
@@ -224,7 +223,7 @@ public interface IQueryConstraints
             : new AttributeSetExact(attributeName, attributeValues!);
 
     static ReferenceProperty? ReferenceProperty(string propertyName, params IOrderConstraint[]? constraints) =>
-        constraints is null ? null : new ReferenceProperty(propertyName);
+        constraints is null ? null : new ReferenceProperty(propertyName, constraints);
 
     static EntityProperty? EntityProperty(params IOrderConstraint[]? constraints) =>
         constraints is null ? null : new EntityProperty(constraints);

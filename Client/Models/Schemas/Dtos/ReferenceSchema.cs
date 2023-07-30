@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Client.DataTypes;
 using Client.Exceptions;
 using Client.Utils;
 
@@ -19,7 +20,6 @@ public class ReferenceSchema
     public bool Faceted { get; }
     public ICollection<AttributeSchema> NonNullableAttributes { get; }
     public IDictionary<string, AttributeSchema> Attributes { get; }
-
     private IDictionary<NamingConvention, string> EntityTypeNameVariants { get; }
     private IDictionary<NamingConvention, string> GroupTypeNameVariants { get; }
     private IDictionary<string, AttributeSchema[]> AttributeNameIndex { get; }
@@ -34,9 +34,9 @@ public class ReferenceSchema
 		bool indexed,
 		bool faceted
 	) {
-		//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, entityType);
+		ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, entityType);
 		if (groupType != null) {
-			//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, groupType);
+			ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, groupType);
 		}
 		if (faceted) {
 			Assert.IsTrue(indexed, "When reference is marked as faceted, it needs also to be indexed.");
@@ -79,9 +79,9 @@ public class ReferenceSchema
 		bool faceted,
 		Dictionary<string, AttributeSchema> attributes
 	) {
-		//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, entityType);
+		ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, entityType);
 		if (groupType != null) {
-			//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, groupType);
+			ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, groupType);
 		}
 		if (faceted) {
 			Assert.IsTrue(indexed, "When reference is marked as faceted, it needs also to be indexed.");
@@ -126,9 +126,9 @@ public class ReferenceSchema
 		bool faceted,
 		IDictionary<string, AttributeSchema> attributes
 	) {
-		//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, entityType);
+		ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, entityType);
 		if (groupType != null) {
-			//ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, groupType);
+			ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, groupType);
 		}
 		if (faceted) {
 			Assert.IsTrue(indexed, "When reference is marked as faceted, it needs also to be indexed.");
@@ -167,7 +167,7 @@ public class ReferenceSchema
         IDictionary<string, AttributeSchema> attributes
     )
     {
-        //TODO: ClassifierUtils.validateClassifierFormat(ClassifierType.ENTITY, referencedEntityType);
+        ClassifierUtils.ValidateClassifierFormat(ClassifierType.Entity, referencedEntityType);
         Name = name;
         NameVariants = nameVariants;
         Description = description;
@@ -245,4 +245,19 @@ public class ReferenceSchema
     }
 
     public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+
+    public override string ToString()
+    {
+	    
+	    return "ReferenceSchema{" +
+	           "name='" + Name + '\'' +
+	           ", cardinality=" + Cardinality +
+	           ", referencedEntityType=" + ReferencedEntityType +
+	           ", referencedGroupType=" + ReferencedGroupType +
+	           ", filterable=" + Filterable +
+	           ", faceted=" + Faceted +
+	           ", nonNullableAttributes=" + NonNullableAttributes +
+	           ", attributes=" + Attributes +
+	           '}';
+    }
 }

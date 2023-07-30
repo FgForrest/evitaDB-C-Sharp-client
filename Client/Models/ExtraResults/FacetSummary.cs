@@ -7,54 +7,60 @@ namespace Client.Models.ExtraResults;
 
 public class FacetSummary : IEvitaResponseExtraResult
 {
-    private readonly Dictionary<string, Dictionary<int, FacetGroupStatistics>> _facetGroupStatisticsWithIds;
-    private readonly Dictionary<string, FacetGroupStatistics> _facetGroupStatisticsWithoutIds;
+    private readonly IDictionary<string, ReferenceStatistics> _referenceStatistics;
 
-    public FacetSummary(ICollection<FacetGroupStatistics> facetGroupStatistics)
+    public FacetSummary(IDictionary<string, ICollection<FacetGroupStatistics>> referenceStatistics)
     {
-        _facetGroupStatisticsWithIds = new Dictionary<string, Dictionary<int, FacetGroupStatistics>>();
-        _facetGroupStatisticsWithoutIds = new Dictionary<string, FacetGroupStatistics>();
-        foreach (FacetGroupStatistics stat in facetGroupStatistics)
+        Dictionary<string, ReferenceStatistics> result = new();
+        foreach (KeyValuePair<string, ICollection<FacetGroupStatistics>> stats in referenceStatistics)
         {
-            int? groupId = stat.GroupEntity?.PrimaryKey;
-            if (!groupId.HasValue)
-            {
-                _facetGroupStatisticsWithoutIds.Add(stat.ReferenceName, stat);
-            }
-            else
-            {
-                if (!_facetGroupStatisticsWithIds.ContainsKey(stat.ReferenceName))
-                {
-                    _facetGroupStatisticsWithIds.Add(stat.ReferenceName, new Dictionary<int, FacetGroupStatistics>());
-                }
-
-                Dictionary<int, FacetGroupStatistics> groupById = _facetGroupStatisticsWithIds[stat.ReferenceName];
-                Assert.IsPremiseValid(!groupById.ContainsKey(groupId.Value),
-                    $"There is already facet group for reference `{stat.ReferenceName}` with id `{groupId}`.");
-                groupById.Add(groupId.Value, stat);
-            }
+            FacetGroupStatistics? nonGroupedStatistics = stats.Value
+                .FirstOrDefault(x => x.GroupEntity is null);
+            result.Add(stats.Key,
+                new ReferenceStatistics(nonGroupedStatistics,
+                    stats.Value.Where(x => x.GroupEntity is not null)
+                        .ToDictionary(key => key.GroupEntity!.PrimaryKey!.Value, value => value)));
         }
+
+        _referenceStatistics = result.ToImmutableDictionary();
+    }
+
+    public FacetSummary(ICollection<FacetGroupStatistics> referenceStatistics)
+    {
+        _referenceStatistics = referenceStatistics.GroupBy(x => x.ReferenceName).ToList()
+            .ToImmutableDictionary(key => key.Key,
+                value => new ReferenceStatistics(
+                    value.ToList().FirstOrDefault(group => group.GroupEntity is null),
+                    value.Where(group => group.GroupEntity is not null)
+                        .ToDictionary(key => key.GroupEntity!.PrimaryKey!.Value, v => v)));
     }
 
     public FacetGroupStatistics? GetFacetGroupStatistics(string referencedEntityType) =>
-        _facetGroupStatisticsWithoutIds.TryGetValue(referencedEntityType, out FacetGroupStatistics? stats)
-            ? stats
+        _referenceStatistics.TryGetValue(referencedEntityType, out ReferenceStatistics? stats)
+            ? stats.NonGroupedStatistics
             : null;
 
     public FacetGroupStatistics? GetFacetGroupStatistics(string referencedEntityType, int groupId) =>
-        _facetGroupStatisticsWithIds.TryGetValue(referencedEntityType,
-            out Dictionary<int, FacetGroupStatistics>? groupById)
-            ? groupById[groupId]
+        _referenceStatistics.TryGetValue(referencedEntityType,
+            out ReferenceStatistics? stats)
+            ? stats.GetFacetGroupStatistics(groupId)
             : null;
 
     public ICollection<FacetGroupStatistics> GetFacetGroupStatistics() =>
-        _facetGroupStatisticsWithIds.Values.SelectMany(x => x.Values)
-            .Concat(_facetGroupStatisticsWithoutIds.Values)
+        _referenceStatistics.Values.SelectMany(x =>
+            {
+                ICollection<FacetGroupStatistics> rs = x.GroupedStatistics.Values;
+                if (x.NonGroupedStatistics is not null)
+                {
+                    rs.Add(x.NonGroupedStatistics);
+                }
+                return rs;
+            })
             .ToList();
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(_facetGroupStatisticsWithIds);
+        return HashCode.Combine(_referenceStatistics);
     }
 
     public override bool Equals(object? o)
@@ -63,48 +69,18 @@ public class FacetSummary : IEvitaResponseExtraResult
         if (o == null || GetType() != o.GetType()) return false;
         FacetSummary that = (FacetSummary) o;
 
-        foreach (KeyValuePair<string, Dictionary<int, FacetGroupStatistics>> referenceEntry in
-                 _facetGroupStatisticsWithIds)
+        foreach (KeyValuePair<string, ReferenceStatistics> referenceEntry in _referenceStatistics)
         {
-            Dictionary<int, FacetGroupStatistics> statistics = referenceEntry.Value;
-            that._facetGroupStatisticsWithIds.TryGetValue(referenceEntry.Key,
-                out Dictionary<int, FacetGroupStatistics>? thatStats);
-            if (thatStats == null || statistics.Count != thatStats.Count)
-            {
-                return false;
-            }
-
-            using IEnumerator<KeyValuePair<int, FacetGroupStatistics>> it = statistics.GetEnumerator();
-            using IEnumerator<KeyValuePair<int, FacetGroupStatistics>> thatIt = thatStats.GetEnumerator();
-            while (it.MoveNext())
-            {
-                KeyValuePair<int, FacetGroupStatistics> entry = it.Current;
-                thatIt.MoveNext();
-                KeyValuePair<int, FacetGroupStatistics> thatEntry = thatIt.Current;
-                if (!Equals(entry.Key, thatEntry.Key) || !Equals(entry.Value, thatEntry.Value))
-                {
-                    return false;
-                }
-            }
-        }
-
-        foreach (KeyValuePair<string, FacetGroupStatistics> referenceEntry in _facetGroupStatisticsWithoutIds)
-        {
-            FacetGroupStatistics statistics = referenceEntry.Value;
-            that._facetGroupStatisticsWithoutIds.TryGetValue(referenceEntry.Key, out FacetGroupStatistics? thatStats);
-            if (thatStats == null || statistics.Count != thatStats.Count)
-            {
-                return false;
-            }
-
-            if (!Equals(statistics, thatStats))
+            ReferenceStatistics statistics = referenceEntry.Value;
+            ReferenceStatistics? thatStatistics =
+                that._referenceStatistics.TryGetValue(referenceEntry.Key, out var refStats) ? refStats : null;
+            if (thatStatistics is null || !statistics.Equals(thatStatistics))
             {
                 return false;
             }
         }
 
-        return _facetGroupStatisticsWithIds.Equals(that._facetGroupStatisticsWithIds) &&
-               _facetGroupStatisticsWithoutIds.Equals(that._facetGroupStatisticsWithoutIds);
+        return true;
     }
 
     public override string ToString()
@@ -115,30 +91,37 @@ public class FacetSummary : IEvitaResponseExtraResult
     public string ToString(Func<FacetGroupStatistics, string> groupRenderer,
         Func<FacetStatistics, string> facetRenderer)
     {
-        return "Facet summary:\n" + string.Join("\n", _facetGroupStatisticsWithIds
+        return "Facet summary:\n" + string.Join("\n", _referenceStatistics
             .OrderBy(entry => entry.Key)
-            .SelectMany(groupsByReferenceName => groupsByReferenceName.Value
-                .Values
-                .Select(statistics => "\t" + groupsByReferenceName.Key + ": " +
-                                      (groupRenderer(statistics).Trim() != ""
-                                          ? groupRenderer(statistics)
-                                          : statistics.GroupEntity?.PrimaryKey.ToString() ?? "") +
-                                      " [" + statistics.Count + "]:\n" +
-                                      string.Join("\n", statistics
-                                          .GetFacetStatistics()
-                                          .Concat(_facetGroupStatisticsWithoutIds.Values
-                                              .SelectMany(x => x.GetFacetStatistics()))
-                                          .Select(facet => "\t\t[" + (facet.Requested ? "X" : " ") + "] " +
-                                                           (facetRenderer(facet).Trim() != ""
-                                                               ? facetRenderer(facet)
-                                                               : facet.FacetEntity.PrimaryKey.ToString()) +
-                                                           " (" + facet.Count + ")" +
-                                                           (facet.Impact != null ? " " + facet.Impact : "")
-                                          )
-                                      )
-                )
-            )
-        );
+            .SelectMany(groupsByReferenceName =>
+                {
+                    ReferenceStatistics stats = groupsByReferenceName.Value;
+                    ICollection<FacetGroupStatistics> groupStatistics = stats.GroupedStatistics.Values;
+                    if (stats.NonGroupedStatistics is not null)
+                    {
+                        groupStatistics.Add(stats.NonGroupedStatistics);
+                    }
+
+                    return groupStatistics.Select(statistics => "\t" + groupsByReferenceName.Key + ": " +
+                                                                (groupRenderer(statistics).Trim() != ""
+                                                                    ? groupRenderer(statistics)
+                                                                    : statistics.GroupEntity?.PrimaryKey.ToString() ??
+                                                                      "") +
+                                                                " [" + statistics.Count + "]:\n" +
+                                                                string.Join("\n", statistics
+                                                                    .GetFacetStatistics()
+                                                                    .Select(facet => "\t\t[" +
+                                                                        (facet.Requested ? "X" : " ") + "] " +
+                                                                        (facetRenderer(facet).Trim() != ""
+                                                                            ? facetRenderer(facet)
+                                                                            : facet.FacetEntity.PrimaryKey.ToString()) +
+                                                                        " (" + facet.Count + ")" +
+                                                                        (facet.Impact != null ? " " + facet.Impact : "")
+                                                                    )
+                                                                )
+                    );
+                }
+            ));
     }
 }
 
@@ -223,20 +206,68 @@ public class FacetStatistics : IComparable<FacetStatistics>
     }
 }
 
+public record ReferenceStatistics(FacetGroupStatistics? NonGroupedStatistics,
+    Dictionary<int, FacetGroupStatistics> GroupedStatistics)
+{
+    public FacetGroupStatistics? GetFacetGroupStatistics(int groupId)
+    {
+        return GroupedStatistics.TryGetValue(groupId, out var groupStatistics) ? groupStatistics : null;
+    }
+
+    public override int GetHashCode()
+    {
+        int result = NonGroupedStatistics != null ? NonGroupedStatistics.GetHashCode() : 0;
+        result = 31 * result + GroupedStatistics.GetHashCode();
+        return result;
+    }
+
+    public virtual bool Equals(ReferenceStatistics? that)
+    {
+        if (this == that) return true;
+        if (that == null || GetType() != that.GetType()) return false;
+
+        if (!Equals(NonGroupedStatistics, that.NonGroupedStatistics))
+        {
+            return false;
+        }
+
+        Dictionary<int, FacetGroupStatistics> statistics = GroupedStatistics;
+        Dictionary<int, FacetGroupStatistics> thatStatistics = that.GroupedStatistics;
+        if (statistics.Count != thatStatistics.Count)
+        {
+            return false;
+        }
+
+        using Dictionary<int, FacetGroupStatistics>.Enumerator it = statistics.GetEnumerator();
+        using Dictionary<int, FacetGroupStatistics>.Enumerator thatIt = statistics.GetEnumerator();
+        while (it.MoveNext())
+        {
+            KeyValuePair<int, FacetGroupStatistics> kvp = it.Current;
+            thatIt.MoveNext();
+            KeyValuePair<int, FacetGroupStatistics> thatKvp = thatIt.Current;
+            if (!Equals(kvp.Key, thatKvp.Key) || !Equals(kvp.Value, thatKvp.Value))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 public class FacetGroupStatistics
 {
     public string ReferenceName { get; }
     public IEntityClassifier? GroupEntity { get; }
     public int Count { get; }
 
-    private readonly Dictionary<int, FacetStatistics> _facetStatisticsWithGroups;
-    private readonly ICollection<FacetStatistics> _facetStatisticsWithoutGroups;
+    private readonly Dictionary<int, FacetStatistics> _facetStatistics;
 
     public FacetStatistics? GetFacetStatistics(int facetId) =>
-        _facetStatisticsWithGroups.TryGetValue(facetId, out FacetStatistics? facetStatistics) ? facetStatistics : null;
+        _facetStatistics.TryGetValue(facetId, out FacetStatistics? facetStatistics) ? facetStatistics : null;
 
     public ICollection<FacetStatistics> GetFacetStatistics() =>
-        _facetStatisticsWithGroups.Values.Concat(_facetStatisticsWithoutGroups).ToImmutableList();
+        _facetStatistics.Values.ToImmutableList();
 
     private static void VerifyGroupType(ReferenceSchema referenceSchema, IEntityClassifier? groupEntity)
     {
@@ -249,26 +280,22 @@ public class FacetGroupStatistics
     }
 
     public FacetGroupStatistics(string referenceName, IEntityClassifier? groupEntity, int count,
-        Dictionary<int, FacetStatistics> facetStatisticsWithGroups,
-        ICollection<FacetStatistics> facetStatisticsWithoutGroups)
+        Dictionary<int, FacetStatistics> facetStatistics)
     {
         ReferenceName = referenceName;
         GroupEntity = groupEntity;
         Count = count;
-        _facetStatisticsWithGroups = facetStatisticsWithGroups;
-        _facetStatisticsWithoutGroups = facetStatisticsWithoutGroups;
+        _facetStatistics = facetStatistics;
     }
 
     public FacetGroupStatistics(ReferenceSchema referenceSchema, IEntityClassifier? groupEntity, int count,
-        Dictionary<int, FacetStatistics> facetStatisticsWithGroups,
-        ICollection<FacetStatistics> facetStatisticsWithoutGroups)
+        Dictionary<int, FacetStatistics> facetStatistics)
     {
         VerifyGroupType(referenceSchema, groupEntity);
         ReferenceName = referenceSchema.Name;
         GroupEntity = groupEntity;
         Count = count;
-        _facetStatisticsWithGroups = facetStatisticsWithGroups;
-        _facetStatisticsWithoutGroups = facetStatisticsWithoutGroups;
+        _facetStatistics = facetStatistics;
     }
 
     public FacetGroupStatistics(ReferenceSchema referenceSchema, IEntityClassifier? groupEntity, int count,
@@ -278,17 +305,14 @@ public class FacetGroupStatistics
         ReferenceName = referenceSchema.Name;
         GroupEntity = groupEntity;
         Count = count;
-        _facetStatisticsWithGroups = facetStatistics
-            .Where(x=>x.FacetEntity.PrimaryKey != null)
+        _facetStatistics = facetStatistics
+            .Where(x => x.FacetEntity.PrimaryKey != null)
             .GroupBy(x => x)
             .Select(y => y.Key)
             .ToDictionary(
                 key => key.FacetEntity.PrimaryKey!.Value,
                 value => value
             );
-        _facetStatisticsWithoutGroups = facetStatistics
-            .Where(x=>x.FacetEntity.PrimaryKey == null)
-            .ToImmutableList();
     }
 
     public override bool Equals(object? o)
@@ -299,14 +323,13 @@ public class FacetGroupStatistics
         if (!ReferenceName.Equals(that.ReferenceName) ||
             Count != that.Count ||
             Equals(GroupEntity, that.GroupEntity) ||
-            _facetStatisticsWithGroups.Count != that._facetStatisticsWithGroups.Count ||
-            _facetStatisticsWithoutGroups.Count != that._facetStatisticsWithoutGroups.Count)
+            _facetStatistics.Count != that._facetStatistics.Count)
         {
             return false;
         }
 
-        using IEnumerator<KeyValuePair<int, FacetStatistics>> it = _facetStatisticsWithGroups.GetEnumerator();
-        using IEnumerator<KeyValuePair<int, FacetStatistics>> thatIt = that._facetStatisticsWithGroups.GetEnumerator();
+        using IEnumerator<KeyValuePair<int, FacetStatistics>> it = _facetStatistics.GetEnumerator();
+        using IEnumerator<KeyValuePair<int, FacetStatistics>> thatIt = that._facetStatistics.GetEnumerator();
         while (it.MoveNext())
         {
             KeyValuePair<int, FacetStatistics> entry = it.Current;
@@ -317,24 +340,11 @@ public class FacetGroupStatistics
             }
         }
 
-        using IEnumerator<FacetStatistics> itWithout = _facetStatisticsWithoutGroups.GetEnumerator();
-        using IEnumerator<FacetStatistics> thatItWithout = that._facetStatisticsWithoutGroups.GetEnumerator();
-        while (it.MoveNext())
-        {
-            FacetStatistics entry = itWithout.Current;
-            FacetStatistics thatEntry = thatItWithout.Current;
-            if (!Equals(entry, thatEntry))
-            {
-                return false;
-            }
-        }
-
         return true;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(ReferenceName, GroupEntity?.EntityType, Count, _facetStatisticsWithGroups,
-            _facetStatisticsWithoutGroups);
+        return HashCode.Combine(ReferenceName, GroupEntity?.EntityType, Count, _facetStatistics);
     }
 }

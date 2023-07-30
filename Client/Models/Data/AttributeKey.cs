@@ -22,4 +22,9 @@ public class AttributeKey : IComparable<AttributeKey>
         //TODO: include locales?
         return string.Compare(AttributeName, other?.AttributeName, StringComparison.Ordinal);
     }
+
+    public override string ToString()
+    {
+        return AttributeName + (Locale == null ? "" : ":" + Locale.TwoLetterISOLanguageName);
+    }
 }

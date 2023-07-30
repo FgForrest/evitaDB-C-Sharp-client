@@ -28,22 +28,28 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     {
         get
         {
-            if (AllRequested)
+            if (AllRequested && AttributeContent is null)
             {
                 return SuffixAll;
             }
+            if (AllRequested && AttributeContent is not null)
+            {
+                return SuffixAllWithAttributes;
+            }
 
-            return AttributeContent is not null ? SuffixWithAttributes : null;
+            if (AttributeContent is not null)
+            {
+                return SuffixWithAttributes;
+            }
+            return null;
         }
     }
 
-    public bool ArgumentImplicitForSuffix(object argument)
-    {
-        throw new NotImplementedException();
-    }
+    public bool ArgumentImplicitForSuffix(object argument) => false;
 
     private const string SuffixAll = "all";
     private const string SuffixWithAttributes = "withAttributes";
+    private const string SuffixAllWithAttributes = "allWithAttributes";
     private static readonly ReferenceContent AllReferences = new ReferenceContent();
 
 

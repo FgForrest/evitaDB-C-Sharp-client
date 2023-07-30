@@ -18,26 +18,22 @@ public abstract class BaseConstraint : IConstraint
         return value == null ? "<NULL>" : EvitaDataTypes.FormatValue(value);
     }
 
-    protected string DefaultName => StringUtils.Uncapitalize(GetType().Name);
+    protected string DefaultName => StringUtils.Uncapitalize(RemoveGenericsFromConstraintNameIfPresent(GetType()));
 
-    protected BaseConstraint(params object?[] arguments) : base()
+    protected BaseConstraint(object?[] arguments) : base()
     {
         _name = DefaultName;
-        /*Arguments = arguments.Any(x => x != EvitaDataTypes.ToSupportedType(x))
+        Arguments = arguments.Any(x => x != EvitaDataTypes.ToSupportedType(x))
             ? arguments.Select(EvitaDataTypes.ToSupportedType).ToArray()
-            : arguments;*/
-        Arguments = arguments;
-        //TODO:  Array problem
+            : arguments;
     }
 
-    protected BaseConstraint(string? name, params object?[] arguments) : base()
+    protected BaseConstraint(string? name, object?[] arguments) : base()
     {
         _name = name ?? DefaultName;
-        /*Arguments = arguments.Any(x => x != EvitaDataTypes.ToSupportedType(x))
+        Arguments = arguments.Any(x => x != EvitaDataTypes.ToSupportedType(x))
             ? arguments.Select(EvitaDataTypes.ToSupportedType).ToArray()
-            : arguments;*/
-        Arguments = arguments;
-        //TODO:  Array problem
+            : arguments;
     }
 
     public abstract Type Type { get; }
@@ -59,4 +55,15 @@ public abstract class BaseConstraint : IConstraint
                    ).Select(ConvertToString) +
                    QueryUtils.ArgClosing);
     }
+
+    private string RemoveGenericsFromConstraintNameIfPresent(Type type)
+    {
+        string name = type.Name;
+        int index = name.IndexOf('`');
+        if (index > 0)
+        {
+            name = name.Remove(index); 
+        }
+        return name;
+    } 
 }

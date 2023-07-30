@@ -12,7 +12,7 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateE
     {
         get
         {
-            object? firstArgument = Arguments.Length > 0 ? null : Arguments[0];
+            object? firstArgument = Arguments.Length > 0 ? Arguments[0] : null;
             return firstArgument is int ? null : (string?) firstArgument;
         }
     }
@@ -41,7 +41,7 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateE
 
     public new bool Necessary => true;
     public new bool Applicable => true;
-    public string? SuffixIfApplied => ReferenceName ?? Suffix;
+    public string? SuffixIfApplied => ReferenceName is not null ? null : Suffix;
     public bool ArgumentImplicitForSuffix(object argument) => false;
     private HierarchyWithinRoot(object[] argument, IFilterConstraint[] fineGrainedConstraints,
         params IConstraint[] additionalChildren) : base(argument, fineGrainedConstraints, additionalChildren)
@@ -51,7 +51,7 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateE
         {
             Assert.IsTrue(
                 filterConstraint is HierarchyExcluding or HierarchyHaving ||
-                filterConstraint is HierarchyDirectRelation && referenceName is not null,
+                filterConstraint is HierarchyDirectRelation && referenceName is null,
                 $"Constraint hierarchyWithinRoot accepts only {(referenceName is null ? "Excluding, Having, or DirectRelation when it targets same entity type" :
                     "Excluding when it targets different entity type")} as inner query!");
         }

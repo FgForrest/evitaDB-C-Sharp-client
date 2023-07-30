@@ -179,7 +179,7 @@ public class EvitaClient : IDisposable
         bool success = grpcResponse.Success;
         if (success)
         {
-            _entitySchemaCache.TryRemove(catalogName, out var result);
+            _entitySchemaCache.TryRemove(catalogName, out _);
         }
         
         return success;

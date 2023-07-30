@@ -11,4 +11,12 @@ public abstract class ConstraintLeaf : BaseConstraint
             throw new EvitaInvalidUsageException("Constraint argument is not allowed for leaf query (" + Name + ").");
         }
     }
+    
+    protected ConstraintLeaf(string? name, params object?[] arguments) : base(name, arguments)
+    {
+        if (arguments.Any(x => x is IConstraint))
+        {
+            throw new EvitaInvalidUsageException("Constraint argument is not allowed for leaf query (" + Name + ").");
+        }
+    }
 }

@@ -151,6 +151,11 @@ public class QueryTelemetry : IEvitaResponseExtraResult
         ExecutionFilter,
 
         /**
+		 * Computing entities within nested query that should be returned in output (filtering).
+		 */
+        ExecutionFilterNestedQuery,
+        
+        /**
 		 * Sorting output entities and slicing requested page.
 		 */
         ExecutionSortAndSlice,
@@ -173,6 +178,11 @@ public class QueryTelemetry : IEvitaResponseExtraResult
         /**
 		 * Fetching referenced entities and entity groups from the storage based on referenced primary keys information.
 		 */
-        FetchingReferences
+        FetchingReferences,
+        
+        /**
+		 * Fetching parent entities from the storage based on parent primary keys information.
+		 */
+        FetchingParents
     }
 }

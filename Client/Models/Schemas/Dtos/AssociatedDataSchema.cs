@@ -74,4 +74,13 @@ public class AssociatedDataSchema
     }
 
     public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public override string ToString()
+    {
+        return "AssociatedDataSchema{" +
+               "name='" + Name + '\'' +
+               ", localized=" + Localized +
+               ", nullable=" + Nullable +
+               ", type=" + Type +
+               '}';
+    }
 }

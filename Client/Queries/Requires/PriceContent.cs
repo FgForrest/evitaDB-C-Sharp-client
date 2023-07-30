@@ -45,7 +45,7 @@ public class PriceContent : AbstractRequireConstraintLeaf, IEntityContentRequire
     }
 
     public PriceContent(PriceContentMode fetchMode, params string[] priceLists) : base(
-        new object[] {fetchMode}.Concat(priceLists))
+        new object[] {fetchMode}.Concat(priceLists).ToArray())
     {
     }
 }

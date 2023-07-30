@@ -2,7 +2,7 @@
 
 namespace Client.Queries.Filter;
 
-public class HierarchyHaving : AbstractFilterConstraintContainer
+public class HierarchyHaving : AbstractFilterConstraintContainer, IHierarchySpecificationFilterConstraint
 {
     private const string ConstraintName = "having";
     

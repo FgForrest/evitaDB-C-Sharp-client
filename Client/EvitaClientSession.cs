@@ -17,6 +17,7 @@ using Client.Models.Schemas.Mutations.Catalog;
 using Client.Pooling;
 using Client.Queries;
 using Client.Queries.Requires;
+using Client.Queries.Visitor;
 using Client.Session;
 using Client.Utils;
 using EvitaDB;
@@ -87,7 +88,7 @@ public class EvitaClientSession : IDisposable
         };
         GrpcQueryResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.Query(request));
         IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(query, grpcResponse);
-        
+
         if (typeof(EntityReference).IsAssignableFrom(typeof(TS)))
         {
             IDataChunk<EntityReference> recordPage = ResponseConverter.ConvertToDataChunk(
@@ -112,6 +113,44 @@ public class EvitaClientSession : IDisposable
         }
 
         throw new EvitaInvalidUsageException("Unsupported return type `" + typeof(TS) + "`!");
+    }
+
+    public EvitaResponse<SealedEntity> QuerySealedEntity(Query query)
+    {
+        if (query.Require == null)
+        {
+            return Query<EvitaEntityResponse, SealedEntity>(
+                IQueryConstraints.Query(
+                    query.Entities,
+                    query.FilterBy,
+                    query.OrderBy,
+                    IQueryConstraints.Require(IQueryConstraints.EntityFetch())
+                )
+            );
+        }
+
+        if (FinderVisitor.FindConstraints<IConstraint>(query.Require, x => x is EntityFetch,
+                x => x is ISeparateEntityContentRequireContainer).Count == 0)
+        {
+            return Query<EvitaEntityResponse, SealedEntity>(
+                IQueryConstraints.Query(
+                    query.Entities,
+                    query.FilterBy,
+                    query.OrderBy,
+                    (Require) query.Require.GetCopyWithNewChildren(
+                        new IRequireConstraint[] {IQueryConstraints.Require(IQueryConstraints.EntityFetch())}
+                            .Concat(query.Require.Children).ToArray(),
+                        query.Require.AdditionalChildren
+                    )
+                )
+            );
+        }
+        return Query<EvitaEntityResponse, SealedEntity>(query);
+    }
+
+    public EvitaResponse<EntityReference> QueryEntityReference(Query query)
+    {
+        return Query<EvitaEntityReferenceResponse, EntityReference>(query);
     }
 
     private EntitySchema? FetchEntitySchema(string entityType)
@@ -216,7 +255,8 @@ public class EvitaClientSession : IDisposable
 
         return grpcResponse.Entity is not null
             ? EntityConverter.ToSealedEntity(
-                entity => _schemaCache.GetEntitySchemaOrThrow(entity.EntityType, entity.SchemaVersion, FetchEntitySchema,
+                entity => _schemaCache.GetEntitySchemaOrThrow(entity.EntityType, entity.SchemaVersion,
+                    FetchEntitySchema,
                     GetCatalogSchema),
                 grpcResponse.Entity
             )
@@ -411,17 +451,19 @@ public class EvitaClientSession : IDisposable
             return updatedCatalogSchema;
         });
     }
-    
-    private IEvitaResponseExtraResult[] GetEvitaResponseExtraResults(Query query, GrpcQueryResponse grpcResponse) {
-        return grpcResponse.ExtraResults is not null ?
-            ResponseConverter.ToExtraResults(
+
+    private IEvitaResponseExtraResult[] GetEvitaResponseExtraResults(Query query, GrpcQueryResponse grpcResponse)
+    {
+        return grpcResponse.ExtraResults is not null
+            ? ResponseConverter.ToExtraResults(
                 sealedEntity => _schemaCache.GetEntitySchemaOrThrow(
                     sealedEntity.EntityType, sealedEntity.SchemaVersion,
                     FetchEntitySchema, GetCatalogSchema
                 ),
                 query,
                 grpcResponse.ExtraResults
-            ) : Array.Empty<IEvitaResponseExtraResult>();
+            )
+            : Array.Empty<IEvitaResponseExtraResult>();
     }
 
     public CatalogSchema GetCatalogSchema()
@@ -590,7 +632,8 @@ public class EvitaClientSession : IDisposable
     {
         if (typeof(SealedEntity).IsAssignableFrom(typeof(T)) &&
             (query.Require == null ||
-             !query.Require.Children.Any(x => x.Type.IsAssignableFrom(typeof(IEntityContentRequire)))))
+             FinderVisitor.FindConstraints<IConstraint>(query.Require, x => x is EntityFetch,
+                 x => x is ISeparateEntityContentRequireContainer).Count == 0))
             throw new EvitaInvalidUsageException(
                 "Method call expects `" + typeof(T).FullName + "` in result, yet it doesn't define `entityFetch` " +
                 "in the requirements. This would imply that only entity references " +

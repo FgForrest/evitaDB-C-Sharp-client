@@ -30,7 +30,7 @@ public class HierarchyStatistics : AbstractRequireConstraintLeaf, IHierarchyOutp
         ConstraintName,
         statisticsTypes.Length == 0
             ? new object[] {statisticsBase}
-            : new object[] {statisticsBase}.Concat(statisticsTypes.Cast<object>()))
+            : new object[] {statisticsBase}.Concat(statisticsTypes.Cast<object>()).ToArray())
     {
     }
 }

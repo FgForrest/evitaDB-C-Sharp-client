@@ -112,6 +112,21 @@ public class QueryConverter
         {
             return EvitaEnumConverter.ToOrderDirection(queryParam.OrderDirectionValue);
         }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviour)
+        {
+            return EvitaEnumConverter.ToEmptyHierarchicalEntityBehaviour(queryParam.EmptyHierarchicalEntityBehaviour);
+        }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsBase)
+        {
+            return EvitaEnumConverter.ToStatisticsBase(queryParam.StatisticsBase);
+        }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsType)
+        {
+            return EvitaEnumConverter.ToStatisticsType(queryParam.StatisticsType);
+        }
 
         if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StringArrayValue)
         {
@@ -207,6 +222,27 @@ public class QueryConverter
                 .Select(EvitaEnumConverter.ToOrderDirection)
                 .ToArray();
         }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviourArrayValue)
+        {
+            return queryParam.EmptyHierarchicalEntityBehaviourArrayValue.Value
+                .Select(EvitaEnumConverter.ToEmptyHierarchicalEntityBehaviour)
+                .ToArray();
+        }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsBaseArrayValue)
+        {
+            return queryParam.StatisticsBaseArrayValue.Value
+                .Select(EvitaEnumConverter.ToStatisticsBase)
+                .ToArray();
+        }
+        
+        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsTypeArrayValue)
+        {
+            return queryParam.StatisticsTypeArrayValue.Value
+                .Select(EvitaEnumConverter.ToStatisticsType)
+                .ToArray();
+        }
 
         throw new EvitaInvalidUsageException("Unsupported Evita data type `" + queryParam + "` in gRPC API.");
     }
@@ -221,6 +257,14 @@ public class QueryConverter
         else if (parameter is int integerValue)
         {
             queryParam.IntegerValue = integerValue;
+        }
+        else if (parameter is short shortValue)
+        {
+            queryParam.IntegerValue = shortValue;
+        }
+        else if (parameter is byte byteValue)
+        {
+            queryParam.IntegerValue = byteValue;
         }
         else if (parameter is long longValue)
         {
@@ -305,6 +349,18 @@ public class QueryConverter
         {
             queryParam.OrderDirectionValue = EvitaEnumConverter.ToGrpcOrderDirection(orderDirectionValue);
         }
+        else if (parameter is EmptyHierarchicalEntityBehaviour emptyHierarchicalEntityBehaviour)
+        {
+            queryParam.EmptyHierarchicalEntityBehaviour = EvitaEnumConverter.ToGrpcEmptyHierarchicalEntityBehaviour(emptyHierarchicalEntityBehaviour);
+        }
+        else if (parameter is StatisticsBase statisticsBase)
+        {
+            queryParam.StatisticsBase = EvitaEnumConverter.ToGrpcStatisticsBase(statisticsBase);
+        }
+        else if (parameter is StatisticsType statisticsType)
+        {
+            queryParam.StatisticsType = EvitaEnumConverter.ToGrpcStatisticsType(statisticsType);
+        }
 
         else if (parameter is string[] stringArrayValue)
         {
@@ -313,6 +369,14 @@ public class QueryConverter
         else if (parameter is int[] integerArrayValue)
         {
             queryParam.IntegerArrayValue = EvitaDataTypesConverter.ToGrpcIntegerArray(integerArrayValue);
+        }
+        else if (parameter is short[] shortArrayValue)
+        {
+            queryParam.IntegerArrayValue = EvitaDataTypesConverter.ToGrpcShortArray(shortArrayValue);
+        }
+        else if (parameter is byte[] byteArrayValue)
+        {
+            queryParam.IntegerArrayValue = EvitaDataTypesConverter.ToGrpcByteArray(byteArrayValue);
         }
         else if (parameter is long[] longArrayValue)
         {
@@ -409,9 +473,24 @@ public class QueryConverter
             queryParam.OrderDirectionArrayValue = new GrpcOrderDirectionArray
                 {Value = {orderDirectionArrayValue.Select(EvitaEnumConverter.ToGrpcOrderDirection)}};
         }
+        else if (parameter is EmptyHierarchicalEntityBehaviour[] emptyHierarchicalEntityBehaviourArray)
+        {
+            queryParam.EmptyHierarchicalEntityBehaviourArrayValue = new GrpcEmptyHierarchicalEntityBehaviourArray
+                {Value = {emptyHierarchicalEntityBehaviourArray.Select(EvitaEnumConverter.ToGrpcEmptyHierarchicalEntityBehaviour)}};
+        }
+        else if (parameter is StatisticsBase[] statisticsBaseArray)
+        {
+            queryParam.StatisticsBaseArrayValue = new GrpcStatisticsBaseArray
+                {Value = {statisticsBaseArray.Select(EvitaEnumConverter.ToGrpcStatisticsBase)}};
+        }
+        else if (parameter is StatisticsType[] statisticsTypeArray)
+        {
+            queryParam.StatisticsTypeArrayValue = new GrpcStatisticsTypeArray
+                {Value = {statisticsTypeArray.Select(EvitaEnumConverter.ToGrpcStatisticsType)}};
+        }
         else
         {
-            throw new EvitaInvalidUsageException("Unsupported Evita data type `" + parameter + "` in gRPC API.");
+            throw new EvitaInvalidUsageException("Unsupported Evita data type `" + parameter.GetType().Name + "` in gRPC API.");
         }
 
         return queryParam;

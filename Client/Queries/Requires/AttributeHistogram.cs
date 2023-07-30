@@ -6,7 +6,7 @@ public class AttributeHistogram : AbstractRequireConstraintLeaf, IExtraResultReq
     {
     }
     
-    public AttributeHistogram(int requestedBucketCount, params string[] attributeNames) : base(new object[]{requestedBucketCount}.Concat(attributeNames))
+    public AttributeHistogram(int requestedBucketCount, params string[] attributeNames) : base(new object[]{requestedBucketCount}.Concat(attributeNames).ToArray())
     {
     }
     

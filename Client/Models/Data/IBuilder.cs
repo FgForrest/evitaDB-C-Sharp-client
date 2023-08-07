@@ -2,8 +2,8 @@
 
 namespace Client.Models.Data;
 
-public interface IBuilder<out T>
+public interface IBuilder<out T, out TM> where TM : IMutation
 {
-    ICollection<IMutation> BuildChangeSet();
+    IEnumerable<TM> BuildChangeSet();
     T Build();
 }

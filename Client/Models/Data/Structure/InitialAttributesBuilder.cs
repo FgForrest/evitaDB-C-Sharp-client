@@ -1,20 +1,20 @@
 ﻿using System.Globalization;
 using Client.Exceptions;
 using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Mutations;
 using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
 using Client.Utils;
 
 namespace Client.Models.Data.Structure;
 
 public class InitialAttributesBuilder : IAttributeBuilder
 {
-    private EntitySchema EntitySchema { get; }
+    private IEntitySchema EntitySchema { get; }
+    private IReferenceSchema? ReferenceSchema { get; }
     private bool SuppressVerification { get; }
     private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
+    public bool AttributesAvailable => true;
 
-    public InitialAttributesBuilder(EntitySchema entitySchema)
+    public InitialAttributesBuilder(IEntitySchema entitySchema)
     {
         EntitySchema = entitySchema;
         AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
@@ -24,7 +24,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
     /**
 	 * AttributesBuilder constructor that will be used for building brand new {@link Attributes} container.
 	 */
-    public InitialAttributesBuilder(EntitySchema entitySchema, bool suppressVerification)
+    public InitialAttributesBuilder(IEntitySchema entitySchema, bool suppressVerification)
     {
         EntitySchema = entitySchema;
         AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
@@ -32,33 +32,33 @@ public class InitialAttributesBuilder : IAttributeBuilder
     }
 
     private static void VerifyAttributeIsInSchemaAndTypeMatch(
-        EntitySchema entitySchema,
+        IEntitySchema entitySchema,
         string attributeName,
         Type? type
     )
     {
-        AttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
+        IAttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
         VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, null, attributeSchema);
     }
 
     private static void VerifyAttributeIsInSchemaAndTypeMatch(
-        EntitySchema entitySchema,
+        IEntitySchema entitySchema,
         string attributeName,
         Type type,
         CultureInfo locale
     )
     {
-        AttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
+        IAttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
         VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, locale, attributeSchema);
     }
 
     private static void VerifyAttributeIsInSchemaAndTypeMatch(
-        EntitySchema entitySchema,
-        ReferenceSchema? referenceSchema,
+        IEntitySchema entitySchema,
+        IReferenceSchema? referenceSchema,
         string attributeName,
         Type? type,
         CultureInfo? locale,
-        AttributeSchema? attributeSchema
+        IAttributeSchema? attributeSchema
     )
     {
         Assert.IsTrue(
@@ -144,42 +144,64 @@ public class InitialAttributesBuilder : IAttributeBuilder
         }
     }
 
-    public object? GetAttribute(string attributeName)
+    internal InitialAttributesBuilder(
+        IEntitySchema entitySchema,
+    IReferenceSchema? referenceSchema
+    ) {
+        EntitySchema = entitySchema;
+        ReferenceSchema = referenceSchema;
+        AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
+        SuppressVerification = false;
+    }
+
+    internal InitialAttributesBuilder(
+        IEntitySchema entitySchema,
+        IReferenceSchema? referenceSchema,
+        bool suppressVerification
+    )
+    {
+        EntitySchema = entitySchema;
+        ReferenceSchema = referenceSchema;
+        AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
+        SuppressVerification = suppressVerification;
+    }
+
+    public object GetAttribute(string attributeName)
     {
         throw new NotImplementedException();
     }
 
-    public object? GetAttribute(string attributeName, CultureInfo locale)
+    public object GetAttribute(string attributeName, CultureInfo locale)
     {
         throw new NotImplementedException();
     }
 
-    public object[]? GetAttributeArray(string attributeName)
+    public object[] GetAttributeArray(string attributeName)
     {
         throw new NotImplementedException();
     }
 
-    public object[]? GetAttributeArray(string attributeName, CultureInfo locale)
+    public object[] GetAttributeArray(string attributeName, CultureInfo locale)
     {
         throw new NotImplementedException();
     }
 
-    public AttributeValue? GetAttributeValue(string attributeName)
+    public AttributeValue GetAttributeValue(string attributeName)
     {
         throw new NotImplementedException();
     }
 
-    public AttributeValue? GetAttributeValue(string attributeName, CultureInfo locale)
+    public AttributeValue GetAttributeValue(string attributeName, CultureInfo locale)
     {
         throw new NotImplementedException();
     }
 
-    public AttributeValue? GetAttributeValue(AttributeKey attributeKey)
+    public AttributeValue GetAttributeValue(AttributeKey attributeKey)
     {
         throw new NotImplementedException();
     }
 
-    public AttributeSchema GetAttributeSchema(string attributeName)
+    public IAttributeSchema GetAttributeSchema(string attributeName)
     {
         throw new NotImplementedException();
     }
@@ -194,7 +216,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         throw new NotImplementedException();
     }
 
-    public ICollection<AttributeValue?> GetAttributeValues()
+    public ICollection<AttributeValue> GetAttributeValues()
     {
         throw new NotImplementedException();
     }
@@ -296,40 +318,35 @@ public class InitialAttributesBuilder : IAttributeBuilder
         throw new NotSupportedException("You cannot apply mutation when entity is just being created!");
     }
 
-    public ICollection<IMutation> BuildChangeSet()
+    public IEnumerable<AttributeMutation> BuildChangeSet()
     {
         throw new NotSupportedException("Initial entity creation doesn't support change monitoring - it has no sense.");
     }
 
     public Attributes Build()
     {
+        IAttributeSchemaProvider<IAttributeSchema> attributeSchemaProvider =
+            ReferenceSchema as IAttributeSchemaProvider<IAttributeSchema> ?? EntitySchema;
+        Dictionary<string, IAttributeSchema> newAttributes = AttributeValues
+            .Where(entry => attributeSchemaProvider.GetAttribute(entry.Key.AttributeName) is not null)
+            .Select(entry => entry.Value)
+            .Select(IAttributeBuilder.CreateImplicitSchema)
+            .ToDictionary(
+                attributeType => attributeType.Name,
+                attributeType => attributeType
+            );
         return new Attributes(
             EntitySchema,
+            ReferenceSchema,
             AttributeValues.Values,
-            AttributeValues
-                .Values
-                .Select(IAttributeBuilder.CreateImplicitSchema)
-                .ToDictionary(
-                    attributeSchema => attributeSchema.Name,
-                    attributeSchema => attributeSchema
-                )
+            !newAttributes.Any()
+                ? attributeSchemaProvider.GetAttributes()
+                : attributeSchemaProvider.GetAttributes()
+                    .Concat(newAttributes)
+                    .ToDictionary(
+                        entry => entry.Key,
+                        entry => entry.Value
+                    )
         );
-        //TODO: add check for duplicate keys
-    }
-
-    private class MergeDuplicateKeys : IEqualityComparer<AttributeSchema>
-    {
-        public bool Equals(AttributeSchema? x, AttributeSchema? y)
-        {
-            Assert.IsTrue(x?.Name == y?.Name,
-                "Ambiguous situation - there are two attributes with the same name and different definition:\n" +
-                x?.Name + " and " + y?.Name);
-            return true;
-        }
-
-        public int GetHashCode(AttributeSchema obj)
-        {
-            return EqualityComparer<AttributeSchema>.Default.GetHashCode(obj);
-        }
     }
 }

@@ -5,7 +5,7 @@ namespace Client.Converters.Models.Data.Mutations;
 
 public class EntityUpsertMutationConverter : IEntityMutationConverter<EntityUpsertMutation, GrpcEntityUpsertMutation>
 {
-    private static readonly DelegatingLocalMutationConverter EntityLocalMutationConverter = new DelegatingLocalMutationConverter();
+    private static readonly DelegatingLocalMutationConverter EntityLocalMutationConverter = new();
 
     public GrpcEntityUpsertMutation Convert(EntityUpsertMutation mutation)
     {

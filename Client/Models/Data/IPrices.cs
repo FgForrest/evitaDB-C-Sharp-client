@@ -4,12 +4,14 @@ using Client.Queries.Requires;
 
 namespace Client.Models.Data;
 
-public interface IPrices
+public interface IPrices : IVersioned
 {
-    Price GetPrice(PriceKey priceKey);
-    Price? GetPrice(int priceId, string priceList, Currency currency);
-    Price? GetPriceForSale();
-    List<Price> GetAllPricesForSale();
+    PriceInnerRecordHandling InnerRecordHandling { get; }
+    bool PricesAvailable { get; }
+    IPrice GetPrice(PriceKey priceKey);
+    IPrice? GetPrice(int priceId, string priceList, Currency currency);
+    IPrice? GetPriceForSale();
+    List<IPrice> GetAllPricesForSale();
     bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode);
-    IEnumerable<Price> GetPrices();
+    IEnumerable<IPrice> GetPrices();
 }

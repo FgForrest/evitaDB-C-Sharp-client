@@ -2,7 +2,7 @@
 
 namespace Client.Models.Schemas.Dtos;
 
-public class AssociatedDataSchema
+public class AssociatedDataSchema : IAssociatedDataSchema
 {
     public string Name { get; }
     public IDictionary<NamingConvention, string> NameVariants { get; }
@@ -70,7 +70,7 @@ public class AssociatedDataSchema
         DeprecationNotice = deprecationNotice;
         Localized = localized;
         Nullable = nullable;
-        Type = type; //TODO - EvitaDataTypes.toWrappedForm(type)
+        Type = type;
     }
 
     public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];

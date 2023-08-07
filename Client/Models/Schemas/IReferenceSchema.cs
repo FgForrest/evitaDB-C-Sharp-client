@@ -1,0 +1,29 @@
+﻿using Client.Models.Schemas.Dtos;
+using Client.Utils;
+
+namespace Client.Models.Schemas;
+
+public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider
+{
+    Cardinality Cardinality { get; }
+    string ReferencedEntityType { get; }
+    string? ReferencedGroupType { get; }
+    bool ReferencedEntityTypeManaged { get; }
+    bool ReferencedGroupTypeManaged { get; }
+    bool Indexed { get; }
+    bool Faceted { get; }
+
+    IDictionary<NamingConvention, string> GetEntityTypeNameVariants(
+        Func<string, EntitySchema> entitySchemaFetcher);
+
+    string GetReferencedEntityTypeNameVariants(
+        NamingConvention namingConvention,
+        Func<string, EntitySchema> entitySchemaFetcher);
+
+    IDictionary<NamingConvention, string> GetGroupTypeNameVariants(
+        Func<string, EntitySchema> entitySchemaFetcher);
+
+    string GetReferencedGroupTypeNameVariants(
+        NamingConvention namingConvention,
+        Func<string, EntitySchema> entitySchemaFetcher);
+}

@@ -4,7 +4,7 @@ using Client.Utils;
 
 namespace Client.Models.Schemas.Dtos;
 
-public class AttributeSchema
+public class AttributeSchema : IAttributeSchema
 {
     public string Name { get; }
     public IDictionary<NamingConvention, string> NameVariants { get; }

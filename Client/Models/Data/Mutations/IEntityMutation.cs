@@ -13,11 +13,5 @@ public interface IEntityMutation : IMutation
 	
 	EntityExistence Expects();
 
-	IEntitySchemaMutation[]? VerifyOrEvolveSchema(
-		CatalogSchema catalogSchema,
-		EntitySchema entitySchema,
-		bool entityCollectionEmpty
-	);
-
 	SealedEntity Mutate(EntitySchema entitySchema, SealedEntity? entity);
 }

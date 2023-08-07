@@ -5,14 +5,14 @@ namespace Client.Models.ExtraResults;
 
 public class Hierarchy : IEvitaResponseExtraResult
 {
-    private readonly IDictionary<string, List<LevelInfo>>? _selfStatistics;
+    private readonly IDictionary<string, List<LevelInfo>>? _selfHierarchy;
     private readonly IDictionary<string, Dictionary<string, List<LevelInfo>>>? _referenceHierarchies;
 
     public IDictionary<string, List<LevelInfo>> GetSelfHierarchy() =>
-        _selfStatistics ?? new Dictionary<string, List<LevelInfo>>();
+        _selfHierarchy ?? new Dictionary<string, List<LevelInfo>>();
 
     public List<LevelInfo> GetSelfHierarchy(string outputName) =>
-        _selfStatistics?[outputName] ?? new List<LevelInfo>();
+        _selfHierarchy?[outputName] ?? new List<LevelInfo>();
 
     public List<LevelInfo> GetReferenceHierarchy(string referenceName, string outputName) =>
         _referenceHierarchies?[referenceName][outputName] ?? new List<LevelInfo>();
@@ -20,10 +20,10 @@ public class Hierarchy : IEvitaResponseExtraResult
     public IDictionary<string, List<LevelInfo>>? GetReferenceHierarchy(string referenceName) => _referenceHierarchies?[referenceName] ?? new Dictionary<string, List<LevelInfo>>();
     public IDictionary<string, Dictionary<string, List<LevelInfo>>>? GetReferenceHierarchies() => _referenceHierarchies;
 
-    public Hierarchy(IDictionary<string, List<LevelInfo>>? selfStatistics,
+    public Hierarchy(IDictionary<string, List<LevelInfo>>? selfHierarchy,
         IDictionary<string, Dictionary<string, List<LevelInfo>>> referenceHierarchies)
     {
-        _selfStatistics = selfStatistics;
+        _selfHierarchy = selfHierarchy;
         _referenceHierarchies = referenceHierarchies;
     }
 
@@ -54,23 +54,23 @@ public class Hierarchy : IEvitaResponseExtraResult
         if (o == null || GetType() != o.GetType()) return false;
         Hierarchy that = (Hierarchy) o;
 
-        if (_selfStatistics == null && that._selfStatistics != null && that._selfStatistics.Any())
+        if (_selfHierarchy == null && that._selfHierarchy != null && that._selfHierarchy.Any())
         {
             return false;
         }
 
-        if (_selfStatistics != null && _selfStatistics.Any() && that._selfStatistics == null)
+        if (_selfHierarchy != null && _selfHierarchy.Any() && that._selfHierarchy == null)
         {
             return false;
         }
 
-        if (_selfStatistics != null)
+        if (_selfHierarchy != null)
         {
-            foreach (var (key, stats) in _selfStatistics)
+            foreach (var (key, stats) in _selfHierarchy)
             {
                 List<LevelInfo>? otherStats =
-                    that._selfStatistics != null &&
-                    that._selfStatistics.TryGetValue(key, out List<LevelInfo>? value)
+                    that._selfHierarchy != null &&
+                    that._selfHierarchy.TryGetValue(key, out List<LevelInfo>? value)
                         ? value
                         : null;
 
@@ -132,16 +132,16 @@ public class Hierarchy : IEvitaResponseExtraResult
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(_selfStatistics, _referenceHierarchies);
+        return HashCode.Combine(_selfHierarchy, _referenceHierarchies);
     }
 
     public override string ToString()
     {
         StringBuilder treeBuilder = new StringBuilder();
 
-        if (_selfStatistics != null)
+        if (_selfHierarchy != null)
         {
-            foreach (KeyValuePair<string, List<LevelInfo>> statsByOutputName in _selfStatistics)
+            foreach (KeyValuePair<string, List<LevelInfo>> statsByOutputName in _selfHierarchy)
             {
                 treeBuilder.Append(statsByOutputName.Key).Append(Environment.NewLine);
 

@@ -1,30 +1,27 @@
 ﻿namespace Client.Models.Data;
 
-public class AttributeValue : IComparable<AttributeValue>
+public class AttributeValue : IComparable<AttributeValue>, IDroppable
 {
     public int Version { get; }
     public AttributeKey Key { get; }
     public object? Value { get; }
+    public bool Dropped { get; }
 
-    public AttributeValue(AttributeValue baseAttribute, object replacedValue)
+    public AttributeValue(AttributeValue baseAttribute, object replacedValue) : this(baseAttribute.Version,
+        baseAttribute.Key, replacedValue, baseAttribute.Dropped)
     {
-        Version = baseAttribute.Version;
-        Key = baseAttribute.Key;
-        Value = replacedValue;
     }
 
-    private AttributeValue(AttributeKey attributeKey, object? value = null)
+    public AttributeValue(AttributeKey attributeKey, object value) : this(1, attributeKey, value)
     {
-        Version = 1;
-        Key = attributeKey;
-        Value = value;
     }
 
-    public AttributeValue(int version, AttributeKey attributeKey, object value)
+    public AttributeValue(int version, AttributeKey attributeKey, object value, bool dropped = false)
     {
         Version = version;
         Key = attributeKey;
         Value = value;
+        Dropped = dropped;
     }
 
     public int CompareTo(AttributeValue? other)

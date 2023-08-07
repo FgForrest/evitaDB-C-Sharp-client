@@ -13,12 +13,18 @@ public class InitialEntityBuilder : IEntityBuilder
     public string EntityType { get; }
     public int? PrimaryKey { get; }
     public int Version { get; }
-    public EntitySchema Schema { get; }
+    public IEntitySchema Schema { get; }
     public int? Parent { get; }
     public IAttributeBuilder AttributesBuilder { get; }
-    /*public AssociatedDataBuilder AssociatedDataBuilder;
-    public PricesBuilder PricesBuilder;*/
+    public IAssociatedDataBuilder AssociatedDataBuilder;
+    public IPricesBuilder PricesBuilder;
     public Dictionary<ReferenceKey, Reference> References { get; } = new ();
+    public PriceInnerRecordHandling InnerRecordHandling => PriceInnerRecordHandling.None;
+    public bool PricesAvailable => Schema.WithPrice; //TODO: fix when possible
+    public bool AssociatedDataAvailable => true; //TODO: fix when possible
+    public bool AttributesAvailable => AttributesBuilder.AttributesAvailable;
+    public bool ReferencesAvailable => true; 
+    public bool ParentAvailable => true;
 
     public InitialEntityBuilder(
 		EntitySchema? entitySchema,
@@ -126,7 +132,7 @@ public class InitialEntityBuilder : IEntityBuilder
         throw new NotImplementedException();
     }
 
-    public AttributeSchema GetAttributeSchema(string attributeName)
+    public IAttributeSchema GetAttributeSchema(string attributeName)
     {
         throw new NotImplementedException();
     }
@@ -181,7 +187,7 @@ public class InitialEntityBuilder : IEntityBuilder
         throw new NotImplementedException();
     }
 
-    public AssociatedDataSchema? GetAssociatedDataSchema(string associatedDataName)
+    public IAssociatedDataSchema? GetAssociatedDataSchema(string associatedDataName)
     {
         throw new NotImplementedException();
     }
@@ -211,22 +217,22 @@ public class InitialEntityBuilder : IEntityBuilder
         throw new NotImplementedException();
     }
 
-    public Price GetPrice(PriceKey priceKey)
+    public IPrice GetPrice(PriceKey priceKey)
     {
         throw new NotImplementedException();
     }
 
-    public Price? GetPrice(int priceId, string priceList, Currency currency)
+    public IPrice? GetPrice(int priceId, string priceList, Currency currency)
     {
         throw new NotImplementedException();
     }
 
-    public Price? GetPriceForSale()
+    public IPrice? GetPriceForSale()
     {
         throw new NotImplementedException();
     }
 
-    public List<Price> GetAllPricesForSale()
+    public List<IPrice> GetAllPricesForSale()
     {
         throw new NotImplementedException();
     }
@@ -236,23 +242,23 @@ public class InitialEntityBuilder : IEntityBuilder
         throw new NotImplementedException();
     }
 
-    public IEnumerable<Price> GetPrices()
+    public IEnumerable<IPrice> GetPrices()
     {
         throw new NotImplementedException();
     }
 
     
-    public ICollection<Reference> GetReferences()
+    public ICollection<IReference> GetReferences()
     {
         throw new NotImplementedException();
     }
 
-    public Reference? GetReference(string referenceName, int referencedEntityId)
+    public IReference? GetReference(string referenceName, int referencedEntityId)
     {
         throw new NotImplementedException();
     }
 
-    public Reference? GetReference(ReferenceKey referenceKey)
+    public IReference? GetReference(ReferenceKey referenceKey)
     {
         throw new NotImplementedException();
     }
@@ -332,4 +338,7 @@ public class InitialEntityBuilder : IEntityBuilder
     {
         throw new NotImplementedException();
     }
+
+    public bool Dropped => false;
+    public IEntityClassifierWithParent? ParentEntity => null;
 }

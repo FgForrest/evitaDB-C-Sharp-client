@@ -1,4 +1,5 @@
 ﻿using Client.Converters.Models.Schema.Mutations.Attributes;
+using Client.Exceptions;
 using Client.Models.Schemas.Mutations;
 using Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB;
@@ -16,7 +17,7 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
                 grpcTopLevelCatalogSchemaMutation.CreateAttributeSchemaMutation = new CreateAttributeSchemaMutationConverter().Convert(createEntitySchemaMutation);
                 break;
             default:
-                throw new NotImplementedException();
+                throw new EvitaInternalError("This should never happen!");
         }
         return grpcTopLevelCatalogSchemaMutation;
     }
@@ -26,7 +27,7 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
         return mutation.MutationCase switch
         {
             GrpcEntitySchemaMutation.MutationOneofCase.CreateAttributeSchemaMutation => new CreateAttributeSchemaMutationConverter().Convert(mutation.CreateAttributeSchemaMutation),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new EvitaInternalError("This should never happen!")
         };
     }
 }

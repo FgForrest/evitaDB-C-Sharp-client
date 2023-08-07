@@ -4,7 +4,6 @@ using Client.Utils;
 
 namespace Client.Queries.Requires;
 
-//TODO other constructors, group fetch
 public class ReferenceContent : AbstractRequireConstraintContainer, IEntityContentRequire,
     ISeparateEntityContentRequireContainer, IConstraintWithSuffix
 {

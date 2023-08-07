@@ -1,30 +1,29 @@
 ﻿namespace Client.Models.Data;
 
-public class AssociatedDataValue : IComparable<AssociatedDataValue>
+public class AssociatedDataValue : IComparable<AssociatedDataValue>, IDroppable
 {
     public int Version { get; }
     public AssociatedDataKey Key { get; }
     public object? Value { get; }
+    public bool Dropped { get; }
 
-    public AssociatedDataValue(AssociatedDataValue baseAssociatedData, object replacedValue)
-    {
-        Version = baseAssociatedData.Version;
-        Key = baseAssociatedData.Key;
-        Value = replacedValue;
-    }
-
-    private AssociatedDataValue(AssociatedDataKey associatedDataKey, object? value = null)
-    {
-        Version = 1;
-        Key = associatedDataKey;
-        Value = value;
-    }
-
-    public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object value)
+    public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object? value = null,
+        bool dropped = false)
     {
         Version = version;
         Key = associatedDataKey;
         Value = value;
+        Dropped = dropped;
+    }
+
+    public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object value) : this(version,
+        associatedDataKey, value, false)
+    {
+    }
+
+    public AssociatedDataValue(AssociatedDataKey associatedDataKey, object? value = null) : this(1, associatedDataKey,
+        value, false)
+    {
     }
 
     public int CompareTo(AssociatedDataValue? other)

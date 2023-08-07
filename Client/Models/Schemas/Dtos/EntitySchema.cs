@@ -20,14 +20,17 @@ public class EntitySchema : IEntitySchema
     public ISet<CultureInfo> Locales { get; }
     public ISet<Currency> Currencies { get; }
     public ISet<EvolutionMode> EvolutionModes { get; }
-    public IEnumerable<AttributeSchema> NonNullableAttributes { get; }
-    public IEnumerable<AssociatedDataSchema> NonNullableAssociatedData { get; }
-    public IDictionary<string, AttributeSchema> Attributes { get; }
-    private IDictionary<string, AttributeSchema[]> AttributeNameIndex { get; }
-    public IDictionary<string, AssociatedDataSchema> AssociatedData { get; }
-    private IDictionary<string, AssociatedDataSchema[]> AssociatedDataNameIndex { get; }
-    public IDictionary<string, ReferenceSchema> References { get; }
-    private IDictionary<string, ReferenceSchema[]> ReferenceNameIndex { get; }
+    public IEnumerable<IAttributeSchema> NonNullableAttributes { get; }
+    public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData { get; }
+    public IDictionary<string, IAttributeSchema> Attributes { get; }
+    private IDictionary<string, IAttributeSchema[]> AttributeNameIndex { get; }
+    private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
+    private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
+    private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
+    public IDictionary<string, IAssociatedDataSchema> AssociatedData { get; }
+    private IDictionary<string, IAssociatedDataSchema[]> AssociatedDataNameIndex { get; }
+    public IDictionary<string, IReferenceSchema> References { get; }
+    private IDictionary<string, IReferenceSchema[]> ReferenceNameIndex { get; }
 
     private EntitySchema(
         int version,
@@ -41,11 +44,11 @@ public class EntitySchema : IEntitySchema
         int indexedPricePlaces,
         ISet<CultureInfo> locales,
         ISet<Currency> currencies,
-        IDictionary<string, AttributeSchema> attributes,
-        IDictionary<string, AssociatedDataSchema> associatedData,
-        IDictionary<string, ReferenceSchema> references,
-        ISet<EvolutionMode> evolutionMode
-    )
+        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IAssociatedDataSchema> associatedData,
+        IDictionary<string, IReferenceSchema> references,
+        ISet<EvolutionMode> evolutionMode,
+        IDictionary<string, SortableAttributeCompoundSchema> sortableAttributeCompounds)
     {
         Version = version;
         Name = name;
@@ -60,13 +63,13 @@ public class EntitySchema : IEntitySchema
         Currencies = currencies;
         Attributes = attributes.ToDictionary(x => x.Key, x => x.Value);
         AttributeNameIndex =
-            InternalGenerateNameVariantIndex(Attributes.Values, x=>x.NameVariants);
+            InternalGenerateNameVariantIndex(Attributes.Values, x => x.NameVariants);
         AssociatedData = associatedData.ToDictionary(x => x.Key, x => x.Value);
         AssociatedDataNameIndex =
-            InternalGenerateNameVariantIndex(AssociatedData.Values, x=>x.NameVariants);
+            InternalGenerateNameVariantIndex(AssociatedData.Values, x => x.NameVariants);
         References = references.ToDictionary(x => x.Key, x => x.Value);
         ReferenceNameIndex =
-            InternalGenerateNameVariantIndex(References.Values, x=>x.NameVariants);
+            InternalGenerateNameVariantIndex(References.Values, x => x.NameVariants);
         EvolutionModes = evolutionMode;
         NonNullableAttributes = this.Attributes
             .Values
@@ -76,6 +79,21 @@ public class EntitySchema : IEntitySchema
             .Values
             .Where(it => !it.Nullable)
             .ToList();
+        SortableAttributeCompounds = sortableAttributeCompounds.ToImmutableDictionary(
+            x => x.Key,
+            x => EntitySchema.ToSortableAttributeCompoundSchema(x.Value)
+        );
+
+        SortableAttributeCompoundNameIndex = EntitySchema.InternalGenerateNameVariantIndex(
+            SortableAttributeCompounds.Values, x => x.NameVariants
+        );
+
+        AttributeToSortableAttributeCompoundIndex = SortableAttributeCompounds
+            .Values
+            .SelectMany(it => it.AttributeElements.Select(attribute => new AttributeToCompound(attribute, it)))
+            .GroupBy(rec => rec.Attribute.AttributeName, compound => compound.CompoundSchema,
+                (key, values) => new {Key = key, Values = values.ToList()})
+            .ToDictionary(x => x.Key, x => x.Values);
     }
 
     public bool IsBlank()
@@ -85,12 +103,12 @@ public class EntitySchema : IEntitySchema
                && EvolutionModes.Count == Enum.GetValues<EvolutionMode>().Length;
     }
 
-    public AssociatedDataSchema? GetAssociatedData(string name)
+    public IAssociatedDataSchema? GetAssociatedData(string name)
     {
         return AssociatedData.TryGetValue(name, out var result) ? result : null;
     }
 
-    public AssociatedDataSchema GetAssociatedDataOrThrow(string name)
+    public IAssociatedDataSchema GetAssociatedDataOrThrow(string name)
     {
         return AssociatedData.TryGetValue(name, out var result)
             ? result
@@ -98,35 +116,40 @@ public class EntitySchema : IEntitySchema
                                                    "` schema!");
     }
 
-    public AssociatedDataSchema? GetAssociatedDataByName(string dataName, NamingConvention namingConvention)
+    public IAssociatedDataSchema? GetAssociatedDataByName(string dataName, NamingConvention namingConvention)
     {
         return AssociatedDataNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
 
-    public ReferenceSchema? GetReference(string name)
+    public IReferenceSchema? GetReference(string name)
     {
         return References.TryGetValue(name, out var result) ? result : null;
     }
 
-    public ReferenceSchema GetReferenceOrThrow(string name)
+    public IReferenceSchema GetReferenceOrThrowException(string referenceName)
     {
-        return References.TryGetValue(name, out var result)
+        return References.TryGetValue(referenceName, out var result)
             ? result
-            : throw new EvitaInvalidUsageException("Reference `" + name + "` is not known in entity `" + Name +
+            : throw new EvitaInvalidUsageException("Reference `" + referenceName + "` is not known in entity `" + Name +
                                                    "` schema!");
     }
 
-    public ReferenceSchema? GetReferenceByName(string dataName, NamingConvention namingConvention)
+    public IReferenceSchema? GetReferenceByName(string dataName, NamingConvention namingConvention)
     {
         return ReferenceNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
+    
+    public IDictionary<string, IAttributeSchema> GetAttributes()
+    {
+        return Attributes;
+    }
 
-    public AttributeSchema? GetAttribute(string name)
+    public IAttributeSchema? GetAttribute(string name)
     {
         return Attributes.TryGetValue(name, out var result) ? result : null;
     }
 
-    public AttributeSchema GetAttributeOrThrow(string name)
+    public IAttributeSchema GetAttributeOrThrow(string name)
     {
         return Attributes.TryGetValue(name, out var result)
             ? result
@@ -134,88 +157,96 @@ public class EntitySchema : IEntitySchema
                                                    "` schema!");
     }
 
-    public AttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention)
+    public IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention)
     {
         return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
-    
-    public static EntitySchema InternalBuild(string name) {
-		return new EntitySchema(
-			1,
-			name, NamingConventionHelper.Generate(name),
-			null, null, false, false, false,
-			2,
-			new HashSet<CultureInfo>().ToImmutableHashSet(),
-			new HashSet<Currency>().ToImmutableHashSet(),
-			new Dictionary<string, AttributeSchema>().ToImmutableDictionary(),
-			new Dictionary<string, AssociatedDataSchema>().ToImmutableDictionary(),
-			new Dictionary<string, ReferenceSchema>().ToImmutableDictionary(),
-			new HashSet<EvolutionMode>(Enum.GetValues<EvolutionMode>()).ToImmutableHashSet()
-		);
-	}
 
-	public static EntitySchema InternalBuild(
-		int version,
-		string name,
-		string? description,
-		string? deprecationNotice,
-		bool withGeneratedPrimaryKey,
-		bool withHierarchy,
-		bool withPrice,
-		int indexedPricePlaces,
-		ISet<CultureInfo> locales,
-		ISet<Currency> currencies,
-		IDictionary<string, AttributeSchema> attributes,
-		IDictionary<string, AssociatedDataSchema> associatedData,
-		IDictionary<string, ReferenceSchema> references,
-		ISet<EvolutionMode> evolutionMode
-	) {
-		return new EntitySchema(
-			version, name, NamingConventionHelper.Generate(name),
-			description, deprecationNotice,
-			withGeneratedPrimaryKey, withHierarchy, withPrice,
-			indexedPricePlaces,
-			locales.ToImmutableHashSet(),
-			currencies.ToImmutableHashSet(),
-			attributes.ToImmutableDictionary(),
-			associatedData.ToImmutableDictionary(),
-			references.ToImmutableDictionary(),
-			evolutionMode.ToImmutableHashSet()
-		);
-	}
+    public static EntitySchema InternalBuild(string name)
+    {
+        return new EntitySchema(
+            1,
+            name, NamingConventionHelper.Generate(name),
+            null, null, false, false, false,
+            2,
+            new HashSet<CultureInfo>().ToImmutableHashSet(),
+            new HashSet<Currency>().ToImmutableHashSet(),
+            new Dictionary<string, IAttributeSchema>().ToImmutableDictionary(),
+            new Dictionary<string, IAssociatedDataSchema>().ToImmutableDictionary(),
+            new Dictionary<string, IReferenceSchema>().ToImmutableDictionary(),
+            new HashSet<EvolutionMode>(Enum.GetValues<EvolutionMode>()).ToImmutableHashSet(),
+            new Dictionary<string, SortableAttributeCompoundSchema>().ToImmutableDictionary()
+        );
+    }
 
-	public static EntitySchema InternalBuild(
-		int version,
-		string name,
-		IDictionary<NamingConvention, string> nameVariants,
-		string? description,
-		string? deprecationNotice,
-		bool withGeneratedPrimaryKey,
-		bool withHierarchy,
-		bool withPrice,
-		int indexedPricePlaces,
-		ISet<CultureInfo> locales,
-		ISet<Currency> currencies,
-		IDictionary<string, AttributeSchema> attributes,
-		IDictionary<string, AssociatedDataSchema> associatedData,
-		IDictionary<string, ReferenceSchema> references,
-		ISet<EvolutionMode> evolutionMode
-	) {
-		return new EntitySchema(
-			version, name, nameVariants,
-			description, deprecationNotice,
-			withGeneratedPrimaryKey, withHierarchy, withPrice,
-			indexedPricePlaces,
-			locales.ToImmutableHashSet(),
-			currencies.ToImmutableHashSet(),
-			attributes.ToImmutableDictionary(),
-			associatedData.ToImmutableDictionary(),
-			references.ToImmutableDictionary(),
-			evolutionMode.ToImmutableHashSet()
-		);
-	}
+    public static EntitySchema InternalBuild(
+        int version,
+        string name,
+        string? description,
+        string? deprecationNotice,
+        bool withGeneratedPrimaryKey,
+        bool withHierarchy,
+        bool withPrice,
+        int indexedPricePlaces,
+        ISet<CultureInfo> locales,
+        ISet<Currency> currencies,
+        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IAssociatedDataSchema> associatedData,
+        IDictionary<string, IReferenceSchema> references,
+        ISet<EvolutionMode> evolutionMode,
+        IDictionary<string, SortableAttributeCompoundSchema> sortableAttributeCompounds
+    )
+    {
+        return new EntitySchema(
+            version, name, NamingConventionHelper.Generate(name),
+            description, deprecationNotice,
+            withGeneratedPrimaryKey, withHierarchy, withPrice,
+            indexedPricePlaces,
+            locales.ToImmutableHashSet(),
+            currencies.ToImmutableHashSet(),
+            attributes.ToImmutableDictionary(),
+            associatedData.ToImmutableDictionary(),
+            references.ToImmutableDictionary(),
+            evolutionMode.ToImmutableHashSet(),
+            sortableAttributeCompounds.ToImmutableDictionary()
+        );
+    }
 
-    public bool DiffersFrom(EntitySchema? otherSchema)
+    public static EntitySchema InternalBuild(
+        int version,
+        string name,
+        IDictionary<NamingConvention, string> nameVariants,
+        string? description,
+        string? deprecationNotice,
+        bool withGeneratedPrimaryKey,
+        bool withHierarchy,
+        bool withPrice,
+        int indexedPricePlaces,
+        ISet<CultureInfo> locales,
+        ISet<Currency> currencies,
+        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IAssociatedDataSchema> associatedData,
+        IDictionary<string, IReferenceSchema> references,
+        ISet<EvolutionMode> evolutionMode,
+        IDictionary<string, SortableAttributeCompoundSchema> sortableAttributeCompounds
+    )
+    {
+        return new EntitySchema(
+            version, name, nameVariants,
+            description, deprecationNotice,
+            withGeneratedPrimaryKey, withHierarchy, withPrice,
+            indexedPricePlaces,
+            locales.ToImmutableHashSet(),
+            currencies.ToImmutableHashSet(),
+            attributes.ToImmutableDictionary(),
+            associatedData.ToImmutableDictionary(),
+            references.ToImmutableDictionary(),
+            evolutionMode.ToImmutableHashSet(),
+            sortableAttributeCompounds.ToImmutableDictionary()
+        );
+    }
+
+    public bool DiffersFrom(IEntitySchema? otherSchema)
     {
         if (this == otherSchema) return false;
         if (otherSchema == null) return true;
@@ -229,22 +260,22 @@ public class EntitySchema : IEntitySchema
         if (!Currencies.Equals(otherSchema.Currencies)) return true;
 
         if (Attributes.Count != otherSchema.Attributes.Count) return true;
-        foreach (KeyValuePair<string, AttributeSchema> entry in Attributes)
+        foreach (KeyValuePair<string, IAttributeSchema> entry in Attributes)
         {
-            AttributeSchema? otherAttributeSchema = otherSchema.GetAttribute(entry.Key);
+            IAttributeSchema? otherAttributeSchema = otherSchema.GetAttribute(entry.Key);
             if (!entry.Value.Equals(otherAttributeSchema))
                 return true;
         }
 
         if (AssociatedData.Count != otherSchema.AssociatedData.Count) return true;
-        foreach (KeyValuePair<string, AssociatedDataSchema> entry in AssociatedData)
+        foreach (KeyValuePair<string, IAssociatedDataSchema> entry in AssociatedData)
         {
             if (!entry.Value.Equals(otherSchema.GetAssociatedData(entry.Key)))
                 return true;
         }
 
         if (References.Count != otherSchema.References.Count) return true;
-        foreach (KeyValuePair<string, ReferenceSchema> entry in References)
+        foreach (KeyValuePair<string, IReferenceSchema> entry in References)
         {
             if (!entry.Value.Equals(otherSchema.GetReference(entry.Key)))
                 return true;
@@ -269,6 +300,7 @@ public class EntitySchema : IEntitySchema
         {
             InternalAddNameVariantsToIndex(nameIndex, schema, nameVariantsFetcher);
         }
+
         return nameIndex;
     }
 
@@ -286,18 +318,110 @@ public class EntitySchema : IEntitySchema
             nameIndex[entry.Value] = currentArray ?? new T[Enum.GetValues<NamingConvention>().Length];
         }
     }
-    
+
     public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+
     public ISet<EvolutionMode> GetEvolutionMode()
     {
-	    return EvolutionModes;
+        return EvolutionModes;
     }
 
-    public bool Allows(EvolutionMode evolutionMode) {
-	    return GetEvolutionMode().Contains(evolutionMode);
+    public bool Allows(EvolutionMode evolutionMode)
+    {
+        return GetEvolutionMode().Contains(evolutionMode);
     }
 
-    public bool SupportsLocale(CultureInfo locale) {
-	    return Locales.Contains(locale);
+    public bool SupportsLocale(CultureInfo locale)
+    {
+        return Locales.Contains(locale);
     }
+    
+    private static AttributeSchema ToAttributeSchema(IAttributeSchema attributeSchemaContract) {
+        return attributeSchemaContract as AttributeSchema ?? AttributeSchema.InternalBuild(
+            attributeSchemaContract.Name,
+            attributeSchemaContract.NameVariants,
+            attributeSchemaContract.Description,
+            attributeSchemaContract.DeprecationNotice,
+            attributeSchemaContract.Unique,
+            attributeSchemaContract.Filterable,
+            attributeSchemaContract.Sortable,
+            attributeSchemaContract.Localized,
+            attributeSchemaContract.Nullable,
+            attributeSchemaContract.Type,
+            attributeSchemaContract.DefaultValue,
+            attributeSchemaContract.IndexedDecimalPlaces
+        );
+    }
+
+    public static SortableAttributeCompoundSchema ToSortableAttributeCompoundSchema(
+        ISortableAttributeCompoundSchema sortableAttributeCompoundSchemaContract)
+    {
+        return sortableAttributeCompoundSchemaContract as SortableAttributeCompoundSchema ?? SortableAttributeCompoundSchema.InternalBuild(
+            sortableAttributeCompoundSchemaContract.Name,
+            sortableAttributeCompoundSchemaContract.NameVariants,
+            sortableAttributeCompoundSchemaContract.Description,
+            sortableAttributeCompoundSchemaContract.DeprecationNotice,
+            sortableAttributeCompoundSchemaContract.AttributeElements
+        );
+    }
+    
+    private static AssociatedDataSchema ToAssociatedDataSchema(IAssociatedDataSchema associatedDataSchemaContract) {
+        return associatedDataSchemaContract as AssociatedDataSchema ?? AssociatedDataSchema.InternalBuild(
+            associatedDataSchemaContract.Name,
+            associatedDataSchemaContract.NameVariants,
+            associatedDataSchemaContract.Description,
+            associatedDataSchemaContract.DeprecationNotice,
+            associatedDataSchemaContract.Localized,
+            associatedDataSchemaContract.Nullable,
+            associatedDataSchemaContract.Type
+        );
+    }
+    
+    private static ReferenceSchema ToReferenceSchema(IReferenceSchema referenceSchemaContract) {
+        return referenceSchemaContract as ReferenceSchema ?? ReferenceSchema.InternalBuild(
+            referenceSchemaContract.Name,
+            referenceSchemaContract.NameVariants,
+            referenceSchemaContract.Description,
+            referenceSchemaContract.DeprecationNotice,
+            referenceSchemaContract.ReferencedEntityType,
+            referenceSchemaContract.GetEntityTypeNameVariants(_ => null),
+            referenceSchemaContract.ReferencedEntityTypeManaged,
+            referenceSchemaContract.Cardinality,
+            referenceSchemaContract.ReferencedGroupType,
+            referenceSchemaContract.GetGroupTypeNameVariants(_ => null),
+            referenceSchemaContract.ReferencedGroupTypeManaged,
+            referenceSchemaContract.Indexed,
+            referenceSchemaContract.Faceted,
+            referenceSchemaContract.GetAttributes(),
+            referenceSchemaContract.GetSortableAttributeCompounds()
+        );
+    }
+
+    public IDictionary<string, SortableAttributeCompoundSchema> GetSortableAttributeCompounds()
+    {
+        return SortableAttributeCompounds;
+    }
+
+    public SortableAttributeCompoundSchema? GetSortableAttributeCompound(string name)
+    {
+        return SortableAttributeCompounds.TryGetValue(name, out var result) ? result : null;
+    }
+
+    public SortableAttributeCompoundSchema? GetSortableAttributeCompoundByName(string name,
+        NamingConvention namingConvention)
+    {
+        return SortableAttributeCompoundNameIndex.TryGetValue(name, out var result)
+            ? result[(int) namingConvention]
+            : null;
+    }
+
+    public IList<SortableAttributeCompoundSchema> GetSortableAttributeCompoundsForAttribute(string attributeName)
+    {
+        return AttributeToSortableAttributeCompoundIndex.TryGetValue(attributeName, out var result)
+            ? result
+            : new List<SortableAttributeCompoundSchema>();
+    }
+    
+    private record AttributeToCompound(AttributeElement Attribute, SortableAttributeCompoundSchema CompoundSchema);
+
 }

@@ -16,11 +16,11 @@ public interface IDataChunk<T> : IEnumerable<T>
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
-        throw new NotImplementedException();
+        return Data?.GetEnumerator() ?? new List<T>.Enumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        throw new NotImplementedException();
+        return Data?.GetEnumerator() ?? new List<T>.Enumerator();
     }
 }

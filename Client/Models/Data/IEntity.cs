@@ -1,15 +1,16 @@
 ﻿using System.Globalization;
-using Client.Models.Data.Structure;
-using Client.Models.Schemas.Dtos;
+using Client.Models.Schemas;
 
 namespace Client.Models.Data;
 
-public interface IEntity : IEntityClassifier, IAttributes, IAssociatedData, IPrices, IVersioned
+public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociatedData, IPrices, IDroppable
 {
-    EntitySchema Schema { get; }
+    IEntitySchema Schema { get; }
     int? Parent { get; }
-    ICollection<Reference> GetReferences();
-    Reference? GetReference(string referenceName, int referencedEntityId);
-    Reference? GetReference(ReferenceKey referenceKey);
+    bool ParentAvailable { get; }
+    bool ReferencesAvailable { get; }
+    ICollection<IReference> GetReferences();
+    IReference? GetReference(string referenceName, int referencedEntityId);
+    IReference? GetReference(ReferenceKey referenceKey);
     ISet<CultureInfo> GetAllLocales();
 }

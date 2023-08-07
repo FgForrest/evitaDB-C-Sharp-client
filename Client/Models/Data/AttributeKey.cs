@@ -19,8 +19,8 @@ public class AttributeKey : IComparable<AttributeKey>
 
     public int CompareTo(AttributeKey? other)
     {
-        //TODO: include locales?
-        return string.Compare(AttributeName, other?.AttributeName, StringComparison.Ordinal);
+        return ComparatorUtils.CompareLocale(Locale, other?.Locale,
+            () => string.Compare(AttributeName, other?.AttributeName, StringComparison.Ordinal));
     }
 
     public override string ToString()

@@ -57,6 +57,7 @@ public static class EntityConverter
                 )
             ),
             new Prices(
+                entitySchema,
                 grpcEntity.Version,
                 grpcEntity.Prices.Select(ToPrice).ToList(),
                 EvitaEnumConverter.ToPriceInnerRecordHandling(grpcEntity.PriceInnerRecordHandling)
@@ -67,12 +68,12 @@ public static class EntityConverter
         );
     }
 
-    private static ICollection<AttributeValue?> ToAttributeValues(
+    private static ICollection<AttributeValue> ToAttributeValues(
         IDictionary<string, GrpcEvitaValue> globalAttributesMap,
         IDictionary<string, GrpcLocalizedAttribute> localizedAttributesMap
     )
     {
-        List<AttributeValue?> result = new(globalAttributesMap.Count + localizedAttributesMap.Count);
+        List<AttributeValue> result = new(globalAttributesMap.Count + localizedAttributesMap.Count);
         foreach (var (attributeName, value) in globalAttributesMap)
         {
             result.Add(
@@ -156,10 +157,9 @@ public static class EntityConverter
         );
     }
 
-    private static Price ToPrice(GrpcPrice grpcPrice)
+    private static IPrice ToPrice(GrpcPrice grpcPrice)
     {
         return new Price(
-            grpcPrice.Version,
             new PriceKey(
                 grpcPrice.PriceId,
                 grpcPrice.PriceList,
@@ -170,7 +170,8 @@ public static class EntityConverter
             EvitaDataTypesConverter.ToDecimal(grpcPrice.TaxRate),
             EvitaDataTypesConverter.ToDecimal(grpcPrice.PriceWithTax),
             grpcPrice.Validity is not null ? EvitaDataTypesConverter.ToDateTimeRange(grpcPrice.Validity) : null,
-            grpcPrice.Sellable
+            grpcPrice.Sellable,
+            grpcPrice.Version
         );
     }
 

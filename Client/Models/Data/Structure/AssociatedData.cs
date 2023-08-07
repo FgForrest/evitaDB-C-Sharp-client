@@ -1,20 +1,25 @@
 ﻿using System.Globalization;
+using Client.Models.Schemas;
 using Client.Models.Schemas.Dtos;
 using Client.Utils;
+using Newtonsoft.Json;
 
 namespace Client.Models.Data.Structure;
 
 public class AssociatedData : IAssociatedData
 {
-    public EntitySchema EntitySchema { get; }
+    [JsonIgnore]
+    public IEntitySchema EntitySchema { get; }
     private IDictionary<AssociatedDataKey, AssociatedDataValue?> AssociatedDataValues { get; }
-    private IDictionary<string, AssociatedDataSchema> AssociatedDataTypes { get; }
+    [JsonIgnore]
+    private IDictionary<string, IAssociatedDataSchema> AssociatedDataTypes { get; }
     private ISet<string>? AssociatedDataNames { get; set; }
     private ISet<CultureInfo>? AssociatedDataLocales { get; set; }
+    public bool AssociatedDataAvailable => true;
 
     public AssociatedData(
-        EntitySchema entitySchema,
-        ISet<AssociatedDataKey> associatedDataKeys,
+        IEntitySchema entitySchema,
+        IEnumerable<AssociatedDataKey> associatedDataKeys,
         ICollection<AssociatedDataValue>? associatedDataValues
     )
     {
@@ -36,6 +41,22 @@ public class AssociatedData : IAssociatedData
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
 
+    public AssociatedData(
+        IEntitySchema entitySchema,
+        IEnumerable<AssociatedDataValue> associatedDataValues,
+        IDictionary<string, IAssociatedDataSchema> associatedDataTypes
+    )
+    {
+        EntitySchema = entitySchema;
+        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue?>();
+        foreach (AssociatedDataValue associatedDataValue in associatedDataValues)
+        {
+            AssociatedDataValues.Add(associatedDataValue.Key, associatedDataValue);
+        }
+
+        AssociatedDataTypes = associatedDataTypes;
+    }
+
     /**
 	 * Constructor should be used only when associated data are loaded from persistent storage.
 	 * Constructor is meant to be internal to the Evita engine.
@@ -53,13 +74,13 @@ public class AssociatedData : IAssociatedData
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
 
-    public AssociatedData(EntitySchema entitySchema)
+    public AssociatedData(IEntitySchema entitySchema)
     {
         EntitySchema = entitySchema;
         AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue?>();
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
-
+    
     public object? GetAssociatedData(string associatedDataName)
     {
         return AssociatedDataValues[new AssociatedDataKey(associatedDataName)]?.Value;
@@ -93,7 +114,7 @@ public class AssociatedData : IAssociatedData
                AssociatedDataValues[new AssociatedDataKey(associatedDataName)];
     }
 
-    public AssociatedDataSchema? GetAssociatedDataSchema(string associatedDataName)
+    public IAssociatedDataSchema? GetAssociatedDataSchema(string associatedDataName)
     {
         return AssociatedDataTypes[associatedDataName];
     }
@@ -109,28 +130,34 @@ public class AssociatedData : IAssociatedData
 
         return AssociatedDataNames;
     }
-    
-    public ISet<AssociatedDataKey> GetAssociatedDataKeys() {
+
+    public ISet<AssociatedDataKey> GetAssociatedDataKeys()
+    {
         return AssociatedDataValues.Keys.ToHashSet();
     }
-    
-    public ICollection<AssociatedDataValue> GetAssociatedDataValues() {
-        return AssociatedDataValues.Values.Where(x=>x != null).ToList()!;
+
+    public ICollection<AssociatedDataValue> GetAssociatedDataValues()
+    {
+        return AssociatedDataValues.Values.Where(x => x != null).ToList()!;
     }
 
-    public ICollection<AssociatedDataValue> GetAssociatedDataValues(string associatedDataName) {
-        return AssociatedDataValues.Where(x=>associatedDataName == x.Key.AssociatedDataName)
-            .Select(x=>x.Value)
+    public ICollection<AssociatedDataValue> GetAssociatedDataValues(string associatedDataName)
+    {
+        return AssociatedDataValues.Where(x => associatedDataName == x.Key.AssociatedDataName)
+            .Select(x => x.Value)
             .ToList()!;
     }
-    
-    public ISet<CultureInfo> GetAssociatedDataLocales() {
-        if (AssociatedDataLocales == null) {
+
+    public ISet<CultureInfo> GetAssociatedDataLocales()
+    {
+        if (AssociatedDataLocales == null)
+        {
             AssociatedDataLocales = AssociatedDataValues
-                .Select(x=>x.Key.Locale)
-                .Where(x=>x != null)
+                .Select(x => x.Key.Locale)
+                .Where(x => x != null)
                 .ToHashSet()!;
         }
+
         return AssociatedDataLocales;
     }
 

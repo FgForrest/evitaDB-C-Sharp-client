@@ -31,7 +31,7 @@ public class DateTimeRange : Range<DateTimeOffset?>, IComparable<DateTimeRange>
     
     public static long ToComparableLong(DateTimeOffset theMoment) => theMoment.ToUnixTimeSeconds();
     
-    protected override bool IsWithin(DateTimeOffset? valueToCheck)
+    public override bool IsWithin(DateTimeOffset? valueToCheck)
     {
         if (valueToCheck is null)
             return false;

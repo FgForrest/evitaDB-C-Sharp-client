@@ -19,7 +19,7 @@ public abstract class NumberRange<T> : Range<T?> where T : struct, IComparable<T
     
     protected abstract Type SupportedType { get; }
 
-    protected override bool IsWithin(T? valueToCheck)
+    public override bool IsWithin(T? valueToCheck)
     {
         Assert.NotNull(valueToCheck, "Cannot resolve within range with NULL value!");
         long valueToCompare = ToComparableLong((T? )EvitaDataTypes.ToTargetType(valueToCheck!, SupportedType), 0L);

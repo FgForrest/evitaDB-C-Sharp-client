@@ -268,7 +268,7 @@ public class InternalEntitySchemaBuilder
 		}
 		AssociatedDataSchema associatedDataSchema = associatedDataSchemaBuilder.toInstance();
 
-		if (existingAssociatedData is not null && !existingAssociatedData.Equals(associatedDataSchema)) { //TODO: OR ELSE TRUE?
+		if (existingAssociatedData is not null && !existingAssociatedData.Equals(associatedDataSchema)) { 
 			ClassifierUtils.ValidateClassifierFormat(ClassifierType.AssociatedData, dataName);
 			// check the names in all naming conventions are unique in the entity schema
 			BaseSchema.AssociatedData

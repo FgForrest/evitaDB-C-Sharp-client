@@ -13,7 +13,7 @@ public abstract class Range<T>
     public T? PreciseFrom { get; init; }
     public T? PreciseTo { get; init; }
 
-    protected abstract bool IsWithin(T valueToCheck);
+    public abstract bool IsWithin(T valueToCheck);
 
     protected bool Overlaps(Range<T> otherRange)
     {

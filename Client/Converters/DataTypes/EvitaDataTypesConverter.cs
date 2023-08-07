@@ -304,6 +304,22 @@ public static class EvitaDataTypesConverter
 
         return result;
     }
+    
+    public static GrpcEvitaAssociatedDataValue ToGrpcEvitaAssociatedDataValue(object? value, int? version = null) {
+        GrpcEvitaAssociatedDataValue grpcEvitaAssociatedDataValue = new();
+
+        if (value is ComplexDataObject complexDataObject) {
+            grpcEvitaAssociatedDataValue.JsonValue = ComplexDataObjectConverter.ConvertComplexDataObjectToJson(complexDataObject).ToString();
+        } else {
+            grpcEvitaAssociatedDataValue.PrimitiveValue = ToGrpcEvitaValue(value, version);
+        }
+
+        if (version != null) {
+            grpcEvitaAssociatedDataValue.Version = version;
+        }
+
+        return grpcEvitaAssociatedDataValue;
+    }
 
     public static GrpcEvitaDataType ToGrpcEvitaDataType(Type type)
     {
@@ -833,19 +849,19 @@ public static class EvitaDataTypesConverter
         return new GrpcDateTimeRangeArray {Value = {dateTimeRangeArrayValues.Select(ToGrpcDateTimeRange).ToArray()}};
     }
 
-    public static GrpcBigDecimalNumberRange ToGrpcBigDecimalNumberRange(DecimalNumberRange deciamNumberRange)
+    public static GrpcBigDecimalNumberRange ToGrpcBigDecimalNumberRange(DecimalNumberRange decimalNumberRange)
     {
         GrpcBigDecimalNumberRange grpcBigDecimalNumberRange = new GrpcBigDecimalNumberRange();
-        if (deciamNumberRange.PreciseFrom is not null)
+        if (decimalNumberRange.PreciseFrom is not null)
         {
-            grpcBigDecimalNumberRange.From = ToGrpcBigDecimal(deciamNumberRange.PreciseFrom.Value);
+            grpcBigDecimalNumberRange.From = ToGrpcBigDecimal(decimalNumberRange.PreciseFrom.Value);
         }
-        if (deciamNumberRange.PreciseTo is not null)
+        if (decimalNumberRange.PreciseTo is not null)
         {
-            grpcBigDecimalNumberRange.To = ToGrpcBigDecimal(deciamNumberRange.PreciseTo.Value);
+            grpcBigDecimalNumberRange.To = ToGrpcBigDecimal(decimalNumberRange.PreciseTo.Value);
         }
 
-        int? retainedDecimalPlaces = deciamNumberRange.RetainedDecimalPlaces;
+        int? retainedDecimalPlaces = decimalNumberRange.RetainedDecimalPlaces;
         grpcBigDecimalNumberRange.DecimalPlacesToCompare = retainedDecimalPlaces ?? 0;
         return grpcBigDecimalNumberRange;
     }

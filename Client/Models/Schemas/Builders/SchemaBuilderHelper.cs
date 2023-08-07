@@ -161,8 +161,9 @@ public class SchemaBuilderHelper
      */
     public static void CheckNamesAreUniqueInAllNamingConventions(ICollection<AttributeSchema> values, AttributeSchema attributeSchema)
     {
-        /*values
-            /*.Where(it => !Equals(it.Name, attributeSchema.Name))#1#
+        /*
+        values
+            .Where(it => !Equals(it.Name, attributeSchema.Name))
             .SelectMany(it=>it.NameVariants
                 .Where(
                     nameVariant=>nameVariant.Value.Equals(attributeSchema.GetNameVariant(nameVariant.Key)))
@@ -173,8 +174,8 @@ public class SchemaBuilderHelper
             .ForEach(conflict => throw new AttributeAlreadyPresentInEntitySchemaException(
                 conflict.ConflictingSchema, attributeSchema,
                 conflict.Convention, conflict.ConflictingName
-            ));*/
-        //TODO uncomment
+            ));
+            */
     }
 
     /**

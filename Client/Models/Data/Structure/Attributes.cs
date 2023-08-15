@@ -146,4 +146,9 @@ public class Attributes : IAttributes
     {
         return AttributeValues.TryGetValue(attributeKey, out var attributeValue) ? attributeValue : null;
     }
+
+    public override string ToString()
+    {
+        return Empty ? "no attributes present" : string.Join("; ", GetAttributeValues().Select(x=>x.ToString()));
+    }
 }

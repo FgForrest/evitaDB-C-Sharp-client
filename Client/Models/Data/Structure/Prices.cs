@@ -15,6 +15,7 @@ public class Prices : IPrices
     public int Version { get; }
     private ImmutableDictionary<PriceKey, IPrice> PriceIndex { get; }
     public PriceInnerRecordHandling InnerRecordHandling { get; }
+    public IPrice? PriceForSale => throw new ContextMissingException();
     public bool PricesAvailable => EntitySchema.WithPrice;
 
     public Prices(IEntitySchema entitySchema, PriceInnerRecordHandling priceInnerRecordHandling)
@@ -63,9 +64,7 @@ public class Prices : IPrices
 
     public IPrice? GetPrice(int priceId, string priceList, Currency currency) =>
         PriceIndex[new PriceKey(priceId, priceList, currency)];
-
-    public IPrice? GetPriceForSale() => throw new ContextMissingException();
-    public IPrice? GetPriceForSaleIfAvailable(string priceList) => null;
+    
     public List<IPrice> GetAllPricesForSale() => new();
     public bool Empty => PriceIndex.Count == 0;
 
@@ -93,4 +92,18 @@ public class Prices : IPrices
     }
 
     public IEnumerable<IPrice> GetPrices() => PriceIndex.Values;
+
+    public override string ToString()
+    {
+        if (PricesAvailable) {
+            List<IPrice> prices = GetPrices().ToList();
+            return "selects " + InnerRecordHandling + " from: " +
+                   (
+                       !prices.Any() ?
+                           "no price" :
+                           string.Join(", ", prices.Select(x => x.ToString()))
+                   );
+        }
+        return "entity has no prices";
+    }
 }

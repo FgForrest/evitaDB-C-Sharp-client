@@ -1,5 +1,5 @@
 ﻿namespace Client.Models.Data.Structure;
 
-public record EntityReference(string EntityType, int? PrimaryKey) : IEntityReference
+public record EntityReference(string Type, int? PrimaryKey) : IEntityReference
 {
 }

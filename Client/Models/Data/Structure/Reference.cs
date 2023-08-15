@@ -11,19 +11,19 @@ public class Reference : IReference
     private IEntitySchema EntitySchema { get; }
     public int Version { get; }
     public ReferenceKey ReferenceKey { get; }
-    private readonly Cardinality? _referenceCardinality;
-    private readonly string? _referencedEntityType;
     public GroupEntityReference? Group { get; }
-    public SealedEntity? GroupEntity => null;
+    public SealedEntity? GroupEntity { get; }
     private Attributes Attributes { get; }
     public bool Dropped { get; }
-    public SealedEntity? ReferencedEntity => null;
+    public SealedEntity? ReferencedEntity { get; }
     public IReferenceSchema? ReferenceSchema => EntitySchema.GetReference(ReferenceKey.ReferenceName);
     public Cardinality? ReferenceCardinality => ReferenceSchema?.Cardinality ?? _referenceCardinality;
     public string? ReferencedEntityType => ReferenceSchema?.ReferencedEntityType ?? _referencedEntityType;
     public string ReferenceName => ReferenceKey.ReferenceName;
     public int ReferencedPrimaryKey => ReferenceKey.PrimaryKey; 
     public bool AttributesAvailable => Attributes.AttributesAvailable;
+    private readonly Cardinality? _referenceCardinality;
+    private readonly string? _referencedEntityType;
     
     public Reference(
 		IEntitySchema entitySchema,
@@ -31,7 +31,9 @@ public class Reference : IReference
 		int referencedEntityPrimaryKey,
 		string? referencedEntityType,
 		Cardinality? cardinality,
-		GroupEntityReference? group
+		GroupEntityReference? group,
+		SealedEntity? referencedEntity = null,
+		SealedEntity? groupEntity = null
 	) {
 		Version = 1;
 		EntitySchema = entitySchema;
@@ -40,6 +42,8 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		Attributes = new Attributes(entitySchema);
+		ReferencedEntity = referencedEntity;
+		GroupEntity = groupEntity;
 	}
 
 	public Reference(
@@ -50,6 +54,8 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
+		SealedEntity? referencedEntity = null,
+		SealedEntity? groupEntity = null,
 		bool dropped = false
 	) {
 		EntitySchema = entitySchema;
@@ -59,6 +65,8 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		Attributes = new Attributes(entitySchema);
+		ReferencedEntity = referencedEntity;
+		GroupEntity = groupEntity;
 		Dropped = dropped;
 	}
 
@@ -71,6 +79,8 @@ public class Reference : IReference
 		Cardinality? cardinality,
 		GroupEntityReference? group,
 		Attributes attributes,
+		SealedEntity? referencedEntity = null,
+		SealedEntity? groupEntity = null,
 		bool dropped = false
 	) {
 		EntitySchema = entitySchema;
@@ -80,6 +90,8 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		Attributes = attributes;
+		ReferencedEntity = referencedEntity;
+		GroupEntity = groupEntity;
 		Dropped = dropped;
 	}
 
@@ -92,6 +104,8 @@ public class Reference : IReference
 		Cardinality? cardinality,
 		GroupEntityReference? group,
 		ICollection<AttributeValue> attributes,
+		SealedEntity? referencedEntity = null,
+		SealedEntity? groupEntity = null,
 		bool dropped = false) 
 	{
 		EntitySchema = entitySchema;
@@ -101,6 +115,8 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		Attributes = new Attributes(entitySchema, attributes);
+		ReferencedEntity = referencedEntity;
+		GroupEntity = groupEntity;
 		Dropped = dropped;
 	}
 
@@ -112,6 +128,8 @@ public class Reference : IReference
 		Cardinality cardinality,
 		GroupEntityReference? group,
 		Attributes attributes,
+		SealedEntity? referencedEntity = null,
+		SealedEntity? groupEntity = null,
 		bool dropped = false
 	)
 	{
@@ -122,6 +140,8 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		Attributes = attributes;
+		ReferencedEntity = referencedEntity;
+		GroupEntity = groupEntity;
 		Dropped = dropped;
 	}
 	
@@ -188,5 +208,13 @@ public class Reference : IReference
 	public ISet<CultureInfo> GetAttributeLocales()
 	{
 		return Attributes.GetAttributeLocales();
+	}
+
+	public override string ToString()
+	{
+		return (Dropped ? "❌ " : "") +
+		       "References `" + ReferenceKey.ReferenceName + "` " + ReferenceKey.PrimaryKey +
+		       (Group == null ? "" : " in " + Group) +
+		       (Attributes.AttributesAvailable ? ", attrs: " + Attributes : "");
 	}
 }

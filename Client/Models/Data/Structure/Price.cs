@@ -65,4 +65,14 @@ public class Price : IPrice
         Sellable = sellable;
         Dropped = dropped;
     }
+
+    public override string ToString()
+    {
+        return (Dropped ? "❌ " : "") +
+               "\uD83D\uDCB0 " + (Sellable ? "\uD83D\uDCB5 " : "") + PriceWithTax + " " + Key.Currency + " (" + TaxRate + "%)" +
+               ", price list " + Key.PriceList +
+               (Validity == null ? "" : ", valid in " + Validity) +
+               ", external id " + Key.PriceId +
+               (InnerRecordId == null ? "" : "/" + InnerRecordId);
+    }
 }

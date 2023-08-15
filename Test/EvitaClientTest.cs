@@ -169,7 +169,7 @@ public class EvitaClientTest
             ));
 
         That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
-        That(referenceResponse.RecordPage.Data.All(x => x is {EntityType: "Product", PrimaryKey: > 0}), Is.True);
+        That(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}), Is.True);
         That(referenceResponse.ExtraResults.Count, Is.EqualTo(1));
         That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
     }

@@ -38,7 +38,7 @@ public record ComplexDataObject
     }
 }
 
-class ToStringDataItemVisitor : IDataItemVisitor
+internal class ToStringDataItemVisitor : IDataItemVisitor
 {
     private StringBuilder AsString { get; } = new();
     private int Indentation { get; }
@@ -66,7 +66,7 @@ class ToStringDataItemVisitor : IDataItemVisitor
             _current += Indentation;
             arrayItem.ForEach((dataItem, hasNext) =>
             {
-                AsString.Append(Enumerable.Repeat(" ", _current));
+                AsString.Append(new string(' ', _current));
                 if (dataItem == null)
                 {
                     AsString.Append("<NULL>");
@@ -84,7 +84,7 @@ class ToStringDataItemVisitor : IDataItemVisitor
                 AsString.Append('\n');
             });
             _current -= Indentation;
-            AsString.Append(Enumerable.Repeat(" ", _current)).Append(']');
+            AsString.Append(new string(' ', _current)).Append(']');
         }
     }
 
@@ -100,7 +100,7 @@ class ToStringDataItemVisitor : IDataItemVisitor
             _current += Indentation;
             mapItem.ForEachSorted((propertyName, dataItem, hasNext) =>
             {
-                AsString.Append(Enumerable.Repeat(" ", _current)).Append(EvitaDataTypes.FormatValue(propertyName))
+                AsString.Append(new string(' ', _current)).Append(EvitaDataTypes.FormatValue(propertyName))
                     .Append(": ");
                 if (dataItem == null)
                 {
@@ -119,7 +119,7 @@ class ToStringDataItemVisitor : IDataItemVisitor
                 AsString.Append('\n');
             });
             _current -= Indentation;
-            AsString.Append(Enumerable.Repeat(" ", _current)).Append('}');
+            AsString.Append(new string(' ', _current)).Append('}');
         }
     }
 

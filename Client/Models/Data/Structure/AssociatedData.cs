@@ -187,4 +187,9 @@ public class AssociatedData : IAssociatedData
                 return QueryUtils.ValueDiffers(thisValue, otherValue);
             });
     }
+
+    public override string ToString()
+    {
+        return string.Join("; ", GetAssociatedDataValues().Select(x => x.ToString()));
+    }
 }

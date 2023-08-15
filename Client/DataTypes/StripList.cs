@@ -2,7 +2,7 @@
 
 public class StripList<T> : IDataChunk<T>
 {
-    public List<T>? Data { get; init; }
+    public List<T>? Data { get; }
     
     public int Limit { get; }
     public int Offset { get; }

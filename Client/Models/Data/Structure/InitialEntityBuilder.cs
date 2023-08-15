@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Client.DataTypes;
+using Client.Exceptions;
 using Client.Models.Data.Mutations;
 using Client.Models.Data.Mutations.Attributes;
 using Client.Models.Schemas;
@@ -10,7 +11,7 @@ namespace Client.Models.Data.Structure;
 
 public class InitialEntityBuilder : IEntityBuilder
 {
-    public string EntityType { get; }
+    public string Type { get; }
     public int? PrimaryKey { get; }
     public int Version { get; }
     public IEntitySchema Schema { get; }
@@ -18,24 +19,25 @@ public class InitialEntityBuilder : IEntityBuilder
     public IAttributeBuilder AttributesBuilder { get; }
     public IAssociatedDataBuilder AssociatedDataBuilder;
     public IPricesBuilder PricesBuilder;
-    public Dictionary<ReferenceKey, Reference> References { get; } = new ();
+    public IDictionary<ReferenceKey, Reference> References { get; } = new Dictionary<ReferenceKey, Reference>();
     public PriceInnerRecordHandling InnerRecordHandling => PriceInnerRecordHandling.None;
     public bool PricesAvailable => Schema.WithPrice; //TODO: fix when possible
     public bool AssociatedDataAvailable => true; //TODO: fix when possible
     public bool AttributesAvailable => AttributesBuilder.AttributesAvailable;
     public bool ReferencesAvailable => true; 
     public bool ParentAvailable => true;
+    public IPrice? PriceForSale => throw new ContextMissingException();
 
     public InitialEntityBuilder(
-		EntitySchema? entitySchema,
+		IEntitySchema? entitySchema,
 		int? primaryKey,
-		ICollection<AttributeValue> attributeValues,
+		IEnumerable<AttributeValue> attributeValues,
 		ICollection<AssociatedDataValue> associatedDataValues,
 		ICollection<Reference> referenceContracts,
 		PriceInnerRecordHandling? priceInnerRecordHandling,
 		ICollection<Price> prices
 	) {
-		EntityType = entitySchema.Name;
+		Type = entitySchema.Name;
 		Schema = entitySchema;
 		PrimaryKey = primaryKey;
 		AttributesBuilder = new InitialAttributesBuilder(entitySchema);
@@ -248,7 +250,7 @@ public class InitialEntityBuilder : IEntityBuilder
     }
 
     
-    public ICollection<IReference> GetReferences()
+    public IEnumerable<IReference> GetReferences()
     {
         throw new NotImplementedException();
     }

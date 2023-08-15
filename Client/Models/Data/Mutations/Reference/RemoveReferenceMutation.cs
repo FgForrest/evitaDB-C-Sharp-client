@@ -32,6 +32,8 @@ public class RemoveReferenceMutation : ReferenceMutation
                     existingValue.Group.Version + 1, true)
                 : null,
             existingValue.GetAttributeValues(),
+            existingValue.ReferencedEntity,
+            existingValue.GroupEntity,
             true
         );
     }

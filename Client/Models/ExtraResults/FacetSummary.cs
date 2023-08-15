@@ -274,8 +274,8 @@ public class FacetGroupStatistics
         if (groupEntity != null)
         {
             string schemaGroupType = referenceSchema.ReferencedGroupType ?? referenceSchema.ReferencedEntityType;
-            Assert.IsPremiseValid(groupEntity.EntityType.Equals(schemaGroupType),
-                $"Group entity is from different collection (`{groupEntity.EntityType}`) than the group or entity (`{schemaGroupType}`).");
+            Assert.IsPremiseValid(groupEntity.Type.Equals(schemaGroupType),
+                $"Group entity is from different collection (`{groupEntity.Type}`) than the group or entity (`{schemaGroupType}`).");
         }
     }
 
@@ -345,6 +345,6 @@ public class FacetGroupStatistics
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(ReferenceName, GroupEntity?.EntityType, Count, _facetStatistics);
+        return HashCode.Combine(ReferenceName, GroupEntity?.Type, Count, _facetStatistics);
     }
 }

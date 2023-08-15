@@ -159,26 +159,22 @@ public class EvitaQueryTest
     [Test]
     public void ShouldBe_Tmp()
     {
-        EvitaResponse<SealedEntity> entities = _client!.QueryCatalog(
-            "evita",
+        EvitaResponse<SealedEntity> entities = _client!.QueryCatalog("evita",
             session => session.QuerySealedEntity(
                 Query(
                     Collection("Product"),
                     FilterBy(
-                        AttributeEquals("code", "garmin-vivoactive-4")
+                        AttributeEquals("code", "amazfit-gtr-3"),
+                        EntityLocaleEquals(CultureInfo.GetCultureInfo("en"))
                     ),
                     Require(
                         EntityFetch(
-                            AttributeContent("code"),
                             ReferenceContent(
-                                "parameterValues",
-                                OrderBy(
-                                    EntityProperty(
-                                        AttributeNatural("code", OrderDirection.Desc)
+                                "categories", 
+                                EntityFetch(AttributeContent("code", "name"),
+                                    HierarchyContent(
+                                        EntityFetch(AttributeContent("code", "name"))
                                     )
-                                ),
-                                EntityFetch(
-                                    AttributeContent("code")
                                 )
                             )
                         )
@@ -186,6 +182,8 @@ public class EvitaQueryTest
                 )
             )
         );
+
+
         Console.WriteLine();
     }
 }

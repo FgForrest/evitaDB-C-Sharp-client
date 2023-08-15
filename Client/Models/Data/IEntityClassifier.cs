@@ -2,6 +2,6 @@
 
 public interface IEntityClassifier
 {
-    public string EntityType { get; }
+    public string Type { get; }
     public int? PrimaryKey { get; }
 }

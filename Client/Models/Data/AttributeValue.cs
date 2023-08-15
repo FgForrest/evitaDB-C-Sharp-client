@@ -35,4 +35,18 @@ public class AttributeValue : IComparable<AttributeValue>, IDroppable
         if (!Equals(Key, otherAttributeValue.Key)) return true;
         return !Equals(Value, otherAttributeValue.Value);
     }
+    
+    public override string ToString()
+    {
+        return (Dropped ? "❌ " : "") +
+               "\uD83D\uDD11 " + Key.AttributeName + " " +
+               (Key.Locale == null ? "" : "(" + Key.Locale.TwoLetterISOLanguageName + ")") +
+               ": " +
+               (
+                   Value is object?[] arrayValue
+                       ?
+                    "[" + string.Join(",", arrayValue.Where(x => x is not null).Select(x => x?.ToString())) + "]" :
+                    Value
+                );
+    }
 }

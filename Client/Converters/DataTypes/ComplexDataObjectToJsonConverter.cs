@@ -35,8 +35,9 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             }
             else if (stackNode is JArray arrayNode)
             {
-                arrayNode.Add(new JArray());
-                _stack.Push(arrayNode);
+                JArray newArray = new();
+                arrayNode.Add(newArray);
+                _stack.Push(newArray);
             }
             else
             {
@@ -44,9 +45,9 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             }
         }
 
-        foreach (var dataItem in arrayItem.Children)
+        arrayItem.ForEach((dataItem, hasNext) =>
         {
-            if (dataItem == null)
+            if (dataItem is null)
             {
                 WriteNull();
             }
@@ -54,7 +55,7 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             {
                 dataItem.Accept(this);
             }
-        }
+        });
 
         _stack.Pop();
     }
@@ -71,13 +72,14 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             var stackNode = _stack.Peek();
             if (stackNode is JObject objectNode)
             {
-                objectNode.Add(_propertyNameStack.Peek(), new JObject());
+                objectNode.Add(_propertyNameStack.Peek());
                 _stack.Push(objectNode);
             }
             else if (stackNode is JArray arrayNode)
             {
-                arrayNode.Add(new JObject());
-                _stack.Push(arrayNode);
+                JObject newObject = new();
+                arrayNode.Add(newObject);
+                _stack.Push(newObject);
             }
             else
             {
@@ -85,7 +87,7 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             }
         }
 
-        foreach (var (propertyName, dataItem) in mapItem.ChildrenIndex)
+        mapItem.ForEach((propertyName, dataItem, hasNext) =>
         {
             _propertyNameStack.Push(propertyName);
 
@@ -99,7 +101,7 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             }
 
             _propertyNameStack.Pop();
-        }
+        });
 
         _stack.Pop();
     }

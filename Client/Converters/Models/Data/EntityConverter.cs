@@ -19,8 +19,16 @@ public static class EntityConverter
     {
         return new EntityReference(entityReference.EntityType, entityReference.PrimaryKey);
     }
+    
+    public static EntityReferenceWithParent ToEntityReferenceWithParent(GrpcEntityReferenceWithParent entityReferenceWithParent) {
+        return new EntityReferenceWithParent(
+            entityReferenceWithParent.EntityType, entityReferenceWithParent.PrimaryKey,
+            entityReferenceWithParent.Parent is not null ?
+                ToEntityReferenceWithParent(entityReferenceWithParent.Parent) : null
+        );
+    }
 
-    public static List<SealedEntity> ToSealedEntities(List<GrpcSealedEntity> sealedEntities,
+    public static List<SealedEntity> ToSealedEntities(IEnumerable<GrpcSealedEntity> sealedEntities,
         Func<string, int, EntitySchema> entitySchemaProvider)
     {
         return sealedEntities.Select(x => ToSealedEntity(
@@ -31,16 +39,30 @@ public static class EntityConverter
     }
 
     public static SealedEntity ToSealedEntity(Func<GrpcSealedEntity, EntitySchema> entitySchemaProvider,
-        GrpcSealedEntity grpcEntity)
+        GrpcSealedEntity grpcEntity, SealedEntity? parent = null)
     {
         EntitySchema entitySchema = entitySchemaProvider.Invoke(grpcEntity);
+        IEntityClassifierWithParent? parentEntity;
+        if (grpcEntity.ParentEntity is not null)
+        {
+            parentEntity = ToSealedEntity(entitySchemaProvider, grpcEntity.ParentEntity);
+        }
+        else if (grpcEntity.ParentReference is not null)
+        {
+            parentEntity = ToEntityReferenceWithParent(grpcEntity.ParentReference);
+        }
+        else
+        {
+            parentEntity = parent;
+        }
         return SealedEntity.InternalBuild(
             grpcEntity.PrimaryKey,
             grpcEntity.Version,
             entitySchema,
             grpcEntity.Parent,
+            parentEntity,
             grpcEntity.References
-                .Select(it => ToReference(entitySchema, it))
+                .Select(it => ToReference(entitySchema, entitySchemaProvider, it))
                 .ToList(),
             new Attributes(
                 entitySchema,
@@ -59,12 +81,13 @@ public static class EntityConverter
             new Prices(
                 entitySchema,
                 grpcEntity.Version,
-                grpcEntity.Prices.Select(ToPrice).ToList(),
+                grpcEntity.Prices.Select(ToPrice).ToList()!,
                 EvitaEnumConverter.ToPriceInnerRecordHandling(grpcEntity.PriceInnerRecordHandling)
             ),
             grpcEntity.Locales
                 .Select(EvitaDataTypesConverter.ToLocale)
-                .ToHashSet()
+                .ToHashSet(),
+            ToPrice(grpcEntity.PriceForSale)
         );
     }
 
@@ -74,25 +97,19 @@ public static class EntityConverter
     )
     {
         List<AttributeValue> result = new(globalAttributesMap.Count + localizedAttributesMap.Count);
-        foreach (var (attributeName, value) in globalAttributesMap)
-        {
-            result.Add(
-                ToAttributeValue(new AttributeKey(attributeName), value)
-            );
-        }
-
         foreach (var (key, localizedAttributeSet) in localizedAttributesMap)
         {
             CultureInfo locale = new CultureInfo(key);
             foreach (KeyValuePair<string, GrpcEvitaValue> attributeEntry in localizedAttributeSet.Attributes)
             {
                 result.Add(
-                    ToAttributeValue(
-                        new AttributeKey(attributeEntry.Key, locale),
-                        attributeEntry.Value
-                    )
+                    ToAttributeValue(new AttributeKey(attributeEntry.Key, locale),attributeEntry.Value)
                 );
             }
+        }
+        foreach (var (attributeName, value) in globalAttributesMap)
+        {
+            result.Add(ToAttributeValue(new AttributeKey(attributeName), value));
         }
 
         return result;
@@ -114,15 +131,6 @@ public static class EntityConverter
     )
     {
         List<AssociatedDataValue?> result = new(globalAssociatedDataMap.Count + localizedAssociatedDataMap.Count);
-        foreach (var (associatedDataName, value) in globalAssociatedDataMap)
-        {
-            result.Add(
-                ToAssociatedDataValue(
-                    new AssociatedDataKey(associatedDataName),
-                    value
-                )
-            );
-        }
 
         foreach (var (key, localizedAssociatedDataSet) in localizedAssociatedDataMap)
         {
@@ -137,6 +145,15 @@ public static class EntityConverter
                     )
                 );
             }
+        }
+        foreach (var (associatedDataName, value) in globalAssociatedDataMap)
+        {
+            result.Add(
+                ToAssociatedDataValue(
+                    new AssociatedDataKey(associatedDataName),
+                    value
+                )
+            );
         }
 
         return result;
@@ -157,8 +174,12 @@ public static class EntityConverter
         );
     }
 
-    private static IPrice ToPrice(GrpcPrice grpcPrice)
+    private static IPrice? ToPrice(GrpcPrice? grpcPrice)
     {
+        if (grpcPrice == null)
+        {
+            return null;
+        }
         return new Price(
             new PriceKey(
                 grpcPrice.PriceId,
@@ -176,7 +197,7 @@ public static class EntityConverter
     }
 
     private static AttributesHolder BuildAttributes(
-        ICollection<AttributeValue> entityAttributes
+        IEnumerable<AttributeValue> entityAttributes
     )
     {
         Dictionary<CultureInfo, GrpcLocalizedAttribute> localizedAttributes =
@@ -215,6 +236,7 @@ public static class EntityConverter
 
     public static Reference ToReference(
         EntitySchema entitySchema,
+        Func<GrpcSealedEntity, EntitySchema> entitySchemaProvider,
         GrpcReference grpcReference
     )
     {
@@ -235,7 +257,9 @@ public static class EntityConverter
             ToAttributeValues(
                 grpcReference.GlobalAttributes,
                 grpcReference.LocalizedAttributes
-            )
+            ),
+            grpcReference.ReferencedEntity == null ? null : ToSealedEntity(entitySchemaProvider, grpcReference.ReferencedEntity),
+            grpcReference.GroupReferencedEntity == null ? null : ToSealedEntity(entitySchemaProvider, grpcReference.GroupReferencedEntity)
         );
     }
 

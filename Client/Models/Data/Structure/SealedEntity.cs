@@ -19,7 +19,7 @@ namespace Client.Models.Data.Structure;
 public class SealedEntity : IEntity
 {
     public int Version { get; }
-    public string EntityType { get; }
+    public string Type { get; }
     public int? PrimaryKey { get; }
     [JsonIgnore]
     public IEntitySchema Schema { get; }
@@ -37,6 +37,7 @@ public class SealedEntity : IEntity
     public bool AssociatedDataAvailable => AssociatedData.AssociatedDataAvailable;
     private bool WithHierarchy { get; set; }
     private ISet<string> ReferencesDefined { get; set; }
+    public IPrice? PriceForSale { get; }
 
     public int? Parent
     {
@@ -47,39 +48,45 @@ public class SealedEntity : IEntity
         }
     }
 
-    private int? _parent;
+    private readonly int? _parent;
 
     public IEntityClassifierWithParent? ParentEntity
     {
         get
         {
             Assert.IsTrue(WithHierarchy, () => new EntityIsNotHierarchicalException(Schema.Name));
-            return null;
+            return _parentEntity;
         }
     }
+    
+    private readonly IEntityClassifierWithParent? _parentEntity;
 
     public static SealedEntity InternalBuild(
         int? primaryKey,
         int? version,
         EntitySchema entitySchema,
         int? parent,
+        IEntityClassifierWithParent? parentEntity,
         IEnumerable<Reference> references,
         Attributes attributes,
         AssociatedData associatedData,
         Prices prices,
-        IEnumerable<CultureInfo> locales)
+        IEnumerable<CultureInfo> locales,
+        IPrice? pricesForSale = null)
     {
         return new SealedEntity(
             version ?? 1,
             entitySchema,
             primaryKey,
             parent,
+            parentEntity,
             references,
             attributes,
             associatedData,
             prices,
             locales,
-            false
+            false,
+            pricesForSale
         );
     }
 
@@ -89,45 +96,52 @@ public class SealedEntity : IEntity
         int? version,
         EntitySchema entitySchema,
         int? parent,
+        IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference>? references,
         Attributes? attributes,
         AssociatedData? associatedData,
         Prices? prices,
         ISet<CultureInfo>? locales,
-        bool dropped)
+        bool dropped,
+        IPrice? priceForSale = null)
     {
         return new SealedEntity(
             version ?? 1,
             entitySchema,
             primaryKey,
             parent,
+            parentEntity,
             references ?? entity.References.Values,
             attributes ?? entity.Attributes,
             associatedData ?? entity.AssociatedData,
             prices ?? entity.Prices,
             locales ?? entity.Locales.ToImmutableHashSet(),
-            dropped
+            dropped,
+            priceForSale
         );
     }
 
     private SealedEntity(
         int version,
-        EntitySchema schema,
+        IEntitySchema schema,
         int? primaryKey,
         int? parent,
+        IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference> references,
         Attributes attributes,
         AssociatedData associatedData,
         Prices prices,
         IEnumerable<CultureInfo> locales,
-        bool dropped
+        bool dropped,
+        IPrice? priceForSale
     )
     {
         Version = version;
-        EntityType = schema.Name;
+        Type = schema.Name;
         Schema = schema;
         PrimaryKey = primaryKey;
         _parent = parent;
+        _parentEntity = parentEntity;
         References = references.ToDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
@@ -137,13 +151,15 @@ public class SealedEntity : IEntity
         InnerRecordHandling = prices.InnerRecordHandling;
         WithHierarchy = Schema.WithHierarchy;
         ReferencesDefined = Schema.References.Keys.ToHashSet();
+        PriceForSale = priceForSale;
     }
 
     private SealedEntity(
         int version,
-        EntitySchema schema,
+        IEntitySchema schema,
         int? primaryKey,
         int? parent,
+        IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference> references,
         Attributes attributes,
         AssociatedData associatedData,
@@ -155,10 +171,11 @@ public class SealedEntity : IEntity
     )
     {
         Version = version;
-        EntityType = schema.Name;
+        Type = schema.Name;
         Schema = schema;
         PrimaryKey = primaryKey;
         _parent = parent;
+        _parentEntity = parentEntity;
         References = references.ToDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
@@ -173,10 +190,11 @@ public class SealedEntity : IEntity
     public SealedEntity(string type, int? primaryKey)
     {
         Version = 1;
-        EntityType = type;
+        Type = type;
         Schema = EntitySchema.InternalBuild(type);
         PrimaryKey = primaryKey;
         _parent = null;
+        _parentEntity = null;
         References = new Dictionary<ReferenceKey, IReference>();
         Attributes = new Attributes(Schema);
         AssociatedData = new AssociatedData(Schema);
@@ -188,7 +206,7 @@ public class SealedEntity : IEntity
     }
 
     public static SealedEntity MutateEntity(
-        EntitySchema entitySchema,
+        IEntitySchema entitySchema,
         SealedEntity? entity,
         ICollection<ILocalMutation> localMutations
     )
@@ -262,6 +280,7 @@ public class SealedEntity : IEntity
                 entitySchema,
                 entity?.PrimaryKey,
                 newParent,
+                null, //TODO TPO: how to get the parent here?
                 mergedReferences.References,
                 newAttributeContainer,
                 newAssociatedDataContainer,
@@ -579,7 +598,7 @@ public class SealedEntity : IEntity
         return newAttributeContainer;
     }
 
-    public ICollection<IReference> GetReferences()
+    public IEnumerable<IReference> GetReferences()
     {
         return References.Values;
     }
@@ -740,16 +759,6 @@ public class SealedEntity : IEntity
     public IPrice? GetPrice(int priceId, string priceList, Currency currency)
     {
         return Prices.GetPrice(priceId, priceList, currency);
-    }
-
-    public IPrice? GetPriceForSale()
-    {
-        throw new ContextMissingException();
-    }
-
-    public Price? GetPriceForSaleIfAvailable()
-    {
-        return null;
     }
 
     public List<IPrice> GetAllPricesForSale()

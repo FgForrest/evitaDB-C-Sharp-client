@@ -21,4 +21,9 @@ public class AssociatedDataKey : IComparable<AssociatedDataKey>
     {
         return string.Compare(AssociatedDataName, other?.AssociatedDataName, StringComparison.Ordinal);
     }
+    
+    public override string ToString()
+    {
+        return $"AssociatedDataKey[associatedDataName={AssociatedDataName}, locale={(Locale == null ? "null" : Locale.TwoLetterISOLanguageName)}]";
+    }
 }

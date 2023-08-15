@@ -33,7 +33,7 @@ public class RemoveReferenceGroupMutation : ReferenceMutation
             existingValue.ReferenceCardinality,
             existingReferenceGroup is {Dropped: false}
                 ? new GroupEntityReference(
-                    existingReferenceGroup.EntityType,
+                    existingReferenceGroup.Type,
                     existingReferenceGroup.PrimaryKey!.Value,
                     existingReferenceGroup.Version + 1,
                     true
@@ -41,6 +41,8 @@ public class RemoveReferenceGroupMutation : ReferenceMutation
                 : throw new InvalidMutationException(
                     "Cannot remove reference group - no reference group is set on reference " + ReferenceKey + "!"),
             existingValue.GetAttributeValues(),
+            existingValue.ReferencedEntity,
+            existingValue.GroupEntity,
             existingValue.Dropped
         );
     }

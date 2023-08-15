@@ -26,6 +26,22 @@ message GrpcEntityReference {
   int32 version = 3;
 }
 
+// Type that represent an entity reference with the additional information about their parent entity.
+message GrpcEntityReferenceWithParent {
+  // Type of entity.
+  // Entity type is main sharding key - all data of entities with same type are stored in separated collections. Within the
+  // entity type entity is uniquely represented by primary key.
+  string entityType = 1;
+  // Unique Integer positive number representing the entity. Can be used for fast lookup for
+  // entity (entities). Primary key must be unique within the same entity type.
+  int32 primaryKey = 2;
+  // Contains version of this entity and gets increased with any entity type update. Allows to execute
+  // optimistic locking i.e. avoiding parallel modifications.
+  int32 version = 3;
+  // Contains information about parent entity in a form of a reference.
+  GrpcEntityReferenceWithParent parent = 4;
+}
+
 // Based on our experience we've designed following data model for handling entities in evitaDB. Model is rather complex
 // but was designed to limit amount of data fetched from database and minimize an amount of data that are indexed and subject
 // to search.
@@ -45,10 +61,10 @@ message GrpcSealedEntity {
   int32 schemaVersion = 4;
   // Primary key of parent entity.
   google.protobuf.Int32Value parent = 5;
-  // A list of hierarchical tree of parent entity references.
-  repeated GrpcEntityReference parentReference = 6;
-  // A list of hierarchical tree of parent entities.
-  repeated GrpcSealedEntity parentEntity = 7;
+  // A parent entity reference with its parent hierarchy chain.
+  GrpcEntityReferenceWithParent parentReference = 6;
+  // A parent entity with its parent hierarchy chain.
+  GrpcSealedEntity parentEntity = 7;
   // Contains global attributes.
   map<string, GrpcEvitaValue> globalAttributes = 8;
   // Contains localized attributes.

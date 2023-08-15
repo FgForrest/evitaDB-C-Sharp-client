@@ -436,6 +436,8 @@ public interface IQueryConstraints
     static AssociatedDataContent AssociatedDataContent(params string[]? associatedDataNames) =>
         associatedDataNames is null ? new AssociatedDataContent() : new AssociatedDataContent(associatedDataNames);
 
+    static DataInLocales DataInLocalesAll() => new DataInLocales();
+    
     static DataInLocales DataInLocales(params CultureInfo[]? locales) => locales is null
         ? new DataInLocales()
         : new DataInLocales(locales);

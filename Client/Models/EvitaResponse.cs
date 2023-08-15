@@ -11,8 +11,8 @@ public abstract class EvitaResponse<T> where T : IEntityClassifier
     public IDataChunk<T> RecordPage { get; }
     public IDictionary<Type, IEvitaResponseExtraResult> ExtraResults => ExtraResultsInternal
         .ToImmutableDictionary(x => x.Key, x => x.Value);
+    public IList<T> RecordData => RecordPage.Data ?? new List<T>();
     private Dictionary<Type, IEvitaResponseExtraResult> ExtraResultsInternal { get; } = new();
-
     protected EvitaResponse(Query query, IDataChunk<T> recordPage)
     {
         Query = query;

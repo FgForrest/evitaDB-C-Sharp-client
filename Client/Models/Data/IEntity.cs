@@ -9,7 +9,8 @@ public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociated
     int? Parent { get; }
     bool ParentAvailable { get; }
     bool ReferencesAvailable { get; }
-    ICollection<IReference> GetReferences();
+    IEnumerable<IReference> GetReferences();
+    IPrice? PriceForSale { get; }
     IReference? GetReference(string referenceName, int referencedEntityId);
     IReference? GetReference(ReferenceKey referenceKey);
     ISet<CultureInfo> GetAllLocales();

@@ -500,7 +500,7 @@ public class EvitaClientSession : IDisposable
         IEntityMutation? mutation = entityBuilder.ToMutation();
         return mutation is not null
             ? UpsertEntity(mutation)
-            : new EntityReference(entityBuilder.EntityType, entityBuilder.PrimaryKey);
+            : new EntityReference(entityBuilder.Type, entityBuilder.PrimaryKey);
     }
 
     public EntityReference UpsertEntity(IEntityMutation entityMutation)
@@ -529,7 +529,7 @@ public class EvitaClientSession : IDisposable
         IEntityMutation? mutation = entityBuilder.ToMutation();
         return mutation is not null
             ? UpsertAndFetchEntity(mutation, require)
-            : GetEntityOrThrow(entityBuilder.EntityType, entityBuilder.PrimaryKey!.Value, require);
+            : GetEntityOrThrow(entityBuilder.Type, entityBuilder.PrimaryKey!.Value, require);
     }
 
     public SealedEntity UpsertAndFetchEntity(IEntityMutation entityMutation, params IEntityContentRequire[] require)

@@ -99,6 +99,16 @@ public class InitialEntityBuilder : IEntityBuilder
         
 	}
     
+    public InitialEntityBuilder(IEntitySchema schema, int? primaryKey) {
+        Type = schema.Name;
+        Schema = schema;
+        PrimaryKey = primaryKey;
+        AttributesBuilder = new InitialAttributesBuilder(schema, null);
+        //AssociatedDataBuilder = new InitialAssociatedDataBuilder(schema);
+        //PricesBuilder = new InitialPricesBuilder(schema);
+        References = new Dictionary<ReferenceKey, Reference>();
+    }
+    
     public object? GetAttribute(string attributeName)
     {
         throw new NotImplementedException();

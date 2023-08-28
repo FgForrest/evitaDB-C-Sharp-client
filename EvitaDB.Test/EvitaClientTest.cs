@@ -48,13 +48,13 @@ public class EvitaClientTest
     }
 
     [Test]
-    public async Task ShouldBeAbleTo_CreateCatalog_And_EntitySchema_AndInsertNewEntity_WithAttribute()
+    public void ShouldBeAbleTo_CreateCatalog_And_EntitySchema_AndInsertNewEntity_WithAttribute()
     {
         // delete test catalog if it exists
         _client!.DeleteCatalogIfExists(TestCatalog);
 
         // define new catalog
-        CatalogSchema catalogSchema = await _client.DefineCatalogAsync(TestCatalog);
+        CatalogSchema catalogSchema = _client.DefineCatalog(TestCatalog);
         That(catalogSchema.Name, Is.EqualTo(TestCatalog));
 
         using (var rwSession = _client.CreateReadWriteSession(TestCatalog))
@@ -175,9 +175,9 @@ public class EvitaClientTest
     }
 
     [Test]
-    public async Task ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_SealedEntities()
+    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_SealedEntities()
     {
-        EvitaEntityResponse entityResponse = await _client!.QueryCatalogAsync(ExistingCatalogWithData, session =>
+        EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
             session.Query<EvitaEntityResponse, SealedEntity>(
                 Query(
                     Collection("Product"),

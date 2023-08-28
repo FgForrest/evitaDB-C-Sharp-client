@@ -71,6 +71,192 @@ public class EvitaClient : IClientContext, IDisposable
         _cdcChannel = channelBuilder.Build();
     }
 
+    public IObservable<ChangeSystemCapture> RegisterSystemChangeCapture(ChangeSystemCaptureRequest request)
+    {
+        return ExecuteWithStreamingEvitaService(stub =>
+            stub.RegisterSystemChangeCapture(
+                    new GrpcRegisterSystemChangeCaptureRequest
+                    {
+                        Content = EvitaEnumConverter.ToGrpcCaptureContent(request.Content)
+                    }
+                ).ResponseStream
+                .AsObservable()
+                .Select(x => ChangeDataCaptureConverter.ToChangeSystemCapture(x.Capture))
+        );
+    }
+
+    public EvitaClientSession CreateReadOnlySession(string catalogName)
+    {
+        return CreateSession(new SessionTraits(catalogName));
+    }
+
+    public EvitaClientSession CreateReadWriteSession(string catalogName)
+    {
+        return CreateSession(new SessionTraits(catalogName, SessionFlags.ReadWrite));
+    }
+
+    public EvitaClientSession? GetSessionById(string catalogName, Guid sessionId)
+    {
+        AssertActive();
+        if (_activeSessions.TryGetValue(sessionId, out EvitaClientSession? session))
+        {
+            return session.CatalogName == catalogName ? session : null;
+        }
+
+        return null;
+    }
+
+    public void TerminateSession(EvitaClientSession session)
+    {
+        AssertActive();
+        session.Close();
+    }
+
+    public ISet<string> GetCatalogNames()
+    {
+        AssertActive();
+        GrpcCatalogNamesResponse grpcResponse =
+            ExecuteWithBlockingEvitaService(evitaService => evitaService.GetCatalogNames(new Empty()));
+        return new HashSet<string>(
+            grpcResponse.CatalogNames
+        );
+    }
+
+    public CatalogSchema DefineCatalog(string catalogName)
+    {
+        AssertActive();
+        if (!GetCatalogNames().Contains(catalogName))
+        {
+            Update(new CreateCatalogSchemaMutation(catalogName));
+        }
+
+        return QueryCatalog(catalogName, x => x.GetCatalogSchema());
+    }
+
+    public void RenameCatalog(string catalogName, string newCatalogName)
+    {
+        AssertActive();
+        GrpcRenameCatalogRequest request = new GrpcRenameCatalogRequest
+        {
+            CatalogName = catalogName,
+            NewCatalogName = newCatalogName
+        };
+        GrpcRenameCatalogResponse response =
+            ExecuteWithBlockingEvitaService(evitaService => evitaService.RenameCatalog(request));
+        if (response.Success)
+        {
+            _entitySchemaCache.Remove(catalogName, out _);
+            _entitySchemaCache.Remove(newCatalogName, out _);
+        }
+    }
+
+    public void ReplaceCatalog(string catalogNameToBeReplacedWith, string catalogNameToBeReplaced)
+    {
+        AssertActive();
+        GrpcReplaceCatalogRequest request = new GrpcReplaceCatalogRequest
+        {
+            CatalogNameToBeReplacedWith = catalogNameToBeReplacedWith,
+            CatalogNameToBeReplaced = catalogNameToBeReplaced
+        };
+        GrpcReplaceCatalogResponse response =
+            ExecuteWithBlockingEvitaService(evitaService => evitaService.ReplaceCatalog(request));
+        if (response.Success)
+        {
+            _entitySchemaCache.Remove(catalogNameToBeReplacedWith, out _);
+            _entitySchemaCache.Remove(catalogNameToBeReplaced, out _);
+        }
+    }
+
+    public bool DeleteCatalogIfExists(string catalogName)
+    {
+        AssertActive();
+
+        GrpcDeleteCatalogIfExistsRequest request = new GrpcDeleteCatalogIfExistsRequest
+        {
+            CatalogName = catalogName
+        };
+        GrpcDeleteCatalogIfExistsResponse grpcResponse =
+            ExecuteWithBlockingEvitaService(evitaService => evitaService.DeleteCatalogIfExists(request));
+        bool success = grpcResponse.Success;
+        if (success)
+        {
+            _entitySchemaCache.TryRemove(catalogName, out _);
+        }
+
+        return success;
+    }
+
+    public void Update(params ITopLevelCatalogSchemaMutation[] catalogMutations)
+    {
+        AssertActive();
+
+        List<GrpcTopLevelCatalogSchemaMutation> grpcSchemaMutations = catalogMutations
+            .Select(CatalogSchemaMutationConverter.Convert)
+            .ToList();
+
+        GrpcUpdateEvitaRequest request = new GrpcUpdateEvitaRequest {SchemaMutations = {grpcSchemaMutations}};
+        ExecuteWithBlockingEvitaService(evitaService => evitaService.Update(request));
+    }
+
+    public T QueryCatalog<T>(string catalogName, Func<EvitaClientSession, T> queryLogic,
+        params SessionFlags[] sessionFlags)
+    {
+        AssertActive();
+        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
+        return queryLogic.Invoke(session);
+    }
+
+    public void QueryCatalog(string catalogName, Action<EvitaClientSession> queryLogic,
+        params SessionFlags[] sessionFlags)
+    {
+        AssertActive();
+        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
+        queryLogic.Invoke(session);
+    }
+
+    public T UpdateCatalog<T>(string catalogName, Func<EvitaClientSession, T> updater, params SessionFlags[]? flags)
+    {
+        AssertActive();
+        SessionTraits traits = new SessionTraits(
+            catalogName,
+            flags == null
+                ? new[] {SessionFlags.ReadWrite}
+                : flags.Contains(SessionFlags.ReadWrite)
+                    ? flags
+                    : flags.Append(SessionFlags.ReadWrite).ToArray()
+        );
+        using EvitaClientSession session = CreateSession(traits);
+        return session.Execute(updater);
+    }
+
+    public void UpdateCatalog(string catalogName, Action<EvitaClientSession> updater, params SessionFlags[]? flags)
+    {
+        UpdateCatalog(
+            catalogName,
+            evitaSession =>
+            {
+                updater.Invoke(evitaSession);
+                return 0;
+            },
+            flags
+        );
+    }
+    
+    public void Close()
+    {
+        if (Interlocked.CompareExchange(ref _active, 1, 0) == 1)
+        {
+            _activeSessions.Values.ToList().ForEach(session => session.CloseTransaction());
+            _activeSessions.Clear();
+            _channelPool.Shutdown();
+        }
+    }
+
+    public void Dispose()
+    {
+        Close();
+    }
+
     private T ExecuteWithBlockingEvitaService<T>(Func<EvitaService.EvitaServiceClient, T> logic)
     {
         return ExecuteWithEvitaService(
@@ -154,16 +340,6 @@ public class EvitaClient : IClientContext, IDisposable
         );
     }
 
-    public EvitaClientSession CreateReadOnlySession(string catalogName)
-    {
-        return CreateSession(new SessionTraits(catalogName));
-    }
-
-    public EvitaClientSession CreateReadWriteSession(string catalogName)
-    {
-        return CreateSession(new SessionTraits(catalogName, SessionFlags.ReadWrite));
-    }
-
     private EvitaClientSession CreateSession(SessionTraits traits)
     {
         AssertActive();
@@ -173,8 +349,10 @@ public class EvitaClient : IClientContext, IDisposable
             DryRun = traits.IsDryRun(),
         };
         var grpcResponse = traits.IsReadWrite()
-            ? ExecuteWithBlockingEvitaService(evitaServiceClient => evitaServiceClient.CreateReadWriteSession(grpcRequest))
-            : ExecuteWithBlockingEvitaService(evitaServiceClient => evitaServiceClient.CreateReadOnlySession(grpcRequest));
+            ? ExecuteWithBlockingEvitaService(evitaServiceClient =>
+                evitaServiceClient.CreateReadWriteSession(grpcRequest))
+            : ExecuteWithBlockingEvitaService(evitaServiceClient =>
+                evitaServiceClient.CreateReadOnlySession(grpcRequest));
         var session = new EvitaClientSession(
             _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
             _channelPool,
@@ -190,87 +368,6 @@ public class EvitaClient : IClientContext, IDisposable
         );
         SessionIdHolder.SetSessionId(traits.CatalogName, grpcResponse.SessionId);
         return session;
-    }
-
-    private async Task<EvitaClientSession> CreateSessionAsync(SessionTraits traits)
-    {
-        AssertActive();
-        GrpcEvitaSessionRequest grpcRequest = new()
-        {
-            CatalogName = traits.CatalogName,
-            DryRun = traits.IsDryRun(),
-        };
-        var grpcResponse = traits.IsReadWrite()
-            ? await ExecuteWithBlockingEvitaService(async evitaServiceClient =>
-                await evitaServiceClient.CreateReadWriteSessionAsync(grpcRequest))
-            : await ExecuteWithBlockingEvitaService(async evitaServiceClient =>
-                await evitaServiceClient.CreateReadOnlySessionAsync(grpcRequest));
-        var session = new EvitaClientSession(
-            _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
-            _channelPool,
-            traits.CatalogName,
-            Enum.Parse<CatalogState>(grpcResponse.CatalogState.ToString()),
-            Guid.Parse(grpcResponse.SessionId),
-            traits,
-            session =>
-            {
-                _activeSessions.Remove(session.SessionId, out _);
-                traits.TerminationCallback?.Invoke(session);
-            }
-        );
-        SessionIdHolder.SetSessionId(traits.CatalogName, grpcResponse.SessionId);
-        return session;
-    }
-
-    public void QueryCatalog(string catalogName, Action<EvitaClientSession> queryLogic,
-        params SessionFlags[] sessionFlags)
-    {
-        AssertActive();
-        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
-        queryLogic.Invoke(session);
-    }
-
-    public async Task QueryCatalogAsync(string catalogName, Action<EvitaClientSession> queryLogic,
-        params SessionFlags[] sessionFlags)
-    {
-        AssertActive();
-        using EvitaClientSession session = await CreateSessionAsync(new SessionTraits(catalogName, sessionFlags));
-        queryLogic.Invoke(session);
-    }
-
-    public T QueryCatalog<T>(string catalogName, Func<EvitaClientSession, T> queryLogic,
-        params SessionFlags[] sessionFlags)
-    {
-        AssertActive();
-        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
-        return queryLogic.Invoke(session);
-    }
-
-    public async Task<T> QueryCatalogAsync<T>(string catalogName, Func<EvitaClientSession, T> queryLogic,
-        params SessionFlags[] sessionFlags)
-    {
-        AssertActive();
-        using EvitaClientSession session = await CreateSessionAsync(new SessionTraits(catalogName, sessionFlags));
-        return queryLogic.Invoke(session);
-    }
-
-    public bool DeleteCatalogIfExists(string catalogName)
-    {
-        AssertActive();
-
-        GrpcDeleteCatalogIfExistsRequest request = new GrpcDeleteCatalogIfExistsRequest
-        {
-            CatalogName = catalogName
-        };
-        GrpcDeleteCatalogIfExistsResponse grpcResponse =
-            ExecuteWithBlockingEvitaService(evitaService => evitaService.DeleteCatalogIfExists(request));
-        bool success = grpcResponse.Success;
-        if (success)
-        {
-            _entitySchemaCache.TryRemove(catalogName, out _);
-        }
-
-        return success;
     }
 
     private void AssertActive()
@@ -279,100 +376,5 @@ public class EvitaClient : IClientContext, IDisposable
         {
             throw new InstanceTerminatedException("client instance");
         }
-    }
-
-    public ISet<string> GetCatalogNames()
-    {
-        AssertActive();
-        GrpcCatalogNamesResponse grpcResponse =
-            ExecuteWithBlockingEvitaService(evitaService => evitaService.GetCatalogNames(new Empty()));
-        return new HashSet<string>(
-            grpcResponse.CatalogNames
-        );
-    }
-
-    public async Task<ISet<string>> GetCatalogNamesAsync()
-    {
-        AssertActive();
-        GrpcCatalogNamesResponse grpcResponse =
-            await ExecuteWithBlockingEvitaService(async evitaService => await evitaService.GetCatalogNamesAsync(new Empty()));
-        return new HashSet<string>(
-            grpcResponse.CatalogNames
-        );
-    }
-
-    public void Update(params ITopLevelCatalogSchemaMutation[] catalogMutations)
-    {
-        AssertActive();
-
-        List<GrpcTopLevelCatalogSchemaMutation> grpcSchemaMutations = catalogMutations
-            .Select(CatalogSchemaMutationConverter.Convert)
-            .ToList();
-
-        GrpcUpdateEvitaRequest request = new GrpcUpdateEvitaRequest {SchemaMutations = {grpcSchemaMutations}};
-        ExecuteWithBlockingEvitaService(evitaService => evitaService.Update(request));
-    }
-
-    public async Task UpdateAsync(params ITopLevelCatalogSchemaMutation[] catalogMutations)
-    {
-        AssertActive();
-
-        List<GrpcTopLevelCatalogSchemaMutation> grpcSchemaMutations = catalogMutations
-            .Select(CatalogSchemaMutationConverter.Convert)
-            .ToList();
-
-        GrpcUpdateEvitaRequest request = new GrpcUpdateEvitaRequest {SchemaMutations = {grpcSchemaMutations}};
-        await ExecuteWithBlockingEvitaService(async evitaService => await evitaService.UpdateAsync(request));
-    }
-
-    public CatalogSchema DefineCatalog(string catalogName)
-    {
-        AssertActive();
-        if (!GetCatalogNames().Contains(catalogName))
-        {
-            Update(new CreateCatalogSchemaMutation(catalogName));
-        }
-
-        return QueryCatalog(catalogName, x => x.GetCatalogSchema());
-    }
-
-    public IObservable<ChangeSystemCapture> RegisterSystemChangeCapture(ChangeSystemCaptureRequest request)
-    {
-        return ExecuteWithStreamingEvitaService(stub => 
-            stub.RegisterSystemChangeCapture(
-                new GrpcRegisterSystemChangeCaptureRequest
-                {
-                    Content = EvitaEnumConverter.ToGrpcCaptureContent(request.Content)
-                }
-            ).ResponseStream
-            .AsObservable()
-            .Select(x => ChangeDataCaptureConverter.ToChangeSystemCapture(x.Capture))
-        );
-    }
-
-    public async Task<CatalogSchema> DefineCatalogAsync(string catalogName)
-    {
-        AssertActive();
-        if (!(await GetCatalogNamesAsync()).Contains(catalogName))
-        {
-            await UpdateAsync(new CreateCatalogSchemaMutation(catalogName));
-        }
-
-        return await QueryCatalogAsync(catalogName, x => x.GetCatalogSchema());
-    }
-
-    public void Close()
-    {
-        if (Interlocked.CompareExchange(ref _active, 1, 0) == 1)
-        {
-            _activeSessions.Values.ToList().ForEach(session => session.CloseTransaction());
-            _activeSessions.Clear();
-            _channelPool.Shutdown();
-        }
-    }
-
-    public void Dispose()
-    {
-        Close();
     }
 }

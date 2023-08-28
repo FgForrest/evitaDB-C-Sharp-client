@@ -33,14 +33,14 @@ jobs:
         uses: vimtor/action-zip@v1
         with:
           dest: 'Validator.zip'
-          files: './EvitaDB.QueryValidator/bin/Release/net7.0/linux-x64/publish/Validator'
+          files: 'EvitaDB.QueryValidator/bin/Release/net7.0/linux-x64/publish/Validator'
           recursive: false
 
       - name: Zip 
         uses: vimtor/action-zip@v1
         with:
           dest: 'Validator-win.zip'
-          files: './EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
+          files: 'EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
           recursive: false
 
       - name: Checkout sources

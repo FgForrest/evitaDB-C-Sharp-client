@@ -26,12 +26,6 @@ jobs:
       - name: Build
         run: cd EvitaDB.QueryValidator && dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false && dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
 
-      - name: List files
-        run: ls -R
-
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
       - name: Zip 
         uses: vimtor/action-zip@v1
         with:
@@ -45,9 +39,6 @@ jobs:
           dest: 'Validator-win.zip'
           files: 'EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
           recursive: false
-
-      - name: Checkout sources
-        uses: actions/checkout@v3
 
       - name: Release
         uses: marvinpinto/action-automatic-releases@v1.2.1

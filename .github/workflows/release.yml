@@ -26,6 +26,9 @@ jobs:
       - name: Build
         run: cd EvitaDB.QueryValidator && dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false && dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
 
+      - name: List files
+        run: ls -R
+
       - name: Checkout sources
         uses: actions/checkout@v2
 

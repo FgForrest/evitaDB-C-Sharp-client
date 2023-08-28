@@ -31,14 +31,14 @@ jobs:
         with:
           type: 'zip'
           filename: 'Validator.zip'
-          path: './bin/Release/net7.0/linux-x64/publish/Validator'
+          path: './EvitaDB.QueryValidator/bin/Release/net7.0/linux-x64/publish/Validator'
 
       - name: Zip Dist
         uses: thedoctor0/zip-release@0.7.1
         with:
           type: 'zip'
           filename: 'Validator-win.zip'
-          path: './bin/Release/net7.0/win-x64/publish/Validator.exe'
+          path: './EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
 
       - name: Release
         uses: marvinpinto/action-automatic-releases@v1.2.1

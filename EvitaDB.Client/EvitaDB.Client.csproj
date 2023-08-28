@@ -5,9 +5,17 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<RootNamespace>Client</RootNamespace>
-<!--
-        <WarningsAsErrors>Nullable</WarningsAsErrors>
--->
+		<Version>0.0.1-alpha</Version>
+		<Title>EvitaDB.Client</Title>
+		<Authors>evitadb.io</Authors>
+		<Description>evitaDB C# client allows connecting to a remote evitaDB server through gRPC API from .NET environment.</Description>
+		<Copyright>2023, FGForrest a.s.</Copyright>
+		<PackageProjectUrl>https://evitadb.io/</PackageProjectUrl>
+		<PackageLicenseUrl>Apache-2.0</PackageLicenseUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<RepositoryUrl>https://github.com/FgForrest/evitaDB-C-Sharp-client</RepositoryUrl>
+		<PackageTags>database in-memory no-sql ecommerce</PackageTags>
+		<PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -25,7 +33,12 @@
       <Protobuf ProtoRoot="Protos" Include="Protos\*.proto" GrpcServices="Client" />
     </ItemGroup>
 
-
-
+    <ItemGroup>
+      <None Include="..\.idea\icon.png">
+        <Pack>True</Pack>
+        <PackagePath></PackagePath>
+        <Link>icon.png</Link>
+      </None>
+    </ItemGroup>
 
 </Project>

@@ -1,0 +1,51 @@
+# Builds and releases a new public version of evitaLab a puts it into `Releases` section of GitHub
+
+name: Release
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - .github/workflows/release.yml
+      - EvitaDB.QueryValidator/**.*
+
+jobs:
+  build-and-release:
+    name: Build and release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.X'   # setup dotnet 7.0.10 for building
+
+      - name: Build
+        run: cd EvitaDB.QueryValidator && dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false && dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
+
+      - name: Zip Dist
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          filename: 'Validator.zip'
+          path: './bin/Release/net7.0/linux-x64/publish/Validator'
+
+      - name: Zip Dist
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          filename: 'Validator-win.zip'
+          path: './bin/Release/net7.0/win-x64/publish/Validator.exe'
+
+      - name: Release
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          automatic_release_tag: "latest"
+          files: |
+            Validator.zip
+            Validator-win.zip

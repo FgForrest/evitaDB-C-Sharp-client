@@ -1,0 +1,40 @@
+using System;
+using System.Globalization;
+using Client;
+using Client.Config;
+using Client.Models;
+using Client.DataTypes;
+using Client.Models.Data.Structure;
+using Newtonsoft.Json;
+
+using static Client.Queries.IQueryConstraints;
+using static Client.Queries.Filter.AttributeSpecialValue;
+using static Client.Queries.Requires.StatisticsType;
+using static Client.Queries.Requires.StatisticsBase;
+using static Client.Queries.Query;
+using static Client.Queries.Order.OrderDirection;
+using static Client.Queries.Requires.PriceContentMode;
+using static Client.Queries.Requires.FacetStatisticsDepth;
+using static Client.Queries.Requires.QueryPriceMode;
+using static Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
+
+public class DynamicClass
+{
+    private static readonly EvitaClientConfiguration EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
+            .SetHost("demo.evitadb.io")
+            .SetPort(5556)
+            .SetUseGeneratedCertificate(false)
+            .SetUsingTrustedRootCaCertificate(true)
+            .Build();
+            
+    public static void Main()
+    {
+    }
+    
+    public static EvitaResponse<SealedEntity> Run() 
+    {
+        EvitaClient evita = new EvitaClient(EvitaClientConfiguration);
+        #QUERY#
+        return entities;
+    }
+}

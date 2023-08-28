@@ -57,7 +57,7 @@ public class ByteNumberRange : NumberRange<byte>
         }
     }
 
-    public static ByteNumberRange InternalBuild(byte? from, byte? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
+    internal static ByteNumberRange InternalBuild(byte? from, byte? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
         return new ByteNumberRange(from, to, retainedDecimalPlaces, fromToCompare, toToCompare);
     }
 

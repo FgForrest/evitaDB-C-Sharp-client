@@ -12,7 +12,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
     public bool Localized { get; }
     public Type Type { get; }
 
-    public static AssociatedDataSchema InternalBuild(string name, Type type, bool localized)
+    internal static AssociatedDataSchema InternalBuild(string name, Type type, bool localized)
     {
         return new AssociatedDataSchema(
             name, NamingConventionHelper.Generate(name),
@@ -22,7 +22,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         );
     }
 
-    public static AssociatedDataSchema InternalBuild(string name, bool localized, bool nullable, Type type)
+    internal static AssociatedDataSchema InternalBuild(string name, bool localized, bool nullable, Type type)
     {
         return new AssociatedDataSchema(
             name, NamingConventionHelper.Generate(name),
@@ -32,7 +32,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         );
     }
 
-    public static AssociatedDataSchema InternalBuild(string name, string? description, string? deprecationNotice,
+    internal static AssociatedDataSchema InternalBuild(string name, string? description, string? deprecationNotice,
         bool localized, bool nullable, Type type)
     {
         return new AssociatedDataSchema(
@@ -43,7 +43,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         );
     }
 
-    public static AssociatedDataSchema InternalBuild(string name, IDictionary<NamingConvention, string> nameVariants,
+    internal static AssociatedDataSchema InternalBuild(string name, IDictionary<NamingConvention, string> nameVariants,
         string? description, string? deprecationNotice, bool localized, bool nullable, Type type)
     {
         return new AssociatedDataSchema(

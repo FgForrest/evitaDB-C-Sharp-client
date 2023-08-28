@@ -14,7 +14,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
     public IList<AttributeElement> AttributeElements { get; }
     private bool? MemoizedLocalized { get; set; }
 
-    public static SortableAttributeCompoundSchema InternalBuild(
+    internal static SortableAttributeCompoundSchema InternalBuild(
         string name,
         string? description,
         string? deprecationNotice,
@@ -30,7 +30,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
         );
     }
 
-    public static SortableAttributeCompoundSchema InternalBuild(
+    internal static SortableAttributeCompoundSchema InternalBuild(
         string name,
         IDictionary<NamingConvention, string> nameVariants,
         string? description,

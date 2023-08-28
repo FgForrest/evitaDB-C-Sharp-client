@@ -31,14 +31,14 @@ jobs:
         with:
           dest: 'Validator.zip'
           files: 'EvitaDB.QueryValidator/bin/Release/net7.0/linux-x64/publish/Validator'
-          recursive: false
+          recursive: true
 
       - name: Zip 
         uses: vimtor/action-zip@v1
         with:
           dest: 'Validator-win.zip'
           files: 'EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
-          recursive: false
+          recursive: true
 
       - name: Release
         uses: marvinpinto/action-automatic-releases@v1.2.1

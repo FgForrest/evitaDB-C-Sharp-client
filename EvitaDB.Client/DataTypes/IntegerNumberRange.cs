@@ -57,7 +57,7 @@ public class IntegerNumberRange : NumberRange<int>
         }
     }
 
-    public static IntegerNumberRange InternalBuild(int? from, int? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
+    internal static IntegerNumberRange InternalBuild(int? from, int? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
         return new IntegerNumberRange(from, to, retainedDecimalPlaces, fromToCompare, toToCompare);
     }
 

@@ -58,7 +58,7 @@ public class LongNumberRange : NumberRange<long>
         }
     }
 
-    public static LongNumberRange InternalBuild(long? from, long? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
+    internal static LongNumberRange InternalBuild(long? from, long? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
         return new LongNumberRange(from, to, retainedDecimalPlaces, fromToCompare, toToCompare);
     }
 

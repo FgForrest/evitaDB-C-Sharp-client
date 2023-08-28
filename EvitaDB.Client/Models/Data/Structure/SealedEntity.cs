@@ -61,7 +61,7 @@ public class SealedEntity : IEntity
     
     private readonly IEntityClassifierWithParent? _parentEntity;
 
-    public static SealedEntity InternalBuild(
+    internal static SealedEntity InternalBuild(
         int? primaryKey,
         int? version,
         EntitySchema entitySchema,
@@ -90,7 +90,7 @@ public class SealedEntity : IEntity
         );
     }
 
-    public static SealedEntity InternalBuild(
+    internal static SealedEntity InternalBuild(
         SealedEntity entity,
         int? primaryKey,
         int? version,

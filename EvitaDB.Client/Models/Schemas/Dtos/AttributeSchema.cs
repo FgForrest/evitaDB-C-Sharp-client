@@ -20,7 +20,7 @@ public class AttributeSchema : IAttributeSchema
     public Type PlainType { get; }
     public int IndexedDecimalPlaces { get; }
 
-    public static AttributeSchema InternalBuild(string name, Type type, bool localized)
+    internal static AttributeSchema InternalBuild(string name, Type type, bool localized)
     {
         return new AttributeSchema(
             name, NamingConventionHelper.Generate(name),
@@ -31,7 +31,7 @@ public class AttributeSchema : IAttributeSchema
         );
     }
 
-    public static AttributeSchema InternalBuild<T>(string name, bool unique, bool filterable, bool sortable,
+    internal static AttributeSchema InternalBuild<T>(string name, bool unique, bool filterable, bool sortable,
         bool localized, bool nullable, Type type, T? defaultValue)
     {
         if ((filterable || sortable) && typeof(decimal) == type)
@@ -50,7 +50,7 @@ public class AttributeSchema : IAttributeSchema
         );
     }
 
-    public static AttributeSchema InternalBuild<T>(string name, string? description, string? deprecationNotice,
+    internal static AttributeSchema InternalBuild<T>(string name, string? description, string? deprecationNotice,
         bool unique, bool filterable, bool sortable, bool localized, bool nullable, Type type, T? defaultValue,
         int indexedDecimalPlaces)
     {
@@ -63,7 +63,7 @@ public class AttributeSchema : IAttributeSchema
         );
     }
 
-    public static AttributeSchema InternalBuild<T>(string name, IDictionary<NamingConvention, string> nameVariants,
+    internal static AttributeSchema InternalBuild<T>(string name, IDictionary<NamingConvention, string> nameVariants,
         string? description, string? deprecationNotice, bool unique, bool filterable, bool sortable,
         bool localized, bool nullable, Type type, T? defaultValue, int
             indexedDecimalPlaces)
@@ -77,7 +77,7 @@ public class AttributeSchema : IAttributeSchema
         );
     }
 
-    public static GlobalAttributeSchema InternalBuild(
+    internal static GlobalAttributeSchema InternalBuild(
         string name,
         string? description,
         string? deprecationNotice,

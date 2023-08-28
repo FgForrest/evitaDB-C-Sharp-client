@@ -57,7 +57,7 @@ public class ShortNumberRange : NumberRange<short>
         }
     }
 
-    public static ShortNumberRange InternalBuild(short? from, short? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
+    internal static ShortNumberRange InternalBuild(short? from, short? to, int? retainedDecimalPlaces, long fromToCompare, long toToCompare) {
         return new ShortNumberRange(from, to, retainedDecimalPlaces, fromToCompare, toToCompare);
     }
 

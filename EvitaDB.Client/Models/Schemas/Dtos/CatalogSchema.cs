@@ -16,7 +16,7 @@ public class CatalogSchema : ICatalogSchema
     
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes { get; }
     
-    public static CatalogSchema InternalBuild(
+    internal static CatalogSchema InternalBuild(
         string name, IDictionary<NamingConvention, string> nameVariants,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         Func<string, IEntitySchema> entitySchemaAccessor
@@ -27,7 +27,7 @@ public class CatalogSchema : ICatalogSchema
         );
     }
 
-    public static CatalogSchema InternalBuild(
+    internal static CatalogSchema InternalBuild(
         int version,
         string name,
         IDictionary<NamingConvention, string> nameVariants,
@@ -44,7 +44,7 @@ public class CatalogSchema : ICatalogSchema
         );
     }
 
-    public static CatalogSchema InternalBuildWithUpdatedVersion(
+    internal static CatalogSchema InternalBuildWithUpdatedVersion(
         CatalogSchema baseSchema
     )
     {

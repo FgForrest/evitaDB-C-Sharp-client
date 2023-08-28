@@ -162,7 +162,7 @@ public class EntitySchema : IEntitySchema
         return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
 
-    public static EntitySchema InternalBuild(string name)
+    internal static EntitySchema InternalBuild(string name)
     {
         return new EntitySchema(
             1,
@@ -179,7 +179,7 @@ public class EntitySchema : IEntitySchema
         );
     }
 
-    public static EntitySchema InternalBuild(
+    internal static EntitySchema InternalBuild(
         int version,
         string name,
         string? description,
@@ -212,7 +212,7 @@ public class EntitySchema : IEntitySchema
         );
     }
 
-    public static EntitySchema InternalBuild(
+    internal static EntitySchema InternalBuild(
         int version,
         string name,
         IDictionary<NamingConvention, string> nameVariants,
@@ -284,7 +284,7 @@ public class EntitySchema : IEntitySchema
         return !Equals(otherSchema.EvolutionModes, EvolutionModes);
     }
 
-    public static IDictionary<string, T[]> InternalGenerateNameVariantIndex<T>(
+    internal static IDictionary<string, T[]> InternalGenerateNameVariantIndex<T>(
         IEnumerable<T> items,
         Func<T, IDictionary<NamingConvention, string>> nameVariantsFetcher
     )

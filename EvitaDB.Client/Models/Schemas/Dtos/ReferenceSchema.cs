@@ -27,7 +27,7 @@ public class ReferenceSchema : IReferenceSchema
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
     private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
 
-    public static ReferenceSchema InternalBuild(
+    internal static ReferenceSchema InternalBuild(
         string name,
         string entityType,
         bool entityTypeRelatesToEntity,
@@ -50,7 +50,6 @@ public class ReferenceSchema : IReferenceSchema
         }
 
         //we need to wrap even empty map to the unmodifiable wrapper in order to unify type for Kryo serialization
-        //noinspection RedundantUnmodifiable
         return new ReferenceSchema(
             name, NamingConventionHelper.Generate(name),
             null, null, cardinality,
@@ -77,7 +76,7 @@ public class ReferenceSchema : IReferenceSchema
 	 *
 	 * Do not use this method from in the client code!
 	 */
-    public static ReferenceSchema InternalBuild(
+    internal static ReferenceSchema InternalBuild(
         string name,
         string? description,
         string? deprecationNotice,
@@ -129,7 +128,7 @@ public class ReferenceSchema : IReferenceSchema
 	 *
 	 * Do not use this method from in the client code!
 	 */
-    public static ReferenceSchema InternalBuild(
+    internal static ReferenceSchema InternalBuild(
         string name,
         IDictionary<NamingConvention, string> nameVariants,
         string? description,

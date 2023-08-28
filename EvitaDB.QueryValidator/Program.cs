@@ -158,7 +158,7 @@ public static partial class Program
     private static void DownloadQueryTemplate()
     {
         using var client = new HttpClient();
-        var response = client.GetAsync("https://evitadb.io/download/evita-csharp-query-template.txt").GetAwaiter().GetResult();
+        var response = client.GetAsync("https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/csharp_query_template.txt").GetAwaiter().GetResult();
         response.EnsureSuccessStatusCode();
         using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
             stream = new FileStream(QueryReplacementPath, FileMode.Create);

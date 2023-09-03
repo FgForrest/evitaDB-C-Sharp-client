@@ -1,4 +1,4 @@
-﻿namespace Client.Models.Mutations;
+﻿namespace EvitaDB.Client.Models.Mutations;
 
 public interface IMutation
 {

@@ -1,6 +1,6 @@
-﻿using Client.Utils;
+﻿using EvitaDB.Client.Utils;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public abstract class Range<T>
 {

@@ -1,4 +1,4 @@
-﻿namespace Client.Utils;
+﻿namespace EvitaDB.Client.Utils;
 
 public class CertificateUtils
 {

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
-using Client.Exceptions;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Catalogs;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
-namespace Client;
+namespace EvitaDB.Client;
 
 public class EvitaEntitySchemaCache
 {

@@ -1,9 +1,9 @@
-﻿using Client.Converters.Models.Data.Mutations.Attributes;
-using Client.Exceptions;
-using Client.Models.Data.Mutations.Attributes;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
 
-namespace Client.Converters.Models.Data.Mutations;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
 public class DelegatingAttributeMutationConverter : ILocalMutationConverter<AttributeMutation, GrpcAttributeMutation>
 {

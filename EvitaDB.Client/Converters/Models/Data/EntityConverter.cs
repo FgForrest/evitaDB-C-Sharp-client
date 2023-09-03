@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
-using Client.Converters.DataTypes;
-using Client.Models.Data;
-using Client.Models.Data.Structure;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
 using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Converters.Models.Data;
+namespace EvitaDB.Client.Converters.Models.Data;
 
 public static class EntityConverter
 {

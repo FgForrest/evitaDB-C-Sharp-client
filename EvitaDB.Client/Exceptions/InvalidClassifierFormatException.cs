@@ -1,6 +1,6 @@
-﻿using Client.DataTypes;
+﻿using EvitaDB.Client.DataTypes;
 
-namespace Client.Exceptions;
+namespace EvitaDB.Client.Exceptions;
 
 public class InvalidClassifierFormatException : EvitaInvalidUsageException
 {

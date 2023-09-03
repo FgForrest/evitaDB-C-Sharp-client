@@ -1,21 +1,9 @@
-﻿namespace Client.Models.Data;
+﻿namespace EvitaDB.Client.Models.Data;
 
-public class AssociatedDataValue : IComparable<AssociatedDataValue>, IDroppable, IContentComparator<AssociatedDataValue>
+public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Value = null,
+        bool Dropped = false)
+    : IComparable<AssociatedDataValue>, IDroppable, IContentComparator<AssociatedDataValue>
 {
-    public int Version { get; }
-    public AssociatedDataKey Key { get; }
-    public object? Value { get; }
-    public bool Dropped { get; }
-
-    public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object? value = null,
-        bool dropped = false)
-    {
-        Version = version;
-        Key = associatedDataKey;
-        Value = value;
-        Dropped = dropped;
-    }
-
     public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object value) : this(version,
         associatedDataKey, value, false)
     {

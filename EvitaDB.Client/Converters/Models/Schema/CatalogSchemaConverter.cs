@@ -1,10 +1,10 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Converters.Models.Schema;
+namespace EvitaDB.Client.Converters.Models.Schema;
 
 public static class CatalogSchemaConverter
 {

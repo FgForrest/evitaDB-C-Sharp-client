@@ -1,21 +1,21 @@
 using System.Globalization;
 using NUnit.Framework;
-using Client;
-using Client.Config;
-using Client.DataTypes;
-using Client.Models;
-using Client.Models.Data.Mutations;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Data.Structure;
-using Client.Models.ExtraResults;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations.Attributes;
-using Client.Models.Schemas.Mutations.Catalogs;
-using Client.Queries.Order;
-using static Client.Queries.IQueryConstraints;
+using EvitaDB.Client;
+using EvitaDB.Client.Config;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.ExtraResults;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
+using EvitaDB.Client.Queries.Order;
+using static EvitaDB.Client.Queries.IQueryConstraints;
 using static NUnit.Framework.Assert;
 
-namespace Test;
+namespace EvitaDB.Test;
 
 public class EvitaClientTest
 {

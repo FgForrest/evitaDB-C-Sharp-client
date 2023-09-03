@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
-using Client.Utils;
+using EvitaDB.Client.Utils;
 
-namespace QueryValidator.Utils;
+namespace EvitaDB.QueryValidator.Utils;
 
 public static class ResponseSerializerUtils
 {
@@ -100,7 +100,7 @@ public static class ResponseSerializerUtils
         // Get the type of the object
         Type type = obj.GetType();
         
-        string propertyName = StringUtils.Capitalize(sourceVariablePart)!;
+        string propertyName = EvitaDB.Client.Utils.StringUtils.Capitalize(sourceVariablePart)!;
         PropertyInfo? propertyInfo = type.GetProperties().FirstOrDefault(x=>x.Name == propertyName);
 
         // Check if the property exists and has a get method

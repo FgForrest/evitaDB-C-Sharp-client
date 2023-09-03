@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.Entities;
+namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
 
 public class AllowLocaleInEntitySchemaMutation : IEntitySchemaMutation
 {

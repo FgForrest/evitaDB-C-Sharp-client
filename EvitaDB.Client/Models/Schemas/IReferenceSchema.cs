@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Dtos;
-using Client.Utils;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider
 {

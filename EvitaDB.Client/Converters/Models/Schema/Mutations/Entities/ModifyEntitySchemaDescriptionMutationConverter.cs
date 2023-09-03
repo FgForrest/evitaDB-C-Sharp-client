@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Mutations.Entities;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Schemas.Mutations.Entities;
 
-namespace Client.Converters.Models.Schema.Mutations.Entities;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.Entities;
 
 public class ModifyEntitySchemaDescriptionMutationConverter : ISchemaMutationConverter<ModifyEntitySchemaDescriptionMutation, GrpcModifyEntitySchemaDescriptionMutation>
 {

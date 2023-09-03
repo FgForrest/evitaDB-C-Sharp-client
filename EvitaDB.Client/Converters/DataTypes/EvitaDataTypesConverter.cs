@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Exceptions;
 using EvitaDB;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Type = System.Type;
 
-namespace Client.Converters.DataTypes;
+namespace EvitaDB.Client.Converters.DataTypes;
 
 public static class EvitaDataTypesConverter
 {

@@ -1,4 +1,4 @@
-﻿namespace Client.Models;
+﻿namespace EvitaDB.Client.Models;
 
 public interface IEvitaResponseExtraResult
 {

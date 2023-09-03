@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
-using Client.Exceptions;
-using Client.Utils;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public static class EvitaDataTypes
 {

@@ -1,12 +1,11 @@
-﻿using Client.Queries.Filter;
-using Client.Queries.Head;
-using Client.Queries.Order;
-using Client.Queries.Requires;
-using Client.Queries.Visitor;
+﻿using EvitaDB.Client.Queries.Filter;
+using EvitaDB.Client.Queries.Head;
+using EvitaDB.Client.Queries.Order;
+using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Client.Queries.Visitor;
+using static EvitaDB.Client.Queries.Visitor.PrettyPrintingVisitor;
 
-using static Client.Queries.Visitor.PrettyPrintingVisitor;
-
-namespace Client.Queries;
+namespace EvitaDB.Client.Queries;
 
 public class Query
 {
@@ -25,6 +24,6 @@ public class Query
     public string PrettyPrint() => PrettyPrintingVisitor.ToString(this, "\t");
     public override string ToString() => PrettyPrintingVisitor.ToString(this);
 
-    public StringWithParameters ToStringWithParametersExtraction() =>
+    public PrettyPrintingVisitor.StringWithParameters ToStringWithParametersExtraction() =>
         ToStringWithParameterExtraction(this);
 }

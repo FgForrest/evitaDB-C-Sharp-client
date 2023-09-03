@@ -1,6 +1,6 @@
-﻿using Client.Utils;
+﻿using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface INamedSchema
 {

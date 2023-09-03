@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.AssociatedData;
+namespace EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 
 public abstract class AssociatedDataMutation : ILocalMutation<AssociatedDataValue>
 {

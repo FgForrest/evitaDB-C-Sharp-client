@@ -1,4 +1,4 @@
-﻿namespace Client.Queries.Filter;
+﻿namespace EvitaDB.Client.Queries.Filter;
 
 public class AttributeGreaterThan<T> : AbstractAttributeFilterConstraintLeaf where T : IComparable
 {

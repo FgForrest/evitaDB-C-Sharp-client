@@ -1,6 +1,6 @@
-﻿using Client.Utils;
+﻿using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class HierarchyFromNode : AbstractRequireConstraintContainer, IHierarchyRequireConstraint
 {

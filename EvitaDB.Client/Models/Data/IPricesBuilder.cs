@@ -1,7 +1,7 @@
-﻿using Client.Models.Data.Mutations.Price;
-using Client.Models.Data.Structure;
+﻿using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Structure;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IPricesBuilder : IBuilder<Prices, PriceMutation>
 {

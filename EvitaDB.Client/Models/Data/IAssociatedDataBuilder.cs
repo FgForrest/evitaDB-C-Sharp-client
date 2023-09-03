@@ -1,10 +1,10 @@
-﻿using Client.Models.Data.Mutations.AssociatedData;
-using Client.Models.Data.Structure;
-using Client.Models.Mutations;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Mutations;
+using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IAssociatedDataBuilder : IBuilder<AssociatedData, AssociatedDataMutation>
 {

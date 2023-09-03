@@ -1,4 +1,4 @@
-﻿namespace Client.Models.ExtraResults;
+﻿namespace EvitaDB.Client.Models.ExtraResults;
 
 public class PriceHistogram : IHistogramContract, IEvitaResponseExtraResult
 {

@@ -1,6 +1,6 @@
-﻿using Client.Queries.Order;
+﻿using EvitaDB.Client.Queries.Order;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public record AttributeElement(
     string AttributeName,

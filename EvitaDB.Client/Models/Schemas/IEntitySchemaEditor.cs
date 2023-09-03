@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Models.Schemas.Dtos;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface IEntitySchemaEditor<out TS> : IEntitySchema where TS : IEntitySchemaBuilder
 {

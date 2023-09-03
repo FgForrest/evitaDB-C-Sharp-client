@@ -1,7 +1,7 @@
-﻿using Client.DataTypes;
-using Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries;
+namespace EvitaDB.Client.Queries;
 
 public abstract class BaseConstraint : IConstraint
 {

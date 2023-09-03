@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace Client.Queries.Filter;
+namespace EvitaDB.Client.Queries.Filter;
 
 public class EntityLocaleEquals : AbstractFilterConstraintLeaf
 {

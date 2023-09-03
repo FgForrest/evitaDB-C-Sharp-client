@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace QueryValidator.Serialization.Json.Resolvers;
+namespace EvitaDB.QueryValidator.Serialization.Json.Resolvers;
 
 public class OrderPropertiesResolver : IgnoreNullablesWithDefaultValuesResolver
 {

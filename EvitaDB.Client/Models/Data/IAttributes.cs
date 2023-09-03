@@ -1,13 +1,15 @@
 ﻿using System.Globalization;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IAttributes
 {
-    bool AttributesAvailable { get; }
+    bool AttributesAvailable();
+    bool AttributesAvailable(CultureInfo locale);
+    bool AttributeAvailable(string attributeName);
+    bool AttributeAvailable(string attributeName, CultureInfo locale);
     object? GetAttribute(string attributeName);
     object? GetAttribute(string attributeName, CultureInfo locale);
     object[]? GetAttributeArray(string attributeName);
@@ -25,9 +27,9 @@ public interface IAttributes
     static bool AnyAttributeDifferBetween(IAttributes first, IAttributes second)
     {
         IEnumerable<AttributeValue> thisValues =
-            first.AttributesAvailable ? first.GetAttributeValues() : new List<AttributeValue>();
+            first.AttributesAvailable() ? first.GetAttributeValues() : new List<AttributeValue>();
         IEnumerable<AttributeValue> otherValues =
-            second.AttributesAvailable ? second.GetAttributeValues() : new List<AttributeValue>();
+            second.AttributesAvailable() ? second.GetAttributeValues() : new List<AttributeValue>();
 
         if (thisValues.Count() != otherValues.Count())
         {

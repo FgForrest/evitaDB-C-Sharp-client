@@ -1,11 +1,11 @@
 ﻿using System.Collections.Immutable;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models.Schemas;
-using Client.Queries.Requires;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Queries.Requires;
 using Newtonsoft.Json;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Prices : IPrices
 {

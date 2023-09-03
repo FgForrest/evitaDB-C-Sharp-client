@@ -1,6 +1,6 @@
-﻿using Client.DataTypes;
+﻿using EvitaDB.Client.DataTypes;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IPrice : IDroppable
 {

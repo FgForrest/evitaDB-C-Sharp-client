@@ -1,9 +1,9 @@
-﻿using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
-using Client.Utils;
-using static Client.Models.Schemas.Builders.SchemaBuilderHelper;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Utils;
+using static EvitaDB.Client.Models.Schemas.Builders.SchemaBuilderHelper;
 
-namespace Client.Models.Schemas.Builders;
+namespace EvitaDB.Client.Models.Schemas.Builders;
 
 public class InternalEntitySchemaBuilder
 {

@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociatedData, IPrices, IDroppable,
     IContentComparator<IEntity>

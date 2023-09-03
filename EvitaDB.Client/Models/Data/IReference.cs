@@ -1,8 +1,8 @@
-﻿using Client.Models.Data.Structure;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IReference : IAttributes, IDroppable
 {

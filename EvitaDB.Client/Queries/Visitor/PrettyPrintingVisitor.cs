@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
-using Client.DataTypes;
-using Client.Utils;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Visitor;
+namespace EvitaDB.Client.Queries.Visitor;
 
 public class PrettyPrintingVisitor : IConstraintVisitor
 {

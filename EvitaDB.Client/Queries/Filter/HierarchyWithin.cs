@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Filter;
+namespace EvitaDB.Client.Queries.Filter;
 
 public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilterConstraint, IConstraintWithSuffix
 {

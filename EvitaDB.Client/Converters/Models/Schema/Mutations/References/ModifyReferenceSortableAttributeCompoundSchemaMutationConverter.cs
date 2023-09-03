@@ -1,8 +1,8 @@
-﻿using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.References;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.References;
 
-namespace Client.Converters.Models.Schema.Mutations.References;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.References;
 
 public class ModifyReferenceSortableAttributeCompoundSchemaMutationConverter : ISchemaMutationConverter<
     ModifyReferenceSortableAttributeCompoundSchemaMutation, GrpcModifyReferenceSortableAttributeCompoundSchemaMutation>

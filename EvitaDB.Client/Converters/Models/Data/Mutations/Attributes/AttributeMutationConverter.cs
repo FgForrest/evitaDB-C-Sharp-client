@@ -1,10 +1,10 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Data;
-using Client.Models.Data.Mutations.Attributes;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using Google.Protobuf;
 
-namespace Client.Converters.Models.Data.Mutations.Attributes;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Attributes;
 
 public abstract class AttributeMutationConverter<TJ, TG> : ILocalMutationConverter<TJ, TG> where TJ : AttributeMutation where TG : IMessage
 {

@@ -1,20 +1,22 @@
 ﻿using System.Reflection;
 using System.Text.RegularExpressions;
-using Client.DataTypes;
-using Client.Models;
-using Client.Models.Data;
-using Client.Models.Data.Structure;
-using Client.Models.ExtraResults;
-using QueryValidator.Serialization.Json.Converters;
-using QueryValidator.Serialization.Json.Binders;
-using QueryValidator.Serialization.Json.Resolvers;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.ExtraResults;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.QueryValidator.Serialization.Json.Binders;
+using EvitaDB.QueryValidator.Serialization.Json.Converters;
+using EvitaDB.QueryValidator.Serialization.Json.Resolvers;
+using EvitaDB.QueryValidator.Serialization.Markdown;
+using EvitaDB.QueryValidator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Newtonsoft.Json;
-using QueryValidator.Utils;
 
-namespace QueryValidator;
+namespace EvitaDB.QueryValidator;
 
 public static partial class Program
 {
@@ -27,9 +29,9 @@ public static partial class Program
     {
         Converters =
         {
-            new EntitySerializer(), 
-            new OrderedJsonSerializer(), 
-            new StripListSerializer(), 
+            new EntitySerializer(),
+            new OrderedJsonSerializer(),
+            new StripListSerializer(),
             new PaginatedListSerializer()
         },
         TypeNameHandling = TypeNameHandling.None,
@@ -119,24 +121,31 @@ public static partial class Program
 
                 if (snippetClass is not null && method is not null)
                 {
-                    EvitaResponse<SealedEntity>? response = (EvitaResponse<SealedEntity>?) method.Invoke(null, null);
-                    if (response is not null)
+                    var responseAndEntitySchema = ((EvitaResponse<SealedEntity>? response, IEntitySchema entitySchema)) 
+                        method.Invoke(null, new[] {FindCatalogName(queryCode)});
+                    if (responseAndEntitySchema.response is not null)
                     {
+                        string serializedOutput;
                         switch (outputFormat)
                         {
                             case "md":
-                                // TODO: Implement markdown output
+                                serializedOutput = MarkdownConverter.GenerateMarkDownTable(
+                                    responseAndEntitySchema.entitySchema, 
+                                    responseAndEntitySchema.response.Query, 
+                                    responseAndEntitySchema.response
+                                );
                                 break;
                             case "json" when sourceVariable is not null:
                             {
-                                object? value = ResponseSerializerUtils.ExtractValueFrom(response, sourceVariable.Split('.'));
+                                object? value = ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response, sourceVariable.Split('.'));
                                 var stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
-                                Console.WriteLine(WrapSerializedOutputInCodeBlock(stringSerialized));
+                                serializedOutput = WrapSerializedOutputInCodeBlock(stringSerialized);
                                 break;
                             }
                             default:
                                 throw new ArgumentException("Bad combination of output format and source variable!");
                         }
+                        Console.WriteLine(serializedOutput);
                     }
                     else
                     {
@@ -154,11 +163,21 @@ public static partial class Program
             }
         }
     }
+    
+    private static string FindCatalogName(string text)
+    {
+        int firstDoubleQuote = text.IndexOf('"');
+        int secondDoubleQuote = text.IndexOf('"', firstDoubleQuote + 1);
+        return text.Substring(firstDoubleQuote + 1, secondDoubleQuote - firstDoubleQuote - 1);
+    }
 
     private static void DownloadQueryTemplate()
     {
         using var client = new HttpClient();
-        var response = client.GetAsync("https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/csharp_query_template.txt").GetAwaiter().GetResult();
+        var response = client
+            .GetAsync(
+                "https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/csharp_query_template.txt")
+            .GetAwaiter().GetResult();
         response.EnsureSuccessStatusCode();
         using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
             stream = new FileStream(QueryReplacementPath, FileMode.Create);

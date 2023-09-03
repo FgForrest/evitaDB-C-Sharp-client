@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using Client.Models.Data;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using static Client.Models.Data.Structure.Attributes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
+using static EvitaDB.Client.Models.Data.Structure.Attributes;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Reference : IReference
 {
@@ -21,7 +21,11 @@ public class Reference : IReference
     public string? ReferencedEntityType => ReferenceSchema?.ReferencedEntityType ?? _referencedEntityType;
     public string ReferenceName => ReferenceKey.ReferenceName;
     public int ReferencedPrimaryKey => ReferenceKey.PrimaryKey; 
-    public bool AttributesAvailable => Attributes.AttributesAvailable;
+    public bool AttributesAvailable() => Attributes.AttributesAvailable();
+    public bool AttributesAvailable(CultureInfo locale) => Attributes.AttributesAvailable(locale);
+    public bool AttributeAvailable(string attributeName) => Attributes.AttributeAvailable(attributeName);
+    public bool AttributeAvailable(string attributeName, CultureInfo locale) => Attributes.AttributeAvailable(attributeName, locale);
+
     private readonly Cardinality? _referenceCardinality;
     private readonly string? _referencedEntityType;
     
@@ -215,6 +219,6 @@ public class Reference : IReference
 		return (Dropped ? "❌ " : "") +
 		       "References `" + ReferenceKey.ReferenceName + "` " + ReferenceKey.PrimaryKey +
 		       (Group == null ? "" : " in " + Group) +
-		       (Attributes.AttributesAvailable ? ", attrs: " + Attributes : "");
+		       (Attributes.AttributesAvailable() ? ", attrs: " + Attributes : "");
 	}
 }

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
-namespace Client.Config;
+namespace EvitaDB.Client.Config;
 
 public record EvitaClientConfiguration(
     string ClientId, string Host, int Port, int SystemApiPort, bool UseGeneratedCertificate,

@@ -1,4 +1,4 @@
-﻿namespace Client.Queries.Requires;
+﻿namespace EvitaDB.Client.Queries.Requires;
 
 public class PriceContent : AbstractRequireConstraintLeaf, IEntityContentRequire, IConstraintWithSuffix
 {

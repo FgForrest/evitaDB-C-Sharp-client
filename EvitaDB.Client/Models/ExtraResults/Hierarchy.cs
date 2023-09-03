@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using Client.Models.Data;
+using EvitaDB.Client.Models.Data;
 
-namespace Client.Models.ExtraResults;
+namespace EvitaDB.Client.Models.ExtraResults;
 
 public class Hierarchy : IEvitaResponseExtraResult
 {

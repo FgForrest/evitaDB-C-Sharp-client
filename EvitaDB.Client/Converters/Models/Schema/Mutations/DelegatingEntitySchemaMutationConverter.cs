@@ -1,16 +1,16 @@
-﻿using Client.Converters.Models.Schema.Mutations.AssociatedData;
-using Client.Converters.Models.Schema.Mutations.Attributes;
-using Client.Converters.Models.Schema.Mutations.Entities;
-using Client.Converters.Models.Schema.Mutations.References;
-using Client.Exceptions;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.AssociatedData;
-using Client.Models.Schemas.Mutations.Attributes;
-using Client.Models.Schemas.Mutations.Entities;
-using Client.Models.Schemas.Mutations.References;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.AssociatedData;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Entities;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.References;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
+using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas.Mutations.Entities;
+using EvitaDB.Client.Models.Schemas.Mutations.References;
 
-namespace Client.Converters.Models.Schema.Mutations;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<IEntitySchemaMutation, GrpcEntitySchemaMutation>
 {

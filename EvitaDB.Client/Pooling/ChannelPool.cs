@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Client.Pooling;
+namespace EvitaDB.Client.Pooling;
 
 public class ChannelPool
 {

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
-using Client.Exceptions;
-using Client.Models.Schemas;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas;
 using Newtonsoft.Json;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Attributes : IAttributes
 {
@@ -18,11 +18,14 @@ public class Attributes : IAttributes
     private ISet<string>? AttributeNames { get; set; }
     private ISet<CultureInfo>? AttributeLocales { get; set; }
     public bool Empty => AttributeValues.Count == 0;
-    public bool AttributesAvailable => true;
-
+    public bool AttributesAvailable() => true;
+    public bool AttributesAvailable(CultureInfo locale) => true;
+    public bool AttributeAvailable(string attributeName) => true;
+    public bool AttributeAvailable(string attributeName, CultureInfo locale) => true;
+    
     public Attributes(IEntitySchema entitySchema, 
         IEnumerable<AttributeValue> attributeValues,
-        Dictionary<string, IAttributeSchema> attributeTypes)
+        IDictionary<string, IAttributeSchema> attributeTypes)
     {
         EntitySchema = entitySchema;
         AttributeValues = attributeValues.ToDictionary(x => x.Key, x => x);

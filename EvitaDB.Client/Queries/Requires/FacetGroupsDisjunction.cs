@@ -1,8 +1,8 @@
-﻿using Client.Exceptions;
-using Client.Queries.Filter;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Queries.Filter;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
 {

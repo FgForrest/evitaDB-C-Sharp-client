@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Mutations.Attributes;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
-namespace Client.Converters.Models.Schema.Mutations.Attributes;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
 
 public class ModifyAttributeSchemaDescriptionMutationConverter : ISchemaMutationConverter<ModifyAttributeSchemaDescriptionMutation, GrpcModifyAttributeSchemaDescriptionMutation>
 {

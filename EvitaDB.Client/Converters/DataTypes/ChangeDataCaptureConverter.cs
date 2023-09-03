@@ -1,12 +1,12 @@
-﻿using Client.Converters.Models;
-using Client.Converters.Models.Data.Mutations;
-using Client.Converters.Models.Schema.Mutations;
-using Client.Models.Cdc;
-using Client.Models.Data.Mutations;
-using Client.Models.Schemas.Mutations;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models;
+using EvitaDB.Client.Converters.Models.Data.Mutations;
+using EvitaDB.Client.Converters.Models.Schema.Mutations;
+using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations;
 
-namespace Client.Converters.DataTypes;
+namespace EvitaDB.Client.Converters.DataTypes;
 
 public static class ChangeDataCaptureConverter
 {

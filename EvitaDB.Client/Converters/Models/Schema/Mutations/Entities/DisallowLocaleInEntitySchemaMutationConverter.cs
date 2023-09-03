@@ -1,8 +1,8 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Schemas.Mutations.Entities;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Schemas.Mutations.Entities;
 
-namespace Client.Converters.Models.Schema.Mutations.Entities;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.Entities;
 
 public class DisallowLocaleInEntitySchemaMutationConverter : ISchemaMutationConverter<DisallowLocaleInEntitySchemaMutation, GrpcDisallowLocaleInEntitySchemaMutation>
 {

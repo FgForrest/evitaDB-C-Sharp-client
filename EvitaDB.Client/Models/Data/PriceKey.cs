@@ -1,9 +1,9 @@
-﻿using Client.DataTypes;
-using Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
-public class PriceKey : IComparable<PriceKey>
+public record PriceKey : IComparable<PriceKey>
 {
     public int PriceId { get; }
     public string PriceList { get; }

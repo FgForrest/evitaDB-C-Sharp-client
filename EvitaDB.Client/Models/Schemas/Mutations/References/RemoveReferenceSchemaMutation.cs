@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Dtos;
-using Client.Utils;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.References;
+namespace EvitaDB.Client.Models.Schemas.Mutations.References;
 
 public class RemoveReferenceSchemaMutation : IReferenceSchemaMutation, IEntitySchemaMutation
 {

@@ -1,6 +1,6 @@
-﻿using Client.DataTypes;
+﻿using EvitaDB.Client.DataTypes;
 
-namespace Client.Queries.Filter;
+namespace EvitaDB.Client.Queries.Filter;
 
 public class PriceInCurrency : AbstractFilterConstraintLeaf
 {

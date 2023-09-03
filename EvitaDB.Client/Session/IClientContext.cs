@@ -1,6 +1,6 @@
-﻿using Client.Utils;
+﻿using EvitaDB.Client.Utils;
 
-namespace Client.Session;
+namespace EvitaDB.Client.Session;
 
 public interface IClientContext
 {

@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.References;
+namespace EvitaDB.Client.Models.Schemas.Mutations.References;
 
 public class ModifyReferenceSortableAttributeCompoundSchemaMutation : AbstractModifyReferenceDataSchemaMutation,
     IEntitySchemaMutation

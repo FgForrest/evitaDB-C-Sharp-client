@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Mutations.AssociatedData;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 
-namespace Client.Converters.Models.Schema.Mutations.AssociatedData;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.AssociatedData;
 
 public class SetAssociatedDataSchemaNullableMutationConverter : ISchemaMutationConverter<SetAssociatedDataSchemaNullableMutation, GrpcSetAssociatedDataSchemaNullableMutation>
 {

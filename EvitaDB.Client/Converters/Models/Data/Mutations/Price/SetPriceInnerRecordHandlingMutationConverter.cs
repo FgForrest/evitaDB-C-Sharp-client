@@ -1,8 +1,8 @@
-﻿using Client.Exceptions;
-using Client.Models.Data.Mutations.Price;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations.Price;
 
-namespace Client.Converters.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Price;
 
 public class SetPriceInnerRecordHandlingMutationConverter : ILocalMutationConverter<SetPriceInnerRecordHandlingMutation,
     GrpcSetPriceInnerRecordHandlingMutation>

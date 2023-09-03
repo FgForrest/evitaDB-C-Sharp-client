@@ -1,6 +1,6 @@
-﻿using Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 
-namespace Client.Queries;
+namespace EvitaDB.Client.Queries;
 
 public abstract class ConstraintLeaf : BaseConstraint
 {

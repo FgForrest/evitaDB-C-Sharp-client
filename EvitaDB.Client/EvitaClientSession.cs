@@ -1,30 +1,30 @@
-﻿using Client.Converters.Models;
-using Client.Converters.Models.Data;
-using Client.Converters.Models.Data.Mutations;
-using Client.Converters.Models.Schema;
-using Client.Converters.Models.Schema.Mutations;
-using Client.Converters.Models.Schema.Mutations.Catalogs;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models;
-using Client.Models.Data;
-using Client.Models.Data.Mutations;
-using Client.Models.Data.Structure;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Catalogs;
-using Client.Pooling;
-using Client.Queries;
-using Client.Queries.Requires;
-using Client.Queries.Visitor;
-using Client.Session;
-using Client.Utils;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models;
+using EvitaDB.Client.Converters.Models.Data;
+using EvitaDB.Client.Converters.Models.Data.Mutations;
+using EvitaDB.Client.Converters.Models.Schema;
+using EvitaDB.Client.Converters.Models.Schema.Mutations;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
+using EvitaDB.Client.Pooling;
+using EvitaDB.Client.Queries;
+using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Client.Queries.Visitor;
+using EvitaDB.Client.Session;
+using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
-using static Client.Queries.Visitor.PrettyPrintingVisitor;
+using static EvitaDB.Client.Queries.Visitor.PrettyPrintingVisitor;
 
-namespace Client;
+namespace EvitaDB.Client;
 
 public class EvitaClientSession : IDisposable
 {
@@ -117,7 +117,7 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         AssertRequestMakesSense<TS>(query);
 
-        StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
+        PrettyPrintingVisitor.StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
         var request = new GrpcQueryRequest
         {
             Query = stringWithParameters.Query,
@@ -209,7 +209,7 @@ public class EvitaClientSession : IDisposable
     {
         AssertActive();
 
-        StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+        PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
         GrpcEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetEntity(
                 new GrpcEntityRequest
@@ -337,7 +337,7 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
         {
-            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(query);
+            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(query);
             GrpcDeleteEntitiesResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntities(
                     new GrpcDeleteEntitiesRequest
@@ -619,7 +619,7 @@ public class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(session =>
         {
             GrpcEntityMutation grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
-            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
             GrpcUpsertEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpsertEntity(
                     new GrpcUpsertEntityRequest
@@ -743,7 +743,7 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(_ =>
         {
-            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
             GrpcDeleteEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService=>
                     evitaSessionService.DeleteEntity(
                     new GrpcDeleteEntityRequest
@@ -776,7 +776,7 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
         {
-            StringWithParameters stringWithParameters = PrettyPrintingVisitor.ToStringWithParameterExtraction(require);
+            PrettyPrintingVisitor.StringWithParameters stringWithParameters = PrettyPrintingVisitor.ToStringWithParameterExtraction(require);
             GrpcDeleteEntityAndItsHierarchyResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntityAndItsHierarchy(
                     new GrpcDeleteEntityRequest

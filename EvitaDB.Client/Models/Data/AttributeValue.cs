@@ -1,17 +1,12 @@
-﻿namespace Client.Models.Data;
+﻿namespace EvitaDB.Client.Models.Data;
 
-public class AttributeValue : IComparable<AttributeValue>, IDroppable, IContentComparator<AttributeValue>
+public record AttributeValue : IComparable<AttributeValue>, IDroppable, IContentComparator<AttributeValue>
 {
     public int Version { get; }
     public AttributeKey Key { get; }
     public object? Value { get; }
     public bool Dropped { get; }
-
-    public AttributeValue(AttributeValue baseAttribute, object replacedValue) : this(baseAttribute.Version,
-        baseAttribute.Key, replacedValue, baseAttribute.Dropped)
-    {
-    }
-
+    
     public AttributeValue(AttributeKey attributeKey, object value) : this(1, attributeKey, value)
     {
     }

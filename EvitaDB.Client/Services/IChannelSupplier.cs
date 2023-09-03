@@ -1,6 +1,6 @@
-﻿using Client.Pooling;
+﻿using EvitaDB.Client.Pooling;
 
-namespace Client.Services;
+namespace EvitaDB.Client.Services;
 
 public interface IChannelSupplier
 {

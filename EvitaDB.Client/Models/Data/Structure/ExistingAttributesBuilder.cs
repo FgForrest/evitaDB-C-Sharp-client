@@ -1,9 +1,8 @@
 ﻿using System.Globalization;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Mutations;
-using Client.Models.Schemas;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class ExistingAttributesBuilder : IAttributeBuilder
 {
@@ -12,7 +11,8 @@ public class ExistingAttributesBuilder : IAttributeBuilder
     private Attributes BaseAttributes { get; }
     private bool SuppressVerification { get; }
     private IDictionary<AttributeKey, AttributeMutation> AttributeMutations { get; }
-    public bool AttributesAvailable => BaseAttributes.AttributesAvailable;
+    public bool AttributesAvailable => BaseAttributes.AttributesAvailable();
+    
 
     public ExistingAttributesBuilder(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
         ICollection<AttributeValue> attributes, IDictionary<string, IAttributeSchema> attributeTypes)
@@ -33,6 +33,14 @@ public class ExistingAttributesBuilder : IAttributeBuilder
         BaseAttributes = attributes;
         SuppressVerification = false;
     }
+
+    bool IAttributes.AttributesAvailable() => BaseAttributes.AttributesAvailable();
+
+    bool IAttributes.AttributesAvailable(CultureInfo locale) => BaseAttributes.AttributesAvailable(locale);
+
+    public bool AttributeAvailable(string attributeName) => BaseAttributes.AttributeAvailable(attributeName);
+
+    public bool AttributeAvailable(string attributeName, CultureInfo locale) => BaseAttributes.AttributeAvailable(attributeName, locale);
 
     public object? GetAttribute(string attributeName)
     {

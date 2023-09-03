@@ -1,8 +1,8 @@
 ﻿using System.Collections;
-using Client.Exceptions;
-using Client.Utils;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries;
+namespace EvitaDB.Client.Queries;
 
 public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContainer<T>, IEnumerable<T>
     where T : IConstraint

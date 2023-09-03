@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
-using Client.Models.Data;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.ExtraResults;
+namespace EvitaDB.Client.Models.ExtraResults;
 
 public class FacetSummary : IEvitaResponseExtraResult
 {

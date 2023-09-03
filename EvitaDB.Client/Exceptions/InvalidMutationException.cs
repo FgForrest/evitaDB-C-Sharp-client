@@ -1,4 +1,4 @@
-﻿namespace Client.Exceptions;
+﻿namespace EvitaDB.Client.Exceptions;
 
 public class InvalidMutationException : EvitaInvalidUsageException
 {

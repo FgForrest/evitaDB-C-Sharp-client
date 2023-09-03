@@ -1,8 +1,8 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Data.Mutations.Price;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Data.Mutations.Price;
 
-namespace Client.Converters.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Price;
 
 public class RemovePriceMutationConverter : PriceMutationConverter<RemovePriceMutation, GrpcRemovePriceMutation>
 {

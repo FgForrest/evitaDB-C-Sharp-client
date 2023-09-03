@@ -1,18 +1,18 @@
-﻿using Client.Converters.Models.Data.Mutations.AssociatedData;
-using Client.Converters.Models.Data.Mutations.Attributes;
-using Client.Converters.Models.Data.Mutations.Entity;
-using Client.Converters.Models.Data.Mutations.Price;
-using Client.Converters.Models.Data.Mutations.Reference;
-using Client.Exceptions;
-using Client.Models.Data.Mutations;
-using Client.Models.Data.Mutations.AssociatedData;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Data.Mutations.Entity;
-using Client.Models.Data.Mutations.Price;
-using Client.Models.Data.Mutations.Reference;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Data.Mutations.AssociatedData;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Entity;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Price;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Mutations.Entity;
+using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Mutations.Reference;
 
-namespace Client.Converters.Models.Data.Mutations;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
 public class DelegatingLocalMutationConverter : ILocalMutationConverter<ILocalMutation, GrpcLocalMutation>
 {

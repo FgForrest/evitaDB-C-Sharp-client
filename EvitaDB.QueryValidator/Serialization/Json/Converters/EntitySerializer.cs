@@ -1,9 +1,9 @@
-﻿using Client.Converters.DataTypes;
-using Client.DataTypes;
-using Client.Models.Data;
+﻿using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data;
 using Newtonsoft.Json;
 
-namespace QueryValidator.Serialization.Json.Converters;
+namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
 public class EntitySerializer : JsonConverter<IEntity>
 {
@@ -189,7 +189,7 @@ public class EntitySerializer : JsonConverter<IEntity>
      */
     private static void WriteAttributes(JsonWriter writer, IAttributes value)
     {
-        if (value.AttributesAvailable && value.GetAttributeValues().Any())
+        if (value.AttributesAvailable() && value.GetAttributeValues().Any())
         {
             Wrap(() =>
             {
@@ -264,7 +264,7 @@ public class EntitySerializer : JsonConverter<IEntity>
      */
     private static void WriteAssociatedData(JsonWriter writer, IAssociatedData value, JsonSerializer serializer)
     {
-        if (value.AssociatedDataAvailable && value.GetAssociatedDataValues().Any())
+        if (value.AssociatedDataAvailable() && value.GetAssociatedDataValues().Any())
         {
             Wrap(() =>
             {

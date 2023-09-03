@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Reference;
+namespace EvitaDB.Client.Models.Data.Mutations.Reference;
 
 public abstract class ReferenceMutation : ILocalMutation<IReference>
 {

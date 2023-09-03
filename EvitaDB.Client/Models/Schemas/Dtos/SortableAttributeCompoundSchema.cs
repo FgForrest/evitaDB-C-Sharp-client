@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
-using Client.Utils;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Dtos;
+namespace EvitaDB.Client.Models.Schemas.Dtos;
 
 public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
 {

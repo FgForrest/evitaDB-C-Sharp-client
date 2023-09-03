@@ -1,4 +1,4 @@
-﻿namespace Client.Session;
+﻿namespace EvitaDB.Client.Session;
 
 public enum CatalogState
 {

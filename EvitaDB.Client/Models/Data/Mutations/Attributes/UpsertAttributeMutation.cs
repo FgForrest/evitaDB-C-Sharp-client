@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Attributes;
+namespace EvitaDB.Client.Models.Data.Mutations.Attributes;
 
 public class UpsertAttributeMutation : AttributeMutation
 {

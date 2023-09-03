@@ -1,8 +1,8 @@
 ﻿using System.Text;
-using Client.DataTypes.Data;
-using Client.Utils;
+using EvitaDB.Client.DataTypes.Data;
+using EvitaDB.Client.Utils;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public record ComplexDataObject
 {

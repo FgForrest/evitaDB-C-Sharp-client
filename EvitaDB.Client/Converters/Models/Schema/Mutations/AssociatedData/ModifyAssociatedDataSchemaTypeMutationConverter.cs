@@ -1,8 +1,8 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Schemas.Mutations.AssociatedData;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 
-namespace Client.Converters.Models.Schema.Mutations.AssociatedData;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations.AssociatedData;
 
 public class ModifyAssociatedDataSchemaTypeMutationConverter : ISchemaMutationConverter<
     ModifyAssociatedDataSchemaTypeMutation, GrpcModifyAssociatedDataSchemaTypeMutation>

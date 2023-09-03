@@ -4,7 +4,6 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>Client</RootNamespace>
 		<Version>0.0.1-alpha</Version>
 		<Title>EvitaDB.Client</Title>
 		<Authors>evitadb.io</Authors>

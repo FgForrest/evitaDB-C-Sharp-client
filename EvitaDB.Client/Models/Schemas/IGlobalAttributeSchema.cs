@@ -1,4 +1,4 @@
-﻿namespace Client.Models.Schemas;
+﻿namespace EvitaDB.Client.Models.Schemas;
 
 public interface IGlobalAttributeSchema : IAttributeSchema
 {

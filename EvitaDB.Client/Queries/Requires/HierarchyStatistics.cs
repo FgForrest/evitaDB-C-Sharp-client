@@ -1,6 +1,6 @@
-﻿using Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class HierarchyStatistics : AbstractRequireConstraintLeaf, IHierarchyOutputRequireConstraint
 {

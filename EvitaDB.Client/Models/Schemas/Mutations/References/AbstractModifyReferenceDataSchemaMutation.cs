@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Schemas.Mutations.References;
+namespace EvitaDB.Client.Models.Schemas.Mutations.References;
 
 public abstract class AbstractModifyReferenceDataSchemaMutation : IEntitySchemaMutation, IReferenceSchemaMutation
 {

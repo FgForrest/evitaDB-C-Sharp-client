@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Utils;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Dtos;
+namespace EvitaDB.Client.Models.Schemas.Dtos;
 
 public class ReferenceSchema : IReferenceSchema
 {

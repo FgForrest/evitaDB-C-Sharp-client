@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Models.Data;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider
 {

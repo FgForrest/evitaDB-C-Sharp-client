@@ -1,6 +1,6 @@
-﻿using Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public class DateTimeRange : Range<DateTimeOffset?>, IComparable<DateTimeRange>
 {

@@ -1,4 +1,4 @@
-﻿namespace Client.DataTypes.Data;
+﻿namespace EvitaDB.Client.DataTypes.Data;
 
 public sealed record DataItemValue(object? Value) : IDataItem
 {

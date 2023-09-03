@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
-using Client.DataTypes;
-using Client.Models.Data;
-using Client.Queries;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Queries;
 
-namespace Client.Models;
+namespace EvitaDB.Client.Models;
 
 public abstract class EvitaResponse<T> where T : IEntityClassifier
 {

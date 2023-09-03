@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Core.Interceptors;
 
-namespace Client.Interceptors;
+namespace EvitaDB.Client.Interceptors;
 
 /// <summary>
 /// This class is used to intercept client calls prior their sending to the server. If client did set sessionId and sessionType

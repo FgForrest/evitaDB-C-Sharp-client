@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations.Catalogs;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface IEntitySchemaBuilder : IEntitySchemaEditor<IEntitySchemaBuilder>
 {

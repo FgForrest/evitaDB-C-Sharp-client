@@ -1,9 +1,9 @@
-﻿using Client.Converters.Models.Schema.Mutations.Catalogs;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Catalogs;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
-namespace Client.Converters.Models.Schema.Mutations;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingTopLevelCatalogSchemaMutationConverter : ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcTopLevelCatalogSchemaMutation>
 {

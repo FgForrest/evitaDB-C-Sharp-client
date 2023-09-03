@@ -1,4 +1,4 @@
-﻿namespace Client.Models.Cdc;
+﻿namespace EvitaDB.Client.Models.Cdc;
 
 public enum CaptureContent
 {

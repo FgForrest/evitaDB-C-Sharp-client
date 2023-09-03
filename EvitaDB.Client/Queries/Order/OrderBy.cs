@@ -1,4 +1,4 @@
-﻿namespace Client.Queries.Order;
+﻿namespace EvitaDB.Client.Queries.Order;
 
 public class OrderBy : AbstractOrderConstraintContainer, IOrderConstraint
 {

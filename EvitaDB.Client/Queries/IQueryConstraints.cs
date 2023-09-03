@@ -1,13 +1,13 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Queries.Filter;
-using Client.Queries.Head;
-using Client.Queries.Order;
-using Client.Queries.Requires;
-using Client.Utils;
-using Random = Client.Queries.Order.Random;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Queries.Filter;
+using EvitaDB.Client.Queries.Head;
+using EvitaDB.Client.Queries.Order;
+using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Client.Utils;
+using Random = EvitaDB.Client.Queries.Order.Random;
 
-namespace Client.Queries;
+namespace EvitaDB.Client.Queries;
 
 public interface IQueryConstraints
 {
@@ -237,7 +237,7 @@ public interface IQueryConstraints
 
     static PriceNatural PriceNatural(OrderDirection orderDirection) => new PriceNatural(orderDirection);
 
-    static Random Random() => new Random();
+    static Order.Random Random() => new Order.Random();
 
     static Require? Require(params IRequireConstraint[]? constraints) =>
         constraints is null ? null : new Require(constraints);

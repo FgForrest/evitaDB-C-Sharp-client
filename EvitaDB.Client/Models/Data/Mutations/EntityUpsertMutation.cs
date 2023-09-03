@@ -1,7 +1,7 @@
-﻿using Client.Models.Data.Structure;
-using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Data.Mutations;
+namespace EvitaDB.Client.Models.Data.Mutations;
 
 public class EntityUpsertMutation : IEntityMutation
 {

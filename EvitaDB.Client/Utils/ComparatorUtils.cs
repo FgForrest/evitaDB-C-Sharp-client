@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public static class ComparatorUtils
 {

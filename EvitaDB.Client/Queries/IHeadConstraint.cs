@@ -1,4 +1,4 @@
-﻿namespace Client.Queries;
+﻿namespace EvitaDB.Client.Queries;
 
 public interface IHeadConstraint : IConstraint
 {

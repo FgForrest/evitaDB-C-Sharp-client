@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class HierarchyDistance : AbstractRequireConstraintLeaf, IHierarchyStopAtRequireConstraint
 {

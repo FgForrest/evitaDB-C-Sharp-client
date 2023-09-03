@@ -1,6 +1,6 @@
-﻿using Client.Utils;
+﻿using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Filter;
+namespace EvitaDB.Client.Queries.Filter;
 
 public class HierarchyHaving : AbstractFilterConstraintContainer, IHierarchySpecificationFilterConstraint
 {

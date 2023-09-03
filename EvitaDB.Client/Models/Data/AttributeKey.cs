@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
-using Client.Utils;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
-public class AttributeKey : IComparable<AttributeKey>
+public record AttributeKey : IComparable<AttributeKey>
 {
     public string AttributeName { get; }
     public CultureInfo? Locale { get; }
@@ -22,7 +22,7 @@ public class AttributeKey : IComparable<AttributeKey>
         return ComparatorUtils.CompareLocale(Locale, other?.Locale,
             () => string.Compare(AttributeName, other?.AttributeName, StringComparison.Ordinal));
     }
-
+    
     public override string ToString()
     {
         return AttributeName + (Locale == null ? "" : ":" + Locale.TwoLetterISOLanguageName);

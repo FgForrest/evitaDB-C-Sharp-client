@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json.Serialization;
 
-namespace QueryValidator.Serialization.Json.Binders;
+namespace EvitaDB.QueryValidator.Serialization.Json.Binders;
 
 public class AllowedSerializationBinder : ISerializationBinder
 {

@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
-using Client.Utils;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
-public class AssociatedDataKey : IComparable<AssociatedDataKey>
+public record AssociatedDataKey : IComparable<AssociatedDataKey>
 {
     public string AssociatedDataName { get; }
     public CultureInfo? Locale { get; }

@@ -1,7 +1,7 @@
-﻿using Client.Models.Mutations;
-using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Mutations;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations;
+namespace EvitaDB.Client.Models.Data.Mutations;
 
 public interface ILocalMutation : IMutation
 {

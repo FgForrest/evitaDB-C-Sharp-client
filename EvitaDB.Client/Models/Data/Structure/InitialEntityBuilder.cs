@@ -1,13 +1,12 @@
 ﻿using System.Globalization;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models.Data.Mutations;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Queries.Requires;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Queries.Requires;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class InitialEntityBuilder : IEntityBuilder
 {
@@ -23,7 +22,7 @@ public class InitialEntityBuilder : IEntityBuilder
     public PriceInnerRecordHandling InnerRecordHandling => PriceInnerRecordHandling.None;
     public bool PricesAvailable => Schema.WithPrice; //TODO: fix when possible
     public bool AssociatedDataAvailable => true; //TODO: fix when possible
-    public bool AttributesAvailable => AttributesBuilder.AttributesAvailable;
+    public bool AttributesAvailable() => AttributesBuilder.AttributesAvailable();
     public bool ReferencesAvailable => true; 
     public bool ParentAvailable => true;
     public IPrice? PriceForSale => throw new ContextMissingException();
@@ -109,6 +108,14 @@ public class InitialEntityBuilder : IEntityBuilder
         References = new Dictionary<ReferenceKey, Reference>();
     }
     
+    bool IAttributes.AttributesAvailable() => AttributesBuilder.AttributesAvailable();
+
+    bool IAttributes.AttributesAvailable(CultureInfo locale) => AttributesBuilder.AttributesAvailable(locale);
+
+    public bool AttributeAvailable(string attributeName) => AttributesBuilder.AttributeAvailable(attributeName);
+
+    public bool AttributeAvailable(string attributeName, CultureInfo locale) => AttributesBuilder.AttributeAvailable(attributeName, locale);
+    
     public object? GetAttribute(string attributeName)
     {
         throw new NotImplementedException();
@@ -170,6 +177,26 @@ public class InitialEntityBuilder : IEntityBuilder
     }
 
     public ISet<CultureInfo> GetAttributeLocales()
+    {
+        throw new NotImplementedException();
+    }
+
+    bool IAssociatedData.AssociatedDataAvailable()
+    {
+        throw new NotImplementedException();
+    }
+
+    bool IAssociatedData.AssociatedDataAvailable(CultureInfo locale)
+    {
+        throw new NotImplementedException();
+    }
+
+    bool IAssociatedData.AssociatedDataAvailable(string associatedDataName)
+    {
+        throw new NotImplementedException();
+    }
+
+    bool IAssociatedData.AssociatedDataAvailable(string associatedDataName, CultureInfo locale)
     {
         throw new NotImplementedException();
     }

@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.Utils;
+using EvitaDB.Client.Exceptions;
 
-namespace Client.Queries.Visitor;
+namespace EvitaDB.Client.Queries.Visitor;
 
 public class FinderVisitor : IConstraintVisitor
 {

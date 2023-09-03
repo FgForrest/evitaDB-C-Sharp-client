@@ -1,4 +1,4 @@
-﻿namespace Client.Queries.Head;
+﻿namespace EvitaDB.Client.Queries.Head;
 
 /// <summary>
 /// Blabla

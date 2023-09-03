@@ -1,8 +1,8 @@
-﻿using Client.Exceptions;
-using Client.Models.Schemas;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data.Mutations.Reference;
+namespace EvitaDB.Client.Models.Data.Mutations.Reference;
 
 public class RemoveReferenceGroupMutation : ReferenceMutation
 {

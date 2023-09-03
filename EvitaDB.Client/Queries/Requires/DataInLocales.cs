@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class DataInLocales : AbstractRequireConstraintLeaf, IEntityContentRequire, IConstraintWithSuffix
 {

@@ -1,9 +1,9 @@
-﻿using Client.Converters.Models.Schema.Mutations.SortableAttributeCompounds;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.SortableAttributeCompounds;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.SortableAttributeCompounds;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.SortableAttributeCompounds;
 
-namespace Client.Converters.Models.Schema.Mutations;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingSortableAttributeCompoundSchemaMutationConverter : ISchemaMutationConverter<
     ISortableAttributeCompoundSchemaMutation, GrpcSortableAttributeCompoundSchemaMutation>

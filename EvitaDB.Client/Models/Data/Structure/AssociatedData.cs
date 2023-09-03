@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 using Newtonsoft.Json;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class AssociatedData : IAssociatedData
 {
@@ -15,7 +15,12 @@ public class AssociatedData : IAssociatedData
     private IDictionary<string, IAssociatedDataSchema> AssociatedDataTypes { get; }
     private ISet<string>? AssociatedDataNames { get; set; }
     private ISet<CultureInfo>? AssociatedDataLocales { get; set; }
-    public bool AssociatedDataAvailable => true;
+    public bool AssociatedDataAvailable() => true;
+    public bool AssociatedDataAvailable(CultureInfo locale) => true;
+
+    public bool AssociatedDataAvailable(string associatedDataName) => true;
+
+    public bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale) => true;
 
     public AssociatedData(
         IEntitySchema entitySchema,

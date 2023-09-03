@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Dtos;
-using Client.Utils;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Exceptions;
+namespace EvitaDB.Client.Exceptions;
 
 public class ReferenceAlreadyPresentInEntitySchemaException : EvitaInvalidUsageException
 {

@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public class StringUtils
 {

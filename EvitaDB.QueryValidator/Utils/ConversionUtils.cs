@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace QueryValidator.Utils;
+namespace EvitaDB.QueryValidator.Utils;
 
 public static class ConversionUtils
 {

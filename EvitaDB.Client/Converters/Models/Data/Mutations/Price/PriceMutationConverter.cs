@@ -1,11 +1,11 @@
-﻿using Client.Converters.DataTypes;
-using Client.Exceptions;
-using Client.Models.Data;
-using Client.Models.Data.Mutations.Price;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations.Price;
 using Google.Protobuf;
 
-namespace Client.Converters.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Price;
 
 public abstract class PriceMutationConverter<TJ, TG> : ILocalMutationConverter<TJ, TG> where TJ : PriceMutation where TG : IMessage
 {

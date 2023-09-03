@@ -1,7 +1,7 @@
-﻿using Client.Models.Schemas.Builders;
-using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas.Builders;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Schemas.Mutations;
+namespace EvitaDB.Client.Models.Schemas.Mutations;
 
 public interface ICombinableEntitySchemaMutation : IEntitySchemaMutation
 {

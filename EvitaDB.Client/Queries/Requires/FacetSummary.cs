@@ -1,9 +1,9 @@
-﻿using Client.Models.Data;
-using Client.Queries.Filter;
-using Client.Queries.Order;
-using Client.Utils;
+﻿using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Queries.Filter;
+using EvitaDB.Client.Queries.Order;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequireConstraint, ISeparateEntityContentRequireContainer
 {

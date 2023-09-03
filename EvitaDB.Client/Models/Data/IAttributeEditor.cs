@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IAttributeEditor<out TW> : IAttributes where TW : IAttributeEditor<TW>
 {

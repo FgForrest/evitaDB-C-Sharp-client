@@ -1,20 +1,20 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models.Data.Mutations;
-using Client.Models.Data.Mutations.AssociatedData;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Data.Mutations.Entity;
-using Client.Models.Data.Mutations.Price;
-using Client.Models.Data.Mutations.Reference;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Queries.Requires;
-using Client.Utils;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations;
+using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Mutations.Entity;
+using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Client.Utils;
 using Newtonsoft.Json;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class SealedEntity : IEntity
 {
@@ -32,9 +32,38 @@ public class SealedEntity : IEntity
     public PriceInnerRecordHandling InnerRecordHandling { get; }
     public bool ParentAvailable => Schema.WithHierarchy;
     public bool PricesAvailable => Prices.PricesAvailable;
-    public bool AttributesAvailable => Attributes.AttributesAvailable;
+    public bool AttributesAvailable() => Attributes.AttributesAvailable();
+    public bool AttributesAvailable(CultureInfo locale)
+    {
+        return Attributes.AttributesAvailable(locale);
+    }
+
+    public bool AttributeAvailable(string attributeName)
+    {
+        return Attributes.AttributeAvailable(attributeName);
+    }
+
+    public bool AttributeAvailable(string attributeName, CultureInfo locale)
+    {
+        return Attributes.AttributeAvailable(attributeName, locale);
+    }
     public bool ReferencesAvailable => true;
-    public bool AssociatedDataAvailable => AssociatedData.AssociatedDataAvailable;
+    public bool AssociatedDataAvailable() => AssociatedData.AssociatedDataAvailable();
+    public bool AssociatedDataAvailable(CultureInfo locale)
+    {
+        return AssociatedData.AssociatedDataAvailable(locale);
+    }
+
+    public bool AssociatedDataAvailable(string associatedDataName)
+    {
+        return AssociatedData.AssociatedDataAvailable(associatedDataName);
+    }
+
+    public bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale)
+    {
+        return AssociatedData.AssociatedDataAvailable(associatedDataName, locale);
+    }
+
     private bool WithHierarchy { get; set; }
     private ISet<string> ReferencesDefined { get; set; }
     public IPrice? PriceForSale { get; }

@@ -1,7 +1,7 @@
-﻿using Client.Queries;
-using Client.Queries.Visitor;
+﻿using EvitaDB.Client.Queries;
+using EvitaDB.Client.Queries.Visitor;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public static class QueryUtils
 {
@@ -35,7 +35,7 @@ public static class QueryUtils
         return FinderVisitor.FindConstraints<T>(constraint, predicate);
     }
 
-    public static List<TC> FindConstraints<TC, TS>(IConstraint constraint) where TC : IFilterConstraint
+    public static List<TC> FindConstraints<TC, TS>(IConstraint constraint) where TC : IConstraint
     {
         return FinderVisitor.FindConstraints<TC>(constraint, typeof(TC).IsInstanceOfType,
             cnt => cnt != constraint && cnt is TS);

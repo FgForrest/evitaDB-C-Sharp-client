@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public class ShortNumberRange : NumberRange<short>
 {

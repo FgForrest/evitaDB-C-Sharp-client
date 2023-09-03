@@ -1,9 +1,9 @@
 ﻿using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using Client.Exceptions;
-using Client.Utils;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.Certificate;
+namespace EvitaDB.Client.Certificate;
 
 public class ClientCertificateManager
 {

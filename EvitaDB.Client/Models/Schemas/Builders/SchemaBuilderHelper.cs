@@ -1,9 +1,9 @@
-﻿using Client.Exceptions;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Builders;
+namespace EvitaDB.Client.Models.Schemas.Builders;
 
 public class SchemaBuilderHelper
 {

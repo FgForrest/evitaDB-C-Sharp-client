@@ -1,4 +1,4 @@
-﻿namespace Client.DataTypes;
+﻿namespace EvitaDB.Client.DataTypes;
 
 public class StripList<T> : IDataChunk<T>
 {

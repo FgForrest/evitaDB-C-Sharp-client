@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Schemas.Mutations.AssociatedData;
+namespace EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 
 public abstract class AbstractModifyAssociatedDataSchemaMutation : IEntitySchemaMutation, IAssociatedDataSchemaMutation
 {

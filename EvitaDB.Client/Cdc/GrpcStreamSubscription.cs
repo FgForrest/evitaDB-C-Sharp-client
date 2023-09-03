@@ -1,6 +1,6 @@
 ﻿using Grpc.Core;
 
-namespace Client.Cdc;
+namespace EvitaDB.Client.Cdc;
 
 public class GrpcStreamSubscription<T> : IDisposable
 {

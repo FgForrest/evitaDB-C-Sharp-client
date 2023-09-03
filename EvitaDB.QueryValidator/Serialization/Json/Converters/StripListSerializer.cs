@@ -1,10 +1,10 @@
-﻿using Client.DataTypes;
-using Client.Models.Data.Structure;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data.Structure;
 using Newtonsoft.Json;
 
-using static QueryValidator.Utils.ResponseSerializerUtils;
+using static EvitaDB.QueryValidator.Utils.ResponseSerializerUtils;
 
-namespace QueryValidator.Serialization.Json.Converters;
+namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
 public class StripListSerializer : JsonConverter<StripList<SealedEntity>>
 {

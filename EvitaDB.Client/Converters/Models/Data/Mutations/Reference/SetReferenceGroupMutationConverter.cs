@@ -1,8 +1,8 @@
-﻿using Client.Models.Data;
-using Client.Models.Data.Mutations.Reference;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations.Reference;
 
-namespace Client.Converters.Models.Data.Mutations.Reference;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Reference;
 
 public class SetReferenceGroupMutationConverter : ILocalMutationConverter<SetReferenceGroupMutation, GrpcSetReferenceGroupMutation>
 {

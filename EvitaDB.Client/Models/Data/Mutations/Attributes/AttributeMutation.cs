@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Attributes;
+namespace EvitaDB.Client.Models.Data.Mutations.Attributes;
 
 public abstract class AttributeMutation : ILocalMutation<AttributeValue>
 {

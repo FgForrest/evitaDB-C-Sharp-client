@@ -1,10 +1,10 @@
-﻿using Client.Exceptions;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Data.Structure;
-using Client.Models.Schemas;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data.Mutations.Reference;
+namespace EvitaDB.Client.Models.Data.Mutations.Reference;
 
 public class ReferenceAttributeMutation : ReferenceMutation
 {

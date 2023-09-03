@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Exceptions;
+namespace EvitaDB.Client.Exceptions;
 
 public class ReferenceNotFoundException : EvitaInvalidUsageException
 {

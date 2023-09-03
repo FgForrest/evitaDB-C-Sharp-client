@@ -1,8 +1,8 @@
-﻿using Client.Exceptions;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.Catalogs;
+namespace EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
 public class ModifyCatalogSchemaDescriptionMutation : ILocalCatalogSchemaMutation
 {

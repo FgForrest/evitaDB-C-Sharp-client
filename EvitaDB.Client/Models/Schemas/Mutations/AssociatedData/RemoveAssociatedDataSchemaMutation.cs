@@ -1,8 +1,8 @@
 ﻿using System.Runtime.InteropServices.JavaScript;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.AssociatedData;
+namespace EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 
 public class RemoveAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation, IEntitySchemaMutation
 {

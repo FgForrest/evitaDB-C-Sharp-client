@@ -1,8 +1,8 @@
-﻿using Client.DataTypes;
-using Client.Models.Data.Structure;
-using Client.Queries;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Queries;
 
-namespace Client.Models;
+namespace EvitaDB.Client.Models;
 
 public class EvitaEntityResponse : EvitaResponse<SealedEntity>
 {

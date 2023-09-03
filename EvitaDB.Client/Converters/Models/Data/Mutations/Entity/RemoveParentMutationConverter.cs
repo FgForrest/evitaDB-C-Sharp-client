@@ -1,7 +1,7 @@
-﻿using Client.Models.Data.Mutations.Entity;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Models.Data.Mutations.Entity;
 
-namespace Client.Converters.Models.Data.Mutations.Entity;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Entity;
 
 public class RemoveParentMutationConverter : ILocalMutationConverter<RemoveParentMutation, GrpcRemoveParentMutation>
 {

@@ -1,8 +1,8 @@
 ﻿using System.Text.RegularExpressions;
-using Client.DataTypes;
-using Client.Exceptions;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public static class ClassifierUtils
 {

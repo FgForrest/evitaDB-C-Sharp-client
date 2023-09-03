@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public enum NamingConvention
 {

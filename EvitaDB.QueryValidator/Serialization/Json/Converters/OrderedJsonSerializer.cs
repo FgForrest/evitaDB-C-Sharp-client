@@ -1,8 +1,8 @@
-﻿using Client.Utils;
-using QueryValidator.Utils;
+﻿using EvitaDB.Client.Utils;
+using EvitaDB.QueryValidator.Utils;
 using Newtonsoft.Json;
 
-namespace QueryValidator.Serialization.Json.Converters;
+namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
 public class OrderedJsonSerializer : JsonConverter
 {

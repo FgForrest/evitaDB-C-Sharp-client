@@ -1,9 +1,9 @@
-﻿using Client.Converters.Models.Schema.Mutations.Attributes;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Attributes;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
-namespace Client.Converters.Models.Schema.Mutations;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingAttributeSchemaMutationConverter : ISchemaMutationConverter<IAttributeSchemaMutation, GrpcAttributeSchemaMutation>
 {

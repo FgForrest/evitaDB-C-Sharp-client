@@ -1,7 +1,7 @@
-﻿using Client.DataTypes;
-using Client.Models.Schemas;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Models.Data.Mutations.Price;
 
 public class UpsertPriceMutation : PriceMutation
 {

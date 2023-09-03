@@ -1,7 +1,7 @@
-﻿using Client.Queries.Order;
-using Client.Utils;
+﻿using EvitaDB.Client.Queries.Order;
+using EvitaDB.Client.Utils;
 
-namespace Client.Queries.Requires;
+namespace EvitaDB.Client.Queries.Requires;
 
 public class HierarchyOfSelf : AbstractRequireConstraintContainer, IRootHierarchyConstraint,
     ISeparateEntityContentRequireContainer, IExtraResultRequireConstraint

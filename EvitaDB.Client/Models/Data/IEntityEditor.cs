@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IEntityEditor<out TW> : IEntity, IAttributeEditor<TW> where TW : IEntityEditor<TW> //TODO: OTHER EDITORS
 {

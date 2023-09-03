@@ -1,13 +1,16 @@
 ﻿using System.Globalization;
-using Client.Models.Schemas;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IAssociatedData
 {
-    bool AssociatedDataAvailable { get; }
+    bool AssociatedDataAvailable();
+    bool AssociatedDataAvailable(CultureInfo locale);
+    bool AssociatedDataAvailable(string associatedDataName);
+    bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale);
     object? GetAssociatedData(string associatedDataName);
     object? GetAssociatedData(string associatedDataName, CultureInfo locale);
     object[]? GetAssociatedDataArray(string associatedDataName, CultureInfo locale);
@@ -21,8 +24,8 @@ public interface IAssociatedData
     ISet<CultureInfo> GetAssociatedDataLocales();
     
     static bool AnyAssociatedDataDifferBetween(IAssociatedData first, IAssociatedData second) {
-        IEnumerable<AssociatedDataValue> thisValues = first.AssociatedDataAvailable ? first.GetAssociatedDataValues() : new List<AssociatedDataValue>();
-        IEnumerable<AssociatedDataValue> otherValues = second.AssociatedDataAvailable ? second.GetAssociatedDataValues() : new List<AssociatedDataValue>();
+        IEnumerable<AssociatedDataValue> thisValues = first.AssociatedDataAvailable() ? first.GetAssociatedDataValues() : new List<AssociatedDataValue>();
+        IEnumerable<AssociatedDataValue> otherValues = second.AssociatedDataAvailable() ? second.GetAssociatedDataValues() : new List<AssociatedDataValue>();
 
         if (thisValues.Count() != otherValues.Count()) {
             return true;

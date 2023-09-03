@@ -1,4 +1,4 @@
-﻿namespace Client.Models.Data.Structure;
+﻿namespace EvitaDB.Client.Models.Data.Structure;
 
 public class HierarchicalPlacement
 {

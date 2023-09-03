@@ -1,4 +1,4 @@
-﻿namespace Client.Models.Data;
+﻿namespace EvitaDB.Client.Models.Data;
 
 public class ReferenceKeyWithAttributeKey : IComparable<ReferenceKeyWithAttributeKey>
 {

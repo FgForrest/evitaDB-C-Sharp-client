@@ -1,15 +1,15 @@
 ﻿using System.Globalization;
-using Client;
-using Client.Config;
-using Client.Models;
-using Client.Models.Cdc;
-using Client.Models.Data.Structure;
-using Client.Queries.Order;
-using Client.Queries.Requires;
-using static Client.Queries.IQueryConstraints;
+using EvitaDB.Client;
+using EvitaDB.Client.Config;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Queries.Order;
+using EvitaDB.Client.Queries.Requires;
+using static EvitaDB.Client.Queries.IQueryConstraints;
 using NUnit.Framework;
 
-namespace Test;
+namespace EvitaDB.Test;
 
 public class EvitaQueryTest
 {

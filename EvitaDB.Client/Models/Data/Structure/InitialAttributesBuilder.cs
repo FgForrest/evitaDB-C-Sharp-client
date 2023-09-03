@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using Client.Exceptions;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Schemas;
-using Client.Utils;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class InitialAttributesBuilder : IAttributeBuilder
 {
@@ -12,7 +12,11 @@ public class InitialAttributesBuilder : IAttributeBuilder
     private IReferenceSchema? ReferenceSchema { get; }
     private bool SuppressVerification { get; }
     private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
-    public bool AttributesAvailable => true;
+    public bool AttributesAvailable() => true;
+    public bool AttributesAvailable(CultureInfo locale) => true;
+    public bool AttributeAvailable(string attributeName) => true;
+    public bool AttributeAvailable(string attributeName, CultureInfo locale) => true;
+
 
     public InitialAttributesBuilder(IEntitySchema entitySchema)
     {

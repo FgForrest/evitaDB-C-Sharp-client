@@ -1,9 +1,9 @@
-﻿using Client.DataTypes;
-using Client.Exceptions;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Client.Converters.DataTypes;
+namespace EvitaDB.Client.Converters.DataTypes;
 
 public static class ComplexDataObjectConverter
 {

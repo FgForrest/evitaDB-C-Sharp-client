@@ -1,21 +1,21 @@
 ﻿using System.Runtime.InteropServices.JavaScript;
-using Client.Converters.DataTypes;
-using Client.Converters.Models.Data;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models;
-using Client.Models.ExtraResults;
-using Client.Models.Schemas.Dtos;
-using Client.Queries;
-using Client.Queries.Requires;
-using Client.Utils;
 using EvitaDB;
-using AttributeHistogram = Client.Models.ExtraResults.AttributeHistogram;
-using FacetSummary = Client.Queries.Requires.FacetSummary;
-using PriceHistogram = Client.Models.ExtraResults.PriceHistogram;
-using QueryTelemetry = Client.Models.ExtraResults.QueryTelemetry;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Converters.Models.Data;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.ExtraResults;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Queries;
+using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Client.Utils;
+using AttributeHistogram = EvitaDB.Client.Models.ExtraResults.AttributeHistogram;
+using FacetSummary = EvitaDB.Client.Queries.Requires.FacetSummary;
+using PriceHistogram = EvitaDB.Client.Models.ExtraResults.PriceHistogram;
+using QueryTelemetry = EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
 
-namespace Client.Converters.Models;
+namespace EvitaDB.Client.Converters.Models;
 
 public static class ResponseConverter
 {
@@ -65,13 +65,13 @@ public static class ResponseConverter
         GrpcHistogram grpcPriceHistogram = extraResults.PriceHistogram;
         if (grpcPriceHistogram is not null)
         {
-            extraResultList.Add(new PriceHistogram(ToHistogram(grpcPriceHistogram)));
+            extraResultList.Add(new Client.Models.ExtraResults.PriceHistogram(ToHistogram(grpcPriceHistogram)));
         }
 
         if (extraResults.AttributeHistogram.Count > 0)
         {
             extraResultList.Add(
-                new AttributeHistogram(
+                new Client.Models.ExtraResults.AttributeHistogram(
                     extraResults.AttributeHistogram.ToDictionary(x =>
                         x.Key, value => ToHistogram(value.Value))
                 )
@@ -106,7 +106,7 @@ public static class ResponseConverter
 
         if (extraResults.FacetGroupStatistics.Count > 0)
         {
-            FacetSummary? facetSummaryRequirementsDefaults = QueryUtils.FindRequire<FacetSummary>(query);
+            Queries.Requires.FacetSummary? facetSummaryRequirementsDefaults = QueryUtils.FindRequire<Queries.Requires.FacetSummary>(query);
             EntityFetch? defaultEntityFetch = facetSummaryRequirementsDefaults?.FacetEntityRequirement;
             EntityGroupFetch? defaultEntityGroupFetch = facetSummaryRequirementsDefaults?.GroupEntityRequirement;
 
@@ -218,9 +218,9 @@ public static class ResponseConverter
         );
     }
 
-    private static QueryTelemetry ToQueryTelemetry(GrpcQueryTelemetry grpcQueryTelemetry)
+    private static Client.Models.ExtraResults.QueryTelemetry ToQueryTelemetry(GrpcQueryTelemetry grpcQueryTelemetry)
     {
-        return new QueryTelemetry(
+        return new Client.Models.ExtraResults.QueryTelemetry(
             EvitaEnumConverter.ToQueryPhase(grpcQueryTelemetry.Operation),
             grpcQueryTelemetry.Start,
             grpcQueryTelemetry.SpentTime,

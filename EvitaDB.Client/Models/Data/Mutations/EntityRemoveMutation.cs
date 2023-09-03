@@ -1,14 +1,14 @@
-﻿using Client.Exceptions;
-using Client.Models.Data.Mutations.AssociatedData;
-using Client.Models.Data.Mutations.Attributes;
-using Client.Models.Data.Mutations.Entity;
-using Client.Models.Data.Mutations.Price;
-using Client.Models.Data.Mutations.Reference;
-using Client.Models.Data.Structure;
-using Client.Models.Schemas.Dtos;
-using Client.Utils;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
+using EvitaDB.Client.Models.Data.Mutations.Entity;
+using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data.Mutations;
+namespace EvitaDB.Client.Models.Data.Mutations;
 
 public class EntityRemoveMutation : IEntityMutation
 {

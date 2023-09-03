@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using Client.Utils;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.ExtraResults;
+namespace EvitaDB.Client.Models.ExtraResults;
 
 public class QueryTelemetry : IEvitaResponseExtraResult
 {

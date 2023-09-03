@@ -1,4 +1,4 @@
-﻿namespace Client;
+﻿namespace EvitaDB.Client;
 
 public class EvitaClientTransaction : IDisposable
 {

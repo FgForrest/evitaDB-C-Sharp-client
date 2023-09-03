@@ -4,6 +4,7 @@ using Client;
 using Client.Config;
 using Client.Models;
 using Client.DataTypes;
+using Client.Models.Schemas;
 using Client.Models.Data.Structure;
 using Newtonsoft.Json;
 
@@ -31,10 +32,11 @@ public class DynamicClass
     {
     }
     
-    public static EvitaResponse<SealedEntity> Run() 
+    public static (EvitaResponse<SealedEntity>, IEntitySchema) Run(string catalogName) 
     {
         EvitaClient evita = new EvitaClient(EvitaClientConfiguration);
         #QUERY#
-        return entities;
+        IEntitySchema entitySchema = evita.CreateReadOnlySession(catalogName).GetEntitySchemaOrThrow(entities.Query.Entities.EntityType);
+        return (entities, entitySchema);
     }
 }

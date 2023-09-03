@@ -1,9 +1,9 @@
-﻿using Client.Converters.DataTypes;
-using Client.Models.Data;
-using Client.Models.Data.Mutations.AssociatedData;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 
-namespace Client.Converters.Models.Data.Mutations.AssociatedData;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.AssociatedData;
 
 public class UpsertAssociatedDataMutationConverter : AssociatedDataMutationConverter<UpsertAssociatedDataMutation, GrpcUpsertAssociatedDataMutation>
 {

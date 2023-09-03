@@ -1,8 +1,8 @@
-﻿using Client.DataTypes;
-using Client.Exceptions;
-using Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Utils;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public class LongNumberRange : NumberRange<long>
 {

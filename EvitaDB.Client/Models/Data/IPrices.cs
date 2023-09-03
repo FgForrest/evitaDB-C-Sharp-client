@@ -1,8 +1,8 @@
-﻿using Client.DataTypes;
-using Client.Models.Data.Structure;
-using Client.Queries.Requires;
+﻿using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Queries.Requires;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IPrices : IVersioned
 {

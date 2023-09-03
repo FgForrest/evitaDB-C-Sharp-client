@@ -1,7 +1,7 @@
-﻿using Client.Exceptions;
-using Client.Models.Data;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data;
 
-namespace Client.Models.Schemas;
+namespace EvitaDB.Client.Models.Schemas;
 
 public interface ICatalogSchema : INamedSchema, IVersioned, IContentComparator<ICatalogSchema>, IAttributeSchemaProvider<IGlobalAttributeSchema>
 {

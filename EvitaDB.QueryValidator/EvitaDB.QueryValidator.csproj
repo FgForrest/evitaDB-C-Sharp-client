@@ -8,7 +8,6 @@
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
         <TargetName>Validator</TargetName>
         <AssemblyName>Validator</AssemblyName>
-        <RootNamespace>QueryValidator</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

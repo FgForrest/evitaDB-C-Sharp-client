@@ -1,12 +1,12 @@
-﻿using Client.Converters.Models.Schema.Mutations.Attributes;
-using Client.Converters.Models.Schema.Mutations.Catalogs;
-using Client.Exceptions;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Attributes;
-using Client.Models.Schemas.Mutations.Catalogs;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
-namespace Client.Converters.Models.Schema.Mutations;
+namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingLocalCatalogSchemaMutationConverter : ISchemaMutationConverter<ILocalCatalogSchemaMutation, GrpcLocalCatalogSchemaMutation>
 {

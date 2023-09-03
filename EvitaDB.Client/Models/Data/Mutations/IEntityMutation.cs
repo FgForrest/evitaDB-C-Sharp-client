@@ -1,9 +1,9 @@
-﻿using Client.Models.Data.Structure;
-using Client.Models.Mutations;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
+﻿using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Mutations;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Data.Mutations;
+namespace EvitaDB.Client.Models.Data.Mutations;
 
 public interface IEntityMutation : IMutation
 {

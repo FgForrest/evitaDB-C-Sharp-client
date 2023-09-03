@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Entity;
+namespace EvitaDB.Client.Models.Data.Mutations.Entity;
 
 public class SetParentMutation : ParentMutation
 {

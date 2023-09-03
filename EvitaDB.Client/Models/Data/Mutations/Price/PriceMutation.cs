@@ -1,6 +1,6 @@
-﻿using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Models.Data.Mutations.Price;
 
 public abstract class PriceMutation : ILocalMutation<IPrice>
 {

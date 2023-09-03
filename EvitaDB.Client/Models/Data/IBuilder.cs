@@ -1,6 +1,6 @@
-﻿using Client.Models.Mutations;
+﻿using EvitaDB.Client.Models.Mutations;
 
-namespace Client.Models.Data;
+namespace EvitaDB.Client.Models.Data;
 
 public interface IBuilder<out T, out TM> where TM : IMutation
 {

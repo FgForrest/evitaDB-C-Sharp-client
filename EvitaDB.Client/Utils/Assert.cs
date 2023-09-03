@@ -1,6 +1,6 @@
-﻿using Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 
-namespace Client.Utils;
+namespace EvitaDB.Client.Utils;
 
 public class Assert
 {

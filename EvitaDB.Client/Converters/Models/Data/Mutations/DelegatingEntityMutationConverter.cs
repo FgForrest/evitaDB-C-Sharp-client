@@ -1,8 +1,8 @@
-﻿using Client.Exceptions;
-using Client.Models.Data.Mutations;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Mutations;
 
-namespace Client.Converters.Models.Data.Mutations;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
 public class DelegatingEntityMutationConverter : IEntityMutationConverter<IEntityMutation, GrpcEntityMutation>
 {

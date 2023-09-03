@@ -1,7 +1,7 @@
-﻿using Client.Models.Data.Structure;
-using Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
 
-namespace Client.Models.Data.Mutations.Price;
+namespace EvitaDB.Client.Models.Data.Mutations.Price;
 
 public class SetPriceInnerRecordHandlingMutation : ILocalMutation<IPrices>
 {

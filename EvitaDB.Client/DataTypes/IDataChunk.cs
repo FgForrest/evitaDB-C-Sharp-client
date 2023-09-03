@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Client.DataTypes;
+namespace EvitaDB.Client.DataTypes;
 
 public interface IDataChunk<T> : IEnumerable<T>
 {

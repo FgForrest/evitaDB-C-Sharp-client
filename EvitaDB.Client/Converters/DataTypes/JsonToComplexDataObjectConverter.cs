@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
-using Client.DataTypes;
-using Client.DataTypes.Data;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.DataTypes.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Client.Converters.DataTypes;
+namespace EvitaDB.Client.Converters.DataTypes;
 
 public class JsonToComplexDataObjectConverter
 {

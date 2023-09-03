@@ -1,11 +1,11 @@
-﻿using Client.Converters.DataTypes;
-using Client.DataTypes;
-using Client.Exceptions;
-using Client.Models.Data;
-using Client.Models.Data.Mutations.Attributes;
-using EvitaDB;
+﻿using EvitaDB;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Mutations.Attributes;
 
-namespace Client.Converters.Models.Data.Mutations.Attributes;
+namespace EvitaDB.Client.Converters.Models.Data.Mutations.Attributes;
 
 public class
     ApplyDeltaMutationConverter : AttributeMutationConverter<ApplyDeltaAttributeMutation,

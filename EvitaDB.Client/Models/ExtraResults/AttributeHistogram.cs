@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace Client.Models.ExtraResults;
+namespace EvitaDB.Client.Models.ExtraResults;
 
 public class AttributeHistogram : IEvitaResponseExtraResult
 {

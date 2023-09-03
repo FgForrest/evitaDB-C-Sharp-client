@@ -1,6 +1,6 @@
-﻿using Client.Models.Mutations;
+﻿using EvitaDB.Client.Models.Mutations;
 
-namespace Client.Models.Schemas.Mutations;
+namespace EvitaDB.Client.Models.Schemas.Mutations;
 
 public interface ISchemaMutation : IMutation
 {

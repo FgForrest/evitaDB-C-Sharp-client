@@ -1,7 +1,7 @@
-﻿using Client.DataTypes;
-using Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Schemas.Mutations.Catalogs;
+namespace EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
 public class CreateEntitySchemaMutation : ILocalCatalogSchemaMutation
 {

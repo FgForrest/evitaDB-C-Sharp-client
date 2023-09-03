@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 
-namespace Client.Pooling;
+namespace EvitaDB.Client.Pooling;
 
 public class ChannelInvoker
 {

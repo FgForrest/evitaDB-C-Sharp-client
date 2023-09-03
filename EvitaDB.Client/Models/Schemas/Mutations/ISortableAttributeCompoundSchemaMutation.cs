@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices.JavaScript;
-using Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
-namespace Client.Models.Schemas.Mutations;
+namespace EvitaDB.Client.Models.Schemas.Mutations;
 
 public interface ISortableAttributeCompoundSchemaMutation : ISchemaMutation
 {

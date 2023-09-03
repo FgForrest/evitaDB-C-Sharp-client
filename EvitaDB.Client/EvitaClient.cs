@@ -2,27 +2,26 @@
 using System.Diagnostics;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
-using Client.Cdc;
-using Client.Certificate;
-using Client.Config;
-using Client.Converters.DataTypes;
-using Client.Converters.Models;
-using Client.Converters.Models.Schema.Mutations;
-using Client.Exceptions;
-using Client.Interceptors;
-using Client.Models.Cdc;
-using Client.Models.Schemas.Dtos;
-using Client.Models.Schemas.Mutations;
-using Client.Models.Schemas.Mutations.Catalogs;
-using Client.Pooling;
-using Client.Services;
-using Client.Session;
-using EvitaDB;
+using EvitaDB.Client.Cdc;
+using EvitaDB.Client.Certificate;
+using EvitaDB.Client.Config;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Converters.Models;
+using EvitaDB.Client.Converters.Models.Schema.Mutations;
+using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Interceptors;
+using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
+using EvitaDB.Client.Pooling;
+using EvitaDB.Client.Services;
+using EvitaDB.Client.Session;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Enum = System.Enum;
 
-namespace Client;
+namespace EvitaDB.Client;
 
 public delegate void EvitaSessionTerminationCallback(EvitaClientSession session);
 

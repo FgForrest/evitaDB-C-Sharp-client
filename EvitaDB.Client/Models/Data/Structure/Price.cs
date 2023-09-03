@@ -1,7 +1,7 @@
-﻿using Client.DataTypes;
-using Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
-namespace Client.Models.Data.Structure;
+namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Price : IPrice
 {

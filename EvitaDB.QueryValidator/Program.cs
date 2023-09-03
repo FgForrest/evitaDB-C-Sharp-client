@@ -121,7 +121,7 @@ public static partial class Program
 
                 if (snippetClass is not null && method is not null)
                 {
-                    var responseAndEntitySchema = ((EvitaResponse<SealedEntity>? response, IEntitySchema entitySchema)) 
+                    var responseAndEntitySchema = ((EvitaResponse<SealedEntity>? response, IEntitySchema entitySchema))
                         method.Invoke(null, new[] {FindCatalogName(queryCode)});
                     if (responseAndEntitySchema.response is not null)
                     {
@@ -130,14 +130,16 @@ public static partial class Program
                         {
                             case "md":
                                 serializedOutput = MarkdownConverter.GenerateMarkDownTable(
-                                    responseAndEntitySchema.entitySchema, 
-                                    responseAndEntitySchema.response.Query, 
+                                    responseAndEntitySchema.entitySchema,
+                                    responseAndEntitySchema.response.Query,
                                     responseAndEntitySchema.response
                                 );
                                 break;
                             case "json" when sourceVariable is not null:
                             {
-                                object? value = ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response, sourceVariable.Split('.'));
+                                object? value =
+                                    ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
+                                        sourceVariable.Split('.'));
                                 var stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
                                 serializedOutput = WrapSerializedOutputInCodeBlock(stringSerialized);
                                 break;
@@ -145,6 +147,7 @@ public static partial class Program
                             default:
                                 throw new ArgumentException("Bad combination of output format and source variable!");
                         }
+
                         Console.WriteLine(serializedOutput);
                     }
                     else
@@ -163,7 +166,7 @@ public static partial class Program
             }
         }
     }
-    
+
     private static string FindCatalogName(string text)
     {
         int firstDoubleQuote = text.IndexOf('"');

@@ -1,23 +1,24 @@
 using System;
 using System.Globalization;
-using Client;
-using Client.Config;
-using Client.Models;
-using Client.DataTypes;
-using Client.Models.Schemas;
-using Client.Models.Data.Structure;
 using Newtonsoft.Json;
 
-using static Client.Queries.IQueryConstraints;
-using static Client.Queries.Filter.AttributeSpecialValue;
-using static Client.Queries.Requires.StatisticsType;
-using static Client.Queries.Requires.StatisticsBase;
-using static Client.Queries.Query;
-using static Client.Queries.Order.OrderDirection;
-using static Client.Queries.Requires.PriceContentMode;
-using static Client.Queries.Requires.FacetStatisticsDepth;
-using static Client.Queries.Requires.QueryPriceMode;
-using static Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
+using EvitaDB.Client;
+using EvitaDB.Client.Config;
+using EvitaDB.Client.Models;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Data.Structure;
+
+using static EvitaDB.Client.Queries.IQueryConstraints;
+using static EvitaDB.Client.Queries.Filter.AttributeSpecialValue;
+using static EvitaDB.Client.Queries.Requires.StatisticsType;
+using static EvitaDB.Client.Queries.Requires.StatisticsBase;
+using static EvitaDB.Client.Queries.Query;
+using static EvitaDB.Client.Queries.Order.OrderDirection;
+using static EvitaDB.Client.Queries.Requires.PriceContentMode;
+using static EvitaDB.Client.Queries.Requires.FacetStatisticsDepth;
+using static EvitaDB.Client.Queries.Requires.QueryPriceMode;
+using static EvitaDB.Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
 
 public class DynamicClass
 {

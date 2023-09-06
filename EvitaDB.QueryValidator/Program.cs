@@ -122,7 +122,7 @@ public static partial class Program
                 if (snippetClass is not null && method is not null)
                 {
                     var responseAndEntitySchema = ((EvitaResponse<SealedEntity>? response, IEntitySchema entitySchema))
-                        method.Invoke(null, new[] {FindCatalogName(queryCode)});
+                        method.Invoke(null, new object?[] {FindCatalogName(queryCode)})!;
                     if (responseAndEntitySchema.response is not null)
                     {
                         string serializedOutput;

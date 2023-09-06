@@ -45,7 +45,13 @@ public class Reference : IReference
 		_referenceCardinality = cardinality;
 		_referencedEntityType = referencedEntityType;
 		Group = group;
-		Attributes = new Attributes(entitySchema);
+		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
+		Attributes = new Attributes(
+			entitySchema, 
+			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
+			new List<AttributeValue>(),
+			referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
+		);
 		ReferencedEntity = referencedEntity;
 		GroupEntity = groupEntity;
 	}
@@ -68,7 +74,13 @@ public class Reference : IReference
 		_referenceCardinality = cardinality;
 		_referencedEntityType = referencedEntityType;
 		Group = group;
-		Attributes = new Attributes(entitySchema);
+		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
+		Attributes = new Attributes(
+			entitySchema, 
+			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
+			new List<AttributeValue>(),
+			referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
+		);
 		ReferencedEntity = referencedEntity;
 		GroupEntity = groupEntity;
 		Dropped = dropped;
@@ -118,7 +130,13 @@ public class Reference : IReference
 		_referenceCardinality = cardinality;
 		_referencedEntityType = referencedEntityType;
 		Group = group;
-		Attributes = new Attributes(entitySchema, attributes);
+		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
+		Attributes = new Attributes(
+			entitySchema, 
+			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
+			attributes,
+			referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
+		);
 		ReferencedEntity = referencedEntity;
 		GroupEntity = groupEntity;
 		Dropped = dropped;
@@ -129,7 +147,7 @@ public class Reference : IReference
 		string referenceName,
 		int referencedEntityPrimaryKey,
 		string? referencedEntityType,
-		Cardinality cardinality,
+		Cardinality? cardinality,
 		GroupEntityReference? group,
 		Attributes attributes,
 		SealedEntity? referencedEntity = null,
@@ -147,6 +165,19 @@ public class Reference : IReference
 		ReferencedEntity = referencedEntity;
 		GroupEntity = groupEntity;
 		Dropped = dropped;
+	}
+	
+	public static ReferenceSchema CreateImplicitSchema(
+		string referenceName,
+		string? referencedEntityType,
+		Cardinality? cardinality,
+		GroupEntityReference? group
+	) {
+		return Schemas.Dtos.ReferenceSchema.InternalBuild(
+			referenceName, referencedEntityType!, false, cardinality!.Value,
+			group?.Type, false,
+			false, false
+		);
 	}
 	
 	public object? GetAttribute(string attributeName)
@@ -184,7 +215,7 @@ public class Reference : IReference
 		return Attributes.GetAttributeValue(attributeKey);
 	}
 
-	public IAttributeSchema GetAttributeSchema(string attributeName)
+	public IAttributeSchema? GetAttributeSchema(string attributeName)
 	{
 		return Attributes.GetAttributeSchema(attributeName);
 	}

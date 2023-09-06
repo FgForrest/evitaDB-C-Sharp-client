@@ -28,13 +28,13 @@ public class TableRow<T>
                 throw new MarkdownSerializationException("Column is null");
             }
 
-            if (item.ToString().Contains(Table<object>.Separator))
+            if (item.ToString()!.Contains(Table<object>.Separator))
             {
                 throw new MarkdownSerializationException("Column contains separator char \"" + Table<object>.Separator + "\"");
             }
 
             sb.Append(Table<object>.Separator);
-            sb.Append(StringUtils.SurroundValueWith(item.ToString(), " "));
+            sb.Append(StringUtils.SurroundValueWith(item.ToString()!, " "));
             if (_columns.IndexOf(item) == _columns.Count - 1)
             {
                 sb.Append(Table<object>.Separator);

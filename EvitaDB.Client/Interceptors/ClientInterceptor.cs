@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using EvitaDB.Client.Session;
+using Grpc.Core;
 using Grpc.Core.Interceptors;
 
 namespace EvitaDB.Client.Interceptors;
@@ -11,6 +12,20 @@ public class ClientInterceptor : Interceptor
 {
     private const string SessionIdHeader = "sessionId";
     private const string CatalogNameHeader = "catalogName";
+    private const string ClientIdHeader = "catalogName";
+    private const string RequestIdHeader = "catalogName";
+
+    private readonly IClientContext? _clientContext;
+
+    public ClientInterceptor(IClientContext clientContext)
+    {
+        _clientContext = clientContext;
+    }
+
+    public ClientInterceptor()
+    {
+        _clientContext = null;
+    }
 
     /// <summary>
     /// This method is intercepting client unary calls prior their sending to the server. When target method requires a session, then
@@ -21,45 +36,31 @@ public class ClientInterceptor : Interceptor
         ClientInterceptorContext<TRequest, TResponse> context,
         BlockingUnaryCallContinuation<TRequest, TResponse> continuation)
     {
+        Metadata metadata = new Metadata();
+        if (_clientContext != null) {
+            string? clientId = _clientContext.GetClientId();
+            if (clientId is not null)
+            {
+                metadata.Add(ClientIdHeader, clientId);
+            } 
+            string? requestId = _clientContext.GetRequestId();
+            if (requestId is not null)
+            {
+                metadata.Add(RequestIdHeader, requestId);
+            }
+        }
         var sessionId = SessionIdHolder.GetSessionId();
-        if (sessionId == null)
-            return base.BlockingUnaryCall(request, context, continuation);
-        Metadata metadata = new()
+        if (sessionId != null)
         {
-            {SessionIdHeader, sessionId},
-            {CatalogNameHeader, SessionIdHolder.GetCatalogName()!}
-        };
+            metadata.Add(SessionIdHeader, sessionId);
+            metadata.Add(CatalogNameHeader, SessionIdHolder.GetCatalogName()!);
+        }
         var newContext = new ClientInterceptorContext<TRequest, TResponse>(
             context.Method,
             context.Host,
             context.Options.WithHeaders(metadata)
         );
         return base.BlockingUnaryCall(request, newContext, continuation);
-    }
-
-    /// <summary>
-    /// This method is intercepting client unary calls prior their sending to the server. When target method requires a session, then
-    /// the requested information set by the client will be checked in SessionIdHolder. If there is a set sessionId, then
-    ///  it will be added together with sessionType to the call metadata.
-    /// </summary>
-    public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(TRequest request,
-        ClientInterceptorContext<TRequest, TResponse> context,
-        AsyncUnaryCallContinuation<TRequest, TResponse> continuation)
-    {
-        var sessionId = SessionIdHolder.GetSessionId();
-        if (sessionId == null)
-            return base.AsyncUnaryCall(request, context, continuation);
-        Metadata metadata = new()
-        {
-            {SessionIdHeader, sessionId},
-            {CatalogNameHeader, SessionIdHolder.GetCatalogName()!}
-        };
-        var newContext = new ClientInterceptorContext<TRequest, TResponse>(
-            context.Method,
-            context.Host,
-            context.Options.WithHeaders(metadata)
-        );
-        return base.AsyncUnaryCall(request, newContext, continuation);
     }
 }
 

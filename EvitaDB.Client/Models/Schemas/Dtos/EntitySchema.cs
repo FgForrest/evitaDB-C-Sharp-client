@@ -59,15 +59,15 @@ public class EntitySchema : IEntitySchema
         WithHierarchy = withHierarchy;
         WithPrice = withPrice;
         IndexedPricePlaces = indexedPricePlaces;
-        Locales = locales;
-        Currencies = currencies;
-        Attributes = attributes.ToDictionary(x => x.Key, x => x.Value);
+        Locales = locales.ToImmutableSortedSet(Comparer<CultureInfo>.Create((x, y) => string.Compare(x.TwoLetterISOLanguageName, y.TwoLetterISOLanguageName, StringComparison.Ordinal)));
+        Currencies = currencies.ToImmutableSortedSet(Comparer<Currency>.Create((x, y) => string.Compare(x.CurrencyCode, y.CurrencyCode, StringComparison.Ordinal)));
+        Attributes = attributes.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
         AttributeNameIndex =
             InternalGenerateNameVariantIndex(Attributes.Values, x => x.NameVariants);
-        AssociatedData = associatedData.ToDictionary(x => x.Key, x => x.Value);
+        AssociatedData = associatedData.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
         AssociatedDataNameIndex =
             InternalGenerateNameVariantIndex(AssociatedData.Values, x => x.NameVariants);
-        References = references.ToDictionary(x => x.Key, x => x.Value);
+        References = references.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
         ReferenceNameIndex =
             InternalGenerateNameVariantIndex(References.Values, x => x.NameVariants);
         EvolutionModes = evolutionMode;

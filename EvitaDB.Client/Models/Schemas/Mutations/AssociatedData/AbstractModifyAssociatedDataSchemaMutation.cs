@@ -46,5 +46,5 @@ public abstract class AbstractModifyAssociatedDataSchemaMutation : IEntitySchema
     }
 
     public abstract IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema);
-    public abstract IAssociatedDataSchema? Mutate(IAssociatedDataSchema? associatedDataSchema);
+    public abstract IAssociatedDataSchema Mutate(IAssociatedDataSchema? associatedDataSchema);
 }

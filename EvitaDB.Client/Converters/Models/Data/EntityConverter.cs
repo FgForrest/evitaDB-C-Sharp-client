@@ -19,12 +19,15 @@ public static class EntityConverter
     {
         return new EntityReference(entityReference.EntityType, entityReference.PrimaryKey);
     }
-    
-    public static EntityReferenceWithParent ToEntityReferenceWithParent(GrpcEntityReferenceWithParent entityReferenceWithParent) {
+
+    public static EntityReferenceWithParent ToEntityReferenceWithParent(
+        GrpcEntityReferenceWithParent entityReferenceWithParent)
+    {
         return new EntityReferenceWithParent(
             entityReferenceWithParent.EntityType, entityReferenceWithParent.PrimaryKey,
-            entityReferenceWithParent.Parent is not null ?
-                ToEntityReferenceWithParent(entityReferenceWithParent.Parent) : null
+            entityReferenceWithParent.Parent is not null
+                ? ToEntityReferenceWithParent(entityReferenceWithParent.Parent)
+                : null
         );
     }
 
@@ -55,6 +58,7 @@ public static class EntityConverter
         {
             parentEntity = parent;
         }
+
         return SealedEntity.InternalBuild(
             grpcEntity.PrimaryKey,
             grpcEntity.Version,
@@ -66,10 +70,12 @@ public static class EntityConverter
                 .ToList(),
             new Attributes(
                 entitySchema,
+                null,
                 ToAttributeValues(
                     grpcEntity.GlobalAttributes,
                     grpcEntity.LocalizedAttributes
-                )
+                ),
+                entitySchema.Attributes
             ),
             new AssociatedData(
                 entitySchema,
@@ -103,10 +109,11 @@ public static class EntityConverter
             foreach (KeyValuePair<string, GrpcEvitaValue> attributeEntry in localizedAttributeSet.Attributes)
             {
                 result.Add(
-                    ToAttributeValue(new AttributeKey(attributeEntry.Key, locale),attributeEntry.Value)
+                    ToAttributeValue(new AttributeKey(attributeEntry.Key, locale), attributeEntry.Value)
                 );
             }
         }
+
         foreach (var (attributeName, value) in globalAttributesMap)
         {
             result.Add(ToAttributeValue(new AttributeKey(attributeName), value));
@@ -146,6 +153,7 @@ public static class EntityConverter
                 );
             }
         }
+
         foreach (var (associatedDataName, value) in globalAssociatedDataMap)
         {
             result.Add(
@@ -180,6 +188,7 @@ public static class EntityConverter
         {
             return null;
         }
+
         return new Price(
             new PriceKey(
                 grpcPrice.PriceId,
@@ -240,6 +249,28 @@ public static class EntityConverter
         GrpcReference grpcReference
     )
     {
+        GroupEntityReference? group;
+        if (grpcReference.GroupReferencedEntityReference is not null)
+        {
+            group = new GroupEntityReference(
+                grpcReference.GroupReferencedEntityReference.EntityType,
+                grpcReference.GroupReferencedEntityReference.PrimaryKey,
+                grpcReference.GroupReferencedEntityReference.Version
+            );
+        }
+        else if (grpcReference.GroupReferencedEntity is not null)
+        {
+            group = new GroupEntityReference(
+                grpcReference.GroupReferencedEntity.EntityType,
+                grpcReference.GroupReferencedEntity.PrimaryKey,
+                grpcReference.GroupReferencedEntity.Version
+            );
+        }
+        else
+        {
+            group = null;
+        }
+
         return new Reference(
             entitySchema,
             grpcReference.Version,
@@ -247,19 +278,17 @@ public static class EntityConverter
             grpcReference.ReferencedEntityReference?.PrimaryKey ?? grpcReference.ReferencedEntity.PrimaryKey,
             grpcReference.ReferencedEntityReference?.EntityType ?? grpcReference.ReferencedEntity.EntityType,
             EvitaEnumConverter.ToCardinality(grpcReference.ReferenceCardinality),
-            grpcReference.GroupReferencedEntity is not null
-                ? new GroupEntityReference(
-                    grpcReference.GroupReferencedEntityReference.EntityType,
-                    grpcReference.GroupReferencedEntityReference.PrimaryKey,
-                    grpcReference.GroupReferencedEntityReference.Version
-                )
-                : null,
+            group,
             ToAttributeValues(
                 grpcReference.GlobalAttributes,
                 grpcReference.LocalizedAttributes
             ),
-            grpcReference.ReferencedEntity == null ? null : ToSealedEntity(entitySchemaProvider, grpcReference.ReferencedEntity),
-            grpcReference.GroupReferencedEntity == null ? null : ToSealedEntity(entitySchemaProvider, grpcReference.GroupReferencedEntity)
+            grpcReference.ReferencedEntity == null
+                ? null
+                : ToSealedEntity(entitySchemaProvider, grpcReference.ReferencedEntity),
+            grpcReference.GroupReferencedEntity == null
+                ? null
+                : ToSealedEntity(entitySchemaProvider, grpcReference.GroupReferencedEntity)
         );
     }
 

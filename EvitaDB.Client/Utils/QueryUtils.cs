@@ -38,7 +38,7 @@ public static class QueryUtils
     public static List<TC> FindConstraints<TC, TS>(IConstraint constraint) where TC : IConstraint
     {
         return FinderVisitor.FindConstraints<TC>(constraint, typeof(TC).IsInstanceOfType,
-            cnt => cnt != constraint && cnt is TS);
+            cnt => cnt != constraint && cnt.GetType().IsAssignableTo(typeof(TS)));
     }
 
     public static T? FindFilter<T>(Query query) where T : IFilterConstraint

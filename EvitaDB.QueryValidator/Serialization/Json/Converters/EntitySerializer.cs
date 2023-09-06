@@ -41,7 +41,7 @@ public class EntitySerializer : JsonConverter<IEntity>
         if (value.InnerRecordHandling != PriceInnerRecordHandling.Unknown)
         {
             writer.WritePropertyName("priceInnerRecordHandling");
-            writer.WriteValue(value.InnerRecordHandling.ToString());
+            writer.WriteValue(value.InnerRecordHandling.ToString().ToUpper());
         }
 
         WriteAttributes(writer, value);
@@ -205,22 +205,22 @@ public class EntitySerializer : JsonConverter<IEntity>
                         WriteNumber<byte>(writer, byteNumber);
                     }
 
-                    if (theValue is short shortNumber)
+                    else if (theValue is short shortNumber)
                     {
                         WriteNumber<short>(writer, shortNumber);
                     }
 
-                    if (theValue is int intNumber)
+                    else if (theValue is int intNumber)
                     {
                         WriteNumber<int>(writer, intNumber);
                     }
 
-                    if (theValue is long longNumber)
+                    else if (theValue is long longNumber)
                     {
                         WriteNumber<long>(writer, longNumber);
                     }
 
-                    if (theValue is decimal decimalNumber)
+                    else if (theValue is decimal decimalNumber)
                     {
                         WriteNumber<decimal>(writer, decimalNumber);
                     }
@@ -279,22 +279,22 @@ public class EntitySerializer : JsonConverter<IEntity>
                         WriteNumber<byte>(writer, byteNumber);
                     }
 
-                    if (theValue is short shortNumber)
+                    else if (theValue is short shortNumber)
                     {
                         WriteNumber<short>(writer, shortNumber);
                     }
 
-                    if (theValue is int intNumber)
+                    else if (theValue is int intNumber)
                     {
                         WriteNumber<int>(writer, intNumber);
                     }
 
-                    if (theValue is long longNumber)
+                    else if (theValue is long longNumber)
                     {
                         WriteNumber<long>(writer, longNumber);
                     }
 
-                    if (theValue is decimal decimalNumber)
+                    else if (theValue is decimal decimalNumber)
                     {
                         WriteNumber<decimal>(writer, decimalNumber);
                     }
@@ -367,7 +367,7 @@ public class EntitySerializer : JsonConverter<IEntity>
             {
                 writer.WritePropertyName("references");
                 writer.WriteStartObject();
-                foreach (var groupBy in value.GetReferences().GroupBy(x => x.ReferenceName))
+                foreach (var groupBy in value.GetReferences().GroupBy(x => x.ReferenceName).OrderBy(x=>x.Key))
                 {
                     WriteReference(writer, serializer, groupBy.Key, groupBy.ToList());
                 }
@@ -447,7 +447,7 @@ public class EntitySerializer : JsonConverter<IEntity>
                 {
                     writer.WritePropertyName("prices");
                     writer.WriteStartArray();
-                    foreach (IPrice price in value.GetPrices())
+                    foreach (IPrice price in value.GetPrices().OrderBy(x=>x.Key.PriceId))
                     {
                         WritePrice(writer, price);
                     }
@@ -467,7 +467,7 @@ public class EntitySerializer : JsonConverter<IEntity>
         {
             writer.WriteStartObject();
             writer.WritePropertyName("currency");
-            writer.WriteValue(value.Currency.ToString());
+            writer.WriteValue(value.Currency.CurrencyCode);
 
             writer.WritePropertyName("priceList");
             writer.WriteValue(value.PriceList);

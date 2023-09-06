@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
@@ -36,7 +37,7 @@ public static partial class MarkdownConverter
         EvitaResponse<SealedEntity> response
     )
     {
-        var entityFetch = query.Require?
+        EntityFetch? entityFetch = query.Require?
             .SelectMany(
                 QueryUtils.FindConstraints<EntityFetch, ISeparateEntityContentRequireContainer>
             )
@@ -47,35 +48,34 @@ public static partial class MarkdownConverter
                                   .Any(require => QueryUtils.FindConstraint<DataInLocales>(require) != null);
 
         // collect headers for the MarkDown table
+        List<AttributeContent> attributeContents = QueryUtils.FindConstraints<AttributeContent, ISeparateEntityContentRequireContainer>(entityFetch!);
         var headers = new List<string> {EntityPrimaryKey};
         headers.AddRange(
-            entityFetch?.SelectMany(
-                    QueryUtils.FindConstraints<AttributeContent, ISeparateEntityContentRequireContainer>
-                )
-                .SelectMany(attributeContent =>
+        attributeContents
+            .SelectMany(attributeContent =>
+            {
+                if (attributeContent.AllRequested)
                 {
-                    if (attributeContent.AllRequested)
-                    {
-                        var attributes = entitySchema.Attributes.Values;
-                        return (localizedQuery ? attributes.Where(attr => attr.Localized) : attributes)
-                            .Select(attr => attr.Name)
-                            .Where(attrName =>
-                                response.RecordData.Any(entity => entity.GetAttributeValue(attrName) is not null));
-                    }
+                    var attributes = entitySchema.Attributes.Values;
+                    return (localizedQuery ? attributes.Where(attr => attr.Localized) : attributes)
+                        .Select(attr => attr.Name)
+                        .Where(attrName =>
+                            response.RecordData.Any(entity => entity.GetAttributeValue(attrName) is not null));
+                }
 
-                    return attributeContent.GetAttributeNames();
-                })
-                .SelectMany(
-                    attributeName => TransformLocalizedAttributes(
-                        response, attributeName, entitySchema.Locales, entitySchema, entity => new[] {entity}
-                    )
+                return attributeContent.GetAttributeNames();
+            })
+            .SelectMany(
+                attributeName => TransformLocalizedAttributes(
+                    response, attributeName, entitySchema.Locales, entitySchema, entity => new[] {entity}
                 )
-                .Distinct() ?? Array.Empty<string>()
+            )
+            .Distinct()
         );
 
+        List<ReferenceContent> referenceContents = QueryUtils.FindConstraints<ReferenceContent, ISeparateEntityContentRequireContainer>(entityFetch!);
         headers.AddRange(
-            entityFetch?.SelectMany(
-                    QueryUtils.FindConstraints<ReferenceContent, ISeparateEntityContentRequireContainer>)
+            referenceContents
                 .SelectMany(refCnt => refCnt.ReferencedNames
                     .Where(name => name != null)
                     .Select(entitySchema.GetReferenceOrThrowException)
@@ -107,7 +107,7 @@ public static partial class MarkdownConverter
                                 .SelectMany(
                                     attrName => TransformLocalizedAttributes(
                                         response, attrName, entitySchema.Locales, referenceSchema,
-                                        entity => entity.GetReferences(referenceSchema.Name).Cast<IAttributes>()
+                                        entity => entity.GetReferences(referenceSchema.Name)
                                     )
                                 )
                                 .Select(attr => RefLink + referenceSchema.Name + AttrLink + attr);
@@ -118,11 +118,10 @@ public static partial class MarkdownConverter
                     .Distinct()
                 )
         );
-
+        
+        List<PriceContent> priceContents = QueryUtils.FindConstraints<PriceContent, ISeparateEntityContentRequireContainer>(entityFetch!);
         headers.AddRange(
-            (entityFetch?.SelectMany(
-                    QueryUtils.FindConstraints<PriceContent, ISeparateEntityContentRequireContainer>
-                )
+            priceContents
                 .Select(priceCnt =>
                 {
                     if (priceCnt.FetchMode == PriceContentMode.RespectingFilter)
@@ -132,12 +131,13 @@ public static partial class MarkdownConverter
 
                     return null;
                 })
-                .Where(x => x != null) ?? Array.Empty<string?>())!
+                .Where(x => x != null)!
         );
 
         // define the table with header line
         var tableBuilder = new Table<object>.Builder()
             .WithAlignment(Table<object>.AlignLeft)
+            // ReSharper disable once CoVariantArrayConversion
             .AddRow(headers.ToArray());
 
         // prepare price formatter
@@ -149,7 +149,7 @@ public static partial class MarkdownConverter
         var currency = query.FilterBy?
             .Select(QueryUtils.FindConstraint<PriceInCurrency>)
             .Select(f => f?.Currency.CurrencyCode)
-            .FirstOrDefault() ?? new CultureInfo("de").NumberFormat.CurrencySymbol;
+            .FirstOrDefault() ?? new CultureInfo("de-DE").NumberFormat.CurrencySymbol;
         var priceFormatter = new CultureInfo(locale.Name) {NumberFormat = {CurrencySymbol = currency}};
         var percentFormatter = NumberFormatInfo.GetInstance(locale);
 
@@ -183,7 +183,7 @@ public static partial class MarkdownConverter
                             ? PriceLink +
                               string.Format(priceFormatter, "{0:C}", sealedEntity.PriceForSale.PriceWithTax) +
                               " (with " +
-                              string.Format(percentFormatter, "{0:P}", sealedEntity.PriceForSale.TaxRate) +
+                              decimal.Parse(sealedEntity.PriceForSale.TaxRate.ToString("0.#########")) + "%" +
                               " tax) / " + string.Format(priceFormatter, "{0:C}",
                                   sealedEntity.PriceForSale.PriceWithoutTax)
                             : "N/A";
@@ -206,7 +206,7 @@ public static partial class MarkdownConverter
 
     private static AttributeKey ToAttributeKey(string attributeHeader)
     {
-        if (attributeHeader.StartsWith("\uD83C"))
+        if (attributeHeader.StartsWith('\uD83C'))
         {
             foreach (KeyValuePair<CultureInfo, string> entry in Locales)
             {

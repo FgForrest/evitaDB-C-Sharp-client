@@ -23,22 +23,29 @@ public interface IAssociatedData
     ICollection<AssociatedDataValue> GetAssociatedDataValues(string associatedDataName);
     ISet<CultureInfo> GetAssociatedDataLocales();
     
-    static bool AnyAssociatedDataDifferBetween(IAssociatedData first, IAssociatedData second) {
-        IEnumerable<AssociatedDataValue> thisValues = first.AssociatedDataAvailable() ? first.GetAssociatedDataValues() : new List<AssociatedDataValue>();
-        IEnumerable<AssociatedDataValue> otherValues = second.AssociatedDataAvailable() ? second.GetAssociatedDataValues() : new List<AssociatedDataValue>();
+    static bool AnyAssociatedDataDifferBetween(IAssociatedData first, IAssociatedData second)
+    {
+        ICollection<AssociatedDataValue> thisValues = first.GetAssociatedDataValues();
+        ICollection<AssociatedDataValue> otherValues = second.GetAssociatedDataValues();
 
-        if (thisValues.Count() != otherValues.Count()) {
+        if (thisValues.Count != otherValues.Count)
+        {
             return true;
-        } else {
-            return thisValues
-                .Any(it => {
+        }
+
+        return thisValues
+            .Any(it =>
+            {
                 AssociatedDataKey key = it.Key;
                 object? thisValue = it.Value;
-                object? otherValue = second.GetAssociatedData(
-                    key.AssociatedDataName, key.Locale
-                );
+                object? otherValue = key.Localized
+                    ? second.GetAssociatedData(
+                        key.AssociatedDataName, key.Locale!
+                    )
+                    : second.GetAssociatedData(
+                        key.AssociatedDataName
+                    );
                 return QueryUtils.ValueDiffers(thisValue, otherValue);
             });
-        }
     }
 }

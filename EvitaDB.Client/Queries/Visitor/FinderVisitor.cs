@@ -27,7 +27,7 @@ public class FinderVisitor : IConstraintVisitor
     private FinderVisitor(Predicate<IConstraint> matcher)
     {
         _matcher = matcher;
-        _stopper = constraint => false;
+        _stopper = _ => false;
     }
 
     private FinderVisitor(Predicate<IConstraint> matcher, Predicate<IConstraint> stopper)
@@ -70,15 +70,13 @@ public class FinderVisitor : IConstraintVisitor
         {
             _result.Add(constraint);
         }
-        if (!constraint.GetType().IsAssignableToGenericType(typeof(ConstraintContainer<>)))
+
+        if (!constraint.GetType().IsAssignableToGenericType(typeof(IConstraintContainer<>)) ||
+            _stopper.Invoke(constraint))
         {
             return;
         }
         IConstraintContainer<IConstraint> constraintContainer = (IConstraintContainer<IConstraint>) constraint;
-        if (_stopper.Invoke(constraintContainer))
-        {
-            return;
-        }
         foreach (IConstraint child in constraintContainer.Children)
         {
             child.Accept(this);

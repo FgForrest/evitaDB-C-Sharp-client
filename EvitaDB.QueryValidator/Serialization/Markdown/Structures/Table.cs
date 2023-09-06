@@ -96,28 +96,31 @@ public class Table<T>
             {
                 sb.Append(Separator);
 
-                string value = "";
+                string? value = "";
                 if (row.GetColumns().Count > columnIndex)
                 {
-                    object valueObject = row.GetColumns()[columnIndex];
+                    object? valueObject = row.GetColumns()[columnIndex];
                     if (valueObject != null)
                     {
                         value = valueObject.ToString();
                     }
                 }
 
-                if (value.Equals(_trimmingIndicator))
+                if (value is not null)
                 {
-                    value = StringUtils.FillUpLeftAligned(value, _trimmingIndicator, columnWidths[columnIndex]);
-                    value = StringUtils.SurroundValueWith(value, Whitespace);
+                    if (value.Equals(_trimmingIndicator))
+                    {
+                        value = StringUtils.FillUpLeftAligned(value, _trimmingIndicator, columnWidths[columnIndex]);
+                        value = StringUtils.SurroundValueWith(value, Whitespace);
+                    }
+                    else
+                    {
+                        int alignment = GetAlignment(_alignments, columnIndex);
+                        value = StringUtils.SurroundValueWith(value, Whitespace);
+                        value = StringUtils.FillUpAligned(value, Whitespace, columnWidths[columnIndex] + 2, alignment);
+                    }
                 }
-                else
-                {
-                    int alignment = GetAlignment(_alignments, columnIndex);
-                    value = StringUtils.SurroundValueWith(value, Whitespace);
-                    value = StringUtils.FillUpAligned(value, Whitespace, columnWidths[columnIndex] + 2, alignment);
-                }
-
+                
                 sb.Append(value);
 
                 if (columnIndex == row.GetColumns().Count - 1)
@@ -185,7 +188,7 @@ public class Table<T>
         TableRow<T> trimmingIndicatorRow = new TableRow<T>();
         for (int columnIndex = 0; columnIndex < table.GetRows()[0].GetColumns().Count; columnIndex++)
         {
-            //trimmingIndicatorRow.GetColumns().Add(trimmingIndicator);
+            trimmingIndicatorRow.GetColumns().Add((T) (object) trimmingIndicator);
         }
 
         table.GetRows().Insert(trimmingStartIndex, trimmingIndicatorRow);
@@ -264,7 +267,7 @@ public class Table<T>
                 continue;
             }
 
-            maximum = Math.Max(value.ToString().Length, maximum);
+            maximum = Math.Max(value.ToString()!.Length, maximum);
         }
 
         return maximum;

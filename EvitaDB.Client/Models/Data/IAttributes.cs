@@ -17,7 +17,7 @@ public interface IAttributes
     AttributeValue? GetAttributeValue(string attributeName);
     AttributeValue? GetAttributeValue(string attributeName, CultureInfo locale);
     AttributeValue? GetAttributeValue(AttributeKey attributeKey);
-    IAttributeSchema GetAttributeSchema(string attributeName);
+    IAttributeSchema? GetAttributeSchema(string attributeName);
     ISet<string> GetAttributeNames();
     ISet<AttributeKey> GetAttributeKeys();
     ICollection<AttributeValue> GetAttributeValues();

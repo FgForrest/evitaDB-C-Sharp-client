@@ -64,7 +64,7 @@ public class EvitaClient : IClientContext, IDisposable
             configuration.Host,
             configuration.Port,
             certificateManager.BuildHttpClientHandler(),
-            new ClientInterceptor()
+            new ClientInterceptor(this)
         );
         _channelPool = new ChannelPool(channelBuilder, 10);
         _cdcChannel = channelBuilder.Build();

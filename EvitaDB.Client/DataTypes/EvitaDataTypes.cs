@@ -265,19 +265,19 @@ public static class EvitaDataTypes
         }
         if (value is DateTimeOffset dateTimeOffsetValue)
         {
-            return dateTimeOffsetValue.ToString("o", CultureInfo.InvariantCulture);
+            return dateTimeOffsetValue.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
         }
         if (value is DateTime dateTimeValue)
         {
-            return dateTimeValue.ToString("o", CultureInfo.InvariantCulture);
+            return dateTimeValue.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
         }
         if (value is DateOnly dateOnlyValue)
         {
-            return dateOnlyValue.ToString("o", CultureInfo.InvariantCulture);
+            return dateOnlyValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         }
         if (value is TimeOnly timeOnlyValue)
         {
-            return timeOnlyValue.ToString("o", CultureInfo.InvariantCulture);
+            return timeOnlyValue.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
         }
         if (value is CultureInfo cultureInfoValue)
         {

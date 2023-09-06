@@ -2,19 +2,17 @@
 using System.Globalization;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 using Newtonsoft.Json;
 
 namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Attributes : IAttributes
 {
-    [JsonIgnore]
-    private IEntitySchema EntitySchema { get; }
-    [JsonIgnore]
-    private IReferenceSchema? ReferenceSchema { get; }
+    [JsonIgnore] private IEntitySchema EntitySchema { get; }
+    [JsonIgnore] private IReferenceSchema? ReferenceSchema { get; }
     private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
-    [JsonIgnore]
-    public IDictionary<string, IAttributeSchema> AttributeTypes { get; }
+    [JsonIgnore] public IDictionary<string, IAttributeSchema> AttributeTypes { get; }
     private ISet<string>? AttributeNames { get; set; }
     private ISet<CultureInfo>? AttributeLocales { get; set; }
     public bool Empty => AttributeValues.Count == 0;
@@ -22,8 +20,8 @@ public class Attributes : IAttributes
     public bool AttributesAvailable(CultureInfo locale) => true;
     public bool AttributeAvailable(string attributeName) => true;
     public bool AttributeAvailable(string attributeName, CultureInfo locale) => true;
-    
-    public Attributes(IEntitySchema entitySchema, 
+
+    public Attributes(IEntitySchema entitySchema,
         IEnumerable<AttributeValue> attributeValues,
         IDictionary<string, IAttributeSchema> attributeTypes)
     {
@@ -65,50 +63,122 @@ public class Attributes : IAttributes
         AttributeValues = attributeValues.ToDictionary(x => x.Key, x => x);
         AttributeTypes = attributeTypes;
     }
-    
+
     public object? GetAttribute(string attributeName)
     {
-        return AttributeValues.Values.FirstOrDefault(x => x.Key.AttributeName == attributeName)?.Value;
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        Assert.IsTrue(!attributeSchema.Localized,
+            () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
+            ? attributeValue.Value
+            : null;
     }
 
     public object[]? GetAttributeArray(string attributeName)
     {
-        return AttributeValues.Values.FirstOrDefault(x => x.Key.AttributeName == attributeName)?.Value as object[];
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        Assert.IsTrue(!attributeSchema.Localized,
+            () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
+            ? (object[]?) attributeValue.Value
+            : null;
     }
 
     public AttributeValue? GetAttributeValue(string attributeName)
     {
-        return AttributeValues.Values.FirstOrDefault(x => x.Key.AttributeName == attributeName);
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        return attributeSchema.Localized ? null :
+            AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue) ? attributeValue :
+            null;
     }
 
     public object? GetAttribute(string attributeName, CultureInfo locale)
     {
-        var attributeValue = AttributeValues.Values.FirstOrDefault(x =>
-            x.Key.AttributeName == attributeName && x.Key.Locale?.IetfLanguageTag == locale.IetfLanguageTag);
-        return attributeValue is null ? GetAttribute(attributeName) : attributeValue.Value;
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        Assert.IsTrue(!attributeSchema.Localized,
+            () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
+            ? attributeValue.Value
+            : null;
     }
 
     public object[]? GetAttributeArray(string attributeName, CultureInfo locale)
     {
-        var attributeValue = AttributeValues.Values.FirstOrDefault(x =>
-            x.Key.AttributeName == attributeName && x.Key.Locale?.IetfLanguageTag == locale.IetfLanguageTag);
-        return attributeValue is null ? GetAttribute(attributeName) as object[] : attributeValue.Value as object[];
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        AttributeKey attributeKey = attributeSchema.Localized
+            ? new AttributeKey(attributeName, locale)
+            : new AttributeKey(attributeName);
+        return AttributeValues.TryGetValue(attributeKey, out var attributeValue)
+            ? (object[]?) attributeValue.Value
+            : null;
     }
 
     public AttributeValue? GetAttributeValue(string attributeName, CultureInfo locale)
     {
-        var attributeValue = AttributeValues.Values.FirstOrDefault(x =>
-            x.Key.AttributeName == attributeName && x.Key.Locale?.IetfLanguageTag == locale.IetfLanguageTag);
-        var attributeKey = AttributeValues.Values.FirstOrDefault(x =>
-            x.Key.AttributeName == attributeName)?.Key;
-        if (attributeKey != null)
-            return attributeValue ?? AttributeValues[attributeKey];
-        return null;
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        AttributeKey attributeKey = attributeSchema.Localized
+            ? new AttributeKey(attributeName, locale)
+            : new AttributeKey(attributeName);
+        return AttributeValues.TryGetValue(attributeKey, out var attributeValue) ? attributeValue : null;
     }
 
-    public IAttributeSchema GetAttributeSchema(string attributeName)
+    public IAttributeSchema? GetAttributeSchema(string attributeName)
     {
-        return AttributeTypes[attributeName];
+        return AttributeTypes.TryGetValue(attributeName, out var attributeSchema) ? attributeSchema : null;
     }
 
     public ISet<string> GetAttributeNames()
@@ -123,17 +193,15 @@ public class Attributes : IAttributes
         return AttributeValues.Keys.ToHashSet();
     }
 
-
     public ICollection<AttributeValue> GetAttributeValues()
     {
-        return AttributeValues.Values;
+        return AttributeValues.Values.OrderByDescending(x=>x.Key.Locale?.TwoLetterISOLanguageName).ThenBy(x=>x.Key.AttributeName).ToList();
     }
 
     public ICollection<AttributeValue> GetAttributeValues(string attributeName)
     {
-        return AttributeValues
-            .Where(it => attributeName == it.Key.AttributeName)
-            .Select(x => x.Value)
+        return GetAttributeValues()
+            .Where(it => it.Key.AttributeName == attributeName)
             .ToList();
     }
 
@@ -147,11 +215,25 @@ public class Attributes : IAttributes
 
     public AttributeValue? GetAttributeValue(AttributeKey attributeKey)
     {
-        return AttributeValues.TryGetValue(attributeKey, out var attributeValue) ? attributeValue : null;
+        string attributeName = attributeKey.AttributeName;
+        if (!AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema))
+        {
+            if (ReferenceSchema is null)
+            {
+                throw new AttributeNotFoundException(attributeName, EntitySchema);
+            }
+
+            throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
+        }
+
+        AttributeKey attributeKeyToUse = attributeSchema.Localized
+            ? attributeKey
+            : attributeKey.Localized ? new AttributeKey(attributeName) : attributeKey;
+        return AttributeValues.TryGetValue(attributeKeyToUse, out var attributeValue) ? attributeValue : null;
     }
 
     public override string ToString()
     {
-        return Empty ? "no attributes present" : string.Join("; ", GetAttributeValues().Select(x=>x.ToString()));
+        return Empty ? "no attributes present" : string.Join("; ", GetAttributeValues().Select(x => x.ToString()));
     }
 }

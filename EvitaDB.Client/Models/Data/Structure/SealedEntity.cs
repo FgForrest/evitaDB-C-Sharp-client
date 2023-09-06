@@ -23,7 +23,7 @@ public class SealedEntity : IEntity
     public int? PrimaryKey { get; }
     [JsonIgnore]
     public IEntitySchema Schema { get; }
-    public Dictionary<ReferenceKey, IReference> References { get; }
+    public IDictionary<ReferenceKey, IReference> References { get; }
     public Attributes Attributes { get; }
     public AssociatedData AssociatedData { get; }
     public Prices Prices { get; }
@@ -171,7 +171,7 @@ public class SealedEntity : IEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToDictionary(x => x.ReferenceKey, x => x);
+        References = references.ToImmutableSortedDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;
@@ -205,7 +205,7 @@ public class SealedEntity : IEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToDictionary(x => x.ReferenceKey, x => x);
+        References = references.ToImmutableSortedDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;

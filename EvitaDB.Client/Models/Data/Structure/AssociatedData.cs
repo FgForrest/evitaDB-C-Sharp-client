@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas;
-using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 using Newtonsoft.Json;
 
@@ -10,40 +9,14 @@ namespace EvitaDB.Client.Models.Data.Structure;
 public class AssociatedData : IAssociatedData
 {
     [JsonIgnore] public IEntitySchema EntitySchema { get; }
-    private IDictionary<AssociatedDataKey, AssociatedDataValue?> AssociatedDataValues { get; }
-    [JsonIgnore] private IDictionary<string, IAssociatedDataSchema> AssociatedDataTypes { get; }
+    internal IDictionary<AssociatedDataKey, AssociatedDataValue> AssociatedDataValues { get; }
+    [JsonIgnore] internal IDictionary<string, IAssociatedDataSchema> AssociatedDataTypes { get; }
     private ISet<string>? AssociatedDataNames { get; set; }
     private ISet<CultureInfo>? AssociatedDataLocales { get; set; }
     public bool AssociatedDataAvailable() => true;
     public bool AssociatedDataAvailable(CultureInfo locale) => true;
-
     public bool AssociatedDataAvailable(string associatedDataName) => true;
-
     public bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale) => true;
-
-    public AssociatedData(
-        IEntitySchema entitySchema,
-        IEnumerable<AssociatedDataKey> associatedDataKeys,
-        ICollection<AssociatedDataValue>? associatedDataValues
-    )
-    {
-        EntitySchema = entitySchema;
-        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue?>();
-        foreach (AssociatedDataKey associatedDataKey in associatedDataKeys)
-        {
-            AssociatedDataValues.Add(associatedDataKey, null);
-        }
-
-        if (associatedDataValues != null)
-        {
-            foreach (AssociatedDataValue associatedDataValue in associatedDataValues)
-            {
-                AssociatedDataValues.Add(associatedDataValue.Key, associatedDataValue);
-            }
-        }
-
-        AssociatedDataTypes = entitySchema.AssociatedData;
-    }
 
     public AssociatedData(
         IEntitySchema entitySchema,
@@ -52,7 +25,7 @@ public class AssociatedData : IAssociatedData
     )
     {
         EntitySchema = entitySchema;
-        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue?>();
+        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue>();
         foreach (AssociatedDataValue associatedDataValue in associatedDataValues)
         {
             AssociatedDataValues.Add(associatedDataValue.Key, associatedDataValue);
@@ -66,22 +39,22 @@ public class AssociatedData : IAssociatedData
      * Constructor is meant to be internal to the Evita engine.
      */
     public AssociatedData(
-        EntitySchema entitySchema,
-        ICollection<AssociatedDataValue?>? associatedDataValues
+        IEntitySchema entitySchema,
+        ICollection<AssociatedDataValue>? associatedDataValues
     )
     {
         EntitySchema = entitySchema;
         AssociatedDataValues = associatedDataValues is null
-            ? new Dictionary<AssociatedDataKey, AssociatedDataValue?>()
+            ? new Dictionary<AssociatedDataKey, AssociatedDataValue>()
             : associatedDataValues
-                .ToDictionary(x => x!.Key, x => x);
+                .ToDictionary(x => x.Key, x => x);
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
 
     public AssociatedData(IEntitySchema entitySchema)
     {
         EntitySchema = entitySchema;
-        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue?>();
+        AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue>();
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
 
@@ -96,7 +69,7 @@ public class AssociatedData : IAssociatedData
             () => ContextMissingException.LocaleForAssociatedDataContextMissing(associatedDataName));
         return AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName),
             out AssociatedDataValue? associatedDataValue)
-            ? associatedDataValue?.Value
+            ? associatedDataValue.Value
             : null;
     }
 
@@ -110,7 +83,7 @@ public class AssociatedData : IAssociatedData
         Assert.IsTrue(!associatedDataSchema.Localized,
             () => ContextMissingException.LocaleForAttributeContextMissing(associatedDataName));
         return AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName), out var attributeValue)
-            ? (object[]?) attributeValue?.Value
+            ? (object[]?) attributeValue.Value
             : null;
     }
 
@@ -139,7 +112,7 @@ public class AssociatedData : IAssociatedData
             ? new AssociatedDataKey(associatedDataName, locale)
             : new AssociatedDataKey(associatedDataName);
         return AssociatedDataValues.TryGetValue(associatedDataKey, out var associatedDataValue)
-            ? associatedDataValue?.Value
+            ? associatedDataValue.Value
             : null;
     }
 
@@ -154,7 +127,7 @@ public class AssociatedData : IAssociatedData
             ? new AssociatedDataKey(associatedDataName, locale)
             : new AssociatedDataKey(associatedDataName);
         return AssociatedDataValues.TryGetValue(associatedDataKey, out var associatedDataValue)
-            ? (object[]?) associatedDataValue?.Value
+            ? (object[]?) associatedDataValue.Value
             : null;
     }
 
@@ -182,14 +155,9 @@ public class AssociatedData : IAssociatedData
 
     public ISet<string> GetAssociatedDataNames()
     {
-        if (AssociatedDataNames is null)
-        {
-            AssociatedDataNames = AssociatedDataValues.Keys
-                .Select(x => x.AssociatedDataName)
-                .ToHashSet();
-        }
-
-        return AssociatedDataNames;
+        return AssociatedDataNames ??= AssociatedDataValues.Keys
+            .Select(x => x.AssociatedDataName)
+            .ToHashSet();
     }
 
     public ISet<AssociatedDataKey> GetAssociatedDataKeys()
@@ -199,9 +167,10 @@ public class AssociatedData : IAssociatedData
 
     public ICollection<AssociatedDataValue> GetAssociatedDataValues()
     {
-        return AssociatedDataValues.Values.Where(x => x != null)
-            .OrderByDescending(x => x?.Key.Locale?.TwoLetterISOLanguageName).ThenBy(x => x?.Key.AssociatedDataName)
-            .ToList()!;
+        return AssociatedDataValues.Values
+            .OrderByDescending(x => x.Key.Locale?.TwoLetterISOLanguageName)
+            .ThenBy(x => x.Key.AssociatedDataName)
+            .ToList();
     }
 
     public ICollection<AssociatedDataValue> GetAssociatedDataValues(string associatedDataName)
@@ -211,15 +180,10 @@ public class AssociatedData : IAssociatedData
 
     public ISet<CultureInfo> GetAssociatedDataLocales()
     {
-        if (AssociatedDataLocales == null)
-        {
-            AssociatedDataLocales = AssociatedDataValues
-                .Select(x => x.Key.Locale)
-                .Where(x => x != null)
-                .ToHashSet()!;
-        }
-
-        return AssociatedDataLocales;
+        return AssociatedDataLocales ??= AssociatedDataValues
+            .Select(x => x.Key.Locale)
+            .Where(x => x != null)
+            .ToHashSet()!;
     }
 
     public AssociatedDataValue? GetAssociatedDataValue(AssociatedDataKey associatedDataKey)
@@ -238,6 +202,20 @@ public class AssociatedData : IAssociatedData
         return AssociatedDataValues.TryGetValue(associatedDataKeyToUse, out var associatedDataValue)
             ? associatedDataValue
             : null;
+    }
+    
+    internal AssociatedDataValue? GetAssociatedDataValueWithoutSchemaCheck(AssociatedDataKey associatedDataKey) {
+        if (AssociatedDataValues.TryGetValue(associatedDataKey, out AssociatedDataValue? associatedDataValue))
+        {
+            return associatedDataValue;
+        }
+
+        if (associatedDataKey.Localized && AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataKey.AssociatedDataName), out AssociatedDataValue? globalAssociatedDataValue))
+        {
+            return globalAssociatedDataValue;
+        }
+        return null;
+        
     }
 
     public override string ToString()

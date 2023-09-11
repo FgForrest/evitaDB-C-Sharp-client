@@ -9,9 +9,9 @@ namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Attributes : IAttributes
 {
-    [JsonIgnore] private IEntitySchema EntitySchema { get; }
-    [JsonIgnore] private IReferenceSchema? ReferenceSchema { get; }
-    private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
+    [JsonIgnore] internal IEntitySchema EntitySchema { get; }
+    [JsonIgnore] internal IReferenceSchema? ReferenceSchema { get; }
+    internal Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
     [JsonIgnore] public IDictionary<string, IAttributeSchema> AttributeTypes { get; }
     private ISet<string>? AttributeNames { get; set; }
     private ISet<CultureInfo>? AttributeLocales { get; set; }
@@ -230,6 +230,20 @@ public class Attributes : IAttributes
             ? attributeKey
             : attributeKey.Localized ? new AttributeKey(attributeName) : attributeKey;
         return AttributeValues.TryGetValue(attributeKeyToUse, out var attributeValue) ? attributeValue : null;
+    }
+    
+    internal AttributeValue? GetAttributeValueWithoutSchemaCheck(AttributeKey attributeKey) {
+        if (AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue))
+        {
+            return attributeValue;
+        }
+
+        if (attributeKey.Localized && AttributeValues.TryGetValue(new AttributeKey(attributeKey.AttributeName), out AttributeValue? globalAttributeValue))
+        {
+            return globalAttributeValue;
+        }
+        return null;
+        
     }
 
     public override string ToString()

@@ -6,8 +6,8 @@ namespace EvitaDB.Client.Models.Schemas.Mutations;
 public interface ICombinableEntitySchemaMutation : IEntitySchemaMutation
 {
     MutationCombinationResult<IEntitySchemaMutation>? CombineWith(
-        CatalogSchema currentCatalogSchema,
-    EntitySchema currentEntitySchema,
+        ICatalogSchema currentCatalogSchema,
+    IEntitySchema currentEntitySchema,
     IEntitySchemaMutation existingMutation
     );
 }

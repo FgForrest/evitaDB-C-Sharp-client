@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -13,9 +12,11 @@ public interface IAssociatedData
     bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale);
     object? GetAssociatedData(string associatedDataName);
     object? GetAssociatedData(string associatedDataName, CultureInfo locale);
+    object[]? GetAssociatedDataArray(string associatedDataName);
     object[]? GetAssociatedDataArray(string associatedDataName, CultureInfo locale);
     AssociatedDataValue? GetAssociatedDataValue(string associatedDataName);
     AssociatedDataValue? GetAssociatedDataValue(string associatedDataName, CultureInfo locale);
+    AssociatedDataValue? GetAssociatedDataValue(AssociatedDataKey associatedDataKey);
     IAssociatedDataSchema? GetAssociatedDataSchema(string associatedDataName);
     ISet<string> GetAssociatedDataNames();
     ISet<AssociatedDataKey> GetAssociatedDataKeys();

@@ -1,7 +1,6 @@
 ﻿namespace EvitaDB.Client.Models.Data;
 
-public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Value = null,
-        bool Dropped = false)
+public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Value = null, bool Dropped = false)
     : IComparable<AssociatedDataValue>, IDroppable, IContentComparator<AssociatedDataValue>
 {
     public AssociatedDataValue(int version, AssociatedDataKey associatedDataKey, object value) : this(version,
@@ -25,7 +24,7 @@ public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Va
         if (!Equals(Key, otherAttributeValue.Key)) return true;
         return !Equals(Value, otherAttributeValue.Value);
     }
-    
+
     public override string ToString()
     {
         return (Dropped ? "❌ " : "") +
@@ -34,9 +33,8 @@ public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Va
                ": " +
                (
                    Value is object?[] arrayValue
-                       ?
-                "[" + string.Join(",", arrayValue.Where(x => x is not null).Select(x => x?.ToString())) + "]" :
-                Value
-            );
+                       ? "[" + string.Join(",", arrayValue.Where(x => x is not null).Select(x => x?.ToString())) + "]"
+                       : Value
+               );
     }
 }

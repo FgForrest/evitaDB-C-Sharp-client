@@ -1,21 +1,27 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using System.Globalization;
+using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Models.Schemas.Mutations;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Utils;
 using static EvitaDB.Client.Models.Schemas.Builders.SchemaBuilderHelper;
 
 namespace EvitaDB.Client.Models.Schemas.Builders;
 
-public class InternalEntitySchemaBuilder
+public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
 {
-    public EntitySchema BaseSchema { get; }
+	private bool _withGeneratedPrimaryKey;
+	private bool _withHierarchy;
+	private bool _withPrice;
+	public IEntitySchema BaseSchema { get; }
     public List<IEntitySchemaMutation> Mutations { get; } = new();
-    private Func<CatalogSchema> CatalogSchemaAccessor { get; set; }
+    private Func<ICatalogSchema> CatalogSchemaAccessor { get; set; }
     private bool UpdatedSchemaDirty { get; set; } = true;
     private EntitySchema? UpdatedSchema { get; set; }
 
     public InternalEntitySchemaBuilder(
-        CatalogSchema catalogSchema,
-        EntitySchema baseSchema,
+        ICatalogSchema catalogSchema,
+        IEntitySchema baseSchema,
         ICollection<IEntitySchemaMutation> schemaMutations)
     {
         CatalogSchemaAccessor = () => catalogSchema;
@@ -25,8 +31,8 @@ public class InternalEntitySchemaBuilder
     }
     
     public InternalEntitySchemaBuilder(
-        CatalogSchema catalogSchema,
-    EntitySchema baseSchema
+        ICatalogSchema catalogSchema,
+    IEntitySchema baseSchema
     ) : this(catalogSchema, baseSchema, new List<IEntitySchemaMutation>()) { }
     
     
@@ -34,7 +40,137 @@ public class InternalEntitySchemaBuilder
 		CatalogSchemaAccessor = catalogSupplier;
 		return this;
 	}
-	
+
+	public IEntitySchemaBuilder VerifySchemaStrictly()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder VerifySchemaButAllow(params EvolutionMode[] evolutionMode)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder VerifySchemaButCreateOnTheFly()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithDescription(string? description)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder Deprecated(string deprecationNotice)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder NotDeprecatedAnymore()
+	{
+		throw new NotImplementedException();
+	}
+
+	IEntitySchemaBuilder IEntitySchemaEditor<IEntitySchemaBuilder>.WithGeneratedPrimaryKey()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutGeneratedPrimaryKey()
+	{
+		throw new NotImplementedException();
+	}
+
+	IEntitySchemaBuilder IEntitySchemaEditor<IEntitySchemaBuilder>.WithHierarchy()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutHierarchy()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithAttribute(string attributeName, Type ofType)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutAttribute(string attributeName)
+	{
+		throw new NotImplementedException();
+	}
+
+	IEntitySchemaBuilder IEntitySchemaEditor<IEntitySchemaBuilder>.WithPrice()
+	{
+		throw new NotImplementedException();
+	}
+
+	IEntitySchemaBuilder IEntitySchemaEditor<IEntitySchemaBuilder>.WithPrice(int indexedDecimalPlaces)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithPriceInCurrency(params Currency[] currency)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithPriceInCurrency(int indexedPricePlaces, params Currency[] currency)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutPrice()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutPriceInCurrency(Currency currency)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithLocale(params CultureInfo[] locale)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutLocale(CultureInfo locale)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithGlobalAttribute(string attributeName)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithAssociatedData(string dataName, Type ofType)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutAssociatedData(string dataName)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithReferenceTo(string name, string externalEntityType, Cardinality cardinality)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithReferenceToEntity(string name, string entityType, Cardinality cardinality)
+	{
+		throw new NotImplementedException();
+	}
+
+	public IEntitySchemaBuilder WithoutReferenceTo(string name)
+	{
+		throw new NotImplementedException();
+	}
+
 	/*public EntitySchemaBuilder VerifySchemaStrictly() {
 		UpdatedSchemaDirty = AddMutations(
 			CatalogSchemaAccessor.Invoke(), BaseSchema, Mutations,
@@ -443,4 +579,149 @@ public class InternalEntitySchemaBuilder
     public record ReferenceNamingConventionConflict(ReferenceSchema ConflictingSchema, NamingConvention Convention,
         string ConflictingName
     );
+
+    public int Version { get; }
+    public string Name { get; }
+    public string? Description { get; }
+    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public string GetNameVariant(NamingConvention namingConvention)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public string? DeprecationNotice { get; }
+    public IDictionary<string, IAttributeSchema> GetAttributes()
+    {
+	    throw new NotImplementedException();
+    }
+
+    IAttributeSchema? IEntitySchema.GetAttribute(string name)
+    {
+	    return GetAttribute(name);
+    }
+
+    IAttributeSchema? IEntitySchema.GetAttributeByName(string dataName, NamingConvention namingConvention)
+    {
+	    return GetAttributeByName(dataName, namingConvention);
+    }
+
+    public bool DiffersFrom(IEntitySchema? otherSchema)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public ISet<EvolutionMode> GetEvolutionMode()
+    {
+	    throw new NotImplementedException();
+    }
+
+    public bool Allows(EvolutionMode evolutionMode)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public bool SupportsLocale(CultureInfo locale)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAttributeSchema GetAttributeOrThrow(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    bool IEntitySchema.WithGeneratedPrimaryKey => _withGeneratedPrimaryKey;
+
+    bool IEntitySchema.WithHierarchy => _withHierarchy;
+
+    bool IEntitySchema.WithPrice => _withPrice;
+
+    public int IndexedPricePlaces { get; }
+    public ISet<CultureInfo> Locales { get; }
+    public ISet<Currency> Currencies { get; }
+    public ISet<EvolutionMode> EvolutionModes { get; }
+    public IEnumerable<IAttributeSchema> NonNullableAttributes { get; }
+    public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData { get; }
+    public IDictionary<string, IAttributeSchema> Attributes { get; }
+    public IDictionary<string, IAssociatedDataSchema> AssociatedData { get; }
+    public IDictionary<string, IReferenceSchema> References { get; }
+    public bool IsBlank()
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAssociatedDataSchema? GetAssociatedData(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAssociatedDataSchema GetAssociatedDataOrThrow(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAssociatedDataSchema? GetAssociatedDataByName(string dataName, NamingConvention namingConvention)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IReferenceSchema? GetReference(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IReferenceSchema? GetReferenceByName(string dataName, NamingConvention namingConvention)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IReferenceSchema GetReferenceOrThrowException(string referenceName)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAttributeSchema? GetAttribute(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IDictionary<string, SortableAttributeCompoundSchema> GetSortableAttributeCompounds()
+    {
+	    throw new NotImplementedException();
+    }
+
+    public SortableAttributeCompoundSchema? GetSortableAttributeCompound(string name)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public SortableAttributeCompoundSchema? GetSortableAttributeCompoundByName(string name, NamingConvention namingConvention)
+    {
+	    throw new NotImplementedException();
+    }
+
+    public IList<SortableAttributeCompoundSchema> GetSortableAttributeCompoundsForAttribute(string attributeName)
+    {
+	    throw new NotImplementedException();
+    }
+
+    IEntitySchemaBuilder IEntitySchemaEditor<IEntitySchemaBuilder>.CooperatingWith(Func<CatalogSchema> catalogSupplier)
+    {
+	    return CooperatingWith(catalogSupplier);
+    }
+
+    public ModifyEntitySchemaMutation? ToMutation()
+    {
+	    throw new NotImplementedException();
+    }
+
+    public EntitySchema ToInstance()
+    {
+	    throw new NotImplementedException();
+    }
 }

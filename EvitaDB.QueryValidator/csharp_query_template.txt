@@ -7,7 +7,7 @@ using EvitaDB.Client.Config;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Schemas;
-using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Data;
 
 using static EvitaDB.Client.Queries.IQueryConstraints;
 using static EvitaDB.Client.Queries.Filter.AttributeSpecialValue;
@@ -33,7 +33,7 @@ public class DynamicClass
     {
     }
     
-    public static (EvitaResponse<SealedEntity>, IEntitySchema) Run(string catalogName) 
+    public static (EvitaResponse<ISealedEntity>, IEntitySchema) Run(string catalogName) 
     {
         EvitaClient evita = new EvitaClient(EvitaClientConfiguration);
         #QUERY#

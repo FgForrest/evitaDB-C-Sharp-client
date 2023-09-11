@@ -10,13 +10,12 @@ namespace EvitaDB.Client.Models.Data.Structure;
 public class Prices : IPrices
 {
     [JsonIgnore]
-    private IEntitySchema EntitySchema { get; }
+    internal IEntitySchema EntitySchema { get; }
     private bool WithPrice { get; }
     public int Version { get; }
     private ImmutableDictionary<PriceKey, IPrice> PriceIndex { get; }
-    public PriceInnerRecordHandling InnerRecordHandling { get; }
+    public PriceInnerRecordHandling? InnerRecordHandling { get; }
     public IPrice? PriceForSale => throw new ContextMissingException();
-    public bool PricesAvailable => EntitySchema.WithPrice;
 
     public Prices(IEntitySchema entitySchema, PriceInnerRecordHandling priceInnerRecordHandling)
     {
@@ -44,7 +43,7 @@ public class Prices : IPrices
     }
     
     public Prices(IEntitySchema entitySchema, int version, IEnumerable<IPrice> prices,
-        PriceInnerRecordHandling priceInnerRecordHandling, bool withPrice)
+        PriceInnerRecordHandling? priceInnerRecordHandling, bool withPrice)
     {
         EntitySchema = entitySchema;
         WithPrice = withPrice;
@@ -53,23 +52,21 @@ public class Prices : IPrices
         InnerRecordHandling = priceInnerRecordHandling;
     }
 
-    public Prices(int version, IEnumerable<IPrice> prices, PriceInnerRecordHandling priceInnerRecordHandling)
-    {
-        Version = version;
-        PriceIndex = prices.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
-        InnerRecordHandling = priceInnerRecordHandling;
-    }
-
-    public IPrice GetPrice(PriceKey priceKey) => PriceIndex[priceKey];
+    public IPrice? GetPrice(PriceKey priceKey) => PriceIndex.TryGetValue(priceKey, out var price) ? price : null;
 
     public IPrice? GetPrice(int priceId, string priceList, Currency currency) =>
-        PriceIndex[new PriceKey(priceId, priceList, currency)];
+        PriceIndex.TryGetValue(new PriceKey(priceId, priceList, currency), out var price) ? price : null;
     
-    public List<IPrice> GetAllPricesForSale() => new();
+    internal IPrice? GetPriceWithoutSchemaCheck(PriceKey priceKey) {
+        return PriceIndex.TryGetValue(priceKey, out var price) ? price : null;
+    }
+
+    public List<IPrice> GetAllPricesForSale() => GetAllPricesForSale(null, null);
     public bool Empty => PriceIndex.Count == 0;
 
     public bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode) =>
         throw new ContextMissingException();
+    public bool PricesAvailable() => EntitySchema.WithPrice;
 
     public List<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
         params string[] priceListPriority)
@@ -95,7 +92,7 @@ public class Prices : IPrices
 
     public override string ToString()
     {
-        if (PricesAvailable) {
+        if (PricesAvailable()) {
             List<IPrice> prices = GetPrices().ToList();
             return "selects " + InnerRecordHandling + " from: " +
                    (

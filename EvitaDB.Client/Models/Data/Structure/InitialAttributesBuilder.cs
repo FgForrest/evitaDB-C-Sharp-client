@@ -6,7 +6,12 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Data.Structure;
 
-public class InitialAttributesBuilder : IAttributeBuilder
+/// <summary>
+/// Class supports intermediate mutable object that allows <see cref="Attributes"/> container rebuilding.
+/// Due to performance reasons, there is special implementation or the situation when entity is newly created.
+/// In this case we know everything is new and we don't need to closely monitor the changes so this can speed things up.
+/// </summary>
+public class InitialAttributesBuilder : IAttributesBuilder
 {
     private IEntitySchema EntitySchema { get; }
     private IReferenceSchema? ReferenceSchema { get; }
@@ -17,7 +22,6 @@ public class InitialAttributesBuilder : IAttributeBuilder
     public bool AttributeAvailable(string attributeName) => true;
     public bool AttributeAvailable(string attributeName, CultureInfo locale) => true;
 
-
     public InitialAttributesBuilder(IEntitySchema entitySchema)
     {
         EntitySchema = entitySchema;
@@ -25,9 +29,6 @@ public class InitialAttributesBuilder : IAttributeBuilder
         SuppressVerification = false;
     }
 
-    /**
-	 * AttributesBuilder constructor that will be used for building brand new {@link Attributes} container.
-	 */
     public InitialAttributesBuilder(IEntitySchema entitySchema, bool suppressVerification)
     {
         EntitySchema = entitySchema;
@@ -35,7 +36,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         SuppressVerification = suppressVerification;
     }
 
-    private static void VerifyAttributeIsInSchemaAndTypeMatch(
+    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
         IEntitySchema entitySchema,
         string attributeName,
         Type? type
@@ -45,7 +46,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, null, attributeSchema);
     }
 
-    private static void VerifyAttributeIsInSchemaAndTypeMatch(
+    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
         IEntitySchema entitySchema,
         string attributeName,
         Type type,
@@ -56,7 +57,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, locale, attributeSchema);
     }
 
-    private static void VerifyAttributeIsInSchemaAndTypeMatch(
+    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
         IEntitySchema entitySchema,
         IReferenceSchema? referenceSchema,
         string attributeName,
@@ -150,8 +151,9 @@ public class InitialAttributesBuilder : IAttributeBuilder
 
     internal InitialAttributesBuilder(
         IEntitySchema entitySchema,
-    IReferenceSchema? referenceSchema
-    ) {
+        IReferenceSchema? referenceSchema
+    )
+    {
         EntitySchema = entitySchema;
         ReferenceSchema = referenceSchema;
         AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
@@ -170,79 +172,117 @@ public class InitialAttributesBuilder : IAttributeBuilder
         SuppressVerification = suppressVerification;
     }
 
-    public object GetAttribute(string attributeName)
+    public object? GetAttribute(string attributeName)
     {
-        throw new NotImplementedException();
+        if (AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue))
+        {
+            return attributeValue.Value;
+        }
+        return null;
     }
 
-    public object GetAttribute(string attributeName, CultureInfo locale)
+    public object? GetAttribute(string attributeName, CultureInfo locale)
     {
-        throw new NotImplementedException();
+        if (AttributeValues.TryGetValue(new AttributeKey(attributeName, locale), out AttributeValue? attributeValue))
+        {
+            return attributeValue.Value;
+        }
+        return null;
     }
 
-    public object[] GetAttributeArray(string attributeName)
+    public object[]? GetAttributeArray(string attributeName)
     {
-        throw new NotImplementedException();
+        if (AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue))
+        {
+            return attributeValue.Value as object[];
+        }
+        return null;
     }
 
-    public object[] GetAttributeArray(string attributeName, CultureInfo locale)
+    public object[]? GetAttributeArray(string attributeName, CultureInfo locale)
     {
-        throw new NotImplementedException();
+        if (AttributeValues.TryGetValue(new AttributeKey(attributeName, locale), out AttributeValue? attributeValue))
+        {
+            return attributeValue.Value as object[];
+        }
+        return null;
     }
 
-    public AttributeValue GetAttributeValue(string attributeName)
+    public AttributeValue? GetAttributeValue(string attributeName)
     {
-        throw new NotImplementedException();
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue)
+            ? attributeValue
+            : null;
     }
 
-    public AttributeValue GetAttributeValue(string attributeName, CultureInfo locale)
+    public AttributeValue? GetAttributeValue(string attributeName, CultureInfo locale)
     {
-        throw new NotImplementedException();
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName, locale), out AttributeValue? attributeValue)
+            ? attributeValue
+            : null;
     }
 
-    public AttributeValue GetAttributeValue(AttributeKey attributeKey)
+    public AttributeValue? GetAttributeValue(AttributeKey attributeKey)
     {
-        throw new NotImplementedException();
+        if (AttributeValues.TryGetValue(attributeKey, out AttributeValue? value))
+        {
+            return value;
+        }
+
+        if (attributeKey.Localized && AttributeValues.TryGetValue(
+                new AttributeKey(attributeKey.AttributeName),
+                out AttributeValue? globalAttributeValue))
+        {
+            return globalAttributeValue;
+        }
+
+        return null;
     }
 
-    public IAttributeSchema GetAttributeSchema(string attributeName)
+    public IAttributeSchema? GetAttributeSchema(string attributeName)
     {
-        throw new NotImplementedException();
+        return EntitySchema.GetAttribute(attributeName);
     }
 
     public ISet<string> GetAttributeNames()
     {
-        throw new NotImplementedException();
+        return AttributeValues.Keys.Select(x=>x.AttributeName).ToHashSet();
     }
 
     public ISet<AttributeKey> GetAttributeKeys()
     {
-        throw new NotImplementedException();
+        return AttributeValues.Keys.ToHashSet();
     }
 
     public ICollection<AttributeValue> GetAttributeValues()
     {
-        throw new NotImplementedException();
+        return AttributeValues.Values;
     }
 
     public ICollection<AttributeValue> GetAttributeValues(string attributeName)
     {
-        throw new NotImplementedException();
+        return GetAttributeValues()
+            .Where(it => attributeName.Equals(it.Key.AttributeName))
+            .ToList();
     }
 
     public ISet<CultureInfo> GetAttributeLocales()
     {
-        throw new NotImplementedException();
+        return AttributeValues
+            .Keys
+            .Select(x => x.Locale)
+            .Where(x => x is not null)
+            .ToHashSet()!;
     }
 
-    public IAttributeBuilder RemoveAttribute(string attributeName)
+    public IAttributesBuilder RemoveAttribute(string attributeName)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName);
         AttributeValues.Remove(attributeKey);
         return this;
     }
 
-    public IAttributeBuilder SetAttribute(string attributeName, object? attributeValue)
+    public IAttributesBuilder SetAttribute(string attributeName, object? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -259,7 +299,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         return this;
     }
 
-    public IAttributeBuilder SetAttribute(string attributeName, object[]? attributeValue)
+    public IAttributesBuilder SetAttribute(string attributeName, object[]? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -276,14 +316,14 @@ public class InitialAttributesBuilder : IAttributeBuilder
         return this;
     }
 
-    public IAttributeBuilder RemoveAttribute(string attributeName, CultureInfo locale)
+    public IAttributesBuilder RemoveAttribute(string attributeName, CultureInfo locale)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         AttributeValues.Remove(attributeKey);
         return this;
     }
 
-    public IAttributeBuilder SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
+    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -300,7 +340,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         return this;
     }
 
-    public IAttributeBuilder SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
+    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -317,7 +357,7 @@ public class InitialAttributesBuilder : IAttributeBuilder
         return this;
     }
 
-    public IAttributeBuilder MutateAttribute(AttributeMutation mutation)
+    public IAttributesBuilder MutateAttribute(AttributeMutation mutation)
     {
         throw new NotSupportedException("You cannot apply mutation when entity is just being created!");
     }
@@ -331,10 +371,10 @@ public class InitialAttributesBuilder : IAttributeBuilder
     {
         IAttributeSchemaProvider<IAttributeSchema> attributeSchemaProvider =
             ReferenceSchema as IAttributeSchemaProvider<IAttributeSchema> ?? EntitySchema;
-        Dictionary<string, IAttributeSchema> newAttributes = AttributeValues
+        IDictionary<string, IAttributeSchema> newAttributes = AttributeValues
             .Where(entry => attributeSchemaProvider.GetAttribute(entry.Key.AttributeName) is not null)
             .Select(entry => entry.Value)
-            .Select(IAttributeBuilder.CreateImplicitSchema)
+            .Select(IAttributesBuilder.CreateImplicitSchema)
             .ToDictionary(
                 attributeType => attributeType.Name,
                 attributeType => attributeType

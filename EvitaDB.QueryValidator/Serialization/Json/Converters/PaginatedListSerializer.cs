@@ -1,14 +1,14 @@
 ﻿using EvitaDB.Client.DataTypes;
-using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Data;
 using Newtonsoft.Json;
 
 using static EvitaDB.QueryValidator.Utils.ResponseSerializerUtils;
 
 namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
-public class PaginatedListSerializer : JsonConverter<PaginatedList<SealedEntity>>
+public class PaginatedListSerializer : JsonConverter<PaginatedList<ISealedEntity>>
 {
-    public override void WriteJson(JsonWriter writer, PaginatedList<SealedEntity>? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, PaginatedList<ISealedEntity>? value, JsonSerializer serializer)
     {
         if (value is null)
         {
@@ -73,9 +73,9 @@ public class PaginatedListSerializer : JsonConverter<PaginatedList<SealedEntity>
         writer.WriteEndObject();
     }
 
-    public override PaginatedList<SealedEntity>? ReadJson(JsonReader reader, Type objectType, PaginatedList<SealedEntity>? existingValue, bool hasExistingValue,
+    public override PaginatedList<ISealedEntity> ReadJson(JsonReader reader, Type objectType, PaginatedList<ISealedEntity>? existingValue, bool hasExistingValue,
         JsonSerializer serializer)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

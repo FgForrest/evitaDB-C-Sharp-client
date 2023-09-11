@@ -4,7 +4,7 @@ namespace EvitaDB.Client.DataTypes;
 
 public interface IDataChunk<T> : IEnumerable<T>
 {
-    List<T>? Data { get; }
+    IList<T>? Data { get; }
     int TotalRecordCount { get; }
     bool IsFullyInitialized { get; }
     bool First { get; }

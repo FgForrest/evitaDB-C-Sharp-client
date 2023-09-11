@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Models.Schemas.Mutations;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
@@ -19,12 +20,18 @@ public class EvitaEntitySchemaCache
 
     public void AnalyzeMutations(params ISchemaMutation[] schemaMutations)
     {
-        foreach (ISchemaMutation mutation in schemaMutations) {
-            if (mutation is ModifyEntitySchemaMutation modifyEntitySchemaMutation) {
+        foreach (ISchemaMutation mutation in schemaMutations)
+        {
+            if (mutation is ModifyEntitySchemaMutation modifyEntitySchemaMutation)
+            {
                 RemoveLatestEntitySchema(modifyEntitySchemaMutation.EntityType);
-            } else if (mutation is ModifyCatalogSchemaMutation entityRelatedMutation) {
+            }
+            else if (mutation is ModifyCatalogSchemaMutation entityRelatedMutation)
+            {
                 AnalyzeMutations(entityRelatedMutation.SchemaMutations);
-            } else if (mutation is ICatalogSchemaMutation) {
+            }
+            else if (mutation is ICatalogSchemaMutation)
+            {
                 RemoveLatestCatalogSchema();
             }
         }
@@ -91,27 +98,30 @@ public class EvitaEntitySchemaCache
         );
     }
 
-    public EntitySchema GetEntitySchemaOrThrow(string entityType, int version,
+    public ISealedEntitySchema GetEntitySchemaOrThrow(string entityType, int version,
         Func<string, EntitySchema?> schemaAccessor,
         Func<CatalogSchema> catalogSchemaSupplier
     )
     {
-        return GetEntitySchema(entityType, version, schemaAccessor) ??
-               throw new CollectionNotFoundException($"Schema for entity type {entityType} not found");
-        //.map(it -> new EntitySchemaDecorator(catalogSchemaSupplier, it))
-        //.orElseThrow(() -> new CollectionNotFoundException(entityType));
+        EntitySchema? entitySchema = GetEntitySchema(entityType, version, schemaAccessor) ??
+                                     throw new CollectionNotFoundException($"Schema for entity type {entityType} not found");
+        return new EntitySchemaDecorator(catalogSchemaSupplier, entitySchema);
     }
 
-    public EntitySchema? GetLatestEntitySchema(string entityType, Func<string, EntitySchema?> schemaAccessor,
-        Action<CatalogSchema> catalogSchemaSupplier
+    public ISealedEntitySchema? GetLatestEntitySchema(string entityType, Func<string, EntitySchema?> schemaAccessor,
+        Func<ICatalogSchema> catalogSchemaSupplier
     )
     {
-        //TODO OPEN FOR WRITE
-        return FetchEntitySchema(
+        EntitySchema? entitySchema = FetchEntitySchema(
             new LatestEntitySchema(entityType),
             schemaWrapper => schemaWrapper is null,
             schemaAccessor
         );
+        if (entitySchema is null)
+        {
+            return null;
+        }
+        return new EntitySchemaDecorator(catalogSchemaSupplier, entitySchema);
     }
 
     public void SetLatestEntitySchema(EntitySchema entitySchema)
@@ -123,9 +133,9 @@ public class EvitaEntitySchemaCache
     }
 
     /**
-	 * Method resets tha last known {@link EntitySchemaContract} to NULL. This will force to fetch actual schema from
-	 * the server side next time, it's asked for it.
-	 */
+     * Method resets tha last known {@link EntitySchemaContract} to NULL. This will force to fetch actual schema from
+     * the server side next time, it's asked for it.
+     */
     public void RemoveLatestEntitySchema(string entityType)
     {
         CachedSchemas.Remove(new LatestEntitySchema(entityType), out _);
@@ -217,30 +227,30 @@ public class EvitaEntitySchemaCache
         internal static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         /**
-		 * The entity schema is considered obsolete after 4 hours since last usage.
-		 */
+         * The entity schema is considered obsolete after 4 hours since last usage.
+         */
         private const long ObsoleteInterval = 4L * 60L * 60L * 100L;
 
         /**
-		 * The entity schema fetched from the server.
-		 */
+         * The entity schema fetched from the server.
+         */
         public CatalogSchema? CatalogSchema { get; }
 
         /**
-		 * The entity schema fetched from the server.
-		 */
+         * The entity schema fetched from the server.
+         */
         public EntitySchema? EntitySchema { get; }
 
         /**
-		 * Date and time ({@link System#currentTimeMillis()} of the moment when the entity schema was fetched from
-		 * the server side.
-		 */
+         * Date and time ({@link System#currentTimeMillis()} of the moment when the entity schema was fetched from
+         * the server side.
+         */
         public long Fetched { get; }
 
         /**
-		 * Date and time ({@link System#currentTimeMillis()} of the moment when the entity schema was used for
-		 * the last tim.
-		 */
+         * Date and time ({@link System#currentTimeMillis()} of the moment when the entity schema was used for
+         * the last tim.
+         */
         private long LastUsed { get; set; }
 
         public SchemaWrapper(CatalogSchema catalogSchema, long fetched)
@@ -260,16 +270,16 @@ public class EvitaEntitySchemaCache
         }
 
         /**
-		 * Tracks the moment when the entity schema was used for the last time.
-		 */
+         * Tracks the moment when the entity schema was used for the last time.
+         */
         public void Used()
         {
             LastUsed = CurrentTimeMillis();
         }
 
         /**
-		 * Returns TRUE if the entity schema was used long ago (defined by the {@link #OBSOLETE_INTERVAL}.
-		 */
+         * Returns TRUE if the entity schema was used long ago (defined by the {@link #OBSOLETE_INTERVAL}.
+         */
         public bool Obsolete(long now)
         {
             return now - ObsoleteInterval > LastUsed;

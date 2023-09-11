@@ -4,6 +4,7 @@ using EvitaDB.Client;
 using EvitaDB.Client.Config;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Structure;
@@ -111,7 +112,7 @@ public class EvitaClientTest
         );
 
         That(newEntity.Schema.Attributes.Count, Is.EqualTo(2));
-        That(newEntity.Attributes.GetAttributeNames().Contains(AttributeDateTime), Is.True);
+        That(newEntity.GetAttributeNames().Contains(AttributeDateTime), Is.True);
         That(
             (newEntity.GetAttribute(AttributeDateTime) as DateTimeOffset?)?.ToString("h:mm:ss tt zz"), 
             Is.EqualTo(dateTimeNow.ToString("h:mm:ss tt zz"))
@@ -130,7 +131,7 @@ public class EvitaClientTest
 
         // schema of the entity should have 3 attributes
         That(notInAttributeSchemaEntity.Schema.Attributes.Count, Is.EqualTo(3));
-        That(notInAttributeSchemaEntity.Attributes.GetAttributeNames().Contains(NonExistingAttribute), Is.True);
+        That(notInAttributeSchemaEntity.GetAttributeNames().Contains(NonExistingAttribute), Is.True);
         That(notInAttributeSchemaEntity.GetAttribute(NonExistingAttribute), Is.EqualTo(true));
     }
 
@@ -178,7 +179,7 @@ public class EvitaClientTest
     public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_SealedEntities()
     {
         EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
-            session.Query<EvitaEntityResponse, SealedEntity>(
+            session.Query<EvitaEntityResponse, ISealedEntity>(
                 Query(
                     Collection("Product"),
                     FilterBy(

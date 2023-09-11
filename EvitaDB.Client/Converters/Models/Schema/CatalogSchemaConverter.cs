@@ -20,7 +20,7 @@ public static class CatalogSchemaConverter
     }
 
     public static CatalogSchema Convert(
-        Func<string, EntitySchema> entitySchemaSupplier,
+        Func<string, IEntitySchema> entitySchemaSupplier,
         GrpcCatalogSchema catalogSchema
     )
     {

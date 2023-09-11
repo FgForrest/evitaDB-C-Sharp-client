@@ -12,10 +12,10 @@ public class Reference : IReference
     public int Version { get; }
     public ReferenceKey ReferenceKey { get; }
     public GroupEntityReference? Group { get; }
-    public SealedEntity? GroupEntity { get; }
+    public ISealedEntity? GroupEntity { get; }
     private Attributes Attributes { get; }
     public bool Dropped { get; }
-    public SealedEntity? ReferencedEntity { get; }
+    public ISealedEntity? ReferencedEntity { get; }
     public IReferenceSchema? ReferenceSchema => EntitySchema.GetReference(ReferenceKey.ReferenceName);
     public Cardinality? ReferenceCardinality => ReferenceSchema?.Cardinality ?? _referenceCardinality;
     public string? ReferencedEntityType => ReferenceSchema?.ReferencedEntityType ?? _referencedEntityType;
@@ -36,8 +36,8 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
-		SealedEntity? referencedEntity = null,
-		SealedEntity? groupEntity = null
+		ISealedEntity? referencedEntity = null,
+		ISealedEntity? groupEntity = null
 	) {
 		Version = 1;
 		EntitySchema = entitySchema;
@@ -64,8 +64,8 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
-		SealedEntity? referencedEntity = null,
-		SealedEntity? groupEntity = null,
+		ISealedEntity? referencedEntity = null,
+		ISealedEntity? groupEntity = null,
 		bool dropped = false
 	) {
 		EntitySchema = entitySchema;
@@ -95,8 +95,8 @@ public class Reference : IReference
 		Cardinality? cardinality,
 		GroupEntityReference? group,
 		Attributes attributes,
-		SealedEntity? referencedEntity = null,
-		SealedEntity? groupEntity = null,
+		ISealedEntity? referencedEntity = null,
+		ISealedEntity? groupEntity = null,
 		bool dropped = false
 	) {
 		EntitySchema = entitySchema;
@@ -120,8 +120,8 @@ public class Reference : IReference
 		Cardinality? cardinality,
 		GroupEntityReference? group,
 		ICollection<AttributeValue> attributes,
-		SealedEntity? referencedEntity = null,
-		SealedEntity? groupEntity = null,
+		ISealedEntity? referencedEntity = null,
+		ISealedEntity? groupEntity = null,
 		bool dropped = false) 
 	{
 		EntitySchema = entitySchema;
@@ -150,8 +150,8 @@ public class Reference : IReference
 		Cardinality? cardinality,
 		GroupEntityReference? group,
 		Attributes attributes,
-		SealedEntity? referencedEntity = null,
-		SealedEntity? groupEntity = null,
+		ISealedEntity? referencedEntity = null,
+		ISealedEntity? groupEntity = null,
 		bool dropped = false
 	)
 	{

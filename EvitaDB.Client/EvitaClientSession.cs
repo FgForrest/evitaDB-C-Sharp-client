@@ -126,20 +126,20 @@ public class EvitaClientSession : IDisposable
         GrpcQueryResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.Query(request));
         IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(query, grpcResponse);
 
-        if (typeof(EntityReference).IsAssignableFrom(typeof(TS)))
+        if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<EntityReference> recordPage = ResponseConverter.ConvertToDataChunk(
+            IDataChunk<EntityReference> recordPage = ResponseConverter.ConvertToDataChunk<EntityReference>(
                 grpcResponse,
                 grpcRecordPage => EntityConverter.ToEntityReferences(grpcRecordPage.EntityReferences)
             );
             return (new EvitaEntityReferenceResponse(query, recordPage, extraResults) as T)!;
         }
 
-        if (typeof(SealedEntity).IsAssignableFrom(typeof(TS)))
+        if (typeof(ISealedEntity).IsAssignableFrom(typeof(TS)))
         {
-            IDataChunk<SealedEntity> recordPage = ResponseConverter.ConvertToDataChunk(
+            IDataChunk<ISealedEntity> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
-                grpcRecordPage => EntityConverter.ToSealedEntities(
+                grpcRecordPage => EntityConverter.ToEntities(
                     grpcRecordPage.SealedEntities.ToList(),
                     (entityType, schemaVersion) => _schemaCache.GetEntitySchemaOrThrow(
                         entityType, schemaVersion, FetchEntitySchema, GetCatalogSchema
@@ -152,11 +152,11 @@ public class EvitaClientSession : IDisposable
         throw new EvitaInvalidUsageException("Unsupported return type `" + typeof(TS) + "`!");
     }
 
-    public EvitaResponse<SealedEntity> QuerySealedEntity(Query query)
+    public EvitaResponse<ISealedEntity> QuerySealedEntity(Query query)
     {
         if (query.Require == null)
         {
-            return Query<EvitaEntityResponse, SealedEntity>(
+            return Query<EvitaEntityResponse, ISealedEntity>(
                 IQueryConstraints.Query(
                     query.Entities,
                     query.FilterBy,
@@ -169,7 +169,7 @@ public class EvitaClientSession : IDisposable
         if (FinderVisitor.FindConstraints<IConstraint>(query.Require, x => x is EntityFetch,
                 x => x is ISeparateEntityContentRequireContainer).Count == 0)
         {
-            return Query<EvitaEntityResponse, SealedEntity>(
+            return Query<EvitaEntityResponse, ISealedEntity>(
                 IQueryConstraints.Query(
                     query.Entities,
                     query.FilterBy,
@@ -183,12 +183,22 @@ public class EvitaClientSession : IDisposable
             );
         }
 
-        return Query<EvitaEntityResponse, SealedEntity>(query);
+        return Query<EvitaEntityResponse, ISealedEntity>(query);
     }
 
     public EvitaResponse<EntityReference> QueryEntityReference(Query query)
     {
         return Query<EvitaEntityReferenceResponse, EntityReference>(query);
+    }
+    
+    public ISealedEntitySchema UpdateAndFetchEntitySchema(IEntitySchemaBuilder entitySchemaBuilder)
+    {
+        ModifyEntitySchemaMutation? schemaMutation = entitySchemaBuilder.ToMutation();
+        if (schemaMutation is not null)
+        {
+            return UpdateAndFetchEntitySchema(schemaMutation);
+        }
+        return GetEntitySchemaOrThrow(entitySchemaBuilder.Name);
     }
 
     private EntitySchema? FetchEntitySchema(string entityType)
@@ -204,7 +214,7 @@ public class EvitaClientSession : IDisposable
         return EntitySchemaConverter.Convert(grpcResponse.EntitySchema);
     }
 
-    public SealedEntity? GetEntity(string entityType, int primaryKey,
+    public ISealedEntity? GetEntity(string entityType, int primaryKey,
         params IEntityContentRequire[] require)
     {
         AssertActive();
@@ -223,7 +233,7 @@ public class EvitaClientSession : IDisposable
         );
 
         return grpcResponse.Entity is not null
-            ? EntityConverter.ToSealedEntity(
+            ? EntityConverter.ToEntity(
                 entity => _schemaCache.GetEntitySchemaOrThrow(
                     entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                 ),
@@ -326,7 +336,7 @@ public class EvitaClientSession : IDisposable
     }
 
 
-    public SealedEntity? DeleteEntity(string entityType, int primaryKey, params IEntityContentRequire[] require)
+    public ISealedEntity? DeleteEntity(string entityType, int primaryKey, params IEntityContentRequire[] require)
     {
         return DeleteEntityInternal(entityType, primaryKey, require);
     }
@@ -422,7 +432,7 @@ public class EvitaClientSession : IDisposable
             : GetEntitySchemaOrThrow(entitySchemaBuilder.Name).Version;
     }
 
-    public EntitySchema UpdateAndFetchEntitySchema(ModifyEntitySchemaMutation schemaMutation)
+    public ISealedEntitySchema UpdateAndFetchEntitySchema(ModifyEntitySchemaMutation schemaMutation)
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
@@ -441,9 +451,7 @@ public class EvitaClientSession : IDisposable
             EntitySchema updatedSchema = EntitySchemaConverter.Convert(response.EntitySchema);
             _schemaCache.AnalyzeMutations(schemaMutation);
             _schemaCache.SetLatestEntitySchema(updatedSchema);
-            return updatedSchema;
-            //return new EntitySchemaDecorator(this::getCatalogSchema, updatedSchema);
-            //TODO LATER
+            return new EntitySchemaDecorator(GetCatalogSchema, updatedSchema);
         });
     }
 
@@ -563,17 +571,16 @@ public class EvitaClientSession : IDisposable
         );
     }
 
-    public EntitySchema GetEntitySchemaOrThrow(string entityType)
+    public ISealedEntitySchema GetEntitySchemaOrThrow(string entityType)
     {
         AssertActive();
-        EntitySchema? schema = GetEntitySchema(entityType);
-        return schema ?? throw new CollectionNotFoundException(entityType);
+        return GetEntitySchema(entityType) ?? throw new CollectionNotFoundException(entityType);
     }
 
-    public EntitySchema? GetEntitySchema(string entityType)
+    public ISealedEntitySchema? GetEntitySchema(string entityType)
     {
         AssertActive();
-        return _schemaCache.GetLatestEntitySchema(entityType, FetchEntitySchema, _ => GetCatalogSchema());
+        return _schemaCache.GetLatestEntitySchema(entityType, FetchEntitySchema, GetCatalogSchema);
     }
 
     public EntityReference UpsertEntity(IEntityBuilder entityBuilder)
@@ -587,7 +594,7 @@ public class EvitaClientSession : IDisposable
     public EntityReference UpsertEntity(IEntityMutation entityMutation)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcEntityMutation grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
             GrpcUpsertEntityResponse grpcResult = ExecuteWithEvitaSessionService(evitaSessionService =>
@@ -605,7 +612,7 @@ public class EvitaClientSession : IDisposable
         });
     }
 
-    public SealedEntity UpsertAndFetchEntity(IEntityBuilder entityBuilder, params IEntityContentRequire[] require)
+    public ISealedEntity UpsertAndFetchEntity(IEntityBuilder entityBuilder, params IEntityContentRequire[] require)
     {
         IEntityMutation? mutation = entityBuilder.ToMutation();
         return mutation is not null
@@ -613,13 +620,13 @@ public class EvitaClientSession : IDisposable
             : GetEntityOrThrow(entityBuilder.Type, entityBuilder.PrimaryKey!.Value, require);
     }
 
-    public SealedEntity UpsertAndFetchEntity(IEntityMutation entityMutation, params IEntityContentRequire[] require)
+    public ISealedEntity UpsertAndFetchEntity(IEntityMutation entityMutation, params IEntityContentRequire[] require)
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
         {
             GrpcEntityMutation grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
-            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
             GrpcUpsertEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpsertEntity(
                     new GrpcUpsertEntityRequest
@@ -631,7 +638,7 @@ public class EvitaClientSession : IDisposable
                     }
                 )
             );
-            return EntityConverter.ToSealedEntity(
+            return EntityConverter.ToEntity(
                 entity => _schemaCache.GetEntitySchemaOrThrow(
                     entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                 ),
@@ -640,9 +647,9 @@ public class EvitaClientSession : IDisposable
         });
     }
 
-    public SealedEntity GetEntityOrThrow(string type, int primaryKey, params IEntityContentRequire[] require)
+    public ISealedEntity GetEntityOrThrow(string type, int primaryKey, params IEntityContentRequire[] require)
     {
-        SealedEntity? entity = GetEntity(type, primaryKey, require);
+        ISealedEntity? entity = GetEntity(type, primaryKey, require);
         return entity ??
                throw new EvitaInvalidUsageException("Entity `" + type + "` with id `" + primaryKey +
                                                     "` doesn't exist!");
@@ -727,7 +734,7 @@ public class EvitaClientSession : IDisposable
 
     private static void AssertRequestMakesSense<T>(Query query) where T : IEntityClassifier
     {
-        if (typeof(SealedEntity).IsAssignableFrom(typeof(T)) &&
+        if (typeof(ISealedEntity).IsAssignableFrom(typeof(T)) &&
             (query.Require == null ||
              FinderVisitor.FindConstraints<IConstraint>(query.Require, x => x is EntityFetch,
                  x => x is ISeparateEntityContentRequireContainer).Count == 0))
@@ -738,7 +745,7 @@ public class EvitaClientSession : IDisposable
             );
     }
 
-    private SealedEntity? DeleteEntityInternal(string entityType, int primaryKey, IEntityContentRequire[] require)
+    private ISealedEntity? DeleteEntityInternal(string entityType, int primaryKey, IEntityContentRequire[] require)
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(_ =>
@@ -757,7 +764,7 @@ public class EvitaClientSession : IDisposable
                 )
             );
             return grpcResponse.Entity is not null
-                ?  EntityConverter.ToSealedEntity(
+                ?  EntityConverter.ToEntity(
                     entity => _schemaCache.GetEntitySchemaOrThrow(
                         entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                     ),
@@ -767,7 +774,7 @@ public class EvitaClientSession : IDisposable
         });
     }
 
-    private DeletedHierarchy<SealedEntity> DeleteEntityHierarchyInternal(
+    private DeletedHierarchy<ISealedEntity> DeleteEntityHierarchyInternal(
         string entityType,
         int primaryKey,
         params IEntityContentRequire[] require
@@ -789,10 +796,10 @@ public class EvitaClientSession : IDisposable
                     }
                 )
             );
-            return new DeletedHierarchy<SealedEntity>(
+            return new DeletedHierarchy<ISealedEntity>(
                 grpcResponse.DeletedEntities,
                 grpcResponse.DeletedRootEntity is not null
-                    ? EntityConverter.ToSealedEntity(
+                    ? EntityConverter.ToEntity(
                         entity => _schemaCache.GetEntitySchemaOrThrow(
                             entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                         ),

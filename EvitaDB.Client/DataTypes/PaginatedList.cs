@@ -2,7 +2,7 @@
 
 public class PaginatedList<T> : IDataChunk<T>
 {
-    public List<T>? Data { get; }
+    public IList<T>? Data { get; }
 
     public int TotalRecordCount { get; }
     public bool IsFullyInitialized => Data != null;
@@ -28,7 +28,7 @@ public class PaginatedList<T> : IDataChunk<T>
         Data = new List<T>();
     }
     
-    public PaginatedList(int pageNumber, int pageSize, int totalRecordCount, List<T> data)
+    public PaginatedList(int pageNumber, int pageSize, int totalRecordCount, IList<T> data)
     {
         PageNumber = pageNumber;
         PageSize = pageSize;

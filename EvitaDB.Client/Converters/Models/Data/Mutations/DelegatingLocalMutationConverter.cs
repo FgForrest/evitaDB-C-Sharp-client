@@ -1,15 +1,14 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Converters.Models.Data.Mutations.AssociatedData;
+﻿using EvitaDB.Client.Converters.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Converters.Models.Data.Mutations.Attributes;
-using EvitaDB.Client.Converters.Models.Data.Mutations.Entity;
-using EvitaDB.Client.Converters.Models.Data.Mutations.Price;
-using EvitaDB.Client.Converters.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Entities;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Prices;
+using EvitaDB.Client.Converters.Models.Data.Mutations.References;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
-using EvitaDB.Client.Models.Data.Mutations.Entity;
-using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Mutations.Entities;
+using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
 
 namespace EvitaDB.Client.Converters.Models.Data.Mutations;

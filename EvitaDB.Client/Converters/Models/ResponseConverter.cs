@@ -1,12 +1,10 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-using EvitaDB;
-using EvitaDB.Client.Converters.DataTypes;
+﻿using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Converters.Models.Data;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.ExtraResults;
-using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Utils;
@@ -20,7 +18,7 @@ namespace EvitaDB.Client.Converters.Models;
 public static class ResponseConverter
 {
     public static IDataChunk<T> ConvertToDataChunk<T>(GrpcQueryResponse grpcResponse,
-        Func<GrpcDataChunk, List<T>> converter)
+        Func<GrpcDataChunk, IList<T>> converter)
     {
         GrpcDataChunk grpcRecordPage = grpcResponse.RecordPage;
         if (grpcRecordPage.ChunkCase == GrpcDataChunk.ChunkOneofCase.PaginatedList)
@@ -50,7 +48,7 @@ public static class ResponseConverter
         );
     }
 
-    public static IEvitaResponseExtraResult[] ToExtraResults(Func<GrpcSealedEntity, EntitySchema> entitySchemaFetcher,
+    public static IEvitaResponseExtraResult[] ToExtraResults(Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
         Query query, GrpcExtraResults? extraResults)
     {
         if (extraResults is null)
@@ -65,13 +63,13 @@ public static class ResponseConverter
         GrpcHistogram grpcPriceHistogram = extraResults.PriceHistogram;
         if (grpcPriceHistogram is not null)
         {
-            extraResultList.Add(new Client.Models.ExtraResults.PriceHistogram(ToHistogram(grpcPriceHistogram)));
+            extraResultList.Add(new PriceHistogram(ToHistogram(grpcPriceHistogram)));
         }
 
         if (extraResults.AttributeHistogram.Count > 0)
         {
             extraResultList.Add(
-                new Client.Models.ExtraResults.AttributeHistogram(
+                new AttributeHistogram(
                     extraResults.AttributeHistogram.ToDictionary(x =>
                         x.Key, value => ToHistogram(value.Value))
                 )
@@ -106,7 +104,7 @@ public static class ResponseConverter
 
         if (extraResults.FacetGroupStatistics.Count > 0)
         {
-            Queries.Requires.FacetSummary? facetSummaryRequirementsDefaults = QueryUtils.FindRequire<Queries.Requires.FacetSummary>(query);
+            FacetSummary? facetSummaryRequirementsDefaults = QueryUtils.FindRequire<FacetSummary>(query);
             EntityFetch? defaultEntityFetch = facetSummaryRequirementsDefaults?.FacetEntityRequirement;
             EntityGroupFetch? defaultEntityGroupFetch = facetSummaryRequirementsDefaults?.GroupEntityRequirement;
 
@@ -141,7 +139,7 @@ public static class ResponseConverter
     }
 
     private static FacetGroupStatistics ToFacetGroupStatistics(
-        Func<GrpcSealedEntity, EntitySchema> entitySchemaFetcher,
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
         EntityFetch? entityFetch,
         EntityGroupFetch? entityGroupFetch,
         GrpcFacetGroupStatistics grpcFacetGroupStatistics
@@ -150,7 +148,7 @@ public static class ResponseConverter
         return new FacetGroupStatistics(
             grpcFacetGroupStatistics.ReferenceName,
             grpcFacetGroupStatistics.GroupEntity is not null
-                ? EntityConverter.ToSealedEntity(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity)
+                ? EntityConverter.ToEntity(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity)
                 : EntityConverter.ToEntityReference(grpcFacetGroupStatistics.GroupEntityReference),
             grpcFacetGroupStatistics.Count,
             grpcFacetGroupStatistics.FacetStatistics
@@ -160,14 +158,14 @@ public static class ResponseConverter
     }
 
     private static FacetStatistics ToFacetStatistics(
-        Func<GrpcSealedEntity, EntitySchema> entitySchemaFetcher,
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
         EntityFetch? entityFetch,
         GrpcFacetStatistics grpcFacetStatistics
     )
     {
         return new FacetStatistics(
             grpcFacetStatistics.FacetEntity is not null
-                ? EntityConverter.ToSealedEntity(
+                ? EntityConverter.ToEntity(
                     entitySchemaFetcher,
                     grpcFacetStatistics.FacetEntity
                 )
@@ -184,7 +182,7 @@ public static class ResponseConverter
     }
 
     private static Dictionary<string, List<LevelInfo>> ToHierarchy(
-        Func<GrpcSealedEntity, EntitySchema> entitySchemaFetcher,
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
         IRootHierarchyConstraint rootHierarchyConstraint,
         GrpcHierarchy grpcHierarchy
     )
@@ -203,14 +201,14 @@ public static class ResponseConverter
     }
 
     private static LevelInfo ToLevelInfo(
-        Func<GrpcSealedEntity, EntitySchema> entitySchemaFetcher,
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
         EntityFetch? entityFetch,
         GrpcLevelInfo grpcLevelInfo
     )
     {
         return new LevelInfo(
             grpcLevelInfo.Entity is not null
-                ? EntityConverter.ToSealedEntity(entitySchemaFetcher, grpcLevelInfo.Entity)
+                ? EntityConverter.ToEntity(entitySchemaFetcher, grpcLevelInfo.Entity)
                 : EntityConverter.ToEntityReference(grpcLevelInfo.EntityReference),
             grpcLevelInfo.QueriedEntityCount,
             grpcLevelInfo.ChildrenCount,
@@ -218,9 +216,9 @@ public static class ResponseConverter
         );
     }
 
-    private static Client.Models.ExtraResults.QueryTelemetry ToQueryTelemetry(GrpcQueryTelemetry grpcQueryTelemetry)
+    private static QueryTelemetry ToQueryTelemetry(GrpcQueryTelemetry grpcQueryTelemetry)
     {
-        return new Client.Models.ExtraResults.QueryTelemetry(
+        return new QueryTelemetry(
             EvitaEnumConverter.ToQueryPhase(grpcQueryTelemetry.Operation),
             grpcQueryTelemetry.Start,
             grpcQueryTelemetry.SpentTime,

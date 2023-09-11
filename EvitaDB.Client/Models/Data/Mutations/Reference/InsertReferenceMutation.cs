@@ -11,7 +11,7 @@ public class InsertReferenceMutation : ReferenceMutation
 
 
     public InsertReferenceMutation(ReferenceKey referenceKey, Cardinality? referenceCardinality,
-        string referencedEntityType) : base(referenceKey)
+        string? referencedEntityType) : base(referenceKey)
     {
         ReferenceKey = referenceKey;
         ReferenceCardinality = referenceCardinality;

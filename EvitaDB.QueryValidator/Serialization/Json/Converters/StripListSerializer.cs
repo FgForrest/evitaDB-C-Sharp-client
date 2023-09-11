@@ -1,14 +1,14 @@
 ﻿using EvitaDB.Client.DataTypes;
-using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Data;
 using Newtonsoft.Json;
 
 using static EvitaDB.QueryValidator.Utils.ResponseSerializerUtils;
 
 namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
-public class StripListSerializer : JsonConverter<StripList<SealedEntity>>
+public class StripListSerializer : JsonConverter<StripList<ISealedEntity>>
 {
-    public override void WriteJson(JsonWriter writer, StripList<SealedEntity>? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, StripList<ISealedEntity>? value, JsonSerializer serializer)
     {
         if (value is null)
         {
@@ -44,9 +44,9 @@ public class StripListSerializer : JsonConverter<StripList<SealedEntity>>
         writer.WriteEndObject();
     }
 
-    public override StripList<SealedEntity>? ReadJson(JsonReader reader, Type objectType, StripList<SealedEntity>? existingValue, bool hasExistingValue,
+    public override StripList<ISealedEntity> ReadJson(JsonReader reader, Type objectType, StripList<ISealedEntity>? existingValue, bool hasExistingValue,
         JsonSerializer serializer)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

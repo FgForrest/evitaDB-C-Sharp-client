@@ -1,9 +1,11 @@
 ﻿using System.Globalization;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Cdc;
-using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using static EvitaDB.Client.Queries.IQueryConstraints;
@@ -21,12 +23,20 @@ public class EvitaQueryTest
     static EvitaQueryTest()
     {
         // create a evita client configuration the the running instance of evita server
+        
         EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
             .SetHost("demo.evitadb.io")
             .SetPort(5556)
             .SetUseGeneratedCertificate(false)
             .SetUsingTrustedRootCaCertificate(true)
             .Build();
+        
+        /*EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
+            .SetHost("localhost")
+            .SetPort(5556)
+            .SetUseGeneratedCertificate(true)
+            .SetUsingTrustedRootCaCertificate(false)
+            .Build();*/
     }
 
     [SetUp]
@@ -40,7 +50,7 @@ public class EvitaQueryTest
     public void ShouldBe_WellSee()
     {
         EvitaEntityResponse evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
-            session => session.Query<EvitaEntityResponse, SealedEntity>(
+            session => session.Query<EvitaEntityResponse, ISealedEntity>(
                 Query(
                     Collection("Product"),
                     FilterBy(
@@ -134,7 +144,7 @@ public class EvitaQueryTest
     [Test]
     public void ShouldBe_WellSee1()
     {
-        EvitaResponse<SealedEntity> evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
+        EvitaResponse<ISealedEntity> evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
             session =>
             {
                 return session.QuerySealedEntity(
@@ -158,7 +168,7 @@ public class EvitaQueryTest
     [Test]
     public void ShouldBe_Tmp()
     {
-        EvitaResponse<SealedEntity> entities = _client!.QueryCatalog("evita",
+        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog("evita",
             session => session.QuerySealedEntity(
                 Query(
                     Collection("Product"),
@@ -181,54 +191,8 @@ public class EvitaQueryTest
                 )
             )
         );
-
-
+        
         Console.WriteLine();
-    }
-    
-    
-    [Test]
-    public Task ShouldEnforceSslError()
-    {
-        Func<EvitaResponse<SealedEntity>> funcEntities = () =>
-        {
-            return _client!.QueryCatalog("evita",
-                session => session.QuerySealedEntity(
-                    Query(
-                        Collection("Product"),
-                        FilterBy(
-                            AttributeEquals("code", "amazfit-gtr-3"),
-                            EntityLocaleEquals(CultureInfo.GetCultureInfo("en"))
-                        ),
-                        Require(
-                            EntityFetch(
-                                ReferenceContent(
-                                    "categories",
-                                    EntityFetch(AttributeContent("code", "name"),
-                                        HierarchyContent(
-                                            EntityFetch(AttributeContent("code", "name"))
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            );
-        };
-
-        try
-        {
-            while (true)
-            {
-                funcEntities.Invoke();
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
     }
     
     [Test]
@@ -246,7 +210,7 @@ public class EvitaQueryTest
     [Test]
     public void ShouldIdk()
     {
-        EvitaResponse<SealedEntity> entities = _client!.QueryCatalog(
+        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog(
             "evita",
             session => session.QuerySealedEntity(
                 Query(
@@ -268,4 +232,44 @@ public class EvitaQueryTest
         );
         Console.WriteLine();
     }
+    
+    [Test]
+    public void ShouldTestCdo()
+    {
+        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog(
+            "evita",
+            session => session.QuerySealedEntity(
+                Query(
+                    Collection("Product"),
+                    Require(
+                        EntityFetch(
+                            AssociatedDataContentAll()
+                        )
+                    )
+                )
+            )
+        );
+
+        var session = _client.CreateReadWriteSession("evita");
+
+        var x = ComplexDataObjectConverter.ConvertFromComplexDataObject(
+            (entities.RecordData[0].GetAssociatedData("allActiveUrls") as ComplexDataObject)!, typeof(TestAsDataObj[]));
+
+        Console.WriteLine(x);
+        
+        var asData = new TestAsDataObj[]
+        {
+            new ("cs", "/cs/macbook-pro-13-2022"),
+            new ("en", "/en/macbook-pro-13-2022")
+        };
+        var initialBuilder = session.CreateNewEntity("Product", 6666666)
+            .SetAssociatedData("allActiveUrls", asData);
+        session.UpsertEntity(initialBuilder);
+        Console.WriteLine();
+    }
+
+    private record TestAsDataObj(string Locale, string Url)
+    {
+        public TestAsDataObj() : this("", "") { }
+    };
 }

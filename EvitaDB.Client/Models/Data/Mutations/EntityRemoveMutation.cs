@@ -1,11 +1,11 @@
 ﻿using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
-using EvitaDB.Client.Models.Data.Mutations.Entity;
-using EvitaDB.Client.Models.Data.Mutations.Price;
+using EvitaDB.Client.Models.Data.Mutations.Entities;
+using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
 using EvitaDB.Client.Models.Data.Structure;
-using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Data.Mutations;
@@ -34,20 +34,19 @@ public class EntityRemoveMutation : IEntityMutation
         return EntityExistence.MayExist;
     }
 
-    public SealedEntity Mutate(EntitySchema entitySchema, SealedEntity? entity)
+    public Entity Mutate(IEntitySchema entitySchema, Entity? entity)
     {
         Assert.NotNull(entity, "Entity must not be null in order to be removed!");
         if (entity!.Dropped)
         {
             return entity;
         }
-
-        return SealedEntity.MutateEntity(entitySchema, entity, ComputeLocalMutationsForEntityRemoval(entity));
+        return Entity.MutateEntity(entitySchema, entity, ComputeLocalMutationsForEntityRemoval(entity));
     }
 
-    public List<ILocalMutation> ComputeLocalMutationsForEntityRemoval(SealedEntity entity)
+    public List<ILocalMutation> ComputeLocalMutationsForEntityRemoval(ISealedEntity entity)
     {
-        return (entity is {ParentAvailable: true, Parent: not null}
+        return (entity.ParentAvailable() && entity.Parent is not null
                 ? new []{entity.Parent.Value}
                 : Array.Empty<int>())
             .Select(_ => new RemoveParentMutation())
@@ -79,7 +78,7 @@ public class EntityRemoveMutation : IEntityMutation
                 new[] {new SetPriceInnerRecordHandlingMutation(PriceInnerRecordHandling.None)}
             )
             .Concat(
-                (entity.PricesAvailable ? entity.GetPrices() : Enumerable.Empty<IPrice>())
+                (entity.PricesAvailable() ? entity.GetPrices() : Enumerable.Empty<IPrice>())
                 .Where(x => x.Dropped == false)
                 .Select(it => new RemovePriceMutation(it.Key))
             )

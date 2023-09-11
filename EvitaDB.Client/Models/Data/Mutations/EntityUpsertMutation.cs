@@ -1,5 +1,5 @@
 ﻿using EvitaDB.Client.Models.Data.Structure;
-using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations;
 
@@ -40,10 +40,10 @@ public class EntityUpsertMutation : IEntityMutation
 
     public EntityExistence Expects() => EntityExistence;
 
-    public SealedEntity Mutate(EntitySchema entitySchema, SealedEntity? entity)
+    public Entity Mutate(IEntitySchema entitySchema, Entity? entity)
     {
-        entity ??= new SealedEntity(EntityType, EntityPrimaryKey);
-        return SealedEntity.MutateEntity(
+        entity ??= new Entity(EntityType, EntityPrimaryKey);
+        return Entity.MutateEntity(
             entitySchema,
             entity,
             LocalMutations

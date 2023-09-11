@@ -5,9 +5,9 @@ using Newtonsoft.Json;
 
 namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
-public class EntitySerializer : JsonConverter<IEntity>
+public class EntitySerializer : JsonConverter<ISealedEntity>
 {
-    public override void WriteJson(JsonWriter writer, IEntity? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, ISealedEntity? value, JsonSerializer serializer)
     {
         if (value == null)
         {
@@ -17,7 +17,7 @@ public class EntitySerializer : JsonConverter<IEntity>
         writer.WriteStartObject();
         writer.WritePropertyName("primaryKey");
         writer.WriteValue(value.PrimaryKey);
-        if (value.ParentAvailable)
+        if (value.ParentAvailable())
         {
             if (value.Parent != null)
             {
@@ -41,7 +41,7 @@ public class EntitySerializer : JsonConverter<IEntity>
         if (value.InnerRecordHandling != PriceInnerRecordHandling.Unknown)
         {
             writer.WritePropertyName("priceInnerRecordHandling");
-            writer.WriteValue(value.InnerRecordHandling.ToString().ToUpper());
+            writer.WriteValue(value.InnerRecordHandling?.ToString().ToUpper());
         }
 
         WriteAttributes(writer, value);
@@ -51,10 +51,10 @@ public class EntitySerializer : JsonConverter<IEntity>
         writer.WriteEndObject();
     }
 
-    public override IEntity ReadJson(JsonReader reader, Type objectType, IEntity? existingValue, bool hasExistingValue,
+    public override ISealedEntity ReadJson(JsonReader reader, Type objectType, ISealedEntity? existingValue, bool hasExistingValue,
         JsonSerializer serializer)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     /**
@@ -361,7 +361,7 @@ public class EntitySerializer : JsonConverter<IEntity>
      */
     private static void WriteReferences(JsonWriter writer, IEntity value, JsonSerializer serializer)
     {
-        if (value.ReferencesAvailable && value.GetReferences().Any())
+        if (value.ReferencesAvailable() && value.GetReferences().Any())
         {
             Wrap(() =>
             {
@@ -431,7 +431,7 @@ public class EntitySerializer : JsonConverter<IEntity>
      */
     private static void WritePrices(JsonWriter writer, IEntity value)
     {
-        if (value.PricesAvailable)
+        if (value.PricesAvailable())
         {
             IPrice? priceForSale = value.PriceForSale;
 

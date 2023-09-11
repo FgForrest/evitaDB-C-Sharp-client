@@ -13,6 +13,7 @@ public class SchemaBuilderHelper
         ILocalCatalogSchemaMutation[] newMutations
     )
     {
+        // TODO: REMOVE THIS COMBINE WITH - WE DONT HAVE IT
         return AddMutations(
             typeof(ILocalCatalogSchemaMutation),
             (existingMutation, newMutation) => ((ICombinableCatalogSchemaMutation) newMutation)
@@ -23,12 +24,13 @@ public class SchemaBuilderHelper
     }
 
     public static bool AddMutations(
-        CatalogSchema currentCatalogSchema,
-        EntitySchema currentEntitySchema,
+        ICatalogSchema currentCatalogSchema,
+        IEntitySchema currentEntitySchema,
         List<IEntitySchemaMutation> existingMutations,
         params IEntitySchemaMutation[] newMutations
     )
     {
+        // TODO: REMOVE THIS COMBINE WITH - WE DONT HAVE IT
         return AddMutations(
             typeof(IEntitySchemaMutation),
             (existingMutation, newMutation) => ((ICombinableEntitySchemaMutation) newMutation)

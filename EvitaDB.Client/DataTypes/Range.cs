@@ -15,7 +15,7 @@ public abstract class Range<T>
 
     public abstract bool IsWithin(T valueToCheck);
 
-    protected bool Overlaps(Range<T> otherRange)
+    public bool Overlaps(Range<T> otherRange)
     {
         Assert.IsTrue(GetType() == otherRange.GetType(), $"Ranges {GetType().Name} and {otherRange.GetType().Name} are not comparable!");
         return (From >= otherRange.From && To <= otherRange.To) ||

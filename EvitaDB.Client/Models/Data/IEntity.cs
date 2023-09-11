@@ -8,13 +8,13 @@ public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociated
 {
     IEntitySchema Schema { get; }
     int? Parent { get; }
-    bool ParentAvailable { get; }
-    bool ReferencesAvailable { get; }
     IEnumerable<IReference> GetReferences();
-    IPrice? PriceForSale { get; }
+    IEnumerable<IReference> GetReferences(string referenceName);
+    new IPrice? PriceForSale { get; }
     IReference? GetReference(string referenceName, int referencedEntityId);
-    IReference? GetReference(ReferenceKey referenceKey);
     ISet<CultureInfo> GetAllLocales();
+    bool ParentAvailable();
+    bool ReferencesAvailable();
 
     new bool DiffersFrom(IEntity? otherEntity)
     {
@@ -26,7 +26,7 @@ public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociated
         if (Dropped != otherEntity.Dropped) return true;
         if (!Type.Equals(otherEntity.Type)) return true;
         if (ParentAvailable != otherEntity.ParentAvailable) return true;
-        if (ParentAvailable)
+        if (ParentAvailable())
         {
             if (ParentEntity is not null != otherEntity.ParentEntity is not null) return true;
             if (ParentEntity is not null &&

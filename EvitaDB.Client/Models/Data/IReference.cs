@@ -8,8 +8,8 @@ public interface IReference : IAttributes, IDroppable
 {
     public ReferenceKey ReferenceKey { get; }
     public GroupEntityReference? Group { get; }
-    public SealedEntity? GroupEntity { get; }
-    public SealedEntity? ReferencedEntity { get; }
+    public ISealedEntity? GroupEntity { get; }
+    public ISealedEntity? ReferencedEntity { get; }
     public IReferenceSchema? ReferenceSchema { get; }
     public Cardinality? ReferenceCardinality { get; }
     public string? ReferencedEntityType { get; }

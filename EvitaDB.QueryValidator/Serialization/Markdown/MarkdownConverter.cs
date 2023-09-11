@@ -1,10 +1,8 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
-using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Filter;
@@ -34,7 +32,7 @@ public static partial class MarkdownConverter
     public static string GenerateMarkDownTable(
         IEntitySchema entitySchema,
         Query query,
-        EvitaResponse<SealedEntity> response
+        EvitaResponse<ISealedEntity> response
     )
     {
         EntityFetch? entityFetch = query.Require?
@@ -77,7 +75,6 @@ public static partial class MarkdownConverter
         headers.AddRange(
             referenceContents
                 .SelectMany(refCnt => refCnt.ReferencedNames
-                    .Where(name => name != null)
                     .Select(entitySchema.GetReferenceOrThrowException)
                     .SelectMany(referenceSchema =>
                     {
@@ -151,7 +148,6 @@ public static partial class MarkdownConverter
             .Select(f => f?.Currency.CurrencyCode)
             .FirstOrDefault() ?? new CultureInfo("de-DE").NumberFormat.CurrencySymbol;
         var priceFormatter = new CultureInfo(locale.Name) {NumberFormat = {CurrencySymbol = currency}};
-        var percentFormatter = NumberFormatInfo.GetInstance(locale);
 
         // add rows
         foreach (var sealedEntity in response.RecordData)
@@ -198,7 +194,7 @@ public static partial class MarkdownConverter
         }
 
         // generate MarkDown
-        PaginatedList<SealedEntity> recordPage = (PaginatedList<SealedEntity>) response.RecordPage;
+        PaginatedList<ISealedEntity> recordPage = (PaginatedList<ISealedEntity>) response.RecordPage;
         return tableBuilder.Build().Serialize() + "\n\n###### **Page** " + recordPage.PageNumber + "/" +
                recordPage.LastPageNumber + " **(Total number of results: " + recordPage.TotalRecordCount +
                ")**";
@@ -226,11 +222,11 @@ public static partial class MarkdownConverter
     }
 
     private static IEnumerable<string> TransformLocalizedAttributes(
-        EvitaResponse<SealedEntity> response,
+        EvitaResponse<ISealedEntity> response,
         string attributeName,
         ISet<CultureInfo> entityLocales,
         IAttributeSchemaProvider<IAttributeSchema> schema,
-        Func<SealedEntity, IEnumerable<IAttributes>> attributesProvider
+        Func<ISealedEntity, IEnumerable<IAttributes>> attributesProvider
     )
     {
         bool localized = schema.GetAttribute(attributeName)?.Localized ??

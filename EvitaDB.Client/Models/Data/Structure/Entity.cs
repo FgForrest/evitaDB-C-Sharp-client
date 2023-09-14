@@ -8,6 +8,7 @@ using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Mutations.Entities;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Data.Structure.Predicates;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Queries.Requires;
@@ -29,6 +30,37 @@ public class Entity : ISealedEntity
     public ISet<CultureInfo> Locales { get; }
     public bool Dropped { get; }
     public PriceInnerRecordHandling? InnerRecordHandling => Prices.InnerRecordHandling;
+    
+    /// <summary>
+    /// This predicate filters out non-fetched locales.
+    /// </summary>
+    private LocalePredicate LocalePredicate { get; }
+    
+    /// <summary>
+    /// This predicate filters out access to the hierarchy parent that were not fetched in query.
+    /// </summary>
+    private HierarchyPredicate HierarchyPredicate { get; }
+    
+    /// <summary>
+    /// This predicate filters out attributes that were not fetched in query.
+    /// </summary>
+    private AttributeValuePredicate AttributePredicate { get; }
+    
+    /// <summary>
+    /// This predicate filters out associated data that were not fetched in query.
+    /// </summary>
+    private AssociatedDataValuePredicate AssociatedDataPredicate { get; }
+    
+    /// <summary>
+    /// This predicate filters out references that were not fetched in query.
+    /// </summary>
+    private ReferencePredicate ReferencePredicate { get; }
+    
+    /// <summary>
+    /// This predicate filters out prices that were not fetched in query.
+    /// </summary>
+    private PricePredicate PricePredicate { get; }
+    
     public bool ParentAvailable() => Schema.WithHierarchy;
     public bool PricesAvailable() => Prices.PricesAvailable();
     public bool AttributesAvailable() => Attributes.AttributesAvailable();
@@ -102,7 +134,9 @@ public class Entity : ISealedEntity
         Attributes attributes,
         AssociatedData associatedData,
         Prices prices,
-        IEnumerable<CultureInfo> locales,
+        ISet<CultureInfo> locales,
+        EvitaRequestData evitaRequestData,
+        bool dropped = false,
         IPrice? pricesForSale = null)
     {
         return new Entity(
@@ -116,7 +150,10 @@ public class Entity : ISealedEntity
             associatedData,
             prices,
             locales,
-            false,
+            evitaRequestData,
+            entitySchema.References.Keys.ToHashSet(),
+            entitySchema.WithHierarchy,
+            dropped,
             pricesForSale
         );
     }
@@ -147,6 +184,9 @@ public class Entity : ISealedEntity
             associatedData ?? entity.AssociatedData,
             prices ?? entity.Prices,
             locales ?? entity.Locales.ToImmutableHashSet(),
+            null,
+            new HashSet<string>(),
+            entitySchema.WithHierarchy,
             dropped,
             priceForSale
         );
@@ -157,14 +197,20 @@ public class Entity : ISealedEntity
         int? version,
         IEntitySchema entitySchema,
         int? parent,
+        IEntityClassifierWithParent? parentEntity,
         ICollection<IReference> references,
         Attributes attributes,
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
-        ISet<string> referencesDefined,
-        bool withHierarchy,
-        bool dropped = false
+        LocalePredicate localePredicate,
+        HierarchyPredicate hierarchyPredicate,
+        AttributeValuePredicate attributePredicate,
+        AssociatedDataValuePredicate associatedDataPredicate,
+        ReferencePredicate referencePredicate,
+        PricePredicate pricePredicate,
+        bool dropped = false,
+        IPrice? priceForSale = null
     )
     {
         return new Entity(
@@ -172,15 +218,20 @@ public class Entity : ISealedEntity
             entitySchema,
             primaryKey,
             parent,
-            null, //TODO TPO: how to get the parent here?
+            parentEntity,
             references,
             attributes,
             associatedData,
             prices,
             locales,
-            referencesDefined,
-            withHierarchy,
-            dropped
+            dropped,
+            priceForSale,
+            localePredicate,
+            hierarchyPredicate,
+            attributePredicate,
+            associatedDataPredicate,
+            referencePredicate,
+            pricePredicate
         );
     }
 
@@ -196,7 +247,13 @@ public class Entity : ISealedEntity
         Prices prices,
         IEnumerable<CultureInfo> locales,
         bool dropped,
-        IPrice? priceForSale
+        IPrice? priceForSale,
+        LocalePredicate localePredicate,
+        HierarchyPredicate hierarchyPredicate,
+        AttributeValuePredicate attributePredicate,
+        AssociatedDataValuePredicate associatedDataPredicate,
+        ReferencePredicate referencePredicate,
+        PricePredicate pricePredicate
     )
     {
         Version = version;
@@ -214,6 +271,12 @@ public class Entity : ISealedEntity
         WithHierarchy = Schema.WithHierarchy;
         ReferencesDefined = Schema.References.Keys.ToHashSet();
         PriceForSale = priceForSale;
+        LocalePredicate = localePredicate;
+        HierarchyPredicate = hierarchyPredicate;
+        AttributePredicate = attributePredicate;
+        AssociatedDataPredicate = associatedDataPredicate;
+        ReferencePredicate = referencePredicate;
+        PricePredicate = pricePredicate;
     }
 
     private Entity(
@@ -227,9 +290,11 @@ public class Entity : ISealedEntity
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
+        EvitaRequestData? evitaRequestData,
         ISet<string> referencesDefined,
         bool withHierarchy,
-        bool dropped
+        bool dropped = false,
+        IPrice? priceForSale = null
     )
     {
         Version = version;
@@ -246,6 +311,25 @@ public class Entity : ISealedEntity
         Dropped = dropped;
         ReferencesDefined = referencesDefined;
         WithHierarchy = withHierarchy;
+        PriceForSale = priceForSale;
+        if (evitaRequestData is null)
+        {
+            LocalePredicate = LocalePredicate.DefaultInstance;
+            HierarchyPredicate = HierarchyPredicate.DefaultInstance;
+            AttributePredicate = AttributeValuePredicate.DefaultInstance;
+            AssociatedDataPredicate = AssociatedDataValuePredicate.DefaultInstance;
+            ReferencePredicate = ReferencePredicate.DefaultInstance;
+            PricePredicate = PricePredicate.DefaultInstance;
+        }
+        else
+        {
+            LocalePredicate = new LocalePredicate(evitaRequestData);
+            HierarchyPredicate = new HierarchyPredicate(evitaRequestData);
+            AttributePredicate = new AttributeValuePredicate(evitaRequestData);
+            AssociatedDataPredicate = new AssociatedDataValuePredicate(evitaRequestData);
+            ReferencePredicate = new ReferencePredicate(evitaRequestData);
+            PricePredicate = new PricePredicate(evitaRequestData, null);
+        }
     }
 
     public Entity(string type, int? primaryKey)
@@ -263,24 +347,39 @@ public class Entity : ISealedEntity
         Locales = new HashSet<CultureInfo>().ToImmutableHashSet();
         WithHierarchy = Schema.WithHierarchy;
         ReferencesDefined = new HashSet<string>();
+        LocalePredicate = LocalePredicate.DefaultInstance;
+        HierarchyPredicate = HierarchyPredicate.DefaultInstance;
+        AttributePredicate = AttributeValuePredicate.DefaultInstance;
+        AssociatedDataPredicate = AssociatedDataValuePredicate.DefaultInstance;
+        ReferencePredicate = ReferencePredicate.DefaultInstance;
+        PricePredicate = PricePredicate.DefaultInstance;
     }
-    
-    public IEntityBuilder OpenForWrite() {
+
+    public IEntityBuilder OpenForWrite()
+    {
         return new ExistingEntityBuilder(this);
     }
 
-    public IEntityBuilder WithMutations(params ILocalMutation[] localMutations) {
+    public IEntityBuilder WithMutations(params ILocalMutation[] localMutations)
+    {
         return new ExistingEntityBuilder(
             this,
             localMutations.ToList()
         );
     }
 
-    public IEntityBuilder WithMutations(ICollection<ILocalMutation> localMutations) {
+    public IEntityBuilder WithMutations(ICollection<ILocalMutation> localMutations)
+    {
         return new ExistingEntityBuilder(
             this,
             localMutations
         );
+    }
+
+    public void CheckReferenceName(string referenceName)
+    {
+        Assert.IsTrue(ReferencesDefined.Contains(referenceName),
+            () => new ReferenceNotFoundException(referenceName, Schema));
     }
 
     public static Entity MutateEntity(
@@ -358,12 +457,13 @@ public class Entity : ISealedEntity
                 entitySchema,
                 entity?.PrimaryKey,
                 newParent,
-                null, //TODO TPO: how to get the parent here?
+                null,
                 mergedReferences.References,
                 newAttributeContainer,
                 newAssociatedDataContainer,
                 priceContainer,
                 entityLocales,
+                null,
                 mergedReferences.ReferencesDefined,
                 entitySchema.WithHierarchy || newParent is not null,
                 false
@@ -884,11 +984,21 @@ public class Entity : ISealedEntity
         ISet<CultureInfo> locales = Locales;
         return (Dropped ? "❌ " : "") +
                "Entity " + Type + " ID=" + PrimaryKey +
-               (ParentAvailable() ? $"{", ↰ " + ParentEntity?.PrimaryKey}" : "" +
-               (ReferencesAvailable() ? ", " + string.Join(", ", GetReferences().Select(it => it.ToString())) : "") +
-               (AttributesAvailable() ? string.Join(", ", GetAttributeValues().Select(it => it.ToString())) : "") +
-               (AssociatedDataAvailable() ? string.Join(", ", GetAssociatedDataValues().Select(it => it.ToString())) : "") +
-               (PricesAvailable() ? string.Join(", ", GetPrices().Select(it => it.ToString())) : "") +
-               (!locales.Any() ? "" : ", localized to " + string.Join(", ", locales.Select(x=>x.TwoLetterISOLanguageName))));
+               (ParentAvailable()
+                   ? $"{", ↰ " + ParentEntity?.PrimaryKey}"
+                   : "" +
+                     (ReferencesAvailable()
+                         ? ", " + string.Join(", ", GetReferences().Select(it => it.ToString()))
+                         : "") +
+                     (AttributesAvailable()
+                         ? string.Join(", ", GetAttributeValues().Select(it => it.ToString()))
+                         : "") +
+                     (AssociatedDataAvailable()
+                         ? string.Join(", ", GetAssociatedDataValues().Select(it => it.ToString()))
+                         : "") +
+                     (PricesAvailable() ? string.Join(", ", GetPrices().Select(it => it.ToString())) : "") +
+                     (!locales.Any()
+                         ? ""
+                         : ", localized to " + string.Join(", ", locales.Select(x => x.TwoLetterISOLanguageName))));
     }
 }

@@ -14,7 +14,7 @@ using EvitaDB.Client.Utils;
 namespace EvitaDB.Client.Models.Data.Structure;
 
 /// <summary>
-/// Builder that is used to alter existing <see cref="ISealedEntity"/>. Entity is immutable object so there is need for another object
+/// Builder that is used to alter existing <see cref="Entity"/>. Entity is immutable object so there is need for another object
 /// that would simplify the process of updating its contents. This is why the builder class exists.
 /// This builder is suitable for the situation when there already is some entity at place, and we need to alter it.
 /// </summary>
@@ -96,7 +96,7 @@ public class ExistingEntityBuilder : IEntityBuilder
     {
     }
 
-    internal void AddMutation(ILocalMutation localMutation)
+    private void AddMutation(ILocalMutation localMutation)
     {
         if (localMutation is ParentMutation hierarchicalPlacementMutation)
         {
@@ -134,8 +134,6 @@ public class ExistingEntityBuilder : IEntityBuilder
         }
     }
     
-    
-
     public IEnumerable<IReference> GetReferences()
     {
         return BaseEntity.GetReferences()

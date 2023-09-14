@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
-using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.QueryValidator.Serialization.Json.Binders;

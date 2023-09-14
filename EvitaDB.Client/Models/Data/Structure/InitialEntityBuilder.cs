@@ -7,6 +7,7 @@ using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Mutations.Entities;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Data.Structure.Predicates;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Requires;
 
@@ -462,13 +463,18 @@ public class InitialEntityBuilder : IEntityBuilder
             Version,
             Schema,
             Parent,
+            ParentEntity,
             References.Values,
             AttributesBuilder.Build(),
             AssociatedDataBuilder.Build(),
             PricesBuilder.Build(),
             GetAllLocales(),
-            Schema.References.Keys.Concat(References.Keys.Select(x => x.ReferenceName)).ToHashSet(),
-            Schema.WithHierarchy || Parent != null
+            LocalePredicate.DefaultInstance,
+            HierarchyPredicate.DefaultInstance,
+            AttributeValuePredicate.DefaultInstance,
+            AssociatedDataValuePredicate.DefaultInstance,
+            ReferencePredicate.DefaultInstance,
+            PricePredicate.DefaultInstance
         );
     }
 

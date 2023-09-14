@@ -92,6 +92,8 @@ public static class EntityConverter
             grpcEntity.Locales
                 .Select(EvitaDataTypesConverter.ToLocale)
                 .ToHashSet(),
+            null, //TODO: get from gRPC
+            false,
             ToPrice(grpcEntity.PriceForSale)
         );
     }

@@ -157,9 +157,6 @@ public static class ComplexDataObjectConverter
 
             return obj;
         }
-        else
-        {
-            throw new ArgumentException("Unsupported IDataItem type");
-        }
+        throw new ArgumentException("Unsupported IDataItem type");
     }
 }

@@ -79,7 +79,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
                 referenceSchema.ReferencedEntityType,
                 referenceSchema.ReferencedEntityTypeManaged
                     ? new Dictionary<NamingConvention, string>()
-                    : referenceSchema.GetEntityTypeNameVariants(s => null),
+                    : referenceSchema.GetEntityTypeNameVariants(s => default),
                 referenceSchema.ReferencedEntityTypeManaged,
                 referenceSchema.Cardinality,
                 referenceSchema.ReferencedGroupType,
@@ -87,8 +87,8 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
                     ? new Dictionary<NamingConvention, string>()
                     : referenceSchema.GetGroupTypeNameVariants(s => null),
                 referenceSchema.ReferencedGroupTypeManaged,
-                referenceSchema.Indexed,
-                referenceSchema.Faceted,
+                referenceSchema.IsIndexed,
+                referenceSchema.IsFaceted,
                 referenceSchema.GetAttributes(),
                 referenceSchema.GetSortableAttributeCompounds().Values.Concat(new[] {newCompoundSchema})
                     .ToDictionary(x => x.Name, x => x)

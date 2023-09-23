@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
+﻿using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
 namespace EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
 

@@ -16,8 +16,8 @@ public class ReferenceSchema : IReferenceSchema
     public string? ReferencedGroupType { get; }
     public bool ReferencedEntityTypeManaged { get; }
     public bool ReferencedGroupTypeManaged { get; }
-    public bool Indexed { get; }
-    public bool Faceted { get; }
+    public bool IsIndexed { get; }
+    public bool IsFaceted { get; }
     public ICollection<IAttributeSchema> NonNullableAttributes { get; }
     public IDictionary<string, IAttributeSchema> Attributes { get; }
     private IDictionary<NamingConvention, string> EntityTypeNameVariants { get; }
@@ -202,8 +202,8 @@ public class ReferenceSchema : IReferenceSchema
         ReferencedGroupType = referencedGroupType;
         GroupTypeNameVariants = groupTypeNameVariants;
         ReferencedGroupTypeManaged = referencedGroupTypeManaged;
-        Indexed = indexed;
-        Faceted = faceted;
+        IsIndexed = indexed;
+        IsFaceted = faceted;
         Attributes = attributes.ToDictionary(x => x.Key, x => x.Value);
         AttributeNameIndex = EntitySchema.InternalGenerateNameVariantIndex(
             Attributes.Values, x => x.NameVariants
@@ -251,7 +251,7 @@ public class ReferenceSchema : IReferenceSchema
         Func<string, EntitySchema> entitySchemaFetcher)
     {
         return ReferencedGroupTypeManaged
-            ? entitySchemaFetcher.Invoke(ReferencedGroupType).NameVariants
+            ? entitySchemaFetcher.Invoke(ReferencedGroupType!).NameVariants
             : GroupTypeNameVariants;
     }
 
@@ -260,7 +260,7 @@ public class ReferenceSchema : IReferenceSchema
         Func<string, EntitySchema> entitySchemaFetcher)
     {
         return ReferencedGroupTypeManaged
-            ? entitySchemaFetcher.Invoke(ReferencedGroupType).GetNameVariant(namingConvention)
+            ? entitySchemaFetcher.Invoke(ReferencedGroupType!).GetNameVariant(namingConvention)
             : GroupTypeNameVariants[namingConvention];
     }
 
@@ -321,8 +321,8 @@ public class ReferenceSchema : IReferenceSchema
                ", cardinality=" + Cardinality +
                ", referencedEntityType=" + ReferencedEntityType +
                ", referencedGroupType=" + ReferencedGroupType +
-               ", indexed=" + Indexed +
-               ", faceted=" + Faceted +
+               ", indexed=" + IsIndexed +
+               ", faceted=" + IsFaceted +
                ", nonNullableAttributes=" + NonNullableAttributes +
                ", attributes=" + Attributes +
                '}';

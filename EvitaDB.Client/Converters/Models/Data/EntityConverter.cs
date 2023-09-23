@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
@@ -30,24 +31,25 @@ public static class EntityConverter
         );
     }
 
-    public static List<ISealedEntity> ToEntities(IEnumerable<GrpcSealedEntity> sealedEntities,
-        Func<string, int, ISealedEntitySchema> entitySchemaProvider)
+    public static List<T> ToEntities<T>(IEnumerable<GrpcSealedEntity> sealedEntities,
+        Func<string, int, ISealedEntitySchema> entitySchemaProvider, EvitaRequest evitaRequest)
     {
-        return sealedEntities.Select(x => ToEntity(
+        return sealedEntities.Select(x => ToEntity<T>(
                 entity => entitySchemaProvider.Invoke(entity.EntityType, entity.Version),
-                x
+                x,
+                evitaRequest
             )
         ).ToList();
     }
 
-    public static ISealedEntity ToEntity(Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaProvider,
-        GrpcSealedEntity grpcEntity, ISealedEntity? parent = null)
+    public static T ToEntity<T>(Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaProvider,
+        GrpcSealedEntity grpcEntity, EvitaRequest evitaRequest, ISealedEntity? parent = null)
     {
         ISealedEntitySchema entitySchema = entitySchemaProvider.Invoke(grpcEntity);
         IEntityClassifierWithParent? parentEntity;
         if (grpcEntity.ParentEntity is not null)
         {
-            parentEntity = ToEntity(entitySchemaProvider, grpcEntity.ParentEntity);
+            parentEntity = ToEntity<ISealedEntity>(entitySchemaProvider, grpcEntity.ParentEntity, evitaRequest);
         }
         else if (grpcEntity.ParentReference is not null)
         {
@@ -58,14 +60,14 @@ public static class EntityConverter
             parentEntity = parent;
         }
 
-        return Entity.InternalBuild(
+        return (T) Entity.InternalBuild(
             grpcEntity.PrimaryKey,
             grpcEntity.Version,
             entitySchema,
             grpcEntity.Parent,
             parentEntity,
             grpcEntity.References
-                .Select(it => ToReference(entitySchema, entitySchemaProvider, it))
+                .Select(it => ToReference(entitySchema, entitySchemaProvider, it, evitaRequest))
                 .ToList(),
             new Attributes(
                 entitySchema,
@@ -92,7 +94,7 @@ public static class EntityConverter
             grpcEntity.Locales
                 .Select(EvitaDataTypesConverter.ToLocale)
                 .ToHashSet(),
-            null, //TODO: get from gRPC
+            evitaRequest,
             false,
             ToPrice(grpcEntity.PriceForSale)
         );
@@ -209,8 +211,8 @@ public static class EntityConverter
     private static Reference ToReference(
         ISealedEntitySchema entitySchema,
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaProvider,
-        GrpcReference grpcReference
-    )
+        GrpcReference grpcReference,
+        EvitaRequest evitaRequest)
     {
         GroupEntityReference? group;
         if (grpcReference.GroupReferencedEntityReference is not null)
@@ -248,10 +250,10 @@ public static class EntityConverter
             ),
             grpcReference.ReferencedEntity == null
                 ? null
-                : ToEntity(entitySchemaProvider, grpcReference.ReferencedEntity),
+                : ToEntity<ISealedEntity>(entitySchemaProvider, grpcReference.ReferencedEntity, evitaRequest),
             grpcReference.GroupReferencedEntity == null
                 ? null
-                : ToEntity(entitySchemaProvider, grpcReference.GroupReferencedEntity)
+                : ToEntity<ISealedEntity>(entitySchemaProvider, grpcReference.GroupReferencedEntity, evitaRequest)
         );
     }
 }

@@ -24,6 +24,6 @@ public class Query
     public string PrettyPrint() => PrettyPrintingVisitor.ToString(this, "\t");
     public override string ToString() => PrettyPrintingVisitor.ToString(this);
 
-    public PrettyPrintingVisitor.StringWithParameters ToStringWithParametersExtraction() =>
+    public StringWithParameters ToStringWithParametersExtraction() =>
         ToStringWithParameterExtraction(this);
 }

@@ -30,8 +30,8 @@ public class ModifyReferenceSchemaRelatedEntityGroupMutation : AbstractModifyRef
             ReferencedGroupType,
             ReferencedGroupTypeManaged || ReferencedGroupType is null ? new Dictionary<NamingConvention, string>() : NamingConventionHelper.Generate(ReferencedGroupType),
             ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds()
         );

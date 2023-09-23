@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -22,7 +23,7 @@ public class RemovePriceMutation : PriceMutation
             existingValue is {Dropped: false},
             () => new InvalidMutationException("Cannot remove price that doesn't exist!")
             );
-        return new Structure.Price(
+        return new Price(
             existingValue!.Version + 1,
             existingValue.Key,
             existingValue.InnerRecordId,

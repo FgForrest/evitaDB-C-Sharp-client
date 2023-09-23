@@ -19,10 +19,10 @@ public class LocalePredicate
     /// </summary>
     public ISet<CultureInfo>? Locales { get; }
 
-    public LocalePredicate(EvitaRequestData evitaRequestData)
+    public LocalePredicate(EvitaRequest evitaRequest)
     {
-        ImplicitLocale = evitaRequestData.ImplicitLocale;
-        Locales = evitaRequestData.RequiredLocaleSet;
+        ImplicitLocale = evitaRequest.GetImplicitLocale();
+        Locales = evitaRequest.GetRequiredLocales();
     }
 
     internal LocalePredicate(CultureInfo? implicitLocale, ISet<CultureInfo>? locales)

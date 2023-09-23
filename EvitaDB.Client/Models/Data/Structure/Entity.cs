@@ -34,32 +34,32 @@ public class Entity : ISealedEntity
     /// <summary>
     /// This predicate filters out non-fetched locales.
     /// </summary>
-    private LocalePredicate LocalePredicate { get; }
+    public LocalePredicate LocalePredicate { get; }
     
     /// <summary>
     /// This predicate filters out access to the hierarchy parent that were not fetched in query.
     /// </summary>
-    private HierarchyPredicate HierarchyPredicate { get; }
+    public HierarchyPredicate HierarchyPredicate { get; }
     
     /// <summary>
     /// This predicate filters out attributes that were not fetched in query.
     /// </summary>
-    private AttributeValuePredicate AttributePredicate { get; }
+    public AttributeValuePredicate AttributePredicate { get; }
     
     /// <summary>
     /// This predicate filters out associated data that were not fetched in query.
     /// </summary>
-    private AssociatedDataValuePredicate AssociatedDataPredicate { get; }
+    public AssociatedDataValuePredicate AssociatedDataPredicate { get; }
     
     /// <summary>
     /// This predicate filters out references that were not fetched in query.
     /// </summary>
-    private ReferencePredicate ReferencePredicate { get; }
+    public ReferencePredicate ReferencePredicate { get; }
     
     /// <summary>
     /// This predicate filters out prices that were not fetched in query.
     /// </summary>
-    private PricePredicate PricePredicate { get; }
+    public PricePredicate PricePredicate { get; }
     
     public bool ParentAvailable() => Schema.WithHierarchy;
     public bool PricesAvailable() => Prices.PricesAvailable();
@@ -135,7 +135,7 @@ public class Entity : ISealedEntity
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
-        EvitaRequestData evitaRequestData,
+        EvitaRequest evitaRequest,
         bool dropped = false,
         IPrice? pricesForSale = null)
     {
@@ -150,7 +150,7 @@ public class Entity : ISealedEntity
             associatedData,
             prices,
             locales,
-            evitaRequestData,
+            evitaRequest,
             entitySchema.References.Keys.ToHashSet(),
             entitySchema.WithHierarchy,
             dropped,
@@ -290,7 +290,7 @@ public class Entity : ISealedEntity
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
-        EvitaRequestData? evitaRequestData,
+        EvitaRequest? evitaRequest,
         ISet<string> referencesDefined,
         bool withHierarchy,
         bool dropped = false,
@@ -312,7 +312,7 @@ public class Entity : ISealedEntity
         ReferencesDefined = referencesDefined;
         WithHierarchy = withHierarchy;
         PriceForSale = priceForSale;
-        if (evitaRequestData is null)
+        if (evitaRequest is null)
         {
             LocalePredicate = LocalePredicate.DefaultInstance;
             HierarchyPredicate = HierarchyPredicate.DefaultInstance;
@@ -323,12 +323,12 @@ public class Entity : ISealedEntity
         }
         else
         {
-            LocalePredicate = new LocalePredicate(evitaRequestData);
-            HierarchyPredicate = new HierarchyPredicate(evitaRequestData);
-            AttributePredicate = new AttributeValuePredicate(evitaRequestData);
-            AssociatedDataPredicate = new AssociatedDataValuePredicate(evitaRequestData);
-            ReferencePredicate = new ReferencePredicate(evitaRequestData);
-            PricePredicate = new PricePredicate(evitaRequestData, null);
+            LocalePredicate = new LocalePredicate(evitaRequest);
+            HierarchyPredicate = new HierarchyPredicate(evitaRequest);
+            AttributePredicate = new AttributeValuePredicate(evitaRequest);
+            AssociatedDataPredicate = new AssociatedDataValuePredicate(evitaRequest);
+            ReferencePredicate = new ReferencePredicate(evitaRequest);
+            PricePredicate = new PricePredicate(evitaRequest, null);
         }
     }
 
@@ -465,8 +465,7 @@ public class Entity : ISealedEntity
                 entityLocales,
                 null,
                 mergedReferences.ReferencesDefined,
-                entitySchema.WithHierarchy || newParent is not null,
-                false
+                entitySchema.WithHierarchy || newParent is not null
             );
         }
 

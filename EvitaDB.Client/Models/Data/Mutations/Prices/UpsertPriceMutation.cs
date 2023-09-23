@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations.Prices;
@@ -63,7 +64,7 @@ public class UpsertPriceMutation : PriceMutation
     public override IPrice MutateLocal(IEntitySchema entitySchema, IPrice? existingValue)
     {
         if (existingValue == null) {
-            return new Structure.Price(
+            return new Price(
                 PriceKey,
                 InnerRecordId,
                 PriceWithoutTax,
@@ -82,7 +83,7 @@ public class UpsertPriceMutation : PriceMutation
             Equals(existingValue.Validity, Validity) ||
             existingValue.Sellable != Sellable
         ) {
-            return new Structure.Price(
+            return new Price(
                 existingValue.Key,
                 InnerRecordId,
                 PriceWithoutTax,

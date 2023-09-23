@@ -1,5 +1,4 @@
-﻿using EvitaDB.Client.Models.Data;
-using EvitaDB.Client.Queries.Filter;
+﻿using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Utils;
 

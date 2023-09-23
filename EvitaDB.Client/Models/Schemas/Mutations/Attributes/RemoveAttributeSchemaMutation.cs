@@ -1,6 +1,4 @@
-﻿using EvitaDB.Client.DataTypes;
-using EvitaDB.Client.Exceptions;
-using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
@@ -32,14 +30,14 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
             referenceSchema.Description,
             referenceSchema.DeprecationNotice,
             referenceSchema.ReferencedEntityType,
-            referenceSchema.GetEntityTypeNameVariants(_ => null),
+            referenceSchema.GetEntityTypeNameVariants(_ => default),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
-            referenceSchema.GetGroupTypeNameVariants(_ => null),
+            referenceSchema.GetGroupTypeNameVariants(_ => default),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes().Values
                 .Where(it => it.Name != Name)
                 .ToDictionary(x => x.Name, x => x),
@@ -53,7 +51,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         return default;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAttributeSchema? existingAttributeSchema = entitySchema!.GetAttribute(Name);
@@ -86,7 +84,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         );
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema!.GetAttribute(Name);

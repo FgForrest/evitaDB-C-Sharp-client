@@ -18,7 +18,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
         string name,
         string? description,
         string? deprecationNotice,
-        List<AttributeElement> attributeElements
+        IList<AttributeElement> attributeElements
     )
     {
         return new SortableAttributeCompoundSchema(

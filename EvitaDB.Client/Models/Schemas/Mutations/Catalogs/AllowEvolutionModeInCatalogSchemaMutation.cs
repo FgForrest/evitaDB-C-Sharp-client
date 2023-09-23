@@ -18,15 +18,15 @@ public class AllowEvolutionModeInCatalogSchemaMutation : ILocalCatalogSchemaMuta
         if (catalogSchema!.CatalogEvolutionModes.All(EvolutionModes.Contains)) {
             // no need to change the schema
             return catalogSchema;
-        } else {
-            return CatalogSchema.InternalBuild(
-                catalogSchema.Version + 1,
-                catalogSchema.Name,
-                catalogSchema.NameVariants,
-                catalogSchema.Description,
-                catalogSchema.CatalogEvolutionModes.Concat(EvolutionModes).ToHashSet(),
-                catalogSchema.GetAttributes(),
-                _ => throw new NotSupportedException("Mutated catalog schema can't provide access to entity schemas!"));
         }
+
+        return CatalogSchema.InternalBuild(
+            catalogSchema.Version + 1,
+            catalogSchema.Name,
+            catalogSchema.NameVariants,
+            catalogSchema.Description,
+            catalogSchema.CatalogEvolutionModes.Concat(EvolutionModes).ToHashSet(),
+            catalogSchema.GetAttributes(),
+            _ => throw new NotSupportedException("Mutated catalog schema can't provide access to entity schemas!"));
     }
 }

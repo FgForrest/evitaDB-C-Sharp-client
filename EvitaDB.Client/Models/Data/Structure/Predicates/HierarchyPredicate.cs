@@ -18,9 +18,9 @@ public class HierarchyPredicate
         RequiresHierarchy = false;
     }
 
-    public HierarchyPredicate(EvitaRequestData evitaRequestData)
+    public HierarchyPredicate(EvitaRequest evitaRequest)
     {
-        RequiresHierarchy = evitaRequestData.RequiresParent;
+        RequiresHierarchy = evitaRequest.RequiresParent();
     }
 
     public HierarchyPredicate(bool requiresHierarchy)

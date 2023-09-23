@@ -1,6 +1,4 @@
 ﻿using System.Globalization;
-using EvitaDB.Client.Models;
-using EvitaDB;
 using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Converters.Models;
 using EvitaDB.Client.DataTypes;
@@ -8,8 +6,6 @@ using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
-using Enum = System.Enum;
-using QueryTelemetry = EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
 
 namespace EvitaDB.Client.Utils;
 

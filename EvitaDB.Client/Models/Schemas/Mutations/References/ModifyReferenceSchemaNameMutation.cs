@@ -28,8 +28,8 @@ public class ModifyReferenceSchemaNameMutation : AbstractModifyReferenceDataSche
             referenceSchema.ReferencedGroupType,
             referenceSchema.ReferencedGroupTypeManaged ? new Dictionary<NamingConvention, string>() : referenceSchema.GetGroupTypeNameVariants(_ => null),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds()
         );

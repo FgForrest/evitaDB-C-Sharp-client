@@ -11,7 +11,7 @@ using EvitaDB.Client.Converters.Models.Schema.Mutations;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Interceptors;
 using EvitaDB.Client.Models.Cdc;
-using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Mutations;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Pooling;
@@ -121,7 +121,7 @@ public class EvitaClient : IClientContext, IDisposable
         );
     }
 
-    public CatalogSchema DefineCatalog(string catalogName)
+    public ICatalogSchemaBuilder DefineCatalog(string catalogName)
     {
         AssertActive();
         if (!GetCatalogNames().Contains(catalogName))
@@ -129,7 +129,7 @@ public class EvitaClient : IClientContext, IDisposable
             Update(new CreateCatalogSchemaMutation(catalogName));
         }
 
-        return QueryCatalog(catalogName, x => x.GetCatalogSchema());
+        return QueryCatalog(catalogName, x => x.GetCatalogSchema()).OpenForWrite();
     }
 
     public void RenameCatalog(string catalogName, string newCatalogName)

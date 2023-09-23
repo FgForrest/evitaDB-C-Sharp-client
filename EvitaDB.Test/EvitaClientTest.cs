@@ -9,7 +9,7 @@ using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.ExtraResults;
-using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Queries.Order;
@@ -55,7 +55,7 @@ public class EvitaClientTest
         _client!.DeleteCatalogIfExists(TestCatalog);
 
         // define new catalog
-        CatalogSchema catalogSchema = _client.DefineCatalog(TestCatalog);
+        ICatalogSchema catalogSchema = _client.DefineCatalog(TestCatalog).ToInstance();
         That(catalogSchema.Name, Is.EqualTo(TestCatalog));
 
         using (var rwSession = _client.CreateReadWriteSession(TestCatalog))
@@ -78,8 +78,10 @@ public class EvitaClientTest
             );
 
             // add the two attributes to the entity schema
-            catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new ModifyEntitySchemaMutation(TestCollection,
-                createAttributeDateTime, createAttributeDecimalRange));
+            catalogSchema = rwSession.UpdateAndFetchCatalogSchema(
+                new ModifyEntitySchemaMutation(TestCollection,
+                createAttributeDateTime, createAttributeDecimalRange)
+            );
             That(catalogSchema.Version, Is.EqualTo(2));
             That(catalogSchema.GetEntitySchema(TestCollection)!.Version, Is.EqualTo(3));
 

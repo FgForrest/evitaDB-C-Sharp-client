@@ -35,6 +35,7 @@ public static class EvitaDataTypes
         queryDataTypes.Add(typeof(CultureInfo));
         queryDataTypes.Add(typeof(Currency));
         queryDataTypes.Add(typeof(Guid));
+        queryDataTypes.Add(typeof(Predecessor));
         SupportedTypes = queryDataTypes.ToImmutableHashSet();
     }
 
@@ -291,6 +292,14 @@ public static class EvitaDataTypes
         {
             return enumValue.ToString();
         }
+        if (value is Guid guidValue)
+        {
+            return guidValue.ToString();
+        }
+        if (value is Predecessor predecessorValue)
+        {
+            return predecessorValue.ToString()!;
+        }
         if (value is null)
         {
             throw new EvitaInternalError(
@@ -300,6 +309,4 @@ public static class EvitaDataTypes
 
         throw new UnsupportedDataTypeException(value.GetType());
     }
-
-    private record TypeWithPrecision(Type RequestedType, int Precision);
 }

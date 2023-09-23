@@ -16,7 +16,7 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
     public override IReferenceSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
-        if (referenceSchema!.Faceted == Faceted)
+        if (referenceSchema!.IsFaceted == Faceted)
         {
             return referenceSchema;
         }
@@ -29,15 +29,15 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
             referenceSchema.ReferencedEntityType,
             referenceSchema.ReferencedEntityTypeManaged
                 ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetEntityTypeNameVariants(_ => null),
+                : referenceSchema.GetEntityTypeNameVariants(_ => default),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
             referenceSchema.ReferencedGroupTypeManaged
                 ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetGroupTypeNameVariants(_ => null),
+                : referenceSchema.GetGroupTypeNameVariants(_ => default),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
+            referenceSchema.IsIndexed,
             Faceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds()

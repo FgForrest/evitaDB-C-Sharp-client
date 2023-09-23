@@ -1,43 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<Version>0.0.1-alpha</Version>
-		<Title>EvitaDB.Client</Title>
-		<Authors>evitadb.io</Authors>
-		<Description>evitaDB C# client allows connecting to a remote evitaDB server through gRPC API from .NET environment.</Description>
-		<Copyright>2023, FGForrest a.s.</Copyright>
-		<PackageProjectUrl>https://evitadb.io/</PackageProjectUrl>
-		<PackageLicenseUrl>Apache-2.0</PackageLicenseUrl>
-		<PackageIcon>icon.png</PackageIcon>
-		<RepositoryUrl>https://github.com/FgForrest/evitaDB-C-Sharp-client</RepositoryUrl>
-		<PackageTags>database in-memory no-sql ecommerce</PackageTags>
-		<PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>
-	</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.0.1-alpha</Version>
+        <Title>EvitaDB.Client</Title>
+        <Authors>evitadb.io</Authors>
+        <Description>evitaDB C# client allows connecting to a remote evitaDB server through gRPC API from .NET environment.</Description>
+        <Copyright>2023, FGForrest a.s.</Copyright>
+        <PackageProjectUrl>https://evitadb.io/</PackageProjectUrl>
+        <PackageLicenseUrl>Apache-2.0</PackageLicenseUrl>
+        <PackageIcon>icon.png</PackageIcon>
+        <RepositoryUrl>https://github.com/FgForrest/evitaDB-C-Sharp-client</RepositoryUrl>
+        <PackageTags>database in-memory no-sql ecommerce</PackageTags>
+        <PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>
+    </PropertyGroup>
 
-	<ItemGroup>
-      <PackageReference Include="Google.Protobuf" Version="3.22.1" />
-      <PackageReference Include="Grpc.Net.Client" Version="2.51.0" />
-      <PackageReference Include="Grpc.Tools" Version="2.52.0">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="System.Reactive" Version="6.0.0" />
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.22.1"/>
+        <PackageReference Include="Grpc.Net.Client" Version="2.51.0"/>
+        <PackageReference Include="Grpc.Tools" Version="2.52.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="System.Reactive" Version="6.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Protobuf ProtoRoot="Protos" Include="Protos\*.proto" GrpcServices="Client" />
+        <Protobuf ProtoRoot="Protos" Include="Protos\*.proto" GrpcServices="Client"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <None Include="..\.idea\icon.png">
-        <Pack>True</Pack>
-        <PackagePath></PackagePath>
-        <Link>icon.png</Link>
-      </None>
-    </ItemGroup>
 
 </Project>

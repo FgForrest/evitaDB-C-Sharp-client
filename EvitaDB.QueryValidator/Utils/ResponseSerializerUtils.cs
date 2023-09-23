@@ -69,7 +69,7 @@ public static class ResponseSerializerUtils
             }
         }
         
-        var getValue = GetPropertyValue(theObject, sourceVariableParts[0]);
+        object? getValue = GetPropertyValue(theObject, sourceVariableParts[0]);
         if (getValue == null)
         {
             throw new Exception("Cannot find or read getter for " + sourceVariableParts[0] + " on `" +

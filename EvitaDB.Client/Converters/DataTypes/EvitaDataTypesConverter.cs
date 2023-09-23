@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
-using EvitaDB;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Enum = System.Enum;
 using Type = System.Type;
 
 namespace EvitaDB.Client.Converters.DataTypes;
@@ -35,6 +35,7 @@ public static class EvitaDataTypesConverter
             GrpcEvitaDataType.Locale => ToLocale(value.LocaleValue),
             GrpcEvitaDataType.Currency => ToCurrency(value.CurrencyValue),
             GrpcEvitaDataType.Uuid => ToGuid(value.UuidValue),
+            GrpcEvitaDataType.Predecessor => ToPredecessor(value.PredecessorValue)!,
 
             GrpcEvitaDataType.StringArray => ToStringArray(value.StringArrayValue),
             GrpcEvitaDataType.ByteArray => ToIntegerArray(value.IntegerArrayValue),
@@ -87,6 +88,7 @@ public static class EvitaDataTypesConverter
             GrpcEvitaDataType.Locale => typeof(CultureInfo),
             GrpcEvitaDataType.Currency => typeof(Currency),
             GrpcEvitaDataType.Uuid => typeof(Guid),
+            GrpcEvitaDataType.Predecessor => typeof(Predecessor),
 
             GrpcEvitaDataType.StringArray => typeof(string[]),
             GrpcEvitaDataType.ByteArray => typeof(byte[]),
@@ -120,7 +122,7 @@ public static class EvitaDataTypesConverter
             return typeof(ComplexDataObject);
         }
 
-        return ToEvitaDataType(System.Enum.Parse<GrpcEvitaDataType>(dataType.ToString()));
+        return ToEvitaDataType(Enum.Parse<GrpcEvitaDataType>(dataType.ToString()));
     }
 
     public static GrpcEvitaAssociatedDataDataType.Types.GrpcEvitaDataType ToGrpcEvitaAssociatedDataDataType(
@@ -131,7 +133,7 @@ public static class EvitaDataTypesConverter
             return GrpcEvitaAssociatedDataDataType.Types.GrpcEvitaDataType.ComplexDataObject;
         }
 
-        return System.Enum.Parse<GrpcEvitaAssociatedDataDataType.Types.GrpcEvitaDataType>(ToGrpcEvitaDataType(dataType).ToString());
+        return Enum.Parse<GrpcEvitaAssociatedDataDataType.Types.GrpcEvitaDataType>(ToGrpcEvitaDataType(dataType).ToString());
     }
 
     public static object ToEvitaValue(GrpcEvitaAssociatedDataValue value)
@@ -243,6 +245,10 @@ public static class EvitaDataTypesConverter
             case Guid guidValue:
                 result.UuidValue = ToGrpcUuid(guidValue);
                 result.Type = GrpcEvitaDataType.Uuid;
+                break;
+            case Predecessor predecessorValue:
+                result.PredecessorValue = ToGrpcPredecessor(predecessorValue);
+                result.Type = GrpcEvitaDataType.Predecessor;
                 break;
 
             case string[] stringArrayValue:
@@ -1069,5 +1075,26 @@ public static class EvitaDataTypesConverter
     public static GrpcUuidArray ToGrpcUuidArray(Guid[] guidArrayValues)
     {
         return new GrpcUuidArray {Value = {guidArrayValues.Select(ToGrpcUuid).ToArray()}};
+    }
+    
+    public static GrpcPredecessor ToGrpcPredecessor(Predecessor predecessor)
+    {
+        if (predecessor.IsHead)
+        {
+            return new GrpcPredecessor
+            {
+                Head = true
+            };
+        }
+
+        return new GrpcPredecessor
+        {
+            PredecessorId = predecessor.PredecessorId
+        };
+    }
+    
+    public static Predecessor? ToPredecessor(GrpcPredecessor predecessor) {
+        return predecessor.Head ? Predecessor.Head :
+            predecessor.PredecessorId.HasValue ? new Predecessor(predecessor.PredecessorId.Value) : null;
     }
 }

@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Converters.DataTypes;
+﻿using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;

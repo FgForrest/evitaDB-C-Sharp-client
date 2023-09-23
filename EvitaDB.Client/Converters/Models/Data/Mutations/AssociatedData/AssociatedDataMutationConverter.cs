@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Converters.DataTypes;
+﻿using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using Google.Protobuf;

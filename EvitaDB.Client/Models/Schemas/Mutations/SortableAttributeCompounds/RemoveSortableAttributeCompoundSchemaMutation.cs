@@ -66,8 +66,8 @@ public class RemoveSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
             referenceSchema.ReferencedGroupType,
             referenceSchema.GetGroupTypeNameVariants(_ => null),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds()
                 .Where(it => !Equals(Name, it.Key))

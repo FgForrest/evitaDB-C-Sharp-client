@@ -1,8 +1,6 @@
 ﻿using System.Globalization;
-using EvitaDB.Client.Models.Data;
-using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Models.Schemas;
-using static EvitaDB.Client.Models.Data.Structure.Attributes;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
 namespace EvitaDB.Client.Models.Data.Structure;
 

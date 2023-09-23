@@ -42,7 +42,7 @@ internal class ToStringDataItemVisitor : IDataItemVisitor
 {
     private StringBuilder AsString { get; } = new();
     private int Indentation { get; }
-    private int _current = 0;
+    private int _current;
 
     public ToStringDataItemVisitor(int indentation = 0)
     {

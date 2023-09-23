@@ -54,13 +54,13 @@ public class PricePredicate
         ContextAvailable = false;
     }
 
-    public PricePredicate(EvitaRequestData evitaRequestData, bool? contextAvailable)
+    public PricePredicate(EvitaRequest evitaRequest, bool? contextAvailable)
     {
-        PriceContentMode = evitaRequestData.EntityPrices;
-        Currency = evitaRequestData.Currency;
-        ValidIn = evitaRequestData.PriceValidInTime;
-        PriceLists = evitaRequestData.PriceLists;
-        AdditionalPriceLists = evitaRequestData.AdditionalPriceLists;
+        PriceContentMode = evitaRequest.GetRequiresEntityPrices();
+        Currency = evitaRequest.GetRequiresCurrency();
+        ValidIn = evitaRequest.GetRequiresPriceValidIn();
+        PriceLists = evitaRequest.GetRequiresPriceLists();
+        AdditionalPriceLists = evitaRequest.GetFetchesAdditionalPriceLists();
         PriceListsAsSet = new HashSet<string>(PriceLists.Length + AdditionalPriceLists.Length);
         foreach (var priceList in PriceLists)
         {
@@ -122,6 +122,21 @@ public class PricePredicate
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    public bool Test(IPrice price)
+    {
+        return PriceContentMode switch
+        {
+            PriceContentMode.All => !price.Dropped,
+            PriceContentMode.None => false,
+            PriceContentMode.RespectingFilter => !price.Dropped &&
+                                                 (Currency == null || Equals(Currency, price.Currency)) &&
+                                                 (!PriceListsAsSet.Any() ||
+                                                  PriceListsAsSet.Contains(price.PriceList)) &&
+                                                 (ValidIn is null || (price.Validity?.ValidFor(ValidIn.Value) ?? true)),
+            _ => false
+        };
     }
 
     public bool Fetched() => PriceContentMode != PriceContentMode.None;

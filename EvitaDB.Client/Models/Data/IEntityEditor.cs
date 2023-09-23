@@ -1,5 +1,4 @@
 ﻿using EvitaDB.Client.Exceptions;
-using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 

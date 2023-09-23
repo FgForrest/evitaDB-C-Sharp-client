@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Converters.DataTypes;
+﻿using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
@@ -293,8 +292,8 @@ public static class EntitySchemaConverter
             EntityTypeRelatesToEntity = referenceSchema.ReferencedEntityTypeManaged,
             GroupType = referenceSchema.ReferencedGroupType,
             GroupTypeRelatesToEntity = referenceSchema.ReferencedGroupTypeManaged,
-            Indexed = referenceSchema.Indexed,
-            Faceted = referenceSchema.Faceted,
+            Indexed = referenceSchema.IsIndexed,
+            Faceted = referenceSchema.IsFaceted,
             Attributes = {ToGrpcAttributeSchemas(referenceSchema.GetAttributes())},
             SortableAttributeCompounds =
                 {ToGrpcSortableAttributeCompoundSchemas(referenceSchema.GetSortableAttributeCompounds())},

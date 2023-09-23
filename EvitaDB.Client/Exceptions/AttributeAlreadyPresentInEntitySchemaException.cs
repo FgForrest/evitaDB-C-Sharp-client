@@ -1,4 +1,4 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Exceptions;
@@ -6,36 +6,50 @@ namespace EvitaDB.Client.Exceptions;
 public class AttributeAlreadyPresentInEntitySchemaException : EvitaInvalidUsageException
 {
     public string? CatalogName { get; }
-    public AttributeSchema? ExistingSchema { get; }
+    public IAttributeSchema? ExistingAttributeSchema { get; }
+    
+    public ISortableAttributeCompoundSchema? ExistingAttributeCompoundSchema { get; }
 
     public AttributeAlreadyPresentInEntitySchemaException(
-        AttributeSchema existingAttribute,
-        AttributeSchema updatedAttribute,
-        NamingConvention convention,
+        IAttributeSchema existingAttribute,
+        IAttributeSchema updatedAttribute,
+        NamingConvention? convention,
         string conflictingName) : base(
         $"Attribute `{updatedAttribute.Name}` and existing attribute `{existingAttribute.Name}` produce the same name `{conflictingName}` in `{convention}` convention! Please choose different attribute name.")
 
     {
         CatalogName = null;
-        ExistingSchema = existingAttribute;
+        ExistingAttributeSchema = existingAttribute;
+        ExistingAttributeCompoundSchema = null;
     }
-
-    public AttributeAlreadyPresentInEntitySchemaException(string privateMessage, string publicMessage) : base(
-        privateMessage, publicMessage)
-    {
+    
+    public AttributeAlreadyPresentInEntitySchemaException(
+        ISortableAttributeCompoundSchema existingAttributeCompound,
+    IAttributeSchema updatedAttribute,
+    NamingConvention? convention,
+    string conflictingName) : base("Attribute `" + updatedAttribute.Name + "` and existing sortable attribute compound `" + existingAttributeCompound.Name + "` produce the same name `" + conflictingName + "`" + (convention == null ? "" : " in `" + convention + "` convention") + "! Please choose different attribute name.") {
+        CatalogName = null;
+        ExistingAttributeSchema = null;
+        ExistingAttributeCompoundSchema = existingAttributeCompound;
     }
-
-    public AttributeAlreadyPresentInEntitySchemaException(string publicMessage, Exception exception) : base(
-        publicMessage, exception)
-    {
+    
+    public AttributeAlreadyPresentInEntitySchemaException(
+        ISortableAttributeCompoundSchema existingAttributeCompound,
+    ISortableAttributeCompoundSchema updatedAttributeCompound,
+    NamingConvention? convention,
+    string conflictingName) : base("Sortable attribute compound `" + updatedAttributeCompound.Name + "` and existing sortable attribute compound `" + existingAttributeCompound.Name + "` produce the same name `" + conflictingName + "`" + (convention == null ? "" : " in `" + convention + "` convention") + "! Please choose different attribute name.") {
+        CatalogName = null;
+        ExistingAttributeSchema = null;
+        ExistingAttributeCompoundSchema = existingAttributeCompound;
     }
-
-    public AttributeAlreadyPresentInEntitySchemaException(string privateMessage, string publicMessage,
-        Exception exception) : base(privateMessage, publicMessage, exception)
-    {
-    }
-
-    public AttributeAlreadyPresentInEntitySchemaException(string publicMessage) : base(publicMessage)
-    {
+    
+    public AttributeAlreadyPresentInEntitySchemaException(
+        IAttributeSchema updatedAttribute,
+        ISortableAttributeCompoundSchema existingAttributeCompound,
+        NamingConvention? convention,
+        string conflictingName) : base("Attribute `" + updatedAttribute.Name + "` and existing sortable attribute compound `" + existingAttributeCompound.Name + "` produce the same name `" + conflictingName + "`" + (convention == null ? "" : " in `" + convention + "` convention") + "! Please choose different attribute name.") {
+        CatalogName = null;
+        ExistingAttributeSchema = null;
+        ExistingAttributeCompoundSchema = existingAttributeCompound;
     }
 }

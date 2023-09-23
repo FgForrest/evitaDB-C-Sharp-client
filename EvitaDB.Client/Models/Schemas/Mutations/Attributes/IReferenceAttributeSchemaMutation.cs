@@ -25,8 +25,8 @@ public interface IReferenceAttributeSchemaMutation : IAttributeSchemaMutation, I
             referenceSchema.ReferencedGroupType,
             referenceSchema.ReferencedGroupTypeManaged ? new Dictionary<NamingConvention, string>() : referenceSchema.GetGroupTypeNameVariants(s => null),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes().Values.Where(x => updatedAttributeSchema.Name != x.Name)
                 .Concat(new []{updatedAttributeSchema})
                 .ToDictionary(x => x.Name, x => x),

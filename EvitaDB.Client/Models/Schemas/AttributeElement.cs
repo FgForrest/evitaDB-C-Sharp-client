@@ -14,7 +14,7 @@ public record AttributeElement(
 		 */
     public static AttributeElement CreateAttributeElement(string attributeName)
     {
-        return new AttributeElement(attributeName, Queries.Order.OrderDirection.Asc, Schemas.OrderBehaviour.NullsLast);
+        return new AttributeElement(attributeName, OrderDirection.Asc, OrderBehaviour.NullsLast);
     }
 
     /**
@@ -23,7 +23,7 @@ public record AttributeElement(
 		 */
     public static AttributeElement CreateAttributeElement(string attributeName, OrderDirection direction)
     {
-        return new AttributeElement(attributeName, direction, Schemas.OrderBehaviour.NullsLast);
+        return new AttributeElement(attributeName, direction, OrderBehaviour.NullsLast);
     }
 
     /**
@@ -32,7 +32,7 @@ public record AttributeElement(
 		 */
     public static AttributeElement CreateAttributeElement(string attributeName, OrderBehaviour behaviour)
     {
-        return new AttributeElement(attributeName, Queries.Order.OrderDirection.Asc, behaviour);
+        return new AttributeElement(attributeName, OrderDirection.Asc, behaviour);
     }
 
     /**

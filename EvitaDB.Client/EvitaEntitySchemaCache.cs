@@ -37,7 +37,8 @@ public class EvitaEntitySchemaCache
         }
     }
 
-    public CatalogSchema GetLatestCatalogSchema(Func<CatalogSchema> schemaAccessor)
+    public ISealedCatalogSchema GetLatestCatalogSchema(Func<CatalogSchema> schemaAccessor,
+        Func<string, IEntitySchema?> entitySchemaAccessor)
     {
         long now = CurrentTimeMillis();
         // each minute apply obsolete check
@@ -71,12 +72,12 @@ public class EvitaEntitySchemaCache
                 LatestCatalogSchema.Instance,
                 newCachedValue
             );
-            return schemaRelevantToSession;
+            return new CatalogSchemaDecorator(schemaRelevantToSession, entitySchemaAccessor);
         }
 
         // if found in cache, update last used timestamp
         schemaWrapper.Used();
-        return schemaWrapper.CatalogSchema!;
+        return new CatalogSchemaDecorator(schemaWrapper.CatalogSchema!, entitySchemaAccessor);
     }
 
     public void SetLatestCatalogSchema(CatalogSchema catalogSchema)
@@ -100,7 +101,7 @@ public class EvitaEntitySchemaCache
 
     public ISealedEntitySchema GetEntitySchemaOrThrow(string entityType, int version,
         Func<string, EntitySchema?> schemaAccessor,
-        Func<CatalogSchema> catalogSchemaSupplier
+        Func<ICatalogSchema> catalogSchemaSupplier
     )
     {
         EntitySchema? entitySchema = GetEntitySchema(entityType, version, schemaAccessor) ??

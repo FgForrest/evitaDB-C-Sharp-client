@@ -22,7 +22,7 @@ public class ModifyReferenceSortableAttributeCompoundSchemaMutation : AbstractMo
         return SortableAttributeCompoundSchemaMutation.Mutate(entitySchema, referenceSchema);
     }
 
-    public override IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public override IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IReferenceSchema? existingReferenceSchema = entitySchema!.GetReference(Name);
@@ -34,7 +34,7 @@ public class ModifyReferenceSortableAttributeCompoundSchemaMutation : AbstractMo
             );
         }
 
-        IReferenceSchema? theSchema = existingReferenceSchema;
+        IReferenceSchema theSchema = existingReferenceSchema;
         IReferenceSchema? updatedSchema = Mutate(entitySchema, theSchema);
         Assert.IsPremiseValid(updatedSchema != null, "Updated reference schema is not expected to be null!");
         return ReplaceReferenceSchema(entitySchema, theSchema, updatedSchema!);

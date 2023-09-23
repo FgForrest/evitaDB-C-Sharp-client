@@ -10,8 +10,8 @@ public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttrib
     string? ReferencedGroupType { get; }
     bool ReferencedEntityTypeManaged { get; }
     bool ReferencedGroupTypeManaged { get; }
-    bool Indexed { get; }
-    bool Faceted { get; }
+    bool IsIndexed { get; }
+    bool IsFaceted { get; }
 
     IDictionary<NamingConvention, string> GetEntityTypeNameVariants(
         Func<string, EntitySchema> entitySchemaFetcher);

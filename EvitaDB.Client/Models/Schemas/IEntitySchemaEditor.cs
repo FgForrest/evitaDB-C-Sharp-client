@@ -4,7 +4,9 @@ using EvitaDB.Client.Models.Schemas.Dtos;
 
 namespace EvitaDB.Client.Models.Schemas;
 
-public interface IEntitySchemaEditor<out TS> : IEntitySchema where TS : IEntitySchemaBuilder
+public interface IEntitySchemaEditor<out TS> : IEntitySchema, INamedSchemaWithDeprecationEditor<TS>,
+	IAttributeProviderSchemaEditor<TS, IAttributeSchema, IAttributeSchemaBuilder>
+	where TS : IEntitySchemaEditor<TS>
 {
 	TS CooperatingWith(Func<CatalogSchema> catalogSupplier);
 	
@@ -13,28 +15,16 @@ public interface IEntitySchemaEditor<out TS> : IEntitySchema where TS : IEntityS
 	TS VerifySchemaButAllow(params EvolutionMode[] evolutionMode);
 	
 	TS VerifySchemaButCreateOnTheFly();
-
-	TS WithDescription(string? description);
 	
-	TS Deprecated(string deprecationNotice);
-	
-	TS NotDeprecatedAnymore();
-	
-	TS WithGeneratedPrimaryKey();
+	new TS WithGeneratedPrimaryKey();
 	
 	TS WithoutGeneratedPrimaryKey();
 	
-	TS WithHierarchy();
+	new TS WithHierarchy();
 	
 	TS WithoutHierarchy();
 	
-	TS WithAttribute(string attributeName, Type ofType);
-
-	//TS WithAttribute(string attributeName, Type ofType, Action<AttributeSchemaEditor> whichIs);
-
-	TS WithoutAttribute(string attributeName);
-	
-	TS WithPrice();
+	new TS WithPrice();
 	
 	TS WithPrice(int indexedDecimalPlaces);
 	
@@ -52,24 +42,24 @@ public interface IEntitySchemaEditor<out TS> : IEntitySchema where TS : IEntityS
 	
 	TS WithGlobalAttribute(string attributeName);
 
-	TS WithAssociatedData(string dataName, Type ofType);
+	TS WithAssociatedData<T>(string dataName);
 	
-	//TS WithAssociatedData(string dataName, Type ofType, Action<AssociatedDataSchemaEditor>? whichIs);
+	TS WithAssociatedData<T>(string dataName, Action<IAssociatedDataSchemaEditor>? whichIs);
 	
 	TS WithoutAssociatedData(string dataName);
 	
 	TS WithReferenceTo(string name, string externalEntityType, Cardinality cardinality);
 	
-	/*TS WithReferenceTo(
+	TS WithReferenceTo(
 		string name,
 		string externalEntityType,
 		Cardinality cardinality,
-		Action<ReferenceSchemaEditor.ReferenceSchemaBuilder>? whichIs
-	);*/
+		Action<IReferenceSchemaBuilder>? whichIs
+	);
 	
 	TS WithReferenceToEntity(string name, string entityType, Cardinality cardinality);
 	
-	//TS WithReferenceToEntity(string name, string entityType, Cardinality cardinality, Action<ReferenceSchemaEditor.ReferenceSchemaBuilder> whichIs);
+	TS WithReferenceToEntity(string name, string entityType, Cardinality cardinality, Action<IReferenceSchemaBuilder> whichIs);
 		
 	TS WithoutReferenceTo(string name);
 }

@@ -8,13 +8,13 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 public class CreateAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation, IEntitySchemaMutation
 {
     public string Name { get; }
-    public string Description { get; }
-    public string DeprecationNotice { get; }
+    public string? Description { get; }
+    public string? DeprecationNotice { get; }
     public Type Type { get; }
     public bool Localized { get; }
     public bool Nullable { get; }
 
-    public CreateAssociatedDataSchemaMutation(string name, string description, string deprecationNotice, Type type,
+    public CreateAssociatedDataSchemaMutation(string name, string? description, string? deprecationNotice, Type type,
         bool localized, bool nullable)
     {
         ClassifierUtils.ValidateClassifierFormat(ClassifierType.AssociatedData, name);
@@ -65,7 +65,7 @@ public class CreateAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
                 entitySchema.Currencies,
                 entitySchema.Attributes,
                 entitySchema.AssociatedData.Values.Concat(new[] {newAssociatedDataSchema})
-                    .ToDictionary(x => x?.Name, x => x),
+                    .ToDictionary(x => x!.Name, x => x)!,
                 entitySchema.References,
                 entitySchema.EvolutionModes,
                 entitySchema.GetSortableAttributeCompounds()

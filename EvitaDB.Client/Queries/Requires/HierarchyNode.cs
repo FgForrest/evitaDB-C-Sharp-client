@@ -1,5 +1,4 @@
-﻿using EvitaDB.Client.Exceptions;
-using EvitaDB.Client.Queries.Filter;
+﻿using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Requires;

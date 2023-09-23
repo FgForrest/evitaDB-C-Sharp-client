@@ -45,13 +45,13 @@ public class AssociatedDataValuePredicate
         RequiresEntityAssociatedData = false;
     }
 
-    public AssociatedDataValuePredicate(EvitaRequestData evitaRequestData)
+    public AssociatedDataValuePredicate(EvitaRequest evitaRequest)
     {
-        ImplicitLocale = evitaRequestData.ImplicitLocale;
-        Locales = evitaRequestData.RequiredLocaleSet;
+        ImplicitLocale = evitaRequest.GetImplicitLocale();
+        Locales = evitaRequest.GetRequiredLocales();
         Locale = ImplicitLocale ?? (Locales is not null && Locales.Count == 1 ? Locales.First() : null);
-        AssociatedDataSet = evitaRequestData.EntityAssociatedDataSet;
-        RequiresEntityAssociatedData = evitaRequestData.EntityAssociatedData;
+        AssociatedDataSet = evitaRequest.GetEntityAssociatedDataSet();
+        RequiresEntityAssociatedData = evitaRequest.RequiresEntityAssociatedData();
     }
 
     internal AssociatedDataValuePredicate(

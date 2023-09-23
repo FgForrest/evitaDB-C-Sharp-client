@@ -198,4 +198,4 @@ public record LevelInfo(IEntityClassifier Entity, int? QueriedEntityCount, int? 
 
         return $"[{QueriedEntityCount}:{ChildrenCount} {Entity}]";
     }
-};
+}

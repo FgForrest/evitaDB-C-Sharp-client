@@ -3,6 +3,7 @@ using EvitaDB.Client.Converters.Models.Data;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries;
@@ -48,9 +49,12 @@ public static class ResponseConverter
         );
     }
 
-    public static IEvitaResponseExtraResult[] ToExtraResults(Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
-        Query query, GrpcExtraResults? extraResults)
+    public static IEvitaResponseExtraResult[] ToExtraResults(
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest, 
+        GrpcExtraResults? extraResults)
     {
+        Query query = evitaRequest.Query;
         if (extraResults is null)
             return Array.Empty<IEvitaResponseExtraResult>();
         List<IEvitaResponseExtraResult> extraResultList = new List<IEvitaResponseExtraResult>();
@@ -85,6 +89,7 @@ public static class ResponseConverter
                     extraResults.SelfHierarchy is not null
                         ? ToHierarchy(
                             entitySchemaFetcher,
+                            evitaRequest,
                             hierarchyConstraints[0],
                             extraResults.SelfHierarchy
                         )
@@ -93,6 +98,7 @@ public static class ResponseConverter
                         x => x.Key,
                         x => ToHierarchy(
                             entitySchemaFetcher,
+                            evitaRequest,
                             hierarchyConstraints
                                 .OfType<HierarchyOfReference>()
                                 .First(it => it.ReferenceNames.Any(name => name == x.Key)), 
@@ -130,7 +136,7 @@ public static class ResponseConverter
                         entityGroupFetch = defaultEntityGroupFetch;
                     }
 
-                    return ToFacetGroupStatistics(entitySchemaFetcher, entityFetch, entityGroupFetch, it);
+                    return ToFacetGroupStatistics(entitySchemaFetcher, evitaRequest, entityFetch, entityGroupFetch, it);
                 }).ToList()
             ));
         }
@@ -140,6 +146,7 @@ public static class ResponseConverter
 
     private static FacetGroupStatistics ToFacetGroupStatistics(
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest,
         EntityFetch? entityFetch,
         EntityGroupFetch? entityGroupFetch,
         GrpcFacetGroupStatistics grpcFacetGroupStatistics
@@ -148,26 +155,28 @@ public static class ResponseConverter
         return new FacetGroupStatistics(
             grpcFacetGroupStatistics.ReferenceName,
             grpcFacetGroupStatistics.GroupEntity is not null
-                ? EntityConverter.ToEntity(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity)
+                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity, evitaRequest)
                 : EntityConverter.ToEntityReference(grpcFacetGroupStatistics.GroupEntityReference),
             grpcFacetGroupStatistics.Count,
             grpcFacetGroupStatistics.FacetStatistics
-                .Select(x => ToFacetStatistics(entitySchemaFetcher, entityFetch, x))
+                .Select(x => ToFacetStatistics(entitySchemaFetcher, evitaRequest, entityFetch, x))
                 .ToDictionary(x => x.FacetEntity.PrimaryKey!.Value, x => x)
         );
     }
 
     private static FacetStatistics ToFacetStatistics(
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest,
         EntityFetch? entityFetch,
         GrpcFacetStatistics grpcFacetStatistics
     )
     {
         return new FacetStatistics(
             grpcFacetStatistics.FacetEntity is not null
-                ? EntityConverter.ToEntity(
+                ? EntityConverter.ToEntity<ISealedEntity>(
                     entitySchemaFetcher,
-                    grpcFacetStatistics.FacetEntity
+                    grpcFacetStatistics.FacetEntity,
+                    evitaRequest
                 )
                 : EntityConverter.ToEntityReference(grpcFacetStatistics.FacetEntityReference),
             grpcFacetStatistics.Requested,
@@ -183,6 +192,7 @@ public static class ResponseConverter
 
     private static Dictionary<string, List<LevelInfo>> ToHierarchy(
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest,
         IRootHierarchyConstraint rootHierarchyConstraint,
         GrpcHierarchy grpcHierarchy
     )
@@ -196,23 +206,24 @@ public static class ResponseConverter
                     cnt => cnt is IHierarchyRequireConstraint hrc && x.Key == hrc.OutputName
                 );
                 EntityFetch? entityFetch = QueryUtils.FindConstraint<EntityFetch>(hierarchyConstraint);
-                return x.Value.LevelInfos.Select(y => ToLevelInfo(entitySchemaFetcher, entityFetch, y)).ToList();
+                return x.Value.LevelInfos.Select(y => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, y)).ToList();
             });
     }
 
     private static LevelInfo ToLevelInfo(
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest,
         EntityFetch? entityFetch,
         GrpcLevelInfo grpcLevelInfo
     )
     {
         return new LevelInfo(
             grpcLevelInfo.Entity is not null
-                ? EntityConverter.ToEntity(entitySchemaFetcher, grpcLevelInfo.Entity)
+                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcLevelInfo.Entity, evitaRequest)
                 : EntityConverter.ToEntityReference(grpcLevelInfo.EntityReference),
             grpcLevelInfo.QueriedEntityCount,
             grpcLevelInfo.ChildrenCount,
-            grpcLevelInfo.Items.Select(it => ToLevelInfo(entitySchemaFetcher, entityFetch, it)).ToList()
+            grpcLevelInfo.Items.Select(it => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, it)).ToList()
         );
     }
 

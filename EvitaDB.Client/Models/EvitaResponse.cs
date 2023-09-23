@@ -23,7 +23,7 @@ public abstract class EvitaResponse<T> where T : IEntityClassifier
     {
         Query = query;
         RecordPage = recordPage;
-        foreach (var extraResult in extraResults)
+        foreach (IEvitaResponseExtraResult extraResult in extraResults)
         {
             ExtraResultsInternal.Add(extraResult.GetType(), extraResult);
         }

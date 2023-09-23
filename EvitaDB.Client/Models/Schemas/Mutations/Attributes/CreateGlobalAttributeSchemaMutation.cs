@@ -8,8 +8,8 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutation, ILocalCatalogSchemaMutation
 {
     public string Name { get; }
-    public string Description { get; }
-    public string DeprecationNotice { get; }
+    public string? Description { get; }
+    public string? DeprecationNotice { get; }
     public bool Unique { get; }
     public bool UniqueGlobally { get; }
     public bool Filterable { get; }
@@ -22,8 +22,8 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
 
     public CreateGlobalAttributeSchemaMutation(
         string name,
-        string description,
-        string deprecationNotice,
+        string? description,
+        string? deprecationNotice,
         bool unique,
         bool uniqueGlobally,
         bool filterable,
@@ -82,12 +82,9 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
                 catalogSchema.GetAttributes().Values.Concat(new []{newAttributeSchema}).ToDictionary(x=>x.Name, x=>x),
                 catalogSchema is CatalogSchema cs ?
                     cs.EntitySchemaAccessor :
-                    _ => {
-                throw new NotSupportedException(
-                    "Mutated schema is not able to provide access to entity schemas!"
-                );
-            }
-            );
+                    _ => throw new NotSupportedException(
+                        "Mutated schema is not able to provide access to entity schemas!"
+                    ));
         }
 
         if (existingAttributeSchema.Equals(newAttributeSchema)) {

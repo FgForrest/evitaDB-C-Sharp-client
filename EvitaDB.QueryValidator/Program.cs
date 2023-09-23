@@ -19,10 +19,9 @@ namespace EvitaDB.QueryValidator;
 
 public static partial class Program
 {
-    private static readonly Regex TheQueryReplacement = ReplacementRegex();
     private const string TempFolderName = "evita-query-validator";
-
     private const string QueryReplacementFileName = "evita-csharp-query-template.txt";
+    private static readonly Regex TheQueryReplacement = ReplacementRegex();
 
     private static readonly JsonSerializerSettings JsonSettings = new()
     {
@@ -67,7 +66,7 @@ public static partial class Program
 
         string[] templateLines = File.ReadAllLines(QueryReplacementPath);
 
-        var code = string.Join('\n', templateLines
+        string code = string.Join('\n', templateLines
             .Select(theLine =>
             {
                 Match replacementMatcher = TheQueryReplacement.Match(theLine);
@@ -99,7 +98,7 @@ public static partial class Program
             references: references,
             options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
-        using var ms = new MemoryStream();
+        using MemoryStream ms = new MemoryStream();
         EmitResult result = compilation.Emit(ms);
 
         if (!result.Success)
@@ -112,11 +111,11 @@ public static partial class Program
         else
         {
             ms.Seek(0, SeekOrigin.Begin);
-            var assembly = Assembly.Load(ms.ToArray());
+            Assembly assembly = Assembly.Load(ms.ToArray());
             try
             {
-                var snippetClass = assembly.GetType("DynamicClass");
-                var method = snippetClass?.GetMethod("Run", BindingFlags.Static | BindingFlags.Public);
+                Type? snippetClass = assembly.GetType("DynamicClass");
+                MethodInfo? method = snippetClass?.GetMethod("Run", BindingFlags.Static | BindingFlags.Public);
 
                 if (snippetClass is not null && method is not null)
                 {
@@ -139,7 +138,7 @@ public static partial class Program
                                 object? value =
                                     ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
                                         sourceVariable.Split('.'));
-                                var stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
+                                string stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
                                 serializedOutput = WrapSerializedOutputInCodeBlock(stringSerialized);
                                 break;
                             }
@@ -175,8 +174,8 @@ public static partial class Program
 
     private static void DownloadQueryTemplate()
     {
-        using var client = new HttpClient();
-        var response = client
+        using HttpClient client = new HttpClient();
+        HttpResponseMessage response = client
             .GetAsync(
                 "https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/csharp_query_template.txt")
             .GetAwaiter().GetResult();

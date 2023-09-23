@@ -228,6 +228,9 @@ public interface IQueryConstraints
     static EntityProperty? EntityProperty(params IOrderConstraint[]? constraints) =>
         constraints is null ? null : new EntityProperty(constraints);
 
+    static EntityGroupProperty? EntityGroupProperty(params IOrderConstraint[]? constraints) =>
+        constraints == null ? null : new EntityGroupProperty(constraints);
+
     static AttributeNatural AttributeNatural(string attributeName) => new AttributeNatural(attributeName);
 
     static AttributeNatural AttributeNatural(string attributeName, OrderDirection orderDirection) =>
@@ -237,7 +240,7 @@ public interface IQueryConstraints
 
     static PriceNatural PriceNatural(OrderDirection orderDirection) => new PriceNatural(orderDirection);
 
-    static Order.Random Random() => new Order.Random();
+    static Random Random() => new Random();
 
     static Require? Require(params IRequireConstraint[]? constraints) =>
         constraints is null ? null : new Require(constraints);
@@ -558,7 +561,7 @@ public interface IQueryConstraints
     }
 
     static ReferenceContent ReferenceContentWithAttributes(string referencedEntityType,
-        AttributeContent? attributeContent, @EntityGroupFetch? groupEntityRequirement)
+        AttributeContent? attributeContent, EntityGroupFetch? groupEntityRequirement)
     {
         return new ReferenceContent(
             referencedEntityType, null, null,
@@ -643,10 +646,8 @@ public interface IQueryConstraints
         {
             return new ReferenceContent(referencedEntityTypes, entityRequirement, groupEntityRequirement);
         }
-        else
-        {
-            return new ReferenceContent(entityRequirement, groupEntityRequirement);
-        }
+
+        return new ReferenceContent(entityRequirement, groupEntityRequirement);
     }
 
     static ReferenceContent ReferenceContent(string referenceName, FilterBy? filterBy)

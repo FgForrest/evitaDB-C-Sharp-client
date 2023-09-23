@@ -59,14 +59,14 @@ public static class ClassifierUtils
         {
             {
                 ClassifierType.Catalog,
-                new HashSet<string>()
+                new HashSet<string>
                 {
                     "system" // would collide with special system API endpoints for managing evitaDB
                 }
             },
             {
                 ClassifierType.Entity,
-                new HashSet<string>()
+                new HashSet<string>
                 {
                     "catalog", // catalog queries in GraphQL, would collide with entity types
                     "entity" // unknown single entity query in GraphQL/REST API, would collide with entity types
@@ -74,7 +74,7 @@ public static class ClassifierUtils
             },
             {
                 ClassifierType.Attribute,
-                new HashSet<string>()
+                new HashSet<string>
                 {
                     "primaryKey", // argument in single entity query in GraphQL/REST API, would collide with attributes
                     "locale", // argument in single entity query in GraphQL/REST API, would collide with attributes
@@ -99,7 +99,7 @@ public static class ClassifierUtils
             },
             {
                 ClassifierType.Reference,
-                new HashSet<string>()
+                new HashSet<string>
                 {
                     "primaryKey", // field in entity object in GraphQL/REST API, would collide with references
                     "locale", // field in entity object in GraphQL/REST API, would collide with references

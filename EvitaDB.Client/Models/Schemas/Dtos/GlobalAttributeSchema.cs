@@ -26,5 +26,18 @@ public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
     {
         UniqueGlobally = uniqueGlobally;
     }
-
+    
+    internal new static GlobalAttributeSchema InternalBuild(
+        string name,
+    Type type,
+    bool localized
+    ) {
+        return new GlobalAttributeSchema(
+            name, NamingConventionHelper.Generate(name),
+            null, null,
+            false, false, false, false, localized, false,
+            type, null,
+            0
+        );
+    }
 }

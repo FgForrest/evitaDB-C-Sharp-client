@@ -19,13 +19,13 @@ public record EvitaClientConfiguration(
         private int Port { get; set; } = DefaultGrpcApiPort;
         private int SystemApiPort { get; set; } = DefaultSystemApiPort;
         private bool UseGeneratedCertificate { get; set; } = true;
-        private bool UsingTrustedRootCaCertificate { get; set; } = false;
-        private bool MtlsEnabled { get; set; } = false;
-        private string? ServerCertificatePath { get; set; } = null;
-        private string? CertificateFileName { get; set; } = null;
-        private string? CertificateKeyFileName { get; set; } = null;
-        private string? CertificateKeyPassword { get; set; } = null;
-        private string? CertificateFolderPath { get; set; } = null;
+        private bool UsingTrustedRootCaCertificate { get; set; }
+        private bool MtlsEnabled { get; set; }
+        private string? ServerCertificatePath { get; set; }
+        private string? CertificateFileName { get; set; }
+        private string? CertificateKeyFileName { get; set; }
+        private string? CertificateKeyPassword { get; set; }
+        private string? CertificateFolderPath { get; set; }
 
         public Builder()
         {

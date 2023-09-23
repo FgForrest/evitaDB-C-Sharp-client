@@ -8,8 +8,8 @@ using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
-using static EvitaDB.Client.Queries.IQueryConstraints;
 using NUnit.Framework;
+using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test;
 
@@ -23,14 +23,14 @@ public class EvitaQueryTest
     static EvitaQueryTest()
     {
         // create a evita client configuration the the running instance of evita server
-        
+
         EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
             .SetHost("demo.evitadb.io")
             .SetPort(5556)
             .SetUseGeneratedCertificate(false)
             .SetUsingTrustedRootCaCertificate(true)
             .Build();
-        
+
         /*EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
             .SetHost("localhost")
             .SetPort(5556)
@@ -145,24 +145,21 @@ public class EvitaQueryTest
     public void ShouldBe_WellSee1()
     {
         EvitaResponse<ISealedEntity> evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
-            session =>
-            {
-                return session.QuerySealedEntity(
-                    Query(
-                        Collection("Category"),
-                        Require(
-                            HierarchyOfSelf(
-                                OrderBy(Random()),
-                                Children(
-                                    "test",
-                                    EntityFetch(ReferenceContentAllWithAttributes()),
-                                    Statistics(StatisticsBase.CompleteFilter, StatisticsType.QueriedEntityCount)
-                                )
+            session => session.QuerySealedEntity(
+                Query(
+                    Collection("Category"),
+                    Require(
+                        HierarchyOfSelf(
+                            OrderBy(Random()),
+                            Children(
+                                "test",
+                                EntityFetch(ReferenceContentAllWithAttributes()),
+                                Statistics(StatisticsBase.CompleteFilter, StatisticsType.QueriedEntityCount)
                             )
                         )
                     )
-                );
-            });
+                )
+            ));
     }
 
     [Test]
@@ -179,7 +176,7 @@ public class EvitaQueryTest
                     Require(
                         EntityFetch(
                             ReferenceContent(
-                                "categories", 
+                                "categories",
                                 EntityFetch(AttributeContent("code", "name"),
                                     HierarchyContent(
                                         EntityFetch(AttributeContent("code", "name"))
@@ -191,19 +188,16 @@ public class EvitaQueryTest
                 )
             )
         );
-        
+
         Console.WriteLine();
     }
-    
+
     [Test]
     public void ShouldTestCdc()
     {
-        IObservable<ChangeSystemCapture> captures = 
+        IObservable<ChangeSystemCapture> captures =
             _client!.RegisterSystemChangeCapture(new ChangeSystemCaptureRequest(CaptureContent.Header));
-        var subscription = captures.Subscribe(c =>
-        {
-            Console.WriteLine(c.Operation);
-        });
+        var subscription = captures.Subscribe(c => { Console.WriteLine(c.Operation); });
         subscription.Dispose();
     }
 
@@ -232,7 +226,7 @@ public class EvitaQueryTest
         );
         Console.WriteLine();
     }
-    
+
     [Test]
     public void ShouldTestCdo()
     {
@@ -256,11 +250,11 @@ public class EvitaQueryTest
             (entities.RecordData[0].GetAssociatedData("allActiveUrls") as ComplexDataObject)!, typeof(TestAsDataObj[]));
 
         Console.WriteLine(x);
-        
+
         var asData = new TestAsDataObj[]
         {
-            new ("cs", "/cs/macbook-pro-13-2022"),
-            new ("en", "/en/macbook-pro-13-2022")
+            new("cs", "/cs/macbook-pro-13-2022"),
+            new("en", "/en/macbook-pro-13-2022")
         };
         var initialBuilder = session.CreateNewEntity("Product", 6666666)
             .SetAssociatedData("allActiveUrls", asData);
@@ -270,6 +264,8 @@ public class EvitaQueryTest
 
     private record TestAsDataObj(string Locale, string Url)
     {
-        public TestAsDataObj() : this("", "") { }
+        public TestAsDataObj() : this("", "")
+        {
+        }
     };
 }

@@ -16,7 +16,7 @@ public class SetReferenceSchemaIndexedMutation : AbstractModifyReferenceDataSche
     public override IReferenceSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
-        if (referenceSchema!.Indexed == Indexed)
+        if (referenceSchema!.IsIndexed == Indexed)
         {
             return referenceSchema;
         }
@@ -43,7 +43,7 @@ public class SetReferenceSchemaIndexedMutation : AbstractModifyReferenceDataSche
                 : referenceSchema.GetGroupTypeNameVariants(_ => null),
             referenceSchema.ReferencedGroupTypeManaged,
             Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds()
         );

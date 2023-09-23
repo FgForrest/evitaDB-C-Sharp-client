@@ -1,28 +1,13 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Exceptions;
 
 public class AttributeAlreadyPresentInCatalogSchemaException : EvitaInvalidUsageException
 {
     public string CatalogName { get; }
-    public AttributeSchema ExistingSchema { get; }
-    public AttributeAlreadyPresentInCatalogSchemaException(string privateMessage, string publicMessage) : base(privateMessage, publicMessage)
-    {
-    }
-
-    public AttributeAlreadyPresentInCatalogSchemaException(string publicMessage, Exception exception) : base(publicMessage, exception)
-    {
-    }
-
-    public AttributeAlreadyPresentInCatalogSchemaException(string privateMessage, string publicMessage, Exception exception) : base(privateMessage, publicMessage, exception)
-    {
-    }
-
-    public AttributeAlreadyPresentInCatalogSchemaException(string publicMessage) : base(publicMessage)
-    {
-    }
+    public IAttributeSchema ExistingSchema { get; }
     
-    public AttributeAlreadyPresentInCatalogSchemaException(string catalogName, AttributeSchema existingSchema) : base(
+    public AttributeAlreadyPresentInCatalogSchemaException(string catalogName, IAttributeSchema existingSchema) : base(
         $"Attribute with name {existingSchema.Name} already defined as global attribute of catalog {catalogName}, use `withCatalogAttribute` method to reuse it!.")
     {
         CatalogName = catalogName;

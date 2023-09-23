@@ -1,5 +1,4 @@
-﻿using EvitaDB.Client.DataTypes;
-using EvitaDB.Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 

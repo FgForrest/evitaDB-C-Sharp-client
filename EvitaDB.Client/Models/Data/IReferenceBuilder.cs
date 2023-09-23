@@ -1,5 +1,4 @@
 ﻿using EvitaDB.Client.Models.Data.Mutations.Reference;
-using EvitaDB.Client.Models.Data.Structure;
 
 namespace EvitaDB.Client.Models.Data;
 

@@ -1,34 +1,15 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Exceptions;
 
 public class AssociatedDataAlreadyPresentInEntitySchemaException : EvitaInvalidUsageException
 {
-    public AssociatedDataSchema ExistingSchema { get; }
-
-    public AssociatedDataAlreadyPresentInEntitySchemaException(string privateMessage, string publicMessage) : base(
-        privateMessage, publicMessage)
-    {
-    }
-
-    public AssociatedDataAlreadyPresentInEntitySchemaException(string publicMessage, Exception exception) : base(
-        publicMessage, exception)
-    {
-    }
-
-    public AssociatedDataAlreadyPresentInEntitySchemaException(string privateMessage, string publicMessage,
-        Exception exception) : base(privateMessage, publicMessage, exception)
-    {
-    }
-
-    public AssociatedDataAlreadyPresentInEntitySchemaException(string publicMessage) : base(publicMessage)
-    {
-    }
+    public IAssociatedDataSchema ExistingSchema { get; }
 
     public AssociatedDataAlreadyPresentInEntitySchemaException(
-        AssociatedDataSchema existingAssociatedData,
-        AssociatedDataSchema updatedAssociatedData,
+        IAssociatedDataSchema existingAssociatedData,
+        IAssociatedDataSchema updatedAssociatedData,
         NamingConvention convention,
         string conflictingName
     ) : base($"Associated data `{updatedAssociatedData}` and existing associated data `{existingAssociatedData}` produce the same name `{conflictingName}` in `{convention}` convention! " +

@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Converters.Models;
+﻿using EvitaDB.Client.Converters.Models;
 using EvitaDB.Client.Converters.Models.Data;
 using EvitaDB.Client.Converters.Models.Data.Mutations;
 using EvitaDB.Client.Converters.Models.Schema;
@@ -23,6 +22,7 @@ using EvitaDB.Client.Session;
 using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
 using static EvitaDB.Client.Queries.Visitor.PrettyPrintingVisitor;
+using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Client;
 
@@ -61,16 +61,18 @@ public class EvitaClientSession : IDisposable
         _onTerminationCallback = onTerminationCallback;
     }
 
-    /*public IEntitySchemaBuilder DefineEntitySchema(string entityType) {
+    public IEntitySchemaBuilder DefineEntitySchema(string entityType)
+    {
         AssertActive();
-        IEntitySchema newEntitySchema = ExecuteInTransactionIfPossible(session => {
+        ISealedEntitySchema newEntitySchema = ExecuteInTransactionIfPossible(session =>
+        {
             GrpcDefineEntitySchemaRequest request = new GrpcDefineEntitySchemaRequest
-                {
-                    EntityType = entityType
-                };
+            {
+                EntityType = entityType
+            };
 
             GrpcDefineEntitySchemaResponse response = ExecuteWithEvitaSessionService(evitaSessionService =>
-                    evitaSessionService.DefineEntitySchema(request)
+                evitaSessionService.DefineEntitySchema(request)
             );
 
             EntitySchema theSchema = EntitySchemaConverter.Convert(response.EntitySchema);
@@ -78,7 +80,7 @@ public class EvitaClientSession : IDisposable
             return new EntitySchemaDecorator(GetCatalogSchema, theSchema);
         });
         return newEntitySchema.OpenForWrite();
-    }*/
+    }
 
     private T ExecuteWithEvitaSessionService<T>(
         Func<EvitaSessionService.EvitaSessionServiceClient, T> evitaSessionServiceClient)
@@ -117,14 +119,17 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         AssertRequestMakesSense<TS>(query);
 
-        PrettyPrintingVisitor.StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
+        StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
         var request = new GrpcQueryRequest
         {
             Query = stringWithParameters.Query,
             PositionalQueryParams = {stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam)}
         };
         GrpcQueryResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.Query(request));
-        IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(query, grpcResponse);
+        IEvitaResponseExtraResult[] extraResults = GetEvitaResponseExtraResults(
+            grpcResponse,
+            new EvitaRequest(query, DateTimeOffset.Now)
+        );
 
         if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
         {
@@ -139,10 +144,14 @@ public class EvitaClientSession : IDisposable
         {
             IDataChunk<ISealedEntity> recordPage = ResponseConverter.ConvertToDataChunk(
                 grpcResponse,
-                grpcRecordPage => EntityConverter.ToEntities(
+                grpcRecordPage => EntityConverter.ToEntities<ISealedEntity>(
                     grpcRecordPage.SealedEntities.ToList(),
                     (entityType, schemaVersion) => _schemaCache.GetEntitySchemaOrThrow(
                         entityType, schemaVersion, FetchEntitySchema, GetCatalogSchema
+                    ),
+                    new EvitaRequest(
+                        query,
+                        DateTimeOffset.Now
                     )
                 )
             );
@@ -175,7 +184,7 @@ public class EvitaClientSession : IDisposable
                     query.FilterBy,
                     query.OrderBy,
                     (Require) query.Require.GetCopyWithNewChildren(
-                        new IRequireConstraint[] {IQueryConstraints.Require(IQueryConstraints.EntityFetch())}
+                        new IRequireConstraint[] {Require(EntityFetch())}
                             .Concat(query.Require.Children).ToArray(),
                         query.Require.AdditionalChildren
                     )
@@ -190,7 +199,7 @@ public class EvitaClientSession : IDisposable
     {
         return Query<EvitaEntityReferenceResponse, EntityReference>(query);
     }
-    
+
     public ISealedEntitySchema UpdateAndFetchEntitySchema(IEntitySchemaBuilder entitySchemaBuilder)
     {
         ModifyEntitySchemaMutation? schemaMutation = entitySchemaBuilder.ToMutation();
@@ -198,6 +207,7 @@ public class EvitaClientSession : IDisposable
         {
             return UpdateAndFetchEntitySchema(schemaMutation);
         }
+
         return GetEntitySchemaOrThrow(entitySchemaBuilder.Name);
     }
 
@@ -219,7 +229,7 @@ public class EvitaClientSession : IDisposable
     {
         AssertActive();
 
-        PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+        StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
         GrpcEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetEntity(
                 new GrpcEntityRequest
@@ -233,11 +243,20 @@ public class EvitaClientSession : IDisposable
         );
 
         return grpcResponse.Entity is not null
-            ? EntityConverter.ToEntity(
+            ? EntityConverter.ToEntity<ISealedEntity>(
                 entity => _schemaCache.GetEntitySchemaOrThrow(
                     entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                 ),
-                grpcResponse.Entity
+                grpcResponse.Entity,
+                new EvitaRequest(
+                    IQueryConstraints.Query(
+                        Collection(entityType),
+                        Require(
+                            EntityFetch(require)
+                        )
+                    ),
+                    DateTimeOffset.Now
+                )
             )
             : null;
     }
@@ -347,7 +366,7 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
         {
-            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(query);
+            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(query);
             GrpcDeleteEntitiesResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntities(
                     new GrpcDeleteEntitiesRequest
@@ -514,7 +533,7 @@ public class EvitaClientSession : IDisposable
         _onTerminationCallback.Invoke(this);
     }
 
-    public CatalogSchema UpdateAndFetchCatalogSchema(params ILocalCatalogSchemaMutation[] schemaMutation)
+    public ISealedCatalogSchema UpdateAndFetchCatalogSchema(params ILocalCatalogSchemaMutation[] schemaMutation)
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(session =>
@@ -532,16 +551,43 @@ public class EvitaClientSession : IDisposable
                 evitaSessionService.UpdateAndFetchCatalogSchema(request)
             );
 
-            CatalogSchema updatedCatalogSchema = CatalogSchemaConverter.Convert(
-                GetEntitySchemaOrThrow, response.CatalogSchema
-            );
+            CatalogSchema updatedCatalogSchema =
+                CatalogSchemaConverter.Convert(GetEntitySchemaOrThrow, response.CatalogSchema);
+            ISealedCatalogSchema updatedSchema = new CatalogSchemaDecorator(updatedCatalogSchema, GetEntitySchemaOrThrow);
             _schemaCache.AnalyzeMutations(schemaMutation);
             _schemaCache.SetLatestCatalogSchema(updatedCatalogSchema);
-            return updatedCatalogSchema;
+            return updatedSchema;
         });
     }
 
-    private IEvitaResponseExtraResult[] GetEvitaResponseExtraResults(Query query, GrpcQueryResponse grpcResponse)
+    public ISealedCatalogSchema UpdateAndFetchCatalogSchema(ICatalogSchemaBuilder catalogSchemaBuilder)
+    {
+        Assert.IsTrue(
+            catalogSchemaBuilder.Name.Equals(CatalogName),
+            "Schema builder targets `" + catalogSchemaBuilder.Name + "` catalog, but the session targets `" +
+            CatalogName + "` catalog!"
+        );
+        ModifyCatalogSchemaMutation? modifyCatalogSchemaMutation = catalogSchemaBuilder.ToMutation();
+        return modifyCatalogSchemaMutation is not null
+            ? UpdateAndFetchCatalogSchema(modifyCatalogSchemaMutation.SchemaMutations)
+            : GetCatalogSchema();
+    }
+
+    public int UpdateCatalogSchema(ICatalogSchemaBuilder catalogSchemaBuilder)
+    {
+        Assert.IsTrue(
+            catalogSchemaBuilder.Name.Equals(CatalogName),
+            "Schema builder targets `" + catalogSchemaBuilder.Name + "` catalog, but the session targets `" +
+            CatalogName + "` catalog!"
+        );
+        ModifyCatalogSchemaMutation? modifyCatalogSchemaMutation = catalogSchemaBuilder.ToMutation();
+        return modifyCatalogSchemaMutation is not null
+            ? UpdateCatalogSchema(modifyCatalogSchemaMutation.SchemaMutations)
+            : GetCatalogSchema().Version;
+    }
+
+    private IEvitaResponseExtraResult[] GetEvitaResponseExtraResults(GrpcQueryResponse grpcResponse,
+        EvitaRequest evitaRequest)
     {
         return grpcResponse.ExtraResults is not null
             ? ResponseConverter.ToExtraResults(
@@ -549,16 +595,16 @@ public class EvitaClientSession : IDisposable
                     sealedEntity.EntityType, sealedEntity.SchemaVersion,
                     FetchEntitySchema, GetCatalogSchema
                 ),
-                query,
+                evitaRequest,
                 grpcResponse.ExtraResults
             )
             : Array.Empty<IEvitaResponseExtraResult>();
     }
 
-    public CatalogSchema GetCatalogSchema()
+    public ISealedCatalogSchema GetCatalogSchema()
     {
         AssertActive();
-        return _schemaCache.GetLatestCatalogSchema(FetchCatalogSchema);
+        return _schemaCache.GetLatestCatalogSchema(FetchCatalogSchema, GetEntitySchema);
     }
 
     private CatalogSchema FetchCatalogSchema()
@@ -638,11 +684,20 @@ public class EvitaClientSession : IDisposable
                     }
                 )
             );
-            return EntityConverter.ToEntity(
+            return EntityConverter.ToEntity<ISealedEntity>(
                 entity => _schemaCache.GetEntitySchemaOrThrow(
                     entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                 ),
-                grpcResponse.Entity
+                grpcResponse.Entity,
+                new EvitaRequest(
+                    IQueryConstraints.Query(
+                        Collection(entityMutation.EntityType),
+                        Require(
+                            EntityFetch(require)
+                        )
+                    ),
+                    DateTimeOffset.Now
+                )
             );
         });
     }
@@ -750,9 +805,9 @@ public class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(_ =>
         {
-            PrettyPrintingVisitor.StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
-            GrpcDeleteEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService=>
-                    evitaSessionService.DeleteEntity(
+            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
+            GrpcDeleteEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+                evitaSessionService.DeleteEntity(
                     new GrpcDeleteEntityRequest
                     {
                         EntityType = entityType,
@@ -764,11 +819,20 @@ public class EvitaClientSession : IDisposable
                 )
             );
             return grpcResponse.Entity is not null
-                ?  EntityConverter.ToEntity(
+                ? EntityConverter.ToEntity<ISealedEntity>(
                     entity => _schemaCache.GetEntitySchemaOrThrow(
                         entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                     ),
-                    grpcResponse.Entity
+                    grpcResponse.Entity,
+                    new EvitaRequest(
+                        IQueryConstraints.Query(
+                            Collection(entityType),
+                            Require(
+                                EntityFetch(require)
+                            )
+                        ),
+                        DateTimeOffset.Now
+                    )
                 )
                 : default;
         });
@@ -781,9 +845,9 @@ public class EvitaClientSession : IDisposable
     )
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
-            PrettyPrintingVisitor.StringWithParameters stringWithParameters = PrettyPrintingVisitor.ToStringWithParameterExtraction(require);
+            StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
             GrpcDeleteEntityAndItsHierarchyResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntityAndItsHierarchy(
                     new GrpcDeleteEntityRequest
@@ -799,17 +863,25 @@ public class EvitaClientSession : IDisposable
             return new DeletedHierarchy<ISealedEntity>(
                 grpcResponse.DeletedEntities,
                 grpcResponse.DeletedRootEntity is not null
-                    ? EntityConverter.ToEntity(
+                    ? EntityConverter.ToEntity<ISealedEntity>(
                         entity => _schemaCache.GetEntitySchemaOrThrow(
                             entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
                         ),
-                        grpcResponse.DeletedRootEntity
+                        grpcResponse.DeletedRootEntity,
+                        new EvitaRequest(
+                            IQueryConstraints.Query(
+                                Collection(entityType),
+                                Require(
+                                    EntityFetch(require)
+                                )
+                            ),
+                            DateTimeOffset.Now
+                        )
                     )
                     : null
             );
         });
     }
-
 
     private void AssertActive()
     {

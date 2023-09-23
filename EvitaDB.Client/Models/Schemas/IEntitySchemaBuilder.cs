@@ -35,7 +35,7 @@ public interface IEntitySchemaBuilder : IEntitySchemaEditor<IEntitySchemaBuilder
     /// </remarks>
     /// </summary>
     /// <returns>instance of created builder that allows its modification</returns>
-    EntitySchema ToInstance();
+    IEntitySchema ToInstance();
 
     /// <summary>
     /// The method is a shortcut for calling <see cref="EvitaClientSession.UpdateEntitySchema(ModifyEntitySchemaMutation)"/>

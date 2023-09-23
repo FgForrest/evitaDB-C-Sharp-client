@@ -7,6 +7,7 @@ using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Mutations.Entities;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Data.Structure.Predicates;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Utils;
@@ -31,6 +32,19 @@ public class ExistingEntityBuilder : IEntityBuilder
     public string Type => BaseEntity.Type;
     public int? PrimaryKey => BaseEntity.PrimaryKey;
 
+    public LocalePredicate LocalePredicate { get; }
+    public HierarchyPredicate HierarchyPredicate { get; }
+    public AttributeValuePredicate AttributePredicate { get; }
+    public AssociatedDataValuePredicate AssociatedDataPredicate { get; }
+    public ReferencePredicate ReferencePredicate { get; }
+    public PricePredicate PricePredicate { get; }
+
+    private static void AssertPricesFetched(PricePredicate pricePredicate)
+    {
+        Assert.IsTrue(pricePredicate.PriceContentMode == PriceContentMode.All,
+            "Prices were not fetched and cannot be updated. Please enrich the entity first or load it with all the prices.");
+    }
+
     public IEntityClassifierWithParent? ParentEntity
     {
         get
@@ -54,6 +68,7 @@ public class ExistingEntityBuilder : IEntityBuilder
     public int? Parent => BaseEntity.Parent;
     public bool Dropped => false;
     public IPrice? PriceForSale => PricesBuilder.PriceForSale;
+
     public IPrice? GetPrice(PriceKey priceKey)
     {
         return PricesBuilder.GetPrice(priceKey);
@@ -90,6 +105,13 @@ public class ExistingEntityBuilder : IEntityBuilder
         {
             AddMutation(localMutation);
         }
+
+        LocalePredicate = baseEntity.LocalePredicate;
+        HierarchyPredicate = baseEntity.HierarchyPredicate;
+        AttributePredicate = baseEntity.AttributePredicate;
+        AssociatedDataPredicate = baseEntity.AssociatedDataPredicate;
+        ReferencePredicate = baseEntity.ReferencePredicate;
+        PricePredicate = baseEntity.PricePredicate;
     }
 
     public ExistingEntityBuilder(Entity baseEntity) : this(baseEntity, new List<ILocalMutation>())
@@ -133,7 +155,7 @@ public class ExistingEntityBuilder : IEntityBuilder
             throw new EvitaInternalError("Unknown mutation: " + localMutation.GetType());
         }
     }
-    
+
     public IEnumerable<IReference> GetReferences()
     {
         return BaseEntity.GetReferences()
@@ -143,9 +165,11 @@ public class ExistingEntityBuilder : IEntityBuilder
                 if (ReferenceMutations.TryGetValue(it.ReferenceKey, out List<ReferenceMutation>? mutations))
                 {
                     IReference? evaluationResult = EvaluateReferenceMutations(it, mutations);
-                    if (evaluationResult is not null && evaluationResult.DiffersFrom(it)) {
+                    if (evaluationResult is not null && evaluationResult.DiffersFrom(it))
+                    {
                         return evaluationResult;
                     }
+
                     return it;
                 }
 
@@ -153,11 +177,11 @@ public class ExistingEntityBuilder : IEntityBuilder
             }).Concat(
                 ReferenceMutations
                     .Where(
-                        it=>BaseEntity.GetReference(it.Key.ReferenceName, it.Key.PrimaryKey) is null)
-                    .Select(x=>x.Value)
-                    .Select(it=>EvaluateReferenceMutations(null, it))
+                        it => BaseEntity.GetReference(it.Key.ReferenceName, it.Key.PrimaryKey) is null)
+                    .Select(x => x.Value)
+                    .Select(it => EvaluateReferenceMutations(null, it))
             )
-            .Where(x=>x is not null).ToList()!;
+            .Where(x => x is not null).ToList()!;
     }
 
     public IEnumerable<IReference> GetReferences(string referenceName)
@@ -178,11 +202,13 @@ public class ExistingEntityBuilder : IEntityBuilder
         }
         else
         {
-            if (ReferenceMutations.TryGetValue(entityReferenceContract, out List<ReferenceMutation>? referenceMutations))
+            if (ReferenceMutations.TryGetValue(entityReferenceContract,
+                    out List<ReferenceMutation>? referenceMutations))
             {
                 EvaluateReferenceMutations(null, referenceMutations);
             }
         }
+
         return reference;
     }
 
@@ -211,72 +237,122 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public IEntityBuilder RemoveAttribute(string attributeName)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName),
+            "Attribute " + attributeName + " was not fetched and cannot be removed. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.RemoveAttribute(attributeName);
         return this;
     }
 
     public IEntityBuilder SetAttribute(string attributeName, object? attributeValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName),
+            "Attribute " + attributeName + " was not fetched and cannot be updated. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
 
     public IEntityBuilder SetAttribute(string attributeName, object[]? attributeValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName),
+            "Attribute " + attributeName + " was not fetched and cannot be updated. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
 
     public IEntityBuilder RemoveAttribute(string attributeName, CultureInfo locale)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName, locale),
+            "Attribute " + attributeName + " in locale " + locale +" was not fetched and cannot be removed. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.RemoveAttribute(attributeName, locale);
         return this;
     }
 
     public IEntityBuilder SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName, locale),
+            "Attribute " + attributeName + " in locale " + locale +" was not fetched and cannot be updated. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
 
     public IEntityBuilder SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(attributeName, locale),
+            "Attribute " + attributeName + " in locale " + locale +" was not fetched and cannot be updated. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
 
     public IEntityBuilder MutateAttribute(AttributeMutation mutation)
     {
+        Assert.IsTrue(
+            mutation.AttributeKey.Localized ? 
+                AttributePredicate.WasFetched(mutation.AttributeKey.AttributeName, mutation.AttributeKey.Locale!) :
+                AttributePredicate.WasFetched(mutation.AttributeKey.AttributeName),
+            "Attribute " + mutation.AttributeKey.AttributeName + " in locale " + mutation.AttributeKey.Locale +" was not fetched and cannot be updated. Please enrich the entity first or load it with attributes."
+        );
         AttributesBuilder.MutateAttribute(mutation);
         return this;
     }
 
     public IEntityBuilder RemoveAssociatedData(string associatedDataName)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " was not fetched and cannot be removed. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.RemoveAssociatedData(associatedDataName);
         return this;
     }
 
     public IEntityBuilder SetAssociatedData(string associatedDataName, object? associatedDataValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " was not fetched and cannot be updated. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.SetAssociatedData(associatedDataName, associatedDataValue);
         return this;
     }
 
     public IEntityBuilder SetAssociatedData(string associatedDataName, object[]? associatedDataValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " was not fetched and cannot be updated. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.SetAssociatedData(associatedDataName, associatedDataValue);
         return this;
     }
 
     public IEntityBuilder RemoveAssociatedData(string associatedDataName, CultureInfo locale)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " in locale " + locale + " was not fetched and cannot be removed. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.RemoveAssociatedData(associatedDataName, locale);
         return this;
     }
 
     public IEntityBuilder SetAssociatedData(string associatedDataName, CultureInfo locale, object? associatedDataValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " in locale " + locale + " was not fetched and cannot be updated. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.SetAssociatedData(associatedDataName, locale, associatedDataValue);
         return this;
     }
@@ -284,12 +360,22 @@ public class ExistingEntityBuilder : IEntityBuilder
     public IEntityBuilder SetAssociatedData(string associatedDataName, CultureInfo locale,
         object[]? associatedDataValue)
     {
+        Assert.IsTrue(
+            AttributePredicate.WasFetched(associatedDataName),
+            "Associated data " + associatedDataName + " in locale " + locale + " was not fetched and cannot be updated. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.SetAssociatedData(associatedDataName, locale, associatedDataValue);
         return this;
     }
 
     public IEntityBuilder MutateAssociatedData(AssociatedDataMutation mutation)
     {
+        Assert.IsTrue(
+            mutation.AssociatedDataKey.Localized ? 
+                AttributePredicate.WasFetched(mutation.AssociatedDataKey.AssociatedDataName, mutation.AssociatedDataKey.Locale!) :
+                AttributePredicate.WasFetched(mutation.AssociatedDataKey.AssociatedDataName),
+            "Associated data " + mutation.AssociatedDataKey.AssociatedDataName + " in locale " + mutation.AssociatedDataKey.Locale +" was not fetched and cannot be updated. Please enrich the entity first or load it with associated data."
+        );
         AssociatedDataBuilder.MutateAssociatedData(mutation);
         return this;
     }
@@ -297,6 +383,10 @@ public class ExistingEntityBuilder : IEntityBuilder
     public IEntityBuilder SetPrice(int priceId, string priceList, Currency currency, decimal priceWithoutTax,
         decimal taxRate, decimal priceWithTax, bool sellable)
     {
+        Assert.IsTrue(
+            PricePredicate.Test(new Price(new PriceKey(priceId, priceList, currency), 1, decimal.One, decimal.One, decimal.One, null, false)),
+            "Price " + priceId + ", " + priceList + ", " + currency + " was not fetched and cannot be updated. Please enrich the entity first or load it with the prices."
+        );
         PricesBuilder.SetPrice(priceId, priceList, currency, priceWithoutTax, taxRate, priceWithTax, sellable);
         return this;
     }
@@ -305,6 +395,10 @@ public class ExistingEntityBuilder : IEntityBuilder
         decimal priceWithoutTax,
         decimal taxRate, decimal priceWithTax, bool sellable)
     {
+        Assert.IsTrue(
+            PricePredicate.Test(new Price(new PriceKey(priceId, priceList, currency), 1, decimal.One, decimal.One, decimal.One, null, false)),
+            "Price " + priceId + ", " + priceList + ", " + currency + " was not fetched and cannot be updated. Please enrich the entity first or load it with the prices."
+        );
         PricesBuilder.SetPrice(priceId, priceList, currency, innerRecordId, priceWithoutTax, taxRate, priceWithTax,
             sellable);
         return this;
@@ -314,6 +408,10 @@ public class ExistingEntityBuilder : IEntityBuilder
         decimal taxRate,
         decimal priceWithTax, DateTimeRange? validity, bool sellable)
     {
+        Assert.IsTrue(
+            PricePredicate.Test(new Price(new PriceKey(priceId, priceList, currency), 1, decimal.One, decimal.One, decimal.One, null, false)),
+            "Price " + priceId + ", " + priceList + ", " + currency + " was not fetched and cannot be updated. Please enrich the entity first or load it with the prices."
+        );
         PricesBuilder.SetPrice(priceId, priceList, currency, priceWithoutTax, taxRate, priceWithTax, validity,
             sellable);
         return this;
@@ -323,6 +421,10 @@ public class ExistingEntityBuilder : IEntityBuilder
         decimal priceWithoutTax,
         decimal taxRate, decimal priceWithTax, DateTimeRange? validity, bool sellable)
     {
+        Assert.IsTrue(
+            PricePredicate.Test(new Price(new PriceKey(priceId, priceList, currency), 1, decimal.One, decimal.One, decimal.One, null, false)),
+            "Price " + priceId + ", " + priceList + ", " + currency + " was not fetched and cannot be updated. Please enrich the entity first or load it with the prices."
+        );
         PricesBuilder.SetPrice(priceId, priceList, currency, innerRecordId, priceWithoutTax, taxRate, priceWithTax,
             validity, sellable);
         return this;
@@ -330,24 +432,31 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public IEntityBuilder RemovePrice(int priceId, string priceList, Currency currency)
     {
+        Assert.IsTrue(
+            PricePredicate.Test(new Price(new PriceKey(priceId, priceList, currency), 1, decimal.One, decimal.One, decimal.One, null, false)),
+            "Price " + priceId + ", " + priceList + ", " + currency + " was not fetched and cannot be removed. Please enrich the entity first or load it with the prices."
+        );
         PricesBuilder.RemovePrice(priceId, priceList, currency);
         return this;
     }
 
     public IEntityBuilder SetPriceInnerRecordHandling(PriceInnerRecordHandling priceInnerRecordHandling)
     {
+        AssertPricesFetched(PricePredicate);
         PricesBuilder.SetPriceInnerRecordHandling(priceInnerRecordHandling);
         return this;
     }
 
     public IEntityBuilder RemovePriceInnerRecordHandling()
     {
+        AssertPricesFetched(PricePredicate);
         PricesBuilder.RemovePriceInnerRecordHandling();
         return this;
     }
 
     public IEntityBuilder RemoveAllNonTouchedPrices()
     {
+        AssertPricesFetched(PricePredicate);
         PricesBuilder.RemoveAllNonTouchedPrices();
         return this;
     }
@@ -362,6 +471,7 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public IEntityBuilder RemoveParent()
     {
+        Assert.NotNull(BaseEntity.Parent, "Cannot remove parent that is not present!");
         HierarchyMutation = BaseEntity.Parent is not null ? new RemoveParentMutation() : null;
         return this;
     }
@@ -388,6 +498,10 @@ public class ExistingEntityBuilder : IEntityBuilder
     public IEntityBuilder SetReference(string referenceName, string referencedEntityType, Cardinality cardinality,
         int referencedPrimaryKey, Action<IReferenceBuilder>? whichIs)
     {
+        Assert.IsTrue(
+            ReferencePredicate.WasFetched(referenceName),
+            "References were not fetched and cannot be updated. Please enrich the entity first or load it with the references."
+        );
         ReferenceKey referenceKey = new ReferenceKey(referenceName, referencedPrimaryKey);
         IEntitySchema schema = Schema;
         IReference? existingReference = BaseEntity.GetReferenceWithoutSchemaCheck(referenceKey);
@@ -420,7 +534,7 @@ public class ExistingEntityBuilder : IEntityBuilder
             }
             else
             {
-                if (referenceInBaseEntity?.Group is {Dropped: false})
+                if (referenceInBaseEntity?.Group is { Dropped: false })
                 {
                     changeSet.Add(new RemoveReferenceGroupMutation(referenceKey));
                 }
@@ -428,10 +542,12 @@ public class ExistingEntityBuilder : IEntityBuilder
                 changeSet.AddRange(
                     referenceInBaseEntity?.GetAttributeValues()
                         .Where(x => !x.Dropped)
-                        .Select(x => new ReferenceAttributeMutation(referenceKey, new RemoveAttributeMutation(x.Key))) ?? Array.Empty<ReferenceAttributeMutation>()
+                        .Select(x =>
+                            new ReferenceAttributeMutation(referenceKey, new RemoveAttributeMutation(x.Key))) ??
+                    Array.Empty<ReferenceAttributeMutation>()
                 );
 
-                
+
                 ReferenceMutations.Add(
                     referenceKey,
                     changeSet
@@ -451,6 +567,10 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public IEntityBuilder RemoveReference(string referenceName, int referencedPrimaryKey)
     {
+        Assert.IsTrue(
+            ReferencePredicate.WasFetched(referenceName),
+            "References were not fetched and cannot be removed. Please enrich the entity first or load it with the references."
+        );
         ReferenceKey referenceKey = new ReferenceKey(referenceName, referencedPrimaryKey);
         Assert.IsTrue(GetReference(referenceName, referencedPrimaryKey) is not null,
             "There's no reference of type " + referenceName + " and primary key " + referencedPrimaryKey + "!");
@@ -463,7 +583,7 @@ public class ExistingEntityBuilder : IEntityBuilder
         );
         ReferenceMutations.Add(
             referenceKey,
-            new List<ReferenceMutation> {new RemoveReferenceMutation(referenceKey)}
+            new List<ReferenceMutation> { new RemoveReferenceMutation(referenceKey) }
         );
         RemovedReferences.Add(referenceKey);
         return this;
@@ -525,23 +645,26 @@ public class ExistingEntityBuilder : IEntityBuilder
     {
         return Schema.GetReference(referenceName) ?? throw new ReferenceNotKnownException(referenceName);
     }
-    
-    private IReference? EvaluateReferenceMutations(IReference? reference, List<ReferenceMutation> mutations) {
+
+    private IReference? EvaluateReferenceMutations(IReference? reference, List<ReferenceMutation> mutations)
+    {
         IReference? mutatedReference = reference;
-        foreach (ReferenceMutation mutation in mutations) {
+        foreach (ReferenceMutation mutation in mutations)
+        {
             mutatedReference = mutation.MutateLocal(BaseEntity.Schema, mutatedReference);
         }
+
         return mutatedReference != null && mutatedReference.DiffersFrom(reference) ? mutatedReference : reference;
     }
 
     public bool AttributesAvailable()
     {
-        return ((IAttributes) AttributesBuilder).AttributesAvailable();
+        return ((IAttributes)AttributesBuilder).AttributesAvailable();
     }
 
     public bool AttributesAvailable(CultureInfo locale)
     {
-        return ((IAttributes) AttributesBuilder).AttributesAvailable(locale);
+        return ((IAttributes)AttributesBuilder).AttributesAvailable(locale);
     }
 
     public bool AttributeAvailable(string attributeName)

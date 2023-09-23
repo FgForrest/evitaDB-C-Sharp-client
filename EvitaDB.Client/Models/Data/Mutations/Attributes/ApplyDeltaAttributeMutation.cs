@@ -45,7 +45,7 @@ public class ApplyDeltaAttributeMutation<T> : ApplyDeltaAttributeMutation
         RequiredRangeAfterApplication = requiredRangeAfterApplication;
     }
 
-    public ApplyDeltaAttributeMutation(string attributeName, T delta, @NumberRange<T>? requiredRangeAfterApplication) :
+    public ApplyDeltaAttributeMutation(string attributeName, T delta, NumberRange<T>? requiredRangeAfterApplication) :
         base(new AttributeKey(attributeName))
     {
         Delta = delta;

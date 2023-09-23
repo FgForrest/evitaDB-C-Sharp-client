@@ -73,8 +73,8 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
                     ? new Dictionary<NamingConvention, string>()
                     : referenceSchema.GetGroupTypeNameVariants(_ => null),
                 referenceSchema.ReferencedGroupTypeManaged,
-                referenceSchema.Indexed,
-                referenceSchema.Faceted,
+                referenceSchema.IsIndexed,
+                referenceSchema.IsFaceted,
                 referenceSchema.GetAttributes().Values.Concat(new[] {newAttributeSchema})
                     .ToDictionary(x => x.Name, x => x),
                 referenceSchema.GetSortableAttributeCompounds()

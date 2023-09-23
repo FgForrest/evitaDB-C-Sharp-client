@@ -6,9 +6,9 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
 public class ModifyCatalogSchemaDescriptionMutation : ILocalCatalogSchemaMutation
 {
-    public string Description { get; }
+    public string? Description { get; }
 
-    public ModifyCatalogSchemaDescriptionMutation(string description)
+    public ModifyCatalogSchemaDescriptionMutation(string? description)
     {
         Description = description;
     }

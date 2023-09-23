@@ -38,12 +38,13 @@ public class ReferencePredicate
         Locales = new HashSet<CultureInfo>();
     }
 
-    public ReferencePredicate(EvitaRequestData evitaRequest)
+    public ReferencePredicate(EvitaRequest evitaRequest)
     {
-        RequiresEntityReferences = evitaRequest.EntityReference;
-        ReferenceSet = evitaRequest.ReferenceSet;
-        ImplicitLocale = evitaRequest.ImplicitLocale;
-        Locales = evitaRequest.RequiredLocaleSet;
+        RequiresEntityReferences = evitaRequest.RequiresEntityReferences();
+        ReferenceSet = evitaRequest.GetReferenceEntityFetch()
+            .ToDictionary(x=>x.Key, x=>x.Value.AttributeRequest);
+        ImplicitLocale = evitaRequest.GetImplicitLocale();
+        Locales = evitaRequest.GetRequiredLocales();
     }
 
     public ReferencePredicate(bool requiresEntityReferences)

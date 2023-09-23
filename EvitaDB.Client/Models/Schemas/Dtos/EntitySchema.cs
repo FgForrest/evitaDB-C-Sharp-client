@@ -71,7 +71,7 @@ public class EntitySchema : IEntitySchema
         ReferenceNameIndex =
             InternalGenerateNameVariantIndex(References.Values, x => x.NameVariants);
         EvolutionModes = evolutionMode;
-        NonNullableAttributes = this.Attributes
+        NonNullableAttributes = Attributes
             .Values
             .Where(it => !it.Nullable)
             .ToList();
@@ -81,10 +81,10 @@ public class EntitySchema : IEntitySchema
             .ToList();
         SortableAttributeCompounds = sortableAttributeCompounds.ToImmutableDictionary(
             x => x.Key,
-            x => EntitySchema.ToSortableAttributeCompoundSchema(x.Value)
+            x => ToSortableAttributeCompoundSchema(x.Value)
         );
 
-        SortableAttributeCompoundNameIndex = EntitySchema.InternalGenerateNameVariantIndex(
+        SortableAttributeCompoundNameIndex = InternalGenerateNameVariantIndex(
             SortableAttributeCompounds.Values, x => x.NameVariants
         );
 
@@ -384,14 +384,14 @@ public class EntitySchema : IEntitySchema
             referenceSchemaContract.Description,
             referenceSchemaContract.DeprecationNotice,
             referenceSchemaContract.ReferencedEntityType,
-            referenceSchemaContract.GetEntityTypeNameVariants(_ => null),
+            referenceSchemaContract.GetEntityTypeNameVariants(_ => default),
             referenceSchemaContract.ReferencedEntityTypeManaged,
             referenceSchemaContract.Cardinality,
             referenceSchemaContract.ReferencedGroupType,
-            referenceSchemaContract.GetGroupTypeNameVariants(_ => null),
+            referenceSchemaContract.GetGroupTypeNameVariants(_ => default),
             referenceSchemaContract.ReferencedGroupTypeManaged,
-            referenceSchemaContract.Indexed,
-            referenceSchemaContract.Faceted,
+            referenceSchemaContract.IsIndexed,
+            referenceSchemaContract.IsFaceted,
             referenceSchemaContract.GetAttributes(),
             referenceSchemaContract.GetSortableAttributeCompounds()
         );

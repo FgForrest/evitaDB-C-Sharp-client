@@ -34,8 +34,8 @@ public interface IReferenceSortableAttributeCompoundSchemaMutation : ISortableAt
                 ? new Dictionary<NamingConvention, string>()
                 : referenceSchema.GetGroupTypeNameVariants(s => null),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+            referenceSchema.IsIndexed,
+            referenceSchema.IsFaceted,
             referenceSchema.GetAttributes(),
             referenceSchema.GetSortableAttributeCompounds().Values
                 .Where(it => updatedSchema.Name != it.Name)

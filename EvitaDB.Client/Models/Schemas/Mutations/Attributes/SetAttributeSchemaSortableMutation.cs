@@ -1,5 +1,4 @@
-﻿using EvitaDB.Client.DataTypes;
-using EvitaDB.Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -22,7 +21,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         Assert.IsTrue(
-            referenceSchema!.Indexed,
+            referenceSchema!.IsIndexed,
             () => new InvalidSchemaMutationException(
                 "The reference `" + referenceSchema.Name + "` is in entity `" + entitySchema.Name + "` is not indexed! " +
                 "Non-indexed references must not contain sortable attribute `" + Name + "`!"
@@ -41,12 +40,12 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(GlobalAttributeSchema.InternalBuild(
+            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -78,7 +77,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
         ), typeof(TS));
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
@@ -92,7 +91,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
         );
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??

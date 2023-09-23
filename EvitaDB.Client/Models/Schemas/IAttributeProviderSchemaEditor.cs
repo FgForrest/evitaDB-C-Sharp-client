@@ -25,9 +25,8 @@ public interface IAttributeProviderSchemaEditor<out TS, T, out TU> : IAttributeS
     /// <param name="attributeName">name of the attribute</param>
     /// <param name="whichIs">lambda that allows to specify attributes of the attribute itself</param>
     /// <typeparam name="TT">type of the entity. Must be one of &lt;see cref="EvitaDataTypes.SupportedTypes"/&gt; types</typeparam>
-    /// <typeparam name="TA"></typeparam>
     /// <returns></returns>
-    TS WithAttribute<TT, TA>(
+    TS WithAttribute<TT>(
         string attributeName,
         Action<TU>? whichIs
     );

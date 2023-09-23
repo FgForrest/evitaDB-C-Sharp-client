@@ -12,7 +12,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
     public bool Localized { get; }
     public Type Type { get; }
 
-    internal static AssociatedDataSchema InternalBuild(string name, Type type, bool localized)
+    internal static AssociatedDataSchema InternalBuild(string name, Type type, bool localized = false)
     {
         return new AssociatedDataSchema(
             name, NamingConventionHelper.Generate(name),

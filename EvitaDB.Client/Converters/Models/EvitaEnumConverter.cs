@@ -1,5 +1,4 @@
-﻿using EvitaDB;
-using EvitaDB.Client.Exceptions;
+﻿using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
@@ -9,7 +8,6 @@ using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Session;
 using static EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
-using QueryTelemetry = EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
 
 namespace EvitaDB.Client.Converters.Models;
 
@@ -330,62 +328,62 @@ public static class EvitaEnumConverter
         };
     }
 
-    public static QueryTelemetry.QueryPhase ToQueryPhase(GrpcQueryPhase grpcQueryPhase)
+    public static QueryPhase ToQueryPhase(GrpcQueryPhase grpcQueryPhase)
     {
         return grpcQueryPhase switch
         {
-            GrpcQueryPhase.Overall => QueryTelemetry.QueryPhase.Overall,
-            GrpcQueryPhase.Planning => QueryTelemetry.QueryPhase.Planning,
-            GrpcQueryPhase.PlanningNestedQuery => QueryTelemetry.QueryPhase.PlanningNestedQuery,
-            GrpcQueryPhase.PlanningIndexUsage => QueryTelemetry.QueryPhase.PlanningIndexUsage,
-            GrpcQueryPhase.PlanningFilter => QueryTelemetry.QueryPhase.PlanningFilter,
-            GrpcQueryPhase.PlanningFilterNestedQuery => QueryTelemetry.QueryPhase.PlanningFilterNestedQuery,
-            GrpcQueryPhase.PlanningFilterAlternative => QueryTelemetry.QueryPhase.PlanningFilterAlternative,
-            GrpcQueryPhase.PlanningSort => QueryTelemetry.QueryPhase.PlanningSort,
-            GrpcQueryPhase.PlanningSortAlternative => QueryTelemetry.QueryPhase.PlanningSortAlternative,
-            GrpcQueryPhase.PlanningExtraResultFabrication => QueryTelemetry.QueryPhase.PlanningExtraResultFabrication,
-            GrpcQueryPhase.PlanningExtraResultFabricationAlternative => QueryTelemetry.QueryPhase
+            GrpcQueryPhase.Overall => QueryPhase.Overall,
+            GrpcQueryPhase.Planning => QueryPhase.Planning,
+            GrpcQueryPhase.PlanningNestedQuery => QueryPhase.PlanningNestedQuery,
+            GrpcQueryPhase.PlanningIndexUsage => QueryPhase.PlanningIndexUsage,
+            GrpcQueryPhase.PlanningFilter => QueryPhase.PlanningFilter,
+            GrpcQueryPhase.PlanningFilterNestedQuery => QueryPhase.PlanningFilterNestedQuery,
+            GrpcQueryPhase.PlanningFilterAlternative => QueryPhase.PlanningFilterAlternative,
+            GrpcQueryPhase.PlanningSort => QueryPhase.PlanningSort,
+            GrpcQueryPhase.PlanningSortAlternative => QueryPhase.PlanningSortAlternative,
+            GrpcQueryPhase.PlanningExtraResultFabrication => QueryPhase.PlanningExtraResultFabrication,
+            GrpcQueryPhase.PlanningExtraResultFabricationAlternative => QueryPhase
                 .PlanningExtraResultFabricationAlternative,
-            GrpcQueryPhase.Execution => QueryTelemetry.QueryPhase.Execution,
-            GrpcQueryPhase.ExecutionPrefetch => QueryTelemetry.QueryPhase.ExecutionPrefetch,
-            GrpcQueryPhase.ExecutionFilter => QueryTelemetry.QueryPhase.ExecutionFilter,
-            GrpcQueryPhase.ExecutionFilterNestedQuery => QueryTelemetry.QueryPhase.ExecutionFilterNestedQuery,
-            GrpcQueryPhase.ExecutionSortAndSlice => QueryTelemetry.QueryPhase.ExecutionSortAndSlice,
-            GrpcQueryPhase.ExtraResultsFabrication => QueryTelemetry.QueryPhase.ExtraResultsFabrication,
-            GrpcQueryPhase.ExtraResultItemFabrication => QueryTelemetry.QueryPhase.ExtraResultItemFabrication,
-            GrpcQueryPhase.Fetching => QueryTelemetry.QueryPhase.Fetching,
-            GrpcQueryPhase.FetchingReferences => QueryTelemetry.QueryPhase.FetchingReferences,
-            GrpcQueryPhase.FetchingParents => QueryTelemetry.QueryPhase.FetchingParents,
+            GrpcQueryPhase.Execution => QueryPhase.Execution,
+            GrpcQueryPhase.ExecutionPrefetch => QueryPhase.ExecutionPrefetch,
+            GrpcQueryPhase.ExecutionFilter => QueryPhase.ExecutionFilter,
+            GrpcQueryPhase.ExecutionFilterNestedQuery => QueryPhase.ExecutionFilterNestedQuery,
+            GrpcQueryPhase.ExecutionSortAndSlice => QueryPhase.ExecutionSortAndSlice,
+            GrpcQueryPhase.ExtraResultsFabrication => QueryPhase.ExtraResultsFabrication,
+            GrpcQueryPhase.ExtraResultItemFabrication => QueryPhase.ExtraResultItemFabrication,
+            GrpcQueryPhase.Fetching => QueryPhase.Fetching,
+            GrpcQueryPhase.FetchingReferences => QueryPhase.FetchingReferences,
+            GrpcQueryPhase.FetchingParents => QueryPhase.FetchingParents,
             _ => throw new EvitaInternalError("Unrecognized remote query phase: " + grpcQueryPhase)
         };
     }
 
-    public static GrpcQueryPhase ToGrpcQueryPhase(QueryTelemetry.QueryPhase queryPhase)
+    public static GrpcQueryPhase ToGrpcQueryPhase(QueryPhase queryPhase)
     {
         return queryPhase switch
         {
-            QueryTelemetry.QueryPhase.Overall => GrpcQueryPhase.Overall,
-            QueryTelemetry.QueryPhase.Planning => GrpcQueryPhase.Planning,
-            QueryTelemetry.QueryPhase.PlanningNestedQuery => GrpcQueryPhase.PlanningNestedQuery,
-            QueryTelemetry.QueryPhase.PlanningIndexUsage => GrpcQueryPhase.PlanningIndexUsage,
-            QueryTelemetry.QueryPhase.PlanningFilter => GrpcQueryPhase.PlanningFilter,
-            QueryTelemetry.QueryPhase.PlanningFilterNestedQuery => GrpcQueryPhase.PlanningFilterNestedQuery,
-            QueryTelemetry.QueryPhase.PlanningFilterAlternative => GrpcQueryPhase.PlanningFilterAlternative,
-            QueryTelemetry.QueryPhase.PlanningSort => GrpcQueryPhase.PlanningSort,
-            QueryTelemetry.QueryPhase.PlanningSortAlternative => GrpcQueryPhase.PlanningSortAlternative,
-            QueryTelemetry.QueryPhase.PlanningExtraResultFabrication => GrpcQueryPhase.PlanningExtraResultFabrication,
-            QueryTelemetry.QueryPhase.PlanningExtraResultFabricationAlternative => GrpcQueryPhase
+            QueryPhase.Overall => GrpcQueryPhase.Overall,
+            QueryPhase.Planning => GrpcQueryPhase.Planning,
+            QueryPhase.PlanningNestedQuery => GrpcQueryPhase.PlanningNestedQuery,
+            QueryPhase.PlanningIndexUsage => GrpcQueryPhase.PlanningIndexUsage,
+            QueryPhase.PlanningFilter => GrpcQueryPhase.PlanningFilter,
+            QueryPhase.PlanningFilterNestedQuery => GrpcQueryPhase.PlanningFilterNestedQuery,
+            QueryPhase.PlanningFilterAlternative => GrpcQueryPhase.PlanningFilterAlternative,
+            QueryPhase.PlanningSort => GrpcQueryPhase.PlanningSort,
+            QueryPhase.PlanningSortAlternative => GrpcQueryPhase.PlanningSortAlternative,
+            QueryPhase.PlanningExtraResultFabrication => GrpcQueryPhase.PlanningExtraResultFabrication,
+            QueryPhase.PlanningExtraResultFabricationAlternative => GrpcQueryPhase
                 .PlanningExtraResultFabricationAlternative,
-            QueryTelemetry.QueryPhase.Execution => GrpcQueryPhase.Execution,
-            QueryTelemetry.QueryPhase.ExecutionPrefetch => GrpcQueryPhase.ExecutionPrefetch,
-            QueryTelemetry.QueryPhase.ExecutionFilter => GrpcQueryPhase.ExecutionFilter,
-            QueryTelemetry.QueryPhase.ExecutionFilterNestedQuery => GrpcQueryPhase.ExecutionFilterNestedQuery,
-            QueryTelemetry.QueryPhase.ExecutionSortAndSlice => GrpcQueryPhase.ExecutionSortAndSlice,
-            QueryTelemetry.QueryPhase.ExtraResultsFabrication => GrpcQueryPhase.ExtraResultsFabrication,
-            QueryTelemetry.QueryPhase.ExtraResultItemFabrication => GrpcQueryPhase.ExtraResultItemFabrication,
-            QueryTelemetry.QueryPhase.Fetching => GrpcQueryPhase.Fetching,
-            QueryTelemetry.QueryPhase.FetchingReferences => GrpcQueryPhase.FetchingReferences,
-            QueryTelemetry.QueryPhase.FetchingParents => GrpcQueryPhase.FetchingParents,
+            QueryPhase.Execution => GrpcQueryPhase.Execution,
+            QueryPhase.ExecutionPrefetch => GrpcQueryPhase.ExecutionPrefetch,
+            QueryPhase.ExecutionFilter => GrpcQueryPhase.ExecutionFilter,
+            QueryPhase.ExecutionFilterNestedQuery => GrpcQueryPhase.ExecutionFilterNestedQuery,
+            QueryPhase.ExecutionSortAndSlice => GrpcQueryPhase.ExecutionSortAndSlice,
+            QueryPhase.ExtraResultsFabrication => GrpcQueryPhase.ExtraResultsFabrication,
+            QueryPhase.ExtraResultItemFabrication => GrpcQueryPhase.ExtraResultItemFabrication,
+            QueryPhase.Fetching => GrpcQueryPhase.Fetching,
+            QueryPhase.FetchingReferences => GrpcQueryPhase.FetchingReferences,
+            QueryPhase.FetchingParents => GrpcQueryPhase.FetchingParents,
             _ => throw new EvitaInternalError("Unrecognized local query phase: " + queryPhase)
         };
     }

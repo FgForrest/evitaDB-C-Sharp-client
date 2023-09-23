@@ -4,7 +4,7 @@ namespace EvitaDB.Client.Models.ExtraResults;
 
 public class AttributeHistogram : IEvitaResponseExtraResult
 {
-    private readonly Dictionary<string, IHistogramContract> _histograms;
+    private readonly IDictionary<string, IHistogramContract> _histograms;
 
     public IHistogramContract? GetHistogram(string attributeName)
     {

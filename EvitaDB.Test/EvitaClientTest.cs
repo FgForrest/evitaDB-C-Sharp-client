@@ -1,4 +1,6 @@
 using System.Globalization;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using NUnit.Framework;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
@@ -21,7 +23,6 @@ namespace EvitaDB.Test;
 public class EvitaClientTest
 {
     private static EvitaClient? _client;
-    private static EvitaClientConfiguration EvitaClientConfiguration { get; }
 
     private const string ExistingCatalogWithData = "evita";
 
@@ -31,21 +32,35 @@ public class EvitaClientTest
     private const string AttributeDecimalRange = "attrDecimalRange";
     private const string NonExistingAttribute = "nonExistingAttribute";
 
-    static EvitaClientTest()
-    {
-        // create a evita client configuration the the running instance of evita server
-        EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
-            .SetHost("localhost")
-            .SetPort(5556)
-            .SetSystemApiPort(5557)
-            .Build();
-    }
+    private const int GrpcPort = 5556;
+    private const int SystemApiPort = 5557;
 
-    [SetUp]
-    public static void Setup()
+    [OneTimeSetUp]
+    public static async Task Setup()
     {
+        IContainer container = new ContainerBuilder()
+            // Set the image for the container to "evitadb/evitadb".
+            .WithImage("evitadb/evitadb:canary")
+            // Bind ports of the container.
+            .WithPortBinding(GrpcPort)
+            .WithPortBinding(SystemApiPort)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
+            // Build the container configuration.
+            .Build();
+
+        // Start the container.
+        await container.StartAsync()
+            .ConfigureAwait(false);
+        
+        // create a evita client configuration the the running instance of evita server
+        EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
+            .SetHost("localhost")
+            .SetPort(GrpcPort)
+            .SetSystemApiPort(SystemApiPort)
+            .Build();
+        
         // create a new evita client with the specified configuration
-        _client = new EvitaClient(EvitaClientConfiguration);
+        _client = new EvitaClient(configuration);
     }
 
     [Test]
@@ -58,7 +73,7 @@ public class EvitaClientTest
         ICatalogSchema catalogSchema = _client.DefineCatalog(TestCatalog).ToInstance();
         That(catalogSchema.Name, Is.EqualTo(TestCatalog));
 
-        using (var rwSession = _client.CreateReadWriteSession(TestCatalog))
+        using (EvitaClientSession rwSession = _client.CreateReadWriteSession(TestCatalog))
         {
             // create a new entity schema
             catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new CreateEntitySchemaMutation(TestCollection));

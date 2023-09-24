@@ -47,7 +47,7 @@ public class EvitaClient : IClientContext, IDisposable
     public EvitaClient(EvitaClientConfiguration configuration)
     {
         _configuration = configuration;
-        var certificateManager = new ClientCertificateManager.Builder()
+        ClientCertificateManager certificateManager = new ClientCertificateManager.Builder()
             .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
             .SetClientCertificatePath(configuration.CertificateFileName)
             .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
@@ -60,7 +60,7 @@ public class EvitaClient : IClientContext, IDisposable
             certificateManager.GetCertificatesFromServer(configuration.Host, configuration.SystemApiPort);
         }
 
-        var channelBuilder = new ChannelBuilder(
+        ChannelBuilder channelBuilder = new ChannelBuilder(
             configuration.Host,
             configuration.Port,
             certificateManager.BuildHttpClientHandler(),
@@ -347,12 +347,12 @@ public class EvitaClient : IClientContext, IDisposable
             CatalogName = traits.CatalogName,
             DryRun = traits.IsDryRun(),
         };
-        var grpcResponse = traits.IsReadWrite()
+        GrpcEvitaSessionResponse? grpcResponse = traits.IsReadWrite()
             ? ExecuteWithBlockingEvitaService(evitaServiceClient =>
                 evitaServiceClient.CreateReadWriteSession(grpcRequest))
             : ExecuteWithBlockingEvitaService(evitaServiceClient =>
                 evitaServiceClient.CreateReadOnlySession(grpcRequest));
-        var session = new EvitaClientSession(
+        EvitaClientSession session = new EvitaClientSession(
             _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
             _channelPool,
             traits.CatalogName,

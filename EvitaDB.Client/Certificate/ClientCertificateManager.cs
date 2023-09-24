@@ -17,7 +17,7 @@ public class ClientCertificateManager
     private bool UseGeneratedCertificate { get; } = true;
     private bool TrustedServerCertificate { get; }
 
-    ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
+    private ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
         string? clientCertificateKeyPath, string? clientCertificateKeyPassword, bool useGeneratedCertificate,
         bool trustedServerCertificate)
     {

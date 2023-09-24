@@ -7,7 +7,7 @@ public class PriceContent : AbstractRequireConstraintLeaf, IEntityContentRequire
     private const string SuffixAll = "all";
 
     public static PriceContent All() => new PriceContent(PriceContentMode.All);
-    public static PriceContent RespectingFilter(params string[] priceLists) => new PriceContent(PriceContentMode.RespectingFilter, priceLists);
+    public static PriceContent RespectingFilter(params string[] priceLists) => new(PriceContentMode.RespectingFilter, priceLists);
 
     public string? SuffixIfApplied
     {
@@ -30,7 +30,7 @@ public class PriceContent : AbstractRequireConstraintLeaf, IEntityContentRequire
         Arguments[0]! as PriceContentMode? ?? Enum.Parse<PriceContentMode>(FetchMode.ToString());
 
     public string[] AdditionalPriceListsToFetch =>
-        Arguments.Length > 1 ? (string[]) Arguments.Skip(1).ToArray() : EmptyPriceLists;
+        (Arguments.Length > 1 ? Arguments.Skip(1).ToArray() as string[] : EmptyPriceLists)!;
 
     private PriceContent(params object[] arguments) : base(arguments)
     {

@@ -16,4 +16,9 @@ public record Predecessor(int PredecessorId)
     /// Returns true if this is the head of the list.
     /// </summary>
     public bool IsHead => PredecessorId == -1;
+
+    public override string ToString()
+    {
+        return $"Predecessor[predecessorId={PredecessorId}]";
+    }
 }

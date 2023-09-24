@@ -33,12 +33,12 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(GlobalAttributeSchema.InternalBuild(
+            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
                 Name,
                 Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -70,7 +70,7 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
         ), typeof(TS));
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
@@ -78,13 +78,13 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IEntityAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             entitySchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??

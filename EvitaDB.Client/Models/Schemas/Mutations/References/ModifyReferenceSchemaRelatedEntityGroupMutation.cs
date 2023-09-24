@@ -15,7 +15,7 @@ public class ModifyReferenceSchemaRelatedEntityGroupMutation : AbstractModifyRef
         ReferencedGroupTypeManaged = referencedGroupTypeManaged;
     }
 
-    public override IReferenceSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
+    public override IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         return ReferenceSchema.InternalBuild(
@@ -37,7 +37,7 @@ public class ModifyReferenceSchemaRelatedEntityGroupMutation : AbstractModifyRef
         );
     }
 
-    public override IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public override IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IReferenceSchema? existingReferenceSchema = entitySchema!.GetReference(Name);
@@ -50,7 +50,7 @@ public class ModifyReferenceSchemaRelatedEntityGroupMutation : AbstractModifyRef
         }
 
         IReferenceSchema theSchema = existingReferenceSchema;
-        IReferenceSchema? updatedReferenceSchema = Mutate(entitySchema, theSchema);
+        IReferenceSchema updatedReferenceSchema = Mutate(entitySchema, theSchema);
         return ReplaceReferenceSchema(entitySchema, theSchema, updatedReferenceSchema);
     }
 }

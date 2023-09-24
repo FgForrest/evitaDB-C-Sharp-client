@@ -367,7 +367,8 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
             {
                 writer.WritePropertyName("references");
                 writer.WriteStartObject();
-                foreach (var groupBy in value.GetReferences().GroupBy(x => x.ReferenceName).OrderBy(x=>x.Key))
+                foreach (var groupBy in value.GetReferences().GroupBy(x => x.ReferenceName)
+                             .OrderBy(x => x.Key, StringComparer.Ordinal))
                 {
                     WriteReference(writer, serializer, groupBy.Key, groupBy.ToList());
                 }

@@ -16,6 +16,7 @@ public class EvitaRequest
     private bool _localeExamined;
     private string? _entityType;
     private CultureInfo? _implicitLocale;
+    private Type? _expectedType;
     private int[]? _primaryKeys;
     private CultureInfo? _locale;
     private bool? _requiredLocales;
@@ -66,13 +67,15 @@ public class EvitaRequest
 
     public EvitaRequest(
         Query query,
-        DateTimeOffset alignedNow)
+        DateTimeOffset alignedNow,
+        Type? expectedType = null)
     {
         Collection? header = query.Entities;
         _entityType = header?.EntityType;
         Query = query;
         AlignedNow = alignedNow;
         _implicitLocale = null;
+        _expectedType = expectedType;
     }
 
     /**
@@ -149,7 +152,7 @@ public class EvitaRequest
                 CultureInfo? theLocale = GetLocale();
                 if (theLocale != null)
                 {
-                    _requiredLocaleSet = new HashSet<CultureInfo>(new[] { theLocale });
+                    _requiredLocaleSet = new HashSet<CultureInfo>(new[] {theLocale});
                 }
             }
             else
@@ -165,7 +168,7 @@ public class EvitaRequest
                     CultureInfo? theLocale = GetLocale();
                     if (theLocale != null)
                     {
-                        _requiredLocaleSet = new HashSet<CultureInfo>(new[] { theLocale });
+                        _requiredLocaleSet = new HashSet<CultureInfo>(new[] {theLocale});
                     }
                 }
 
@@ -173,7 +176,7 @@ public class EvitaRequest
             }
         }
 
-        return _requiredLocaleSet;
+        return _requiredLocaleSet!;
     }
 
     /**
@@ -198,7 +201,8 @@ public class EvitaRequest
     {
         if (_primaryKeys == null)
         {
-            _primaryKeys = QueryUtils.FindFilter<EntityPrimaryKeyInSet, ISeparateEntityContentRequireContainer>(Query)?.PrimaryKeys ?? EmptyInts;
+            _primaryKeys = QueryUtils.FindFilter<EntityPrimaryKeyInSet, ISeparateEntityContentRequireContainer>(Query)
+                ?.PrimaryKeys ?? EmptyInts;
         }
 
         return _primaryKeys;
@@ -211,7 +215,8 @@ public class EvitaRequest
     {
         if (_requiresEntity == null)
         {
-            EntityFetch? entityFetch = QueryUtils.FindRequire<EntityFetch, ISeparateEntityContentRequireContainer>(Query);
+            EntityFetch? entityFetch =
+                QueryUtils.FindRequire<EntityFetch, ISeparateEntityContentRequireContainer>(Query);
             _requiresEntity = entityFetch != null;
             _entityRequirement = entityFetch;
         }
@@ -536,18 +541,22 @@ public class EvitaRequest
             if (entityRequirement is not null)
             {
                 List<ReferenceContent>
-                    referenceContent = QueryUtils.FindConstraints<ReferenceContent, ISeparateEntityContentRequireContainer>(entityRequirement);
+                    referenceContent =
+                        QueryUtils.FindConstraints<ReferenceContent, ISeparateEntityContentRequireContainer>(
+                            entityRequirement);
                 _entityReference = referenceContent.Any();
                 _defaultReferenceRequirement = referenceContent
                     .Where(it => ArrayUtils.IsEmpty(it.ReferencedNames))
                     .Select(it => GetRequirementContext(it, it.AttributeContent))
                     .FirstOrDefault();
-                
+
                 _entityFetchRequirements = referenceContent
-                    .SelectMany(it=>
+                    .SelectMany(it =>
                         it.ReferencedNames
-                            .Select(entityType => new KeyValuePair<string,RequirementContext>(entityType, GetRequirementContext(it, it.AttributeContent)))
-                    ).ToDictionary(x=>x.Key, x=>x.Value);
+                            .Select(entityType =>
+                                new KeyValuePair<string, RequirementContext>(entityType,
+                                    GetRequirementContext(it, it.AttributeContent)))
+                    ).ToDictionary(x => x.Key, x => x.Value);
             }
             else
             {
@@ -580,23 +589,57 @@ public class EvitaRequest
             _requiredWithinHierarchy = true;
         }
 
-        return _hierarchyWithin.TryGetValue(referenceName, out IHierarchyFilterConstraint? constraint)
+        return _hierarchyWithin!.TryGetValue(referenceName, out IHierarchyFilterConstraint? constraint)
             ? constraint
             : null;
     }
-    
-    private void InitPagination() {
+
+    public IDataChunk<T> CreateDataChunk<T>(int totalRecordCount, IList<T> data)
+    {
+        if (_firstRecordOffset == null)
+        {
+            InitPagination();
+        }
+
+        if (data.Any())
+        {
+            // TODO: do we need conversion function?
+            T first = data[0];
+            if (_expectedType != first?.GetType())
+            {
+                // Conversion
+            }
+        }
+
+        return _resultForm switch
+        {
+            ResultForm.PaginatedList => new PaginatedList<T>(
+                _limit!.Value == 0 ? 1 : (_firstRecordOffset!.Value + _limit.Value) / _limit.Value, _limit.Value,
+                totalRecordCount, data),
+            ResultForm.StripList => new StripList<T>(_firstRecordOffset!.Value, _limit!.Value, totalRecordCount, data),
+            null => new PaginatedList<T>(0, 0, 0),
+            _ => new PaginatedList<T>(0, 0, 0)
+        };
+    }
+
+    private void InitPagination()
+    {
         Page? page = QueryUtils.FindRequire<Page>(Query);
         Strip? strip = QueryUtils.FindRequire<Strip>(Query);
-        if (page is not null) {
+        if (page is not null)
+        {
             _limit = page.PageSize;
             _firstRecordOffset = PaginatedList<object>.GetFirstItemNumberForPage(page.Number, _limit.Value);
             _resultForm = ResultForm.PaginatedList;
-        } else if (strip is not null) {
+        }
+        else if (strip is not null)
+        {
             _limit = strip.Limit;
             _firstRecordOffset = strip.Offset;
             _resultForm = ResultForm.StripList;
-        } else {
+        }
+        else
+        {
             _limit = 20;
             _firstRecordOffset = 0;
             _resultForm = ResultForm.PaginatedList;

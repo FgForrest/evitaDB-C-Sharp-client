@@ -13,7 +13,7 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
         Faceted = faceted;
     }
 
-    public override IReferenceSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
+    public override IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         if (referenceSchema!.IsFaceted == Faceted)
@@ -44,7 +44,7 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
         );
     }
 
-    public override IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public override IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IReferenceSchema? existingReferenceSchema = entitySchema!.GetReference(Name);
@@ -57,7 +57,7 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
         }
 
         IReferenceSchema theSchema = existingReferenceSchema;
-        IReferenceSchema? updatedReferenceSchema = Mutate(entitySchema, theSchema);
+        IReferenceSchema updatedReferenceSchema = Mutate(entitySchema, theSchema);
         return ReplaceReferenceSchema(entitySchema, theSchema, updatedReferenceSchema);
     }
 }

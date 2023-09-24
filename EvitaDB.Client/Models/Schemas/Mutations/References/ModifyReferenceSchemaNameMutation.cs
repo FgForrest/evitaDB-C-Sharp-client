@@ -13,7 +13,7 @@ public class ModifyReferenceSchemaNameMutation : AbstractModifyReferenceDataSche
         NewName = newName;
     }
 
-    public override IReferenceSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
+    public override IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         return ReferenceSchema.InternalBuild(
@@ -35,7 +35,7 @@ public class ModifyReferenceSchemaNameMutation : AbstractModifyReferenceDataSche
         );
     }
 
-    public override IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public override IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IReferenceSchema? existingReferenceSchema = entitySchema!.GetReference(Name);
@@ -48,7 +48,7 @@ public class ModifyReferenceSchemaNameMutation : AbstractModifyReferenceDataSche
         }
 
         IReferenceSchema theSchema = existingReferenceSchema;
-        IReferenceSchema? updatedReferenceSchema = Mutate(entitySchema, theSchema);
+        IReferenceSchema updatedReferenceSchema = Mutate(entitySchema, theSchema);
         return ReplaceReferenceSchema(entitySchema, theSchema, updatedReferenceSchema);
     }
 }

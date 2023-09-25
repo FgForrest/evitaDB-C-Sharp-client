@@ -38,7 +38,7 @@ public class EvitaClient : IClientContext, IDisposable
     private readonly ConcurrentDictionary<Guid, EvitaClientSession> _activeSessions = new();
     private readonly ConcurrentDictionary<string, EvitaEntitySchemaCache> _entitySchemaCache = new();
 
-    private readonly EvitaClientConfiguration _configuration;
+    public EvitaClientConfiguration Configuration { get; }
 
     private static readonly Regex ErrorMessagePattern = new(@"(\w+:\w+:\w+): (.*)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase
@@ -46,7 +46,7 @@ public class EvitaClient : IClientContext, IDisposable
 
     public EvitaClient(EvitaClientConfiguration configuration)
     {
-        _configuration = configuration;
+        Configuration = configuration;
         ClientCertificateManager certificateManager = new ClientCertificateManager.Builder()
             .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
             .SetClientCertificatePath(configuration.CertificateFileName)
@@ -278,7 +278,7 @@ public class EvitaClient : IClientContext, IDisposable
         Func<TS, T> logic)
     {
         return (this as IClientContext).ExecuteWithClientAndRequestId(
-            _configuration.ClientId,
+            Configuration.ClientId,
             Guid.NewGuid().ToString(),
             () =>
             {

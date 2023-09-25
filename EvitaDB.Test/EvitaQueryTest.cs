@@ -6,10 +6,12 @@ using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using NUnit.Framework;
 using static EvitaDB.Client.Queries.IQueryConstraints;
+using static NUnit.Framework.Assert;
 
 namespace EvitaDB.Test;
 
@@ -37,6 +39,90 @@ public class EvitaQueryTest
             .SetUseGeneratedCertificate(true)
             .SetUsingTrustedRootCaCertificate(false)
             .Build();*/
+    }
+    
+    [Test]
+    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_EntityReferences()
+    {
+        EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
+            session => session.Query<EvitaEntityReferenceResponse, EntityReference>(
+                Query(
+                    Collection("Product"),
+                    FilterBy(
+                        And(
+                            Not(
+                                AttributeContains("url", "bla")
+                            ),
+                            Or(
+                                EntityPrimaryKeyInSet(677, 678, 679, 680),
+                                And(
+                                    PriceBetween(1.2m, 1000),
+                                    PriceValidIn(DateTimeOffset.Now),
+                                    PriceInPriceLists("basic", "vip"),
+                                    PriceInCurrency(new Currency("CZK"))
+                                )
+                            )
+                        )
+                    ),
+                    OrderBy(
+                        PriceNatural(OrderDirection.Desc)
+                    ),
+                    Require(
+                        Page(1, 20),
+                        DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
+                        QueryTelemetry()
+                    )
+                )
+            ));
+
+        That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
+        That(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}), Is.True);
+        That(referenceResponse.ExtraResults.Count, Is.EqualTo(1));
+        That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
+    }
+
+    [Test]
+    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_SealedEntities()
+    {
+        EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
+            session.Query<EvitaEntityResponse, ISealedEntity>(
+                Query(
+                    Collection("Product"),
+                    FilterBy(
+                        And(
+                            Not(
+                                AttributeContains("url", "bla")
+                            ),
+                            Or(
+                                EntityPrimaryKeyInSet(677, 678, 679, 680),
+                                And(
+                                    PriceBetween(102.2m, 10000),
+                                    PriceValidIn(DateTimeOffset.Now),
+                                    PriceInPriceLists("basic", "vip"),
+                                    PriceInCurrency(new Currency("CZK"))
+                                )
+                            )
+                        )
+                    ),
+                    OrderBy(
+                        PriceNatural(OrderDirection.Desc)
+                    ),
+                    Require(
+                        Page(1, 20),
+                        EntityFetch(AttributeContentAll(), ReferenceContentAll(), PriceContentAll()),
+                        DataInLocales(new CultureInfo("en-US"), new CultureInfo("cs-CZ")),
+                        QueryTelemetry()
+                    )
+                )
+            ));
+
+        That(entityResponse.RecordPage.Data!.Count, Is.EqualTo(20));
+        That(entityResponse.RecordPage.Data.Any(x => x.GetAttributeValues().Any()), Is.True);
+        That(entityResponse.RecordPage.Data.Any(x => x.GetReferences().Any()), Is.True);
+        That(entityResponse.RecordPage.Data.Any(x => x.GetPrices().Any()), Is.True);
+
+        That(entityResponse.ExtraResults.Count, Is.EqualTo(1));
+        That(entityResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
     }
 
     [SetUp]

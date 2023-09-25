@@ -21,4 +21,5 @@
         <ProjectReference Include="..\EvitaDB.Client\EvitaDB.Client.csproj"/>
     </ItemGroup>
 
+
 </Project>

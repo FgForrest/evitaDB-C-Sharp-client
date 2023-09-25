@@ -114,6 +114,89 @@ public class EvitaClientSession : IDisposable
         );
     }
 
+    public ISet<string> GetAllEntityTypes()
+    {
+        AssertActive();
+        GrpcEntityTypesResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            evitaSessionService.GetAllEntityTypes(new Empty())
+        );
+        return new HashSet<string>(grpcResponse.EntityTypes);
+    }
+
+    public TS? QueryOne<TS>(Query query) where TS : class, IEntityClassifier
+    {
+        AssertActive();
+        AssertRequestMakesSense<TS>(query);
+
+        StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
+        var request = new GrpcQueryRequest
+        {
+            Query = stringWithParameters.Query,
+            PositionalQueryParams = {stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam)}
+        };
+        GrpcQueryOneResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.QueryOne(request));
+
+        if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
+        {
+            return (grpcResponse.EntityReference is not null
+                ? EntityConverter.ToEntityReference(grpcResponse.EntityReference)
+                : null) as TS;
+        }
+
+        if (typeof(ISealedEntity).IsAssignableFrom(typeof(TS)))
+        {
+            return grpcResponse.SealedEntity is not null
+                ? EntityConverter.ToEntity<TS>(
+                    entity => _schemaCache.GetEntitySchemaOrThrow(
+                        entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
+                    ),
+                    grpcResponse.SealedEntity,
+                    new EvitaRequest(
+                        query,
+                        DateTimeOffset.Now
+                    )
+                )
+                : null;
+        }
+
+        throw new EvitaInvalidUsageException("Unsupported return type `" + typeof(TS) + "`!");
+    }
+
+    public IList<TS> QueryList<TS>(Query query) where TS : IEntityClassifier
+    {
+        AssertActive();
+        AssertRequestMakesSense<TS>(query);
+
+        StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
+        var request = new GrpcQueryRequest
+        {
+            Query = stringWithParameters.Query,
+            PositionalQueryParams = {stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam)}
+        };
+        GrpcQueryListResponse grpcResponse = ExecuteWithEvitaSessionService(session => session.QueryList(request));
+
+        if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
+        {
+            return EntityConverter.ToEntityReferences(grpcResponse.EntityReferences) as IList<TS>;
+        }
+
+        if (typeof(ISealedEntity).IsAssignableFrom(typeof(TS)))
+        {
+            return EntityConverter.ToEntities<TS>(
+                grpcResponse.SealedEntities,
+                (entityType, schemaVersion) => _schemaCache.GetEntitySchemaOrThrow(
+                    entityType, schemaVersion, FetchEntitySchema, GetCatalogSchema
+                ),
+                new EvitaRequest(
+                    query,
+                    DateTimeOffset.Now
+                )
+            );
+        }
+
+        throw new EvitaInvalidUsageException("Unsupported return type `" + typeof(TS) + "`!");
+    }
+
     public T Query<T, TS>(Query query) where TS : IEntityClassifier where T : EvitaResponse<TS>
     {
         AssertActive();
@@ -553,7 +636,8 @@ public class EvitaClientSession : IDisposable
 
             CatalogSchema updatedCatalogSchema =
                 CatalogSchemaConverter.Convert(GetEntitySchemaOrThrow, response.CatalogSchema);
-            ISealedCatalogSchema updatedSchema = new CatalogSchemaDecorator(updatedCatalogSchema, GetEntitySchemaOrThrow);
+            ISealedCatalogSchema updatedSchema =
+                new CatalogSchemaDecorator(updatedCatalogSchema, GetEntitySchemaOrThrow);
             _schemaCache.AnalyzeMutations(schemaMutation);
             _schemaCache.SetLatestCatalogSchema(updatedCatalogSchema);
             return updatedSchema;
@@ -714,7 +798,21 @@ public class EvitaClientSession : IDisposable
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(
-            session => new InitialEntityBuilder(GetEntitySchemaOrThrow(entityType), null)
+            _ =>
+            {
+                IEntitySchema entitySchema;
+                if (GetCatalogSchema().CatalogEvolutionModes.Contains(CatalogEvolutionMode.AddingEntityTypes))
+                {
+                    ISealedEntitySchema? schema = GetEntitySchema(entityType);
+                    entitySchema = schema is not null ? schema : EntitySchema.InternalBuild(entityType);
+                }
+                else
+                {
+                    entitySchema = GetEntitySchemaOrThrow(entityType);
+                }
+
+                return new InitialEntityBuilder(entitySchema, null);
+            }
         );
     }
 
@@ -722,7 +820,21 @@ public class EvitaClientSession : IDisposable
     {
         AssertActive();
         return ExecuteInTransactionIfPossible(
-            session => new InitialEntityBuilder(GetEntitySchemaOrThrow(entityType), primaryKey)
+            _ =>
+            {
+                IEntitySchema entitySchema;
+                if (GetCatalogSchema().CatalogEvolutionModes.Contains(CatalogEvolutionMode.AddingEntityTypes))
+                {
+                    ISealedEntitySchema? schema = GetEntitySchema(entityType);
+                    entitySchema = schema is not null ? schema : EntitySchema.InternalBuild(entityType);
+                }
+                else
+                {
+                    entitySchema = GetEntitySchemaOrThrow(entityType);
+                }
+
+                return new InitialEntityBuilder(entitySchema, primaryKey);
+            }
         );
     }
 
@@ -785,6 +897,26 @@ public class EvitaClientSession : IDisposable
             Console.WriteLine(ex.Message);
             throw;
         }
+    }
+
+    public EntityReference? QueryOneEntityReference(Query query)
+    {
+        return QueryOne<EntityReference>(query);
+    }
+
+    public ISealedEntity? QueryOneSealedEntity(Query query)
+    {
+        return QueryOne<ISealedEntity>(query);
+    }
+
+    public IList<EntityReference> QueryListOfEntityReferences(Query query)
+    {
+        return QueryList<EntityReference>(query);
+    }
+
+    public IList<ISealedEntity> QueryListOfSealedEntities(Query query)
+    {
+        return QueryList<ISealedEntity>(query);
     }
 
     private static void AssertRequestMakesSense<T>(Query query) where T : IEntityClassifier

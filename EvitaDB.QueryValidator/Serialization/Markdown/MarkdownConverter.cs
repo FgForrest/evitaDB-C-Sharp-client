@@ -178,7 +178,7 @@ public static partial class MarkdownConverter
                                 {
                                     string formattedValue =
                                         FormatValue(refEntity.GetAttributeValue(attributeKey)?.Value);
-                                    return RefEntityLink + refEntitySplit[1] + refEntity.PrimaryKey + AttrLink +
+                                    return RefEntityLink + refEntitySplit[1] + " " + refEntity.PrimaryKey + AttrLink +
                                            formattedValue;
                                 }));
                         }

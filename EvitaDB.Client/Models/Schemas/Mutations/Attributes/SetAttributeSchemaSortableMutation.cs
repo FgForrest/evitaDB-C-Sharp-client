@@ -34,18 +34,18 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                                                        "` schema for reference with name `" + referenceSchema.Name +
                                                        "`!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(null, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(null, existingAttributeSchema);
         return (this as IReferenceAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             referenceSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -55,13 +55,13 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                 Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             attributeSchema.Description,
@@ -71,10 +71,10 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
             Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
-            attributeSchema.GetType(),
+            attributeSchema.Type,
             attributeSchema.DefaultValue,
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
@@ -85,7 +85,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IEntityAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             entitySchema, existingAttributeSchema, updatedAttributeSchema
         );
@@ -98,9 +98,9 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                                                          throw new InvalidSchemaMutationException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
-        IGlobalAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema!
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 }

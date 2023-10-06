@@ -88,9 +88,19 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
         return GetAssociatedDataValueInternal(new AssociatedDataKey(associatedDataName))?.Value;
     }
 
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        return BaseAssociatedData.GetAssociatedData<T>(associatedDataName);
+    }
+
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
     {
         return GetAssociatedDataValueInternal(new AssociatedDataKey(associatedDataName, locale))?.Value;
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        return BaseAssociatedData.GetAssociatedData<T>(associatedDataName, locale);
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)

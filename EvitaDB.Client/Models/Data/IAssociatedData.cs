@@ -11,7 +11,9 @@ public interface IAssociatedData
     bool AssociatedDataAvailable(string associatedDataName);
     bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale);
     object? GetAssociatedData(string associatedDataName);
+    T? GetAssociatedData<T>(string associatedDataName) where T : class;
     object? GetAssociatedData(string associatedDataName, CultureInfo locale);
+    T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class;
     object[]? GetAssociatedDataArray(string associatedDataName);
     object[]? GetAssociatedDataArray(string associatedDataName, CultureInfo locale);
     AssociatedDataValue? GetAssociatedDataValue(string associatedDataName);

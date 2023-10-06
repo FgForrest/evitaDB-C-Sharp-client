@@ -27,18 +27,18 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
                                                        "` schema for reference with name `" + referenceSchema.Name +
                                                        "`!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(null, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(null, existingAttributeSchema);
         return (this as IReferenceAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             referenceSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -48,13 +48,13 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             Description,
@@ -64,10 +64,10 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
             attributeSchema.Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
-            attributeSchema.GetType(),
+            attributeSchema.Type,
             attributeSchema.DefaultValue,
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
@@ -91,9 +91,9 @@ public class ModifyAttributeSchemaDescriptionMutation : IEntityAttributeSchemaMu
                                                          throw new InvalidSchemaMutationException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
-        IGlobalAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema!
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 }

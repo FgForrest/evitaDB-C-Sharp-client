@@ -31,6 +31,8 @@ public static class Data
     public const string PriceListB2B = "b2b";
     public const string PriceListIntroduction = "introduction";
 
+    public const string TestCatalog = nameof(TestCatalog);
+
     public static readonly string[] PriceListNames =
     {
         PriceListBasic,

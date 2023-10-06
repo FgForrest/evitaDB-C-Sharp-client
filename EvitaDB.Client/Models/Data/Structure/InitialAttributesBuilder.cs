@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas;
@@ -372,7 +373,7 @@ public class InitialAttributesBuilder : IAttributesBuilder
         IAttributeSchemaProvider<IAttributeSchema> attributeSchemaProvider =
             ReferenceSchema as IAttributeSchemaProvider<IAttributeSchema> ?? EntitySchema;
         IDictionary<string, IAttributeSchema> newAttributes = AttributeValues
-            .Where(entry => attributeSchemaProvider.GetAttribute(entry.Key.AttributeName) is not null)
+            .Where(entry => attributeSchemaProvider.GetAttribute(entry.Key.AttributeName) is null)
             .Select(entry => entry.Value)
             .Select(IAttributesBuilder.CreateImplicitSchema)
             .ToDictionary(
@@ -384,10 +385,10 @@ public class InitialAttributesBuilder : IAttributesBuilder
             ReferenceSchema,
             AttributeValues.Values,
             !newAttributes.Any()
-                ? attributeSchemaProvider.GetAttributes()
+                ? attributeSchemaProvider.GetAttributes().ToImmutableDictionary()
                 : attributeSchemaProvider.GetAttributes()
                     .Concat(newAttributes)
-                    .ToDictionary(
+                    .ToImmutableDictionary(
                         entry => entry.Key,
                         entry => entry.Value
                     )

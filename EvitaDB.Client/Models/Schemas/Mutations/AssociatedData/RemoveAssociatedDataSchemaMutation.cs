@@ -18,10 +18,10 @@ public class RemoveAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
         return null;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAssociatedDataSchema? existingAssociatedDataSchema = entitySchema.GetAssociatedData(Name);
+        IAssociatedDataSchema? existingAssociatedDataSchema = entitySchema!.GetAssociatedData(Name);
         if (existingAssociatedDataSchema is null) {
             // the associated data schema was already removed - or just doesn't exist,
             // so we can simply return current schema

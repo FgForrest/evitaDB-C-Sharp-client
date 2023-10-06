@@ -24,6 +24,7 @@ public static partial class MarkdownConverter
     private const string PredecessorHeadSymbol = "⎆";
     private const string PredecessorSymbol = "↻ ";
 
+    private const string RefEntityLink = "\uD83D\uDCC4 ";
     private const string RefLink = "\uD83D\uDD17 ";
     private const string AttrLink = ": ";
     private const string PriceLink = "\uD83E\uDE99 ";
@@ -49,31 +50,12 @@ public static partial class MarkdownConverter
                                   .Any(require => QueryUtils.FindConstraint<DataInLocales>(require) != null);
 
         // collect headers for the MarkDown table
-        List<AttributeContent> attributeContents =
-            QueryUtils.FindConstraints<AttributeContent, ISeparateEntityContentRequireContainer>(entityFetch!);
         var headers = new List<string> {EntityPrimaryKey};
-        headers.AddRange(
-            attributeContents
-                .SelectMany(attributeContent =>
-                {
-                    if (attributeContent.AllRequested)
-                    {
-                        var attributes = entitySchema.Attributes.Values;
-                        return (localizedQuery ? attributes.Where(attr => attr.Localized) : attributes)
-                            .Select(attr => attr.Name)
-                            .Where(attrName =>
-                                response.RecordData.Any(entity => entity.GetAttributeValue(attrName) is not null));
-                    }
-
-                    return attributeContent.GetAttributeNames();
-                })
-                .SelectMany(
-                    attributeName => TransformLocalizedAttributes(
-                        response, attributeName, entitySchema.Locales, entitySchema, entity => new[] {entity}
-                    )
-                )
-                .Distinct()
-        );
+        if (entityFetch is not null)
+        {
+            headers.AddRange(GetEntityHeaders(entityFetch, () => response.RecordData,
+                entitySchema, localizedQuery, null));
+        }
 
         List<ReferenceContent> referenceContents =
             QueryUtils.FindConstraints<ReferenceContent, ISeparateEntityContentRequireContainer>(entityFetch!);
@@ -108,14 +90,17 @@ public static partial class MarkdownConverter
                             return attributeNames
                                 .SelectMany(
                                     attrName => TransformLocalizedAttributes(
-                                        response, attrName, entitySchema.Locales, referenceSchema,
-                                        entity => entity.GetReferences(referenceSchema.Name)
+                                        () => response.RecordData, attrName, entitySchema.Locales, referenceSchema,
+                                        entity => entity.GetReferences(referenceSchema.Name),
+                                        RefLink + referenceSchema.Name + AttrLink
                                     )
                                 )
-                                .Select(attr => RefLink + referenceSchema.Name + AttrLink + attr);
+                                .Concat(GetReferencedEntityHeaders(response, refCnt, referenceSchema, entitySchema,
+                                    localizedQuery));
                         }
 
-                        return Enumerable.Empty<string>();
+                        return GetReferencedEntityHeaders(response, refCnt, referenceSchema, entitySchema,
+                            localizedQuery);
                     })
                     .Distinct()
                 )
@@ -170,13 +155,41 @@ public static partial class MarkdownConverter
                     AttributeKey? attributeKey;
                     if (header.StartsWith(RefLink))
                     {
-                        var refAttr = AttrLinkParser.Split(header[RefLink.Length..]);
+                        string[] refAttr = AttrLinkParser.Split(header[RefLink.Length..]);
+                        if (refAttr.Length == 1)
+                        {
+                            string[] refEntitySplit = refAttr[0].Split(RefEntityLink);
+                            string refName = refEntitySplit[0].Trim();
+                            return string.Join(", ", sealedEntity.GetReferences(refName)
+                                .Select(x => x.ReferencedPrimaryKey)
+                                .Select(refEntity => RefEntityLink + refEntitySplit[1] + AttrLink + refEntity));
+                        }
                         attributeKey = ToAttributeKey(refAttr[1]);
+                        if (refAttr[0].Contains(RefEntityLink))
+                        {
+                            string[] refEntitySplit = refAttr[0].Split(RefEntityLink);
+                            string refName = refEntitySplit[0].Trim();
+                            return string.Join(", ", sealedEntity.GetReferences(refName)
+                                .Select(x => x.ReferencedEntity)
+                                .Where(x => x is not null)
+                                .Select(x => x!)
+                                .Where(refEntity => refEntity.GetAttributeValue(attributeKey) is not null)
+                                .Select(refEntity =>
+                                {
+                                    string formattedValue =
+                                        FormatValue(refEntity.GetAttributeValue(attributeKey)?.Value);
+                                    return RefEntityLink + refEntitySplit[1] + refEntity.PrimaryKey + AttrLink +
+                                           formattedValue;
+                                }));
+                        }
+
                         return string.Join(", ", sealedEntity.GetReferences(refAttr[0])
                             .Where(reference => reference.GetAttributeValue(attributeKey) is not null)
-                            .Select(reference => RefLink + reference.ReferenceKey.PrimaryKey + AttrLink +
-                                                 FormatValue(reference
-                                                     .GetAttributeValue(attributeKey)?.Value)));
+                            .Select(r =>
+                            {
+                                string formattedValue = FormatValue(r.GetAttributeValue(attributeKey)?.Value);
+                                return RefLink + r.ReferenceKey.PrimaryKey + AttrLink + formattedValue;
+                            }));
                     }
 
                     if (header == PriceForSale)
@@ -227,12 +240,67 @@ public static partial class MarkdownConverter
         return new AttributeKey(attributeHeader);
     }
 
-    private static IEnumerable<string> TransformLocalizedAttributes(
+    private static IEnumerable<string> GetReferencedEntityHeaders(
         EvitaResponse<ISealedEntity> response,
+        ReferenceContent referenceContent,
+        IReferenceSchema referenceSchema,
+        IEntitySchema entitySchema,
+        bool localizedQuery
+    )
+    {
+        return new[] {RefLink + " " + referenceSchema.Name + " " + RefEntityLink + referenceSchema.ReferencedEntityType}
+            .Concat(
+                QueryUtils.FindConstraints<EntityFetch, ISeparateEntityContentRequireContainer>(referenceContent)
+                    .SelectMany(
+                        refEntity => GetEntityHeaders(
+                            refEntity,
+                            () => response.RecordData
+                                .SelectMany(theEntity => theEntity.GetReferences(referenceSchema.Name))
+                                .Select(theRef => theRef.ReferencedEntity)
+                                .Where(x => x is not null)!,
+                            entitySchema, localizedQuery,
+                            RefLink + " " + referenceSchema.Name + " " + RefEntityLink +
+                            referenceSchema.ReferencedEntityType + AttrLink
+                        )
+                    )
+            );
+    }
+
+    private static IEnumerable<string> GetEntityHeaders(EntityFetch entityFetch,
+        Func<IEnumerable<ISealedEntity>> entityCollectionAccessor, IEntitySchema entitySchema,
+        bool localizedQuery, string? prefix)
+    {
+        return QueryUtils.FindConstraints<AttributeContent, ISeparateEntityContentRequireContainer>(entityFetch)
+            .SelectMany(attributeContent =>
+            {
+                if (attributeContent.AllRequested)
+                {
+                    IEnumerable<IAttributeSchema> attributes = entitySchema.GetAttributes().Values;
+                    return (localizedQuery ? attributes.Where(x => x.Localized) : attributes)
+                        .Select(x => x.Name)
+                        .Where(attrName =>
+                            entityCollectionAccessor.Invoke()
+                                .Any(entity => entity.GetAttributeValue(attrName) is not null));
+                }
+
+                return attributeContent.GetAttributeNames();
+            })
+            .SelectMany(
+                attributeName => TransformLocalizedAttributes(
+                    entityCollectionAccessor, attributeName, entitySchema.Locales, entitySchema, x => new[] {x},
+                    prefix
+                )
+            )
+            .Distinct();
+    }
+
+    private static IEnumerable<string> TransformLocalizedAttributes(
+        Func<IEnumerable<ISealedEntity>> response,
         string attributeName,
         ISet<CultureInfo> entityLocales,
         IAttributeSchemaProvider<IAttributeSchema> schema,
-        Func<ISealedEntity, IEnumerable<IAttributes>> attributesProvider
+        Func<ISealedEntity, IEnumerable<IAttributes>> attributesProvider,
+        string? prefix
     )
     {
         bool localized = schema.GetAttribute(attributeName)?.Localized ??
@@ -240,7 +308,7 @@ public static partial class MarkdownConverter
         if (localized)
         {
             return entityLocales
-                .Where(locale => response.RecordData
+                .Where(locale => response.Invoke()
                     .SelectMany(attributesProvider)
                     .Any(attributeProvider => attributeProvider.AttributesAvailable(locale) &&
                                               attributeProvider.GetAttributeValue(attributeName,
@@ -254,10 +322,11 @@ public static partial class MarkdownConverter
                     }
 
                     throw new ArgumentException("No flag for locale: " + locale);
-                });
+                })
+                .Select(it => prefix is null ? it : prefix + attributeName);
         }
 
-        return new[] {attributeName};
+        return prefix is null ? new[] {attributeName} : new[] {prefix + attributeName};
     }
 
     private static string FormatValue(object? value)
@@ -266,6 +335,7 @@ public static partial class MarkdownConverter
         {
             return predecessor.IsHead ? PredecessorHeadSymbol : PredecessorSymbol + predecessor.PredecessorId;
         }
+
         return EvitaDataTypes.FormatValue(value);
     }
 

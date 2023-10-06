@@ -37,12 +37,12 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name, Description, DeprecationNotice, Unique, Filterable, Sortable, Localized, Nullable, Type, DefaultValue,
             IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
@@ -64,14 +64,14 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
                 referenceSchema.DeprecationNotice,
                 referenceSchema.ReferencedEntityType,
                 referenceSchema.ReferencedEntityTypeManaged
-                    ? new Dictionary<NamingConvention, string>()
-                    : referenceSchema.GetEntityTypeNameVariants(_ => null),
+                    ? new Dictionary<NamingConvention, string?>()
+                    : referenceSchema.GetEntityTypeNameVariants(_ => null!),
                 referenceSchema.ReferencedEntityTypeManaged,
                 referenceSchema.Cardinality,
                 referenceSchema.ReferencedGroupType,
                 referenceSchema.ReferencedGroupTypeManaged
-                    ? new Dictionary<NamingConvention, string>()
-                    : referenceSchema.GetGroupTypeNameVariants(_ => null),
+                    ? new Dictionary<NamingConvention, string?>()
+                    : referenceSchema.GetGroupTypeNameVariants(_ => null!),
                 referenceSchema.ReferencedGroupTypeManaged,
                 referenceSchema.IsIndexed,
                 referenceSchema.IsFaceted,
@@ -95,10 +95,10 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         );
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAttributeSchema? newAttributeSchema = Mutate(catalogSchema, (IAttributeSchema?) null);
+        IAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IAttributeSchema?) null);
         IAttributeSchema? existingAttributeSchema = entitySchema!.GetAttribute(Name);
         if (existingAttributeSchema == null)
         {

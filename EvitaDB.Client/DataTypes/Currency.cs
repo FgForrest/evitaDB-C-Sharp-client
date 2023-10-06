@@ -8,4 +8,9 @@ public class Currency
     {
         CurrencyCode = currencyCode;
     }
+
+    public override string ToString()
+    {
+        return $"[{CurrencyCode}]";
+    }
 }

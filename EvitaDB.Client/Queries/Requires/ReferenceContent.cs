@@ -5,7 +5,7 @@ using EvitaDB.Client.Utils;
 namespace EvitaDB.Client.Queries.Requires;
 
 public class ReferenceContent : AbstractRequireConstraintContainer, IEntityContentRequire,
-    ISeparateEntityContentRequireContainer, IConstraintWithSuffix
+    ISeparateEntityContentRequireContainer, IConstraintContainerWithSuffix
 {
     public EntityFetch? EntityRequirements => Children.OfType<EntityFetch>().FirstOrDefault();
     public EntityGroupFetch? EntityGroupRequirements => Children.OfType<EntityGroupFetch>().FirstOrDefault();
@@ -31,6 +31,7 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
             {
                 return SuffixAll;
             }
+
             if (AllRequested && AttributeContent is not null)
             {
                 return SuffixAllWithAttributes;
@@ -40,6 +41,7 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
             {
                 return SuffixWithAttributes;
             }
+
             return null;
         }
     }
@@ -50,8 +52,7 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     private const string SuffixWithAttributes = "withAttributes";
     private const string SuffixAllWithAttributes = "allWithAttributes";
     private static readonly ReferenceContent AllReferences = new ReferenceContent();
-
-
+    
     public string ReferenceName
     {
         get
@@ -126,6 +127,10 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     {
     }
 
+    public bool ChildImplicitForSuffix(IConstraint child)
+    {
+        return child is AttributeContent {AllRequested: true};
+    }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint[] children,
         IConstraint[] additionalChildren)

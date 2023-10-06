@@ -112,9 +112,9 @@ public static class ComplexDataObjectConverter
         return null;
     }
     
-    public static object? ConvertFromComplexDataObject(ComplexDataObject complexDataObject, Type type)
+    public static T? ConvertFromComplexDataObject<T>(ComplexDataObject complexDataObject) where T : class
     {
-        return ConvertFromIComplexDataObject(complexDataObject.Root, type);
+        return ConvertFromIComplexDataObject(complexDataObject.Root, typeof(T)) as T;
     }
     
     private static object? ConvertFromIComplexDataObject(IDataItem dataItem, Type type)

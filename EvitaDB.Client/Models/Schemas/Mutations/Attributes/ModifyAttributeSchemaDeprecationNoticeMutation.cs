@@ -26,18 +26,18 @@ public class ModifyAttributeSchemaDeprecationNoticeMutation : IEntityAttributeSc
                                                        "` schema for reference with name `" + referenceSchema.Name +
                                                        "`!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(null, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(null, existingAttributeSchema);
         return (this as IReferenceAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             referenceSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(GlobalAttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 DeprecationNotice,
@@ -47,13 +47,13 @@ public class ModifyAttributeSchemaDeprecationNoticeMutation : IEntityAttributeSc
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             attributeSchema.Description,
@@ -63,13 +63,13 @@ public class ModifyAttributeSchemaDeprecationNoticeMutation : IEntityAttributeSc
             attributeSchema.Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
-            attributeSchema.GetType(),
+            attributeSchema.Type,
             attributeSchema.DefaultValue,
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??

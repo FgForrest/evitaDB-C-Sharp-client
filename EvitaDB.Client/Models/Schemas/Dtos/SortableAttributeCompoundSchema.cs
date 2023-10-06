@@ -7,8 +7,8 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
 {
     public string Name { get; }
     public string? Description { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public string? DeprecationNotice { get; }
     public IList<AttributeElement> AttributeElements { get; }
@@ -32,7 +32,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
 
     internal static SortableAttributeCompoundSchema InternalBuild(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         IList<AttributeElement> attributeElements
@@ -49,7 +49,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
 
     private SortableAttributeCompoundSchema(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         IEnumerable<AttributeElement> attributeElements

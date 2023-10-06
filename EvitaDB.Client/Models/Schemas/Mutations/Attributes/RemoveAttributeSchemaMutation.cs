@@ -30,11 +30,11 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
             referenceSchema.Description,
             referenceSchema.DeprecationNotice,
             referenceSchema.ReferencedEntityType,
-            referenceSchema.GetEntityTypeNameVariants(_ => default),
+            referenceSchema.GetEntityTypeNameVariants(_ => null!),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
-            referenceSchema.GetGroupTypeNameVariants(_ => default),
+            referenceSchema.GetGroupTypeNameVariants(_ => null!),
             referenceSchema.ReferencedGroupTypeManaged,
             referenceSchema.IsIndexed,
             referenceSchema.IsFaceted,
@@ -45,7 +45,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         return default;

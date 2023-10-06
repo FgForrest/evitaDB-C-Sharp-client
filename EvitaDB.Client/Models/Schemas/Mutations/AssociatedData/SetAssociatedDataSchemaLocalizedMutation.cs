@@ -12,7 +12,7 @@ public class SetAssociatedDataSchemaLocalizedMutation : AbstractModifyAssociated
     {
         Localized = localized;
     }
-    public override IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public override IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAssociatedDataSchema? existingAssociatedDataSchema = entitySchema!.GetAssociatedData(Name);
@@ -24,11 +24,11 @@ public class SetAssociatedDataSchemaLocalizedMutation : AbstractModifyAssociated
         }
 
         IAssociatedDataSchema theSchema = existingAssociatedDataSchema;
-        IAssociatedDataSchema? updatedAssociatedDataSchema = Mutate(theSchema);
+        IAssociatedDataSchema updatedAssociatedDataSchema = Mutate(theSchema);
         return ReplaceAssociatedDataIfDifferent(entitySchema, theSchema, updatedAssociatedDataSchema);
     }
 
-    public override IAssociatedDataSchema? Mutate(IAssociatedDataSchema? associatedDataSchema)
+    public override IAssociatedDataSchema Mutate(IAssociatedDataSchema? associatedDataSchema)
     {
         Assert.IsPremiseValid(associatedDataSchema != null, "Associated data schema is mandatory!");
         return AssociatedDataSchema.InternalBuild(

@@ -253,7 +253,7 @@ public class EvitaClientSession : IDisposable
                     query.Entities,
                     query.FilterBy,
                     query.OrderBy,
-                    IQueryConstraints.Require(IQueryConstraints.EntityFetch())
+                    Require(EntityFetch())
                 )
             );
         }

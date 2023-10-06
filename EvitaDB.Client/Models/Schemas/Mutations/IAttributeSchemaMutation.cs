@@ -3,5 +3,5 @@
 public interface IAttributeSchemaMutation : ISchemaMutation
 {
     string Name { get; }
-    TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema;
+    TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema;
 }

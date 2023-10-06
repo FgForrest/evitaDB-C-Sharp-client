@@ -27,7 +27,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
     public string? DeprecationNotice => _instance.DeprecationNotice;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
     bool IEntitySchema.WithGeneratedPrimaryKey => _instance.WithGeneratedPrimaryKey;
     bool IEntitySchema.WithHierarchy => _instance.WithHierarchy;
     bool IEntitySchema.WithPrice => _instance.WithPrice;
@@ -375,7 +375,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         whichIs?.Invoke(associatedDataSchemaBuilder);
         IAssociatedDataSchema associatedDataSchema = associatedDataSchemaBuilder.ToInstance();
 
-        if (existingAssociatedData is not null && !existingAssociatedData.Equals(associatedDataSchema))
+        if (existingAssociatedData is not null && !existingAssociatedData.Equals(associatedDataSchema) || true)
         {
             ClassifierUtils.ValidateClassifierFormat(ClassifierType.AssociatedData, dataName);
             // check the names in all naming conventions are unique in the entity schema
@@ -384,9 +384,9 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
                 .Where(it => !Equals(it.Name, associatedDataSchema.Name))
                 .SelectMany(it => it.NameVariants
                     .Where(nameVariant =>
-                        nameVariant.Value.Equals(associatedDataSchema.GetNameVariant(nameVariant.Key)))
+                        nameVariant.Value!.Equals(associatedDataSchema.GetNameVariant(nameVariant.Key)))
                     .Select(nameVariant =>
-                        new AssociatedDataNamingConventionConflict(it, nameVariant.Key, nameVariant.Value))
+                        new AssociatedDataNamingConventionConflict(it, nameVariant.Key, nameVariant.Value!))
                 ).ToList()
                 .ForEach(conflict => throw new AssociatedDataAlreadyPresentInEntitySchemaException(
                     conflict.ConflictingSchema, associatedDataSchema,
@@ -519,8 +519,8 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
                 .Where(it => !Equals(it.Name, referenceSchemaBuilder.Name))
                 .SelectMany(
                     it => it.NameVariants
-                    .Where(nameVariant => nameVariant.Value.Equals(referenceSchemaBuilder.GetNameVariant(nameVariant.Key)))
-                    .Select(nameVariant => new ReferenceNamingConventionConflict(it, nameVariant.Key, nameVariant.Value))
+                    .Where(nameVariant => nameVariant.Value!.Equals(referenceSchemaBuilder.GetNameVariant(nameVariant.Key)))
+                    .Select(nameVariant => new ReferenceNamingConventionConflict(it, nameVariant.Key, nameVariant.Value!))
                 )
                 .ToList()
                 .ForEach(conflict => throw new ReferenceAlreadyPresentInEntitySchemaException(
@@ -557,7 +557,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         string ConflictingName
     );
 
-    public string GetNameVariant(NamingConvention namingConvention)
+    public string? GetNameVariant(NamingConvention namingConvention)
     {
         return _instance.GetNameVariant(namingConvention);
     }

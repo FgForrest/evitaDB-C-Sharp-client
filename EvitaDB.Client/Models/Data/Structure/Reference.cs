@@ -243,6 +243,29 @@ public class Reference : IReference
 		return Attributes.GetAttributeLocales();
 	}
 
+	public override bool Equals(object? obj)
+	{
+		if (obj == null) return false;
+		
+		if (ReferenceEquals(this, obj)) return true;
+		
+		if (obj.GetType() != GetType()) return false;
+		
+		Reference reference = (Reference) obj;
+		if (!ReferenceKey.Equals(reference.ReferenceKey)) return false;
+		if (ReferencedEntityType is not null && !ReferencedEntityType.Equals(reference.ReferencedEntityType) || ReferencedEntityType is null && reference.ReferencedEntityType is not null) return false;
+		if (!ReferenceName.Equals(reference.ReferenceName)) return false;
+		if (!ReferencedPrimaryKey.Equals(reference.ReferencedPrimaryKey)) return false;
+		if (Group is not null && !Group.Equals(reference.Group) || Group is null && reference.Group is not null) return false;
+		if (!Attributes.Equals(reference.Attributes)) return false;
+		return Dropped.Equals(reference.Dropped);
+	}
+
+	public override int GetHashCode()
+	{
+		return HashCode.Combine(Version, ReferenceKey);
+	}
+
 	public override string ToString()
 	{
 		return (Dropped ? "❌ " : "") +

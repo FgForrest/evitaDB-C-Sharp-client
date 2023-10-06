@@ -13,17 +13,17 @@ public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttrib
     bool IsIndexed { get; }
     bool IsFaceted { get; }
 
-    IDictionary<NamingConvention, string> GetEntityTypeNameVariants(
-        Func<string, EntitySchema> entitySchemaFetcher);
+    IDictionary<NamingConvention, string?> GetEntityTypeNameVariants(
+        Func<string?, EntitySchema> entitySchemaFetcher);
 
-    string GetReferencedEntityTypeNameVariants(
+    string? GetReferencedEntityTypeNameVariants(
         NamingConvention namingConvention,
-        Func<string, EntitySchema> entitySchemaFetcher);
+        Func<string?, EntitySchema> entitySchemaFetcher);
 
-    IDictionary<NamingConvention, string> GetGroupTypeNameVariants(
-        Func<string, EntitySchema> entitySchemaFetcher);
+    IDictionary<NamingConvention, string?> GetGroupTypeNameVariants(
+        Func<string?, EntitySchema> entitySchemaFetcher);
 
-    string GetReferencedGroupTypeNameVariants(
+    string? GetReferencedGroupTypeNameVariants(
         NamingConvention namingConvention,
-        Func<string, EntitySchema> entitySchemaFetcher);
+        Func<string?, EntitySchema> entitySchemaFetcher);
 }

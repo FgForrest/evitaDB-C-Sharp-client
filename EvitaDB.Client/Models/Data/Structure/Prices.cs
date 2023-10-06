@@ -9,8 +9,7 @@ namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Prices : IPrices
 {
-    [JsonIgnore]
-    internal IEntitySchema EntitySchema { get; }
+    [JsonIgnore] internal IEntitySchema EntitySchema { get; }
     private bool WithPrice { get; }
     public int Version { get; }
     private ImmutableDictionary<PriceKey, IPrice> PriceIndex { get; }
@@ -41,7 +40,7 @@ public class Prices : IPrices
         priceInnerRecordHandling, entitySchema.WithPrice)
     {
     }
-    
+
     public Prices(IEntitySchema entitySchema, int version, IEnumerable<IPrice> prices,
         PriceInnerRecordHandling? priceInnerRecordHandling, bool withPrice)
     {
@@ -52,13 +51,14 @@ public class Prices : IPrices
         InnerRecordHandling = priceInnerRecordHandling;
     }
 
-    public IPrice? GetPrice(PriceKey priceKey) => PriceIndex.TryGetValue(priceKey, out var price) ? price : null;
+    public IPrice? GetPrice(PriceKey priceKey) => PriceIndex.TryGetValue(priceKey, out IPrice? price) ? price : null;
 
     public IPrice? GetPrice(int priceId, string priceList, Currency currency) =>
-        PriceIndex.TryGetValue(new PriceKey(priceId, priceList, currency), out var price) ? price : null;
-    
-    internal IPrice? GetPriceWithoutSchemaCheck(PriceKey priceKey) {
-        return PriceIndex.TryGetValue(priceKey, out var price) ? price : null;
+        PriceIndex.TryGetValue(new PriceKey(priceId, priceList, currency), out IPrice? price) ? price : null;
+
+    internal IPrice? GetPriceWithoutSchemaCheck(PriceKey priceKey)
+    {
+        return PriceIndex.TryGetValue(priceKey, out IPrice? price) ? price : null;
     }
 
     public List<IPrice> GetAllPricesForSale() => GetAllPricesForSale(null, null);
@@ -66,6 +66,7 @@ public class Prices : IPrices
 
     public bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode) =>
         throw new ContextMissingException();
+
     public bool PricesAvailable() => EntitySchema.WithPrice;
 
     public List<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
@@ -92,15 +93,15 @@ public class Prices : IPrices
 
     public override string ToString()
     {
-        if (PricesAvailable()) {
+        if (PricesAvailable())
+        {
             List<IPrice> prices = GetPrices().ToList();
             return "selects " + InnerRecordHandling + " from: " +
                    (
-                       !prices.Any() ?
-                           "no price" :
-                           string.Join(", ", prices.Select(x => x.ToString()))
+                       !prices.Any() ? "no price" : string.Join(", ", prices.Select(x => x.ToString()))
                    );
         }
+
         return "entity has no prices";
     }
 }

@@ -6,6 +6,6 @@ public interface INamedSchema
 {
     string Name { get; }
     string? Description { get; }
-    IDictionary<NamingConvention, string> NameVariants { get; }
-    string GetNameVariant(NamingConvention namingConvention);
+    IDictionary<NamingConvention, string?> NameVariants { get; }
+    string? GetNameVariant(NamingConvention namingConvention);
 }

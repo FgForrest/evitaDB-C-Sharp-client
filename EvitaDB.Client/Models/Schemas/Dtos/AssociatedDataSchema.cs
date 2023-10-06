@@ -1,11 +1,12 @@
-﻿using EvitaDB.Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Dtos;
 
 public class AssociatedDataSchema : IAssociatedDataSchema
 {
     public string Name { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public bool Nullable { get; }
@@ -43,7 +44,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         );
     }
 
-    internal static AssociatedDataSchema InternalBuild(string name, IDictionary<NamingConvention, string> nameVariants,
+    internal static AssociatedDataSchema InternalBuild(string name, IDictionary<NamingConvention, string?> nameVariants,
         string? description, string? deprecationNotice, bool localized, bool nullable, Type type)
     {
         return new AssociatedDataSchema(
@@ -56,7 +57,7 @@ public class AssociatedDataSchema : IAssociatedDataSchema
 
     private AssociatedDataSchema(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         bool localized,
@@ -70,10 +71,10 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         DeprecationNotice = deprecationNotice;
         Localized = localized;
         Nullable = nullable;
-        Type = type;
+        Type = EvitaDataTypes.IsSupportedTypeOrItsArray(type) ? type : typeof(ComplexDataObject);
     }
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
     public override string ToString()
     {
         return "AssociatedDataSchema{" +

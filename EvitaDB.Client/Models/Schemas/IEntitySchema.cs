@@ -26,9 +26,9 @@ public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISorta
     IReferenceSchema? GetReference(string name);
     IReferenceSchema? GetReferenceByName(string dataName, NamingConvention namingConvention);
     IReferenceSchema GetReferenceOrThrowException(string referenceName);
-    IAttributeSchema? GetAttribute(string name);
+    new IAttributeSchema? GetAttribute(string name);
     IAttributeSchema GetAttributeOrThrow(string name);
-    IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention);
+    new IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention);
     bool DiffersFrom(IEntitySchema? otherSchema);
     ISet<EvolutionMode> GetEvolutionMode();
     bool Allows(EvolutionMode evolutionMode);

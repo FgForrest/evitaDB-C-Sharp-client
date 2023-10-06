@@ -12,13 +12,15 @@ public interface IPrices : IVersioned
     bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode);
     IEnumerable<IPrice> GetPrices();
     bool PricesAvailable();
-    
-    public static bool AnyPriceDifferBetween(IPrices first, IPrices second) {
+
+    public static bool AnyPriceDifferBetween(IPrices first, IPrices second)
+    {
         IEnumerable<IPrice> thisValues = first.PricesAvailable() ? first.GetPrices() : new List<IPrice>();
         IEnumerable<IPrice> otherValues = second.PricesAvailable() ? second.GetPrices() : new List<IPrice>();
 
         var enumerable = thisValues.ToList();
-        if (enumerable.Count() != otherValues.Count()) {
+        if (enumerable.Count() != otherValues.Count())
+        {
             return true;
         }
 

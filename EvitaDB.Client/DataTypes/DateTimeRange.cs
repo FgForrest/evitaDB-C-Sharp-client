@@ -68,4 +68,10 @@ public class DateTimeRange : Range<DateTimeOffset?>, IComparable<DateTimeRange>
     {
         return new DateTimeRange(from, null);
     }
+
+    public override string ToString()
+    {
+        return OpenChar + (PreciseFrom.HasValue ? PreciseFrom.ToString() : "") +
+               IntervalJoin + (PreciseTo.HasValue ? PreciseTo.ToString() : "") + CloseChar;
+    }
 }

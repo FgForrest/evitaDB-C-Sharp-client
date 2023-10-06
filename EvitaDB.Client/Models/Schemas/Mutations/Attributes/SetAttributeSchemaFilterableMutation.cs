@@ -40,12 +40,12 @@ public class SetAttributeSchemaFilterableMutation : IEntityAttributeSchemaMutati
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -55,13 +55,13 @@ public class SetAttributeSchemaFilterableMutation : IEntityAttributeSchemaMutati
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             attributeSchema.Description,
@@ -71,10 +71,10 @@ public class SetAttributeSchemaFilterableMutation : IEntityAttributeSchemaMutati
             attributeSchema.Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
-            attributeSchema.GetType(),
+            attributeSchema.Type,
             attributeSchema.DefaultValue,
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)

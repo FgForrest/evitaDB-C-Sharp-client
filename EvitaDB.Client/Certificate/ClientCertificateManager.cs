@@ -8,30 +8,36 @@ namespace EvitaDB.Client.Certificate;
 public class ClientCertificateManager
 {
     private static readonly string DefaultClientCertificateFolderPath =
-        Path.GetTempPath() + "evita-client-certificates";
+        Path.Combine(Path.GetTempPath(), "evita-client-certificates");
 
     private string ClientCertificateFolderPath { get; }
     private string? ClientCertificatePath { get; }
     private string? ClientCertificateKeyPath { get; }
     private string? ClientCertificateKeyPassword { get; }
-    private bool UseGeneratedCertificate { get; } = true;
+    private bool UseGeneratedCertificate { get; }
     private bool TrustedServerCertificate { get; }
 
     private ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
         string? clientCertificateKeyPath, string? clientCertificateKeyPassword, bool useGeneratedCertificate,
-        bool trustedServerCertificate)
+        bool trustedServerCertificate, string host, int port)
     {
-        ClientCertificateFolderPath = clientCertificateFolderPath;
+        string certificateDirectory;
+        if (useGeneratedCertificate)
+        {
+            certificateDirectory = GetCertificatesFromServer(host, port, clientCertificateFolderPath).GetAwaiter().GetResult();
+        }
+        else
+        {
+            certificateDirectory = IdentifyServerDirectory(host, port, clientCertificateFolderPath).GetAwaiter()
+                .GetResult();
+        }
+
+        ClientCertificateFolderPath = certificateDirectory;
         ClientCertificatePath = clientCertificatePath;
         ClientCertificateKeyPath = clientCertificateKeyPath;
         ClientCertificateKeyPassword = clientCertificateKeyPassword;
         UseGeneratedCertificate = useGeneratedCertificate;
         TrustedServerCertificate = trustedServerCertificate;
-    }
-
-    public ClientCertificateManager()
-    {
-        ClientCertificateFolderPath = DefaultClientCertificateFolderPath;
     }
 
     public class Builder
@@ -42,12 +48,14 @@ public class ClientCertificateManager
         private string? ClientCertificateKeyPassword { get; set; }
         private bool UseGeneratedCertificate { get; set; } = true;
         private bool TrustedServerCertificate { get; set; }
+        private string? Host { get; set; }
+        private int Port { get; set; }
 
         public ClientCertificateManager Build()
         {
             return new ClientCertificateManager(ClientCertificateFolderPath, ClientCertificatePath,
                 ClientCertificateKeyPath, ClientCertificateKeyPassword, UseGeneratedCertificate,
-                TrustedServerCertificate);
+                TrustedServerCertificate, Host!, Port);
         }
 
         public Builder SetClientCertificateFolderPath(string? clientCertificateFolderPath)
@@ -74,9 +82,11 @@ public class ClientCertificateManager
             return this;
         }
 
-        public Builder SetUseGeneratedCertificate(bool useGeneratedCertificate)
+        public Builder SetUseGeneratedCertificate(bool useGeneratedCertificate, string host, int port)
         {
             UseGeneratedCertificate = useGeneratedCertificate;
+            Host = host;
+            Port = port;
             return this;
         }
 
@@ -87,18 +97,36 @@ public class ClientCertificateManager
         }
     }
 
-    public void GetCertificatesFromServer(string host, int systemApiPort)
+    private async Task<string> GetCertificatesFromServer(string host, int systemApiPort,
+        string certificateClientFolderPath)
     {
-        var apiEndpoint = $"http://{host}:{systemApiPort}/system/";
-        if (!Directory.Exists(ClientCertificateFolderPath))
+        string apiEndpoint = $"http://{host}:{systemApiPort}/system/";
+        string serverName = await GetServerName(apiEndpoint);
+        string serverSpecificDirectory = Path.Combine(certificateClientFolderPath, serverName);
+        if (!Directory.Exists(serverSpecificDirectory))
         {
-            Directory.CreateDirectory(DefaultClientCertificateFolderPath);
+            Assert.IsTrue(Directory.CreateDirectory(serverSpecificDirectory).Exists,
+                "Cannot create folder `" + serverSpecificDirectory + "`!");
         }
+        else
+        {
+            string rootCaCert =
+                Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedRootCaCertificateFileName);
+            string cert = Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
+            string key = Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
+            if (Path.Exists(rootCaCert) && Path.Exists(cert) && Path.Exists(key))
+            {
+                return serverSpecificDirectory;
+            }
+        }
+
         try
         {
-            DownloadFile(apiEndpoint, CertificateUtils.GeneratedCertificateFileName);
-            DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateFileName);
-            DownloadFile(apiEndpoint, CertificateUtils.GeneratedClientCertificateKeyFileName);
+            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedCertificateFileName);
+            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
+            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
+
+            return serverSpecificDirectory;
         }
         catch (Exception ex)
         {
@@ -107,18 +135,41 @@ public class ClientCertificateManager
         }
     }
 
-    private void DownloadFile(string apiEndpoint, string fileName)
+    private void DownloadFile(string apiEndpoint, string baseDir, string fileName)
     {
-        using (var client = new HttpClient())
+        using var client = new HttpClient();
+        var response = client.GetAsync(apiEndpoint + fileName).GetAwaiter().GetResult();
+        response.EnsureSuccessStatusCode();
+        using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
+            stream = new FileStream(Path.Combine(baseDir, fileName), FileMode.Create);
+        contentStream.CopyTo(stream);
+    }
+
+    private static async Task<string> IdentifyServerDirectory(string host, int port, string certificateClientFolderPath)
+    {
+        string apiEndpoint = "http://" + host + ":" + port + "/system/";
+        try
         {
-            var response = client.GetAsync(apiEndpoint + fileName).GetAwaiter().GetResult();
-            response.EnsureSuccessStatusCode();
-            using (Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
-                   stream = new FileStream($"{ClientCertificateFolderPath}{Path.DirectorySeparatorChar}{fileName}",
-                       FileMode.Create))
-            {
-                contentStream.CopyTo(stream);
-            }
+            string serverName = await GetServerName(apiEndpoint);
+            return Path.Combine(certificateClientFolderPath, serverName);
+        }
+        catch (IOException e)
+        {
+            throw new EvitaInvalidUsageException("Failed to download certificates from server", e);
+        }
+    }
+
+    private static async Task<string> GetServerName(string apiEndpoint)
+    {
+        using var client = new HttpClient();
+        try
+        {
+            return await client.GetStringAsync(apiEndpoint + "server-name");
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw new EvitaInvalidUsageException(ex.Message, "Failed to get server name", ex);
         }
     }
 

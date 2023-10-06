@@ -1,4 +1,6 @@
 ﻿using System.Globalization;
+using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
@@ -71,6 +73,63 @@ public class AssociatedData : IAssociatedData
             out AssociatedDataValue? associatedDataValue)
             ? associatedDataValue.Value
             : null;
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        IAssociatedDataSchema associatedDataSchema =
+                AssociatedDataTypes.TryGetValue(associatedDataName, out IAssociatedDataSchema? schema)
+                    ? schema
+                    : throw new AssociatedDataNotFoundException(associatedDataName, EntitySchema);
+        Assert.IsTrue(
+                !associatedDataSchema.Localized,
+                () => ContextMissingException.LocaleForAssociatedDataContextMissing(associatedDataName)
+            );
+        AssociatedDataValue? associatedDataValue =
+            AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName), out AssociatedDataValue? value)
+                ? value
+                : null;
+
+        if (associatedDataValue is null)
+        {
+            return default;
+        }
+
+        if (associatedDataValue.Value is ComplexDataObject complexDataObject)
+        {
+            return ComplexDataObjectConverter.ConvertFromComplexDataObject<T>(complexDataObject);
+        }
+        
+        return (T) associatedDataValue.Value!;
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        IAssociatedDataSchema associatedDataSchema =
+            AssociatedDataTypes.TryGetValue(associatedDataName, out IAssociatedDataSchema? schema)
+                ? schema
+                : throw new AssociatedDataNotFoundException(associatedDataName, EntitySchema);
+        
+        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized ?
+            new AssociatedDataKey(associatedDataName, locale) :
+            new AssociatedDataKey(associatedDataName);
+        
+        AssociatedDataValue? associatedDataValue =
+            AssociatedDataValues.TryGetValue(associatedDataKey, out AssociatedDataValue? value)
+                ? value
+                : null;
+
+        if (associatedDataValue is null)
+        {
+            return default;
+        }
+
+        if (associatedDataValue.Value is ComplexDataObject complexDataObject)
+        {
+            return ComplexDataObjectConverter.ConvertFromComplexDataObject<T>(complexDataObject);
+        }
+        
+        return (T) associatedDataValue.Value!;
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)
@@ -203,19 +262,22 @@ public class AssociatedData : IAssociatedData
             ? associatedDataValue
             : null;
     }
-    
-    internal AssociatedDataValue? GetAssociatedDataValueWithoutSchemaCheck(AssociatedDataKey associatedDataKey) {
+
+    internal AssociatedDataValue? GetAssociatedDataValueWithoutSchemaCheck(AssociatedDataKey associatedDataKey)
+    {
         if (AssociatedDataValues.TryGetValue(associatedDataKey, out AssociatedDataValue? associatedDataValue))
         {
             return associatedDataValue;
         }
 
-        if (associatedDataKey.Localized && AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataKey.AssociatedDataName), out AssociatedDataValue? globalAssociatedDataValue))
+        if (associatedDataKey.Localized && AssociatedDataValues.TryGetValue(
+                new AssociatedDataKey(associatedDataKey.AssociatedDataName),
+                out AssociatedDataValue? globalAssociatedDataValue))
         {
             return globalAssociatedDataValue;
         }
+
         return null;
-        
     }
 
     public override string ToString()

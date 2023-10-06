@@ -50,9 +50,9 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
     
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             Description,
             DeprecationNotice,
@@ -64,13 +64,13 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
             Nullable,
             Type,
             DefaultValue,
-            IndexedDecimalPlaces), typeof(TS));
+            IndexedDecimalPlaces) as TS)!;
     }
 
     public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
-        IGlobalAttributeSchema? newAttributeSchema = Mutate<IGlobalAttributeSchema>(catalogSchema, null);
+        IGlobalAttributeSchema newAttributeSchema = Mutate<IGlobalAttributeSchema>(catalogSchema, null);
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema?.GetAttribute(Name);
         if (existingAttributeSchema == null) {
             return CatalogSchema.InternalBuild(
@@ -94,7 +94,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
 
         // ups, there is conflict in attribute settings
         throw new InvalidSchemaMutationException(
-            "The attribute `" + Name + "` already exists in entity `" + catalogSchema.Name + "` schema and" +
+            "The attribute `" + Name + "` already exists in entity `" + catalogSchema?.Name + "` schema and" +
             " has different definition. To alter existing attribute schema you need to use different mutations."
         );
     }

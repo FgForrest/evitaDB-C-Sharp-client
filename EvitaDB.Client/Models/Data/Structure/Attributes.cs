@@ -78,7 +78,7 @@ public class Attributes : IAttributes
 
         Assert.IsTrue(!attributeSchema.Localized,
             () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
-        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
+        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue)
             ? attributeValue.Value
             : null;
     }
@@ -97,9 +97,27 @@ public class Attributes : IAttributes
 
         Assert.IsTrue(!attributeSchema.Localized,
             () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
-        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
-            ? (object[]?) attributeValue.Value
-            : null;
+        if (AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue))
+        {
+            if (attributeValue.Value is object[] objArray)
+            {
+                return objArray;
+            }
+            if (attributeValue.Value is Array array && array.GetType().GetElementType()!.IsValueType)
+            {
+                int length = array.Length;
+                object[] objectArray = new object[length];
+
+                for (int i = 0; i < length; i++)
+                {
+                    objectArray[i] = array.GetValue(i)!;
+                }
+
+                return objectArray;
+            }
+        }
+
+        return null;
     }
 
     public AttributeValue? GetAttributeValue(string attributeName)
@@ -115,7 +133,7 @@ public class Attributes : IAttributes
         }
 
         return attributeSchema.Localized ? null :
-            AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue) ? attributeValue :
+            AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue) ? attributeValue :
             null;
     }
 
@@ -131,9 +149,11 @@ public class Attributes : IAttributes
             throw new AttributeNotFoundException(attributeName, ReferenceSchema, EntitySchema);
         }
 
-        Assert.IsTrue(!attributeSchema.Localized,
-            () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
-        return AttributeValues.TryGetValue(new AttributeKey(attributeName), out var attributeValue)
+        AttributeKey attributeKey = attributeSchema.Localized
+            ? new AttributeKey(attributeName, locale)
+            : new AttributeKey(attributeName);
+        
+        return AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue)
             ? attributeValue.Value
             : null;
     }
@@ -153,8 +173,8 @@ public class Attributes : IAttributes
         AttributeKey attributeKey = attributeSchema.Localized
             ? new AttributeKey(attributeName, locale)
             : new AttributeKey(attributeName);
-        return AttributeValues.TryGetValue(attributeKey, out var attributeValue)
-            ? (object[]?) attributeValue.Value
+        return AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue)
+            ? attributeValue.Value as object[]
             : null;
     }
 
@@ -173,12 +193,12 @@ public class Attributes : IAttributes
         AttributeKey attributeKey = attributeSchema.Localized
             ? new AttributeKey(attributeName, locale)
             : new AttributeKey(attributeName);
-        return AttributeValues.TryGetValue(attributeKey, out var attributeValue) ? attributeValue : null;
+        return AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue) ? attributeValue : null;
     }
 
     public IAttributeSchema? GetAttributeSchema(string attributeName)
     {
-        return AttributeTypes.TryGetValue(attributeName, out var attributeSchema) ? attributeSchema : null;
+        return AttributeTypes.TryGetValue(attributeName, out IAttributeSchema? attributeSchema) ? attributeSchema : null;
     }
 
     public ISet<string> GetAttributeNames()
@@ -229,7 +249,7 @@ public class Attributes : IAttributes
         AttributeKey attributeKeyToUse = attributeSchema.Localized
             ? attributeKey
             : attributeKey.Localized ? new AttributeKey(attributeName) : attributeKey;
-        return AttributeValues.TryGetValue(attributeKeyToUse, out var attributeValue) ? attributeValue : null;
+        return AttributeValues.TryGetValue(attributeKeyToUse, out AttributeValue? attributeValue) ? attributeValue : null;
     }
     
     internal AttributeValue? GetAttributeValueWithoutSchemaCheck(AttributeKey attributeKey) {
@@ -243,7 +263,22 @@ public class Attributes : IAttributes
             return globalAttributeValue;
         }
         return null;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj == null) return false;
         
+        if (ReferenceEquals(this, obj)) return true;
+
+        if (GetType() != obj.GetType()) return false;
+        Attributes other = (Attributes) obj;
+        return AttributeValues.SequenceEqual(other.AttributeValues);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(AttributeValues);
     }
 
     public override string ToString()

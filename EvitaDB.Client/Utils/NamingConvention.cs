@@ -16,11 +16,11 @@ public static class NamingConventionHelper
     private static NamingConvention[] AllConventions =>
         Enum.GetValues<NamingConvention>();
 
-    public static IDictionary<NamingConvention, string> Generate(string name)
+    public static IDictionary<NamingConvention, string?> Generate(string name)
     {
         return AllConventions.ToDictionary(
             x => x,
             x => StringUtils.ToSpecificCase(name, x)
-        ).ToImmutableDictionary(x=>x.Key, x=>x.Value);
+        ).ToImmutableDictionary(x=>x.Key, x=>x.Value)!;
     }
 }

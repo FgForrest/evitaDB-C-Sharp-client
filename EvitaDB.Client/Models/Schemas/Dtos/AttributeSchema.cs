@@ -7,7 +7,7 @@ namespace EvitaDB.Client.Models.Schemas.Dtos;
 public class AttributeSchema : IAttributeSchema
 {
     public string Name { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public bool Unique { get; }
@@ -63,7 +63,7 @@ public class AttributeSchema : IAttributeSchema
         );
     }
 
-    internal static AttributeSchema InternalBuild<T>(string name, IDictionary<NamingConvention, string> nameVariants,
+    internal static AttributeSchema InternalBuild<T>(string name, IDictionary<NamingConvention, string?> nameVariants,
         string? description, string? deprecationNotice, bool unique, bool filterable, bool sortable,
         bool localized, bool nullable, Type type, T? defaultValue, int
             indexedDecimalPlaces)
@@ -103,7 +103,7 @@ public class AttributeSchema : IAttributeSchema
 
     internal AttributeSchema(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         bool unique,
@@ -131,7 +131,7 @@ public class AttributeSchema : IAttributeSchema
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public override string ToString()
     {

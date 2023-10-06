@@ -97,21 +97,22 @@ public class ExistingEntityBuilder : IEntityBuilder
     public ExistingEntityBuilder(Entity baseEntity, ICollection<ILocalMutation> localMutations)
     {
         BaseEntity = baseEntity;
-        AttributesBuilder = new ExistingAttributesBuilder(BaseEntity.Schema, null, BaseEntity.Attributes);
-        AssociatedDataBuilder = new ExistingAssociatedDataBuilder(BaseEntity.Schema, BaseEntity.AssociatedData);
-        PricesBuilder = new ExistingPricesBuilder(BaseEntity.Schema, BaseEntity.Prices);
-        ReferenceMutations = new Dictionary<ReferenceKey, List<ReferenceMutation>>();
-        foreach (ILocalMutation localMutation in localMutations)
-        {
-            AddMutation(localMutation);
-        }
-
+        
         LocalePredicate = baseEntity.LocalePredicate;
         HierarchyPredicate = baseEntity.HierarchyPredicate;
         AttributePredicate = baseEntity.AttributePredicate;
         AssociatedDataPredicate = baseEntity.AssociatedDataPredicate;
         ReferencePredicate = baseEntity.ReferencePredicate;
         PricePredicate = baseEntity.PricePredicate;
+        
+        AttributesBuilder = new ExistingAttributesBuilder(BaseEntity.Schema, null, BaseEntity.Attributes);
+        AssociatedDataBuilder = new ExistingAssociatedDataBuilder(BaseEntity.Schema, BaseEntity.AssociatedData);
+        PricesBuilder = new ExistingPricesBuilder(BaseEntity.Schema, BaseEntity.Prices, PricePredicate);
+        ReferenceMutations = new Dictionary<ReferenceKey, List<ReferenceMutation>>();
+        foreach (ILocalMutation localMutation in localMutations)
+        {
+            AddMutation(localMutation);
+        }
     }
 
     public ExistingEntityBuilder(Entity baseEntity) : this(baseEntity, new List<ILocalMutation>())
@@ -767,9 +768,19 @@ public class ExistingEntityBuilder : IEntityBuilder
         return AssociatedDataBuilder.GetAssociatedData(associatedDataName);
     }
 
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        return AssociatedDataBuilder.GetAssociatedData<T>(associatedDataName);
+    }
+
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
     {
         return AssociatedDataBuilder.GetAssociatedData(associatedDataName, locale);
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        return AssociatedDataBuilder.GetAssociatedData<T>(associatedDataName, locale);
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)

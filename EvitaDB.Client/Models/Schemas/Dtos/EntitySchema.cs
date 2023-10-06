@@ -10,7 +10,7 @@ public class EntitySchema : IEntitySchema
 {
     public int Version { get; }
     public string Name { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public bool WithGeneratedPrimaryKey { get; }
@@ -35,7 +35,7 @@ public class EntitySchema : IEntitySchema
     private EntitySchema(
         int version,
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         bool withGeneratedPrimaryKey,
@@ -215,7 +215,7 @@ public class EntitySchema : IEntitySchema
     internal static EntitySchema InternalBuild(
         int version,
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         bool withGeneratedPrimaryKey,
@@ -286,7 +286,7 @@ public class EntitySchema : IEntitySchema
 
     internal static IDictionary<string, T[]> InternalGenerateNameVariantIndex<T>(
         IEnumerable<T> items,
-        Func<T, IDictionary<NamingConvention, string>> nameVariantsFetcher
+        Func<T, IDictionary<NamingConvention, string?>> nameVariantsFetcher
     )
     {
         var list = items.ToList();
@@ -307,19 +307,19 @@ public class EntitySchema : IEntitySchema
     private static void InternalAddNameVariantsToIndex<T>(
         IDictionary<string, T[]> nameIndex,
         T schema,
-        Func<T, IDictionary<NamingConvention, string>> nameVariantsFetcher
+        Func<T, IDictionary<NamingConvention, string?>> nameVariantsFetcher
     )
     {
-        foreach (KeyValuePair<NamingConvention, string> entry in nameVariantsFetcher.Invoke(schema))
+        foreach (KeyValuePair<NamingConvention, string?> entry in nameVariantsFetcher.Invoke(schema))
         {
-            T[]? currentArray = nameIndex.TryGetValue(entry.Value, out var existingArray)
+            T[]? currentArray = nameIndex.TryGetValue(entry.Value ?? throw new InvalidOperationException(), out var existingArray)
                 ? existingArray
                 : null;
             nameIndex[entry.Value] = currentArray ?? new T[Enum.GetValues<NamingConvention>().Length];
         }
     }
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
 
     public ISet<EvolutionMode> GetEvolutionMode()
     {
@@ -384,7 +384,7 @@ public class EntitySchema : IEntitySchema
             referenceSchemaContract.Description,
             referenceSchemaContract.DeprecationNotice,
             referenceSchemaContract.ReferencedEntityType,
-            referenceSchemaContract.GetEntityTypeNameVariants(_ => default),
+            referenceSchemaContract.GetEntityTypeNameVariants(_ => null),
             referenceSchemaContract.ReferencedEntityTypeManaged,
             referenceSchemaContract.Cardinality,
             referenceSchemaContract.ReferencedGroupType,

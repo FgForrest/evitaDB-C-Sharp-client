@@ -8,8 +8,8 @@ using EvitaDB.Client.Utils;
 namespace EvitaDB.Client.Models.Schemas.Builders;
 
 public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaEditor<TE>
-    where TE : IAttributeSchemaEditor<TE>
-    where TS : IAttributeSchema
+    where TE : class, IAttributeSchemaEditor<TE>
+    where TS : class, IAttributeSchema
 {
     protected TS BaseSchema { get; }
     protected ICatalogSchema? CatalogSchema { get; }
@@ -39,24 +39,12 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
         BaseSchema = existingSchema;
         _instance ??= ToInstance();
     }
-
-
-    public TE WithDescription(string? description)
-    {
-        UpdatedSchemaDirty = AddMutations(
-            new ModifyAttributeSchemaDescriptionMutation(
-                BaseSchema.Name,
-                description
-            )
-        );
-        return (TE)Convert.ChangeType(this, typeof(TE));
-    }
-
+    
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public string? DeprecationNotice => _instance.DeprecationNotice;
 
@@ -75,6 +63,17 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
     public object? DefaultValue => _instance.DefaultValue;
     public int IndexedDecimalPlaces => _instance.IndexedDecimalPlaces;
 
+    public TE WithDescription(string? description)
+    {
+        UpdatedSchemaDirty = AddMutations(
+            new ModifyAttributeSchemaDescriptionMutation(
+                BaseSchema.Name,
+                description
+            )
+        );
+        return (this as TE)!;
+    }
+    
     public TE Deprecated(string deprecationNotice)
     {
         UpdatedSchemaDirty = AddMutations(
@@ -83,7 +82,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 deprecationNotice
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     public TE NotDeprecatedAnymore()
@@ -94,7 +93,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 null
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     public TE WithDefaultValue(object? defaultValue)
@@ -121,7 +120,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
             );
         }
 
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Filterable()
@@ -132,7 +131,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 true
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Filterable(Func<bool> decider)
@@ -143,7 +142,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 decider.Invoke()
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Unique()
@@ -154,7 +153,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 true
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Unique(Func<bool> decider)
@@ -165,7 +164,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 decider.Invoke()
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Sortable()
@@ -176,7 +175,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 true
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Sortable(Func<bool> decider)
@@ -187,7 +186,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 decider.Invoke()
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Localized()
@@ -198,7 +197,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 true
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Localized(Func<bool> decider)
@@ -209,7 +208,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 decider.Invoke()
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Nullable()
@@ -220,7 +219,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 true
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     TE IAttributeSchemaEditor<TE>.Nullable(Func<bool> decider)
@@ -231,7 +230,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 decider.Invoke()
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     public TE IndexDecimalPlaces(int indexedDecimalPlaces)
@@ -246,7 +245,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 indexedDecimalPlaces
             )
         );
-        return (TE)Convert.ChangeType(this, typeof(TE));
+        return (this as TE)!;
     }
 
     /// <summary>
@@ -296,17 +295,17 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
     {
         Type type = currentSchema.Type;
         Assert.IsTrue(
-            !currentSchema.Sortable || typeof(IComparable<>).IsAssignableFrom(type),
+            !currentSchema.Sortable || typeof(IComparable<>).IsAssignableFrom(type) || typeof(IComparable).IsAssignableFrom(type),
             "Data type `" + currentSchema.Type + "` in attribute schema `" + currentSchema.Name +
             "` must implement Comparable in order to be usable for indexing!"
         );
         Assert.IsTrue(
-            !(currentSchema.Filterable && currentSchema.Unique),
+            currentSchema is not { Filterable: true, Unique: true },
             "Attribute `" + currentSchema.Name +
             "` cannot be both unique and filterable. Unique attributes are implicitly filterable!"
         );
         Assert.IsTrue(
-            !(currentSchema.Sortable && currentSchema.Type.IsArray),
+            currentSchema is not { Sortable: true, Type.IsArray: true },
             "Attribute `" + currentSchema.Name +
             "` is sortable but also an array. Arrays cannot be handled by sorting algorithm!"
         );

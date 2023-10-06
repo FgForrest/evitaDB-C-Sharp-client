@@ -252,9 +252,17 @@ public static class EvitaDataTypes
         {
             return CharStringDelimiter + charValue.ToString().Replace(StringDelimiter, "\\\\'") + StringDelimiter;
         }
-        if (value is byte or decimal or short or int or long)
+        if (value is byte or short or int or long)
         {
             return value.ToString()!;
+        }
+        if (value is decimal decimalValue)
+        {
+            string stringDecimal = decimalValue.ToString(CultureInfo.InvariantCulture)
+                .Replace("E", "e")
+                .Replace("e0", "")
+                .Replace("+", "");
+            return stringDecimal.StartsWith('.') ? "0" + stringDecimal : stringDecimal;
         }
         if (value is bool boolValue)
         {

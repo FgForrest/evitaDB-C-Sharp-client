@@ -8,7 +8,7 @@ namespace EvitaDB.Client.Models.Schemas.Dtos;
 public class ReferenceSchema : IReferenceSchema
 {
     public string Name { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public Cardinality Cardinality { get; }
@@ -20,8 +20,8 @@ public class ReferenceSchema : IReferenceSchema
     public bool IsFaceted { get; }
     public ICollection<IAttributeSchema> NonNullableAttributes { get; }
     public IDictionary<string, IAttributeSchema> Attributes { get; }
-    private IDictionary<NamingConvention, string> EntityTypeNameVariants { get; }
-    private IDictionary<NamingConvention, string> GroupTypeNameVariants { get; }
+    private IDictionary<NamingConvention, string?> EntityTypeNameVariants { get; }
+    private IDictionary<NamingConvention, string?> GroupTypeNameVariants { get; }
     private IDictionary<string, IAttributeSchema[]> AttributeNameIndex { get; }
     private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
@@ -55,13 +55,13 @@ public class ReferenceSchema : IReferenceSchema
             null, null, cardinality,
             entityType,
             entityTypeRelatesToEntity
-                ? new Dictionary<NamingConvention, string>()
+                ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(entityType),
             entityTypeRelatesToEntity,
             groupType,
             groupType != null && string.IsNullOrWhiteSpace(groupType) && !groupTypeRelatesToEntity
                 ? NamingConventionHelper.Generate(groupType)
-                : new Dictionary<NamingConvention, string>(),
+                : new Dictionary<NamingConvention, string?>(),
             groupTypeRelatesToEntity,
             indexed,
             faceted,
@@ -107,13 +107,13 @@ public class ReferenceSchema : IReferenceSchema
             description, deprecationNotice, cardinality,
             entityType,
             entityTypeRelatesToEntity
-                ? new Dictionary<NamingConvention, string>()
+                ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(entityType),
             entityTypeRelatesToEntity,
             groupType,
             groupType != null && string.IsNullOrWhiteSpace(groupType) && !groupTypeRelatesToEntity
                 ? NamingConventionHelper.Generate(groupType)
-                : new Dictionary<NamingConvention, string>(),
+                : new Dictionary<NamingConvention, string?>(),
             groupTypeRelatesToEntity,
             indexed,
             faceted,
@@ -130,15 +130,15 @@ public class ReferenceSchema : IReferenceSchema
 	 */
     internal static ReferenceSchema InternalBuild(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         string entityType,
-        IDictionary<NamingConvention, string> entityTypeNameVariants,
+        IDictionary<NamingConvention, string?> entityTypeNameVariants,
         bool entityTypeRelatesToEntity,
         Cardinality cardinality,
         string? groupType,
-        IDictionary<NamingConvention, string>? groupTypeNameVariants,
+        IDictionary<NamingConvention, string?>? groupTypeNameVariants,
         bool groupTypeRelatesToEntity,
         bool indexed,
         bool faceted,
@@ -164,7 +164,7 @@ public class ReferenceSchema : IReferenceSchema
             entityTypeNameVariants,
             entityTypeRelatesToEntity,
             groupType,
-            groupTypeNameVariants ?? new Dictionary<NamingConvention, string>(),
+            groupTypeNameVariants ?? new Dictionary<NamingConvention, string?>(),
             groupTypeRelatesToEntity,
             indexed,
             faceted,
@@ -175,15 +175,15 @@ public class ReferenceSchema : IReferenceSchema
 
     private ReferenceSchema(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         Cardinality cardinality,
         string referencedEntityType,
-        IDictionary<NamingConvention, string> entityTypeNameVariants,
+        IDictionary<NamingConvention, string?> entityTypeNameVariants,
         bool referencedEntityTypeManaged,
         string? referencedGroupType,
-        IDictionary<NamingConvention, string> groupTypeNameVariants,
+        IDictionary<NamingConvention, string?> groupTypeNameVariants,
         bool referencedGroupTypeManaged,
         bool indexed,
         bool faceted,
@@ -230,7 +230,7 @@ public class ReferenceSchema : IReferenceSchema
     }
 
 
-    public IDictionary<NamingConvention, string> GetEntityTypeNameVariants(
+    public IDictionary<NamingConvention, string?> GetEntityTypeNameVariants(
         Func<string, EntitySchema> entitySchemaFetcher)
     {
         return ReferencedEntityTypeManaged
@@ -238,7 +238,7 @@ public class ReferenceSchema : IReferenceSchema
             : EntityTypeNameVariants;
     }
 
-    public string GetReferencedEntityTypeNameVariants(
+    public string? GetReferencedEntityTypeNameVariants(
         NamingConvention namingConvention,
         Func<string, EntitySchema> entitySchemaFetcher)
     {
@@ -247,7 +247,7 @@ public class ReferenceSchema : IReferenceSchema
             : EntityTypeNameVariants[namingConvention];
     }
 
-    public IDictionary<NamingConvention, string> GetGroupTypeNameVariants(
+    public IDictionary<NamingConvention, string?> GetGroupTypeNameVariants(
         Func<string, EntitySchema> entitySchemaFetcher)
     {
         return ReferencedGroupTypeManaged
@@ -255,7 +255,7 @@ public class ReferenceSchema : IReferenceSchema
             : GroupTypeNameVariants;
     }
 
-    public string GetReferencedGroupTypeNameVariants(
+    public string? GetReferencedGroupTypeNameVariants(
         NamingConvention namingConvention,
         Func<string, EntitySchema> entitySchemaFetcher)
     {
@@ -287,7 +287,7 @@ public class ReferenceSchema : IReferenceSchema
         return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants[namingConvention];
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public IDictionary<string, SortableAttributeCompoundSchema> GetSortableAttributeCompounds()
     {

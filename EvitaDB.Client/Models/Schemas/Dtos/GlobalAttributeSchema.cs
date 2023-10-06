@@ -10,7 +10,7 @@ public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
 
     public GlobalAttributeSchema(
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
         bool unique,

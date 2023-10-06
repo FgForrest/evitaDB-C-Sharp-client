@@ -2,13 +2,13 @@
 
 public class FilterBy : AbstractFilterConstraintContainer
 {
-    private FilterBy() {
+    private FilterBy() : base() {
     }
     
     public FilterBy(params IFilterConstraint[] children) : base(children) {
     }
 
-    public bool IsNecessary => Applicable;
+    public bool Necessary => Applicable;
 
     public IFilterConstraint? Child => GetChildrenCount() == 0 ? null : Children[0];
 

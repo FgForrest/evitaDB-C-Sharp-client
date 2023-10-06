@@ -4,6 +4,7 @@ using DotNet.Testcontainers.Containers;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
 using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
@@ -11,6 +12,7 @@ using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
+using EvitaDB.Client.Utils;
 using EvitaDB.Test.Utils;
 using NUnit.Framework;
 using static EvitaDB.Client.Queries.IQueryConstraints;
@@ -21,15 +23,7 @@ namespace EvitaDB.Test;
 public class EvitaClientTest
 {
     private static EvitaClient? _client;
-
-    private const string ExistingCatalogWithData = "evita";
-
-    private const string TestCatalog = "testingCatalog";
-    private const string TestCollection = "testingCollection";
-    private const string AttributeDateTime = "attrDateTime";
-    private const string AttributeDecimalRange = "attrDecimalRange";
-    private const string NonExistingAttribute = "nonExistingAttribute";
-
+    
     private const int GrpcPort = 5556;
     private const int SystemApiPort = 5557;
 
@@ -62,67 +56,80 @@ public class EvitaClientTest
         _client = new EvitaClient(configuration);
     }
 
+    [SetUp]
+    public void BeforeEachTest()
+    {
+        DeleteAndCreateCatalog(Data.TestCatalog);
+        CreateEntitySchema(Entities.Product);
+        CreateEntitiesThatMatchSchema(Entities.Product, 3);
+    }
+
     [Test]
     public void ShouldBeAbleTo_CreateCatalog_And_EntitySchema_AndInsertNewEntity_WithAttribute()
     {
+        string testCollection = "testingCollection";
+        string attributeDateTime = "attrDateTime";
+        string attributeDecimalRange = "attrDecimalRange";
+        string nonExistingAttribute = "nonExistingAttribute";
+        
         // delete test catalog if it exists
-        _client!.DeleteCatalogIfExists(TestCatalog);
+        _client!.DeleteCatalogIfExists(Data.TestCatalog);
 
         // define new catalog
-        ICatalogSchema catalogSchema = _client.DefineCatalog(TestCatalog).ToInstance();
-        That(catalogSchema.Name, Is.EqualTo(TestCatalog));
+        ICatalogSchema catalogSchema = _client.DefineCatalog(Data.TestCatalog).ToInstance();
+        That(catalogSchema.Name, Is.EqualTo(Data.TestCatalog));
 
-        using (EvitaClientSession rwSession = _client.CreateReadWriteSession(TestCatalog))
+        using (EvitaClientSession rwSession = _client.CreateReadWriteSession(Data.TestCatalog))
         {
             // create a new entity schema
-            catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new CreateEntitySchemaMutation(TestCollection));
+            catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new CreateEntitySchemaMutation(testCollection));
 
-            That(catalogSchema.GetEntitySchema(TestCollection), Is.Not.Null);
-            That(catalogSchema.GetEntitySchema(TestCollection)!.Version, Is.EqualTo(1));
+            That(catalogSchema.GetEntitySchema(testCollection), Is.Not.Null);
+            That(catalogSchema.GetEntitySchema(testCollection)!.Version, Is.EqualTo(1));
             That(catalogSchema.Version, Is.EqualTo(2));
 
             // create two attributes schema mutations
             CreateAttributeSchemaMutation createAttributeDateTime = new CreateAttributeSchemaMutation(
-                AttributeDateTime, nameof(AttributeDateTime), null, false, true, true, false, true,
+                attributeDateTime, nameof(attributeDateTime), null, false, true, true, false, true,
                 typeof(DateTimeOffset), null, 0
             );
             CreateAttributeSchemaMutation createAttributeDecimalRange = new CreateAttributeSchemaMutation(
-                AttributeDecimalRange, nameof(AttributeDecimalRange), null, false, true, true, false, true,
+                attributeDecimalRange, nameof(attributeDecimalRange), null, false, true, true, false, true,
                 typeof(DecimalNumberRange), null, 2
             );
 
             // add the two attributes to the entity schema
             catalogSchema = rwSession.UpdateAndFetchCatalogSchema(
-                new ModifyEntitySchemaMutation(TestCollection,
+                new ModifyEntitySchemaMutation(testCollection,
                     createAttributeDateTime, createAttributeDecimalRange)
             );
             That(catalogSchema.Version, Is.EqualTo(2));
-            That(catalogSchema.GetEntitySchema(TestCollection)!.Version, Is.EqualTo(3));
+            That(catalogSchema.GetEntitySchema(testCollection)!.Version, Is.EqualTo(3));
 
             // check if the entity schema has the two attributes
-            ISealedEntitySchema? entitySchema = rwSession.GetEntitySchema(TestCollection);
+            ISealedEntitySchema? entitySchema = rwSession.GetEntitySchema(testCollection);
             That(entitySchema, Is.Not.Null);
             That(entitySchema!.Attributes.Count, Is.EqualTo(2));
             That(entitySchema.Version, Is.EqualTo(3));
-            That(entitySchema.Attributes.ContainsKey(AttributeDateTime), Is.True);
-            That(entitySchema.Attributes[AttributeDateTime].Type, Is.EqualTo(typeof(DateTimeOffset)));
-            That(entitySchema.Attributes.ContainsKey(AttributeDecimalRange), Is.True);
-            That(entitySchema.Attributes[AttributeDecimalRange].Type, Is.EqualTo(typeof(DecimalNumberRange)));
+            That(entitySchema.Attributes.ContainsKey(attributeDateTime), Is.True);
+            That(entitySchema.Attributes[attributeDateTime].Type, Is.EqualTo(typeof(DateTimeOffset)));
+            That(entitySchema.Attributes.ContainsKey(attributeDecimalRange), Is.True);
+            That(entitySchema.Attributes[attributeDecimalRange].Type, Is.EqualTo(typeof(DecimalNumberRange)));
 
             // close the session and switch catalog to the alive state
             rwSession.GoLiveAndClose();
         }
 
-        using EvitaClientSession newSession = _client.CreateReadWriteSession(TestCatalog);
+        using EvitaClientSession newSession = _client.CreateReadWriteSession(Data.TestCatalog);
 
         // insert a new entity with one of attributes defined in the entity schema
         DateTimeOffset dateTimeNow = DateTimeOffset.Now;
         ISealedEntity newEntity = newSession.UpsertAndFetchEntity(
             new EntityUpsertMutation(
-                TestCollection,
+                testCollection,
                 null,
                 EntityExistence.MayExist,
-                new UpsertAttributeMutation(AttributeDateTime, dateTimeNow)
+                new UpsertAttributeMutation(attributeDateTime, dateTimeNow)
             ),
             AttributeContent()
         );
@@ -130,27 +137,27 @@ public class EvitaClientTest
         string dateTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
 
         That(newEntity.Schema.Attributes.Count, Is.EqualTo(2));
-        That(newEntity.GetAttributeNames().Contains(AttributeDateTime), Is.True);
+        That(newEntity.GetAttributeNames().Contains(attributeDateTime), Is.True);
         That(
-            (newEntity.GetAttribute(AttributeDateTime) as DateTimeOffset?)?.ToString(dateTimeFormat),
+            (newEntity.GetAttribute(attributeDateTime) as DateTimeOffset?)?.ToString(dateTimeFormat),
             Is.EqualTo(dateTimeNow.ToString(dateTimeFormat))
         );
 
         // insert a new entity with attribute that is not defined in the entity schema
         ISealedEntity notInAttributeSchemaEntity = newSession.UpsertAndFetchEntity(
             new EntityUpsertMutation(
-                TestCollection,
+                testCollection,
                 null,
                 EntityExistence.MayExist,
-                new UpsertAttributeMutation(NonExistingAttribute, true)
+                new UpsertAttributeMutation(nonExistingAttribute, true)
             ),
             AttributeContent()
         );
 
         // schema of the entity should have 3 attributes
         That(notInAttributeSchemaEntity.Schema.Attributes.Count, Is.EqualTo(3));
-        That(notInAttributeSchemaEntity.GetAttributeNames().Contains(NonExistingAttribute), Is.True);
-        That(notInAttributeSchemaEntity.GetAttribute(NonExistingAttribute), Is.EqualTo(true));
+        That(notInAttributeSchemaEntity.GetAttributeNames().Contains(nonExistingAttribute), Is.True);
+        That(notInAttributeSchemaEntity.GetAttribute(nonExistingAttribute), Is.EqualTo(true));
     }
 
     [Test]
@@ -334,7 +341,7 @@ public class EvitaClientTest
     {
         EvitaClient clientWithEmptyCache = new EvitaClient(_client!.Configuration);
         clientWithEmptyCache.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session =>
             {
                 IEntitySchema? productSchema = session.GetCatalogSchema().GetEntitySchema(Entities.Product);
@@ -348,7 +355,7 @@ public class EvitaClientTest
     {
         ISet<string> catalogNames = ListCatalogNames(_client!);
         That(catalogNames.Count, Is.EqualTo(1));
-        That(catalogNames.Contains(TestCatalog), Is.True);
+        That(catalogNames.Contains(Data.TestCatalog), Is.True);
     }
 
     private static ISet<string> ListCatalogNames(EvitaClient evitaClient)
@@ -366,7 +373,7 @@ public class EvitaClientTest
             ISet<String> catalogNames = _client.GetCatalogNames();
 
             That(catalogNames.Count, Is.EqualTo(2));
-            That(catalogNames.Contains(TestCatalog), Is.True);
+            That(catalogNames.Contains(Data.TestCatalog), Is.True);
             That(catalogNames.Contains(newCatalogName), Is.True);
         }
         finally
@@ -383,9 +390,9 @@ public class EvitaClientTest
         bool removed = _client.DeleteCatalogIfExists(newCatalogName);
         That(removed, Is.True);
 
-        ISet<String> catalogNames = _client.GetCatalogNames();
+        ISet<string> catalogNames = _client.GetCatalogNames();
         That(catalogNames.Count, Is.EqualTo(1));
-        That(catalogNames.Contains(TestCatalog), Is.True);
+        That(catalogNames.Contains(Data.TestCatalog), Is.True);
     }
 
     [Test]
@@ -395,14 +402,14 @@ public class EvitaClientTest
         _client!.DefineCatalog(newCatalog);
 
         ISet<string> catalogNames = _client.GetCatalogNames();
-        That(catalogNames.Count, Is.EqualTo(2));
+        That(catalogNames.Count, Is.EqualTo(1));
         That(catalogNames.Contains(newCatalog), Is.True);
-        That(catalogNames.Contains(TestCatalog), Is.True);
+        That(catalogNames.Contains(Data.TestCatalog), Is.True);
         That(
-            _client.QueryCatalog(TestCatalog, evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version),
+            _client.QueryCatalog(Data.TestCatalog, evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version),
             Is.EqualTo(10));
 
-        _client.ReplaceCatalog(TestCatalog, newCatalog);
+        _client.ReplaceCatalog(Data.TestCatalog, newCatalog);
 
         ISet<string> catalogNamesAgain = _client.GetCatalogNames();
         That(catalogNamesAgain.Count, Is.EqualTo(1));
@@ -419,19 +426,19 @@ public class EvitaClientTest
 
         ISet<string> catalogNames = _client!.GetCatalogNames();
         That(catalogNames.Count, Is.EqualTo(1));
-        That(catalogNames.Contains(TestCatalog), Is.True);
+        That(catalogNames.Contains(Data.TestCatalog), Is.True);
         That(
-            _client.QueryCatalog(TestCatalog, evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version),
-            Is.EqualTo(10));
+            _client.QueryCatalog(Data.TestCatalog, evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version),
+            Is.EqualTo(2));
 
-        _client.RenameCatalog(TestCatalog, newCatalog);
+        _client.RenameCatalog(Data.TestCatalog, newCatalog);
 
         ISet<string> catalogNamesAgain = _client.GetCatalogNames();
         That(catalogNamesAgain.Count, Is.EqualTo(1));
         That(catalogNamesAgain.Contains(newCatalog), Is.True);
         That(
             _client.QueryCatalog(newCatalog, evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version), 
-            Is.EqualTo(11));
+            Is.EqualTo(3));
     }
 
     [Test]
@@ -441,7 +448,7 @@ public class EvitaClientTest
         int? productCount = null;
         int? productSchemaVersion = null;
         _client!.UpdateCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session =>
             {
                 That(session.GetAllEntityTypes().Contains(Entities.Product), Is.True);
@@ -455,13 +462,13 @@ public class EvitaClientTest
             }
         );
         _client.UpdateCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session => session.ReplaceCollection(
                 newCollection,
                 Entities.Product
             ));
         _client.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session =>
             {
                 That(session.GetAllEntityTypes().Contains(Entities.Product), Is.False);
@@ -472,8 +479,7 @@ public class EvitaClientTest
             }
         );
     }
-
-
+    
     [Test]
     public void ShouldRenameCollection()
     {
@@ -481,7 +487,7 @@ public class EvitaClientTest
         int? productCount = null;
         int? productSchemaVersion = null;
         _client!.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session =>
             {
                 That(session.GetAllEntityTypes().Contains(Entities.Product), Is.True);
@@ -491,13 +497,13 @@ public class EvitaClientTest
             }
         );
         _client.UpdateCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session => session.RenameCollection(
                 Entities.Product,
                 newCollection
             ));
         _client.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session =>
             {
                 That(session.GetAllEntityTypes().Contains(Entities.Product), Is.False);
@@ -513,18 +519,18 @@ public class EvitaClientTest
     public void ShouldQueryCatalog()
     {
         ICatalogSchema catalogSchema = _client!.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             x => x.GetCatalogSchema()
         );
         That(catalogSchema, Is.Not.Null);
-        That(catalogSchema.Name, Is.EqualTo(TestCatalog));
+        That(catalogSchema.Name, Is.EqualTo(Data.TestCatalog));
     }
 
     [Test]
     public void ShouldQueryOneEntityReference()
     {
         EntityReference entityReference = _client!.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session => session.QueryOneEntityReference(
                 Query(
                     Collection(Entities.Product),
@@ -541,8 +547,10 @@ public class EvitaClientTest
     [Test]
     public void ShouldNotQueryOneMissingEntity()
     {
+        CreateEntitySchema(Entities.Product);
+        CreateEntitiesThatMatchSchema(Entities.Product, 1);
         EntityReference? entityReference = _client!.QueryCatalog(
-            TestCatalog,
+            Data.TestCatalog,
             session => session.QueryOneEntityReference(
                 Query(
                     Collection(Entities.Product),
@@ -552,5 +560,175 @@ public class EvitaClientTest
                 )
             ));
         That(entityReference, Is.Null);
+    }
+
+    private static void CreateEntitySchema(string entityType)
+    {
+        using EvitaClientSession rwSession = _client!.CreateReadWriteSession(Data.TestCatalog);
+        
+        IEntitySchemaBuilder builder = rwSession.DefineEntitySchema(entityType)
+            .WithAttribute<string>(Data.AttributeName,
+                whichIs => whichIs.Filterable().Sortable().Localized()
+                    .WithDescription("This describes the attribute `name`"))
+            .WithAttribute<DateTimeOffset[]>(Data.AttributeValidity,
+                whichIs => whichIs.Nullable())
+            .WithAssociatedData<TestAsDataObj[]>(Data.AssociatedDataReferencedFiles,
+                whichIs => whichIs.Nullable().Localized())
+            .WithLocale(new CultureInfo("cs"), new CultureInfo("en"))
+            .WithReferenceTo("relatedProducts", entityType, Cardinality.ZeroOrMore,
+                whichIs => whichIs.Indexed().WithGroupType("Group").WithAttribute<int>(Data.AttributePriority, attr => attr.Sortable()))
+            .WithPrice()
+            .WithoutHierarchy()
+            .WithGeneratedPrimaryKey();
+
+        ISealedEntitySchema schema = builder.UpdateAndFetchVia(rwSession);
+
+        IAttributeSchema? nameAttributeSchema = schema.GetAttribute(Data.AttributeName);
+        That(nameAttributeSchema, Is.Not.Null);
+        That(nameAttributeSchema!.Type, Is.EqualTo(typeof(string)));
+        That(nameAttributeSchema.Filterable, Is.True);
+        That(nameAttributeSchema.Sortable, Is.True);
+        That(nameAttributeSchema.Nullable, Is.False);
+        That(nameAttributeSchema.Localized, Is.True);
+        That(nameAttributeSchema.Unique, Is.False);
+        That(nameAttributeSchema.Description, Is.Not.Null.Or.Empty);
+        
+        IAttributeSchema? validityAttributeSchema = schema.GetAttribute(Data.AttributeValidity);
+        That(validityAttributeSchema, Is.Not.Null);
+        That(validityAttributeSchema!.Type, Is.EqualTo(typeof(DateTimeOffset[])));
+        That(validityAttributeSchema.Filterable, Is.False);
+        That(validityAttributeSchema.Sortable, Is.False);
+        That(validityAttributeSchema.Nullable, Is.True);
+        That(validityAttributeSchema.Localized, Is.False);
+        That(validityAttributeSchema.Unique, Is.False);
+        That(validityAttributeSchema.Description, Is.Null.Or.Empty);
+        
+        IAttributeSchema? aliasAttributeSchema = schema.GetAttribute(Data.AttributeAlias);
+        That(aliasAttributeSchema, Is.Null);
+
+        IAssociatedDataSchema? associatedDataSchema = schema.GetAssociatedData(Data.AssociatedDataReferencedFiles);
+        That(associatedDataSchema, Is.Not.Null);
+        That(associatedDataSchema!.Type, Is.EqualTo(typeof(ComplexDataObject)));
+        That(associatedDataSchema.Localized, Is.True);
+        That(associatedDataSchema.Nullable, Is.True);
+        
+        IAssociatedDataSchema? nonExistingAssociatedDataSchema = schema.GetAssociatedData(Data.AssociatedDataLabels);
+        That(nonExistingAssociatedDataSchema, Is.Null);
+        
+        IReferenceSchema? referenceSchema = schema.GetReference("relatedProducts");
+        That(referenceSchema, Is.Not.Null);
+        That(referenceSchema!.Cardinality, Is.EqualTo(Cardinality.ZeroOrMore));
+        That(referenceSchema.IsIndexed, Is.True);
+        That(referenceSchema.ReferencedEntityType, Is.EqualTo(entityType));
+        That(referenceSchema.ReferencedGroupType, Is.EqualTo("Group"));
+
+        IAttributeSchema? referenceAttributeSchema = referenceSchema.GetAttribute(Data.AttributePriority);
+        That(referenceAttributeSchema, Is.Not.Null);
+        That(referenceAttributeSchema!.Filterable, Is.False);
+        That(referenceAttributeSchema.Sortable, Is.True);
+        
+        That(referenceSchema.GetAttribute(Data.AttributeQuantity), Is.Null);
+        
+        That(schema.WithPrice, Is.True);
+        That(schema.WithHierarchy, Is.False);
+        That(schema.WithGeneratedPrimaryKey, Is.True);
+    }
+
+    private static IList<ISealedEntity> CreateEntitiesThatMatchSchema(string entityType, int count)
+    {
+        List<ISealedEntity> entities = new List<ISealedEntity>();
+
+        using EvitaClientSession rwSession = _client!.CreateReadWriteSession(Data.TestCatalog);
+        for (int i = 0; i < count; i++)
+        {
+            IEntityBuilder builder = rwSession.CreateNewEntity(entityType);
+
+            CultureInfo englishLocale = new CultureInfo("en");
+            CultureInfo czechLocale = new CultureInfo("cs");
+            
+            string enAttributeName = "name-"+englishLocale.TwoLetterISOLanguageName;
+            string csAttributeName = "name-"+czechLocale.TwoLetterISOLanguageName;
+            builder.SetAttribute(Data.AttributeName, englishLocale, enAttributeName);
+            builder.SetAttribute(Data.AttributeName, czechLocale, csAttributeName);
+
+            DateTimeOffset now = DateTimeOffset.Now;
+            DateTimeOffset dateTimeOffset =
+                new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, now.Offset);
+            
+            DateTimeOffset[] attributeValidity =
+                { dateTimeOffset, dateTimeOffset.AddDays(7), dateTimeOffset.AddDays(14) };
+            builder.SetAttribute(Data.AttributeValidity, attributeValidity);
+            
+            TestAsDataObj[] asData = {
+                new("cs", "/cs/macbook-pro-13-2022"),
+                new("en", "/en/macbook-pro-13-2022")
+            };
+
+            builder.SetAssociatedData(Data.AssociatedDataReferencedFiles, englishLocale, asData);
+            builder.SetAssociatedData(Data.AssociatedDataReferencedFiles, czechLocale, asData);
+
+            IPrice price = new Price(new PriceKey(1, "basic", new Currency("CZK")), null, 100, 15, 115,
+                DateTimeRange.Between(DateTimeOffset.Now, DateTimeOffset.Now.AddDays(7)), true);
+            builder.SetPrice(price.PriceId, price.PriceList, price.Currency, price.PriceWithoutTax, price.TaxRate,
+                price.PriceWithTax, price.Validity, price.Sellable);
+
+            PriceInnerRecordHandling priceInnerRecordHandling = PriceInnerRecordHandling.FirstOccurrence;
+            builder.SetPriceInnerRecordHandling(priceInnerRecordHandling);
+
+            GroupEntityReference groupEntityReference = new GroupEntityReference("Group", 1, 1);
+            
+            string referenceName = "relatedProducts";
+            int referencePrimaryKey = 2;
+            builder.SetReference(referenceName, referencePrimaryKey, referenceBuilder => 
+                referenceBuilder
+                    .SetGroup(groupEntityReference.ReferencedEntity, groupEntityReference.ReferencedEntityPrimaryKey)
+                    .SetAttribute(Data.AttributePriority, 5));
+
+            IReference reference = builder.GetReference(referenceName, referencePrimaryKey)!;
+
+            AtomicReference<EntityReference> entityReference = new AtomicReference<EntityReference>();
+            DoesNotThrow(() => entityReference.Value = builder.UpsertVia(rwSession));
+
+            ISealedEntity? entity = rwSession.GetEntity(entityReference.Value!.Type,
+                entityReference.Value.PrimaryKey!.Value, EntityFetchAllContent());
+            
+            That(entity, Is.Not.Null);
+            That(entity!.GetAttribute(Data.AttributeName, englishLocale), Is.EqualTo(enAttributeName));
+            That(entity.GetAttribute(Data.AttributeName, czechLocale), Is.EqualTo(csAttributeName));
+            That(entity.GetAttributeArray(Data.AttributeValidity), Is.EqualTo(attributeValidity));
+            That(entity.GetAssociatedData(Data.AssociatedDataReferencedFiles, englishLocale)?.GetType(), Is.EqualTo(typeof(ComplexDataObject)));
+            That(entity.GetAssociatedData(Data.AssociatedDataReferencedFiles, czechLocale)?.GetType(), Is.EqualTo(typeof(ComplexDataObject)));
+            That(entity.GetAssociatedData<TestAsDataObj[]>(Data.AssociatedDataReferencedFiles, englishLocale), Is.EqualTo(asData));
+            That(entity.GetAssociatedData<TestAsDataObj[]>(Data.AssociatedDataReferencedFiles, czechLocale), Is.EqualTo(asData));
+            That(entity.GetPrice(price.Key), Is.EqualTo(price));
+            That(entity.InnerRecordHandling, Is.EqualTo(priceInnerRecordHandling));
+            That(entity.GetReference(reference.ReferenceName, reference.ReferencedPrimaryKey), Is.EqualTo(reference));
+            
+            entities.Add(entity);
+        }
+        
+        return entities;
+    }
+
+    private static void CreateEntityThatViolatesSchema(string entityType)
+    {
+        using EvitaClientSession rwSession = _client!.CreateReadWriteSession(Data.TestCatalog);
+        CultureInfo attributeLocale = new CultureInfo("en");
+        IEntityBuilder builder = rwSession.CreateNewEntity(entityType);
+        builder.SetAttribute(Data.AttributeName, attributeLocale, 5);
+        Throws(typeof(EvitaInvalidUsageException), () => builder.UpsertVia(rwSession));
+    }
+
+    public static void DeleteAndCreateCatalog(string catalogName)
+    {
+        _ = _client!.DeleteCatalogIfExists(catalogName);
+        _client.DefineCatalog(catalogName);
+    }
+    
+    private record TestAsDataObj(string Locale, string Url)
+    {
+        public TestAsDataObj() : this("", "")
+        {
+        }
     }
 }

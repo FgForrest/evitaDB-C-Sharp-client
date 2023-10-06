@@ -4,7 +4,7 @@ using EvitaDB.Client.Utils;
 namespace EvitaDB.Client.Queries.Filter;
 
 public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateEntityScopeContainer,
-    IConstraintWithSuffix
+    IConstraintContainerWithSuffix
 {
     private const string Suffix = "self";
 

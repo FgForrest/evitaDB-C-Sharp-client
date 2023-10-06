@@ -2,7 +2,7 @@
 
 namespace EvitaDB.Client.Utils;
 
-public class Assert
+internal static class Assert
 {
     public static void IsTrue(bool condition, string message)
     {

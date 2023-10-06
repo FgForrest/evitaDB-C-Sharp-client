@@ -6,7 +6,7 @@ public class ReferenceHaving : AbstractFilterConstraintContainer
     {
     }
     
-    private ReferenceHaving(string referenceName) : base(referenceName)
+    private ReferenceHaving(string referenceName) : base(new object[] {referenceName})
     {
     }
     

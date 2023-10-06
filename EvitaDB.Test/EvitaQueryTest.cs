@@ -332,8 +332,8 @@ public class EvitaQueryTest
 
         var session = _client.CreateReadWriteSession("evita");
 
-        var x = ComplexDataObjectConverter.ConvertFromComplexDataObject(
-            (entities.RecordData[0].GetAssociatedData("allActiveUrls") as ComplexDataObject)!, typeof(TestAsDataObj[]));
+        var x = ComplexDataObjectConverter.ConvertFromComplexDataObject<TestAsDataObj[]>(
+            (entities.RecordData[0].GetAssociatedData("allActiveUrls") as ComplexDataObject)!);
 
         Console.WriteLine(x);
 
@@ -353,5 +353,5 @@ public class EvitaQueryTest
         public TestAsDataObj() : this("", "")
         {
         }
-    };
+    }
 }

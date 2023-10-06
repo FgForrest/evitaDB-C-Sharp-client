@@ -3,7 +3,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Data.Structure;
 
-public class Price : IPrice
+public record Price : IPrice
 {
     private const string PriceKeyIsMandatoryValue = "Price key is mandatory value!";
     private const string PriceWithoutTaxIsMandatoryValue = "Price without tax is mandatory value!";
@@ -64,6 +64,20 @@ public class Price : IPrice
         Validity = validity;
         Sellable = sellable;
         Dropped = dropped;
+    }
+
+    public virtual bool Equals(Price? other)
+    {
+        if (other == null) return false;
+        
+        if (ReferenceEquals(this, other)) return true;
+        
+        return Version == other.Version && Key.Equals(other.Key);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Key);
     }
 
     public override string ToString()

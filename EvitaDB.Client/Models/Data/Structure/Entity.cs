@@ -870,6 +870,16 @@ public class Entity : ISealedEntity
         return AssociatedData.GetAssociatedData(associatedDataName);
     }
 
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        return AssociatedData.GetAssociatedData<T>(associatedDataName);
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        return AssociatedData.GetAssociatedData<T>(associatedDataName, locale);
+    }
+
     public object[]? GetAssociatedDataArray(string associatedDataName)
     {
         return AssociatedData.GetAssociatedDataArray(associatedDataName);

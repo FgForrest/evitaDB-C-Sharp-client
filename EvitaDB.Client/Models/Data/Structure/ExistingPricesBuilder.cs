@@ -2,6 +2,7 @@
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
+using EvitaDB.Client.Models.Data.Structure.Predicates;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Utils;
@@ -20,6 +21,7 @@ public class ExistingPricesBuilder : IPricesBuilder
     private SetPriceInnerRecordHandlingMutation? PriceInnerRecordHandlingEntityMutation { get; set; }
     private bool RemoveAllNonModifiedPrices { get; set; }
     public int Version => BasePrices.Version;
+    public PricePredicate PricePredicate { get; }
 
     public PriceInnerRecordHandling? InnerRecordHandling => PriceInnerRecordHandlingEntityMutation is not null
         ? PriceInnerRecordHandlingEntityMutation.MutateLocal(EntitySchema, BasePrices).InnerRecordHandling
@@ -41,12 +43,14 @@ public class ExistingPricesBuilder : IPricesBuilder
 
     public ExistingPricesBuilder(
         IEntitySchema entitySchema,
-        Prices prices
+        Prices prices,
+        PricePredicate pricePredicate
     )
     {
         BasePrices = prices;
         EntitySchema = entitySchema;
         PriceMutations = new Dictionary<PriceKey, PriceMutation>();
+        PricePredicate = pricePredicate;
     }
 
     /// <summary>
@@ -189,8 +193,15 @@ public class ExistingPricesBuilder : IPricesBuilder
 
     public bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode)
     {
-        // TODO tpo: HOW TO DO THIS WITHOUT PREDICATES?
-        return false;
+        if (PricePredicate.Currency is not null && PricePredicate.PriceLists is not null &&
+            PricePredicate.PriceLists.Any())
+        {
+            //return HasPriceInInterval(from, to, queryPriceMode, PricePredicate.Currency, PricePredicate.PriceLists);
+            // TODO: should we compute it here? or just fetch it from the server
+            return true;
+        }
+
+        throw new ContextMissingException();
     }
 
     public IEnumerable<IPrice> GetPrices()

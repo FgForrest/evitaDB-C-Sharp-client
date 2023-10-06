@@ -112,6 +112,27 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         return newAdditionalChildren!;
     }
 
+    public T[] ExplicitChildren
+    {
+        get
+        {
+            return Children.Where(it =>
+                    this is not IConstraintContainerWithSuffix cws || !cws.ChildImplicitForSuffix(it))
+                .ToArray();
+        }
+    }
+
+    public IConstraint[] ExplicitAdditionalChildren
+    {
+        get
+        {
+            return AdditionalChildren
+                .Where(it =>
+                    this is not IConstraintContainerWithSuffix cws || !cws.AdditionalChildImplicitForSuffix(it))
+                .ToArray();
+        }
+    }
+
     public IEnumerator<T> GetEnumerator()
     {
         return Children.ToList().GetEnumerator();
@@ -147,7 +168,8 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         AdditionalChildren = ValidateAndFilterAdditionalChildren(additionalChildren);
     }
 
-    protected ConstraintContainer(string? name, object[] arguments, params T[] children) : this(name, arguments, children, NoAdditionalChildren)
+    protected ConstraintContainer(string? name, object[] arguments, params T[] children) : this(name, arguments,
+        children, NoAdditionalChildren)
     {
     }
 

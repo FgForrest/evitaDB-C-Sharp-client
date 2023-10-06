@@ -37,17 +37,17 @@ public class CreateAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
         return Equals(propertyRetriever.Invoke(existingVersion), newValue) ? null : mutationCreator.Invoke(newValue);
     }
 
-    public IAssociatedDataSchema? Mutate(IAssociatedDataSchema? associatedDataSchema)
+    public IAssociatedDataSchema Mutate(IAssociatedDataSchema? associatedDataSchema)
     {
         return AssociatedDataSchema.InternalBuild(
             Name, Description, DeprecationNotice, Localized, Nullable, Type
         );
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAssociatedDataSchema? newAssociatedDataSchema = Mutate(null);
+        IAssociatedDataSchema newAssociatedDataSchema = Mutate(null);
         IAssociatedDataSchema? existingAssociatedDataSchema = entitySchema!.GetAssociatedData(Name);
         if (existingAssociatedDataSchema is null)
         {
@@ -65,7 +65,7 @@ public class CreateAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
                 entitySchema.Currencies,
                 entitySchema.Attributes,
                 entitySchema.AssociatedData.Values.Concat(new[] {newAssociatedDataSchema})
-                    .ToDictionary(x => x!.Name, x => x)!,
+                    .ToDictionary(x => x.Name, x => x),
                 entitySchema.References,
                 entitySchema.EvolutionModes,
                 entitySchema.GetSortableAttributeCompounds()

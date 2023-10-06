@@ -13,17 +13,17 @@ public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
         Name = name;
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
-        return (TS) catalogSchema!.GetAttribute(Name) ?? throw new EvitaInvalidUsageException(
+        return (TS) catalogSchema!.GetAttribute(Name)! ?? throw new EvitaInvalidUsageException(
             "No global attribute with name `" + Name + "` found in catalog `" + catalogSchema.Name + "`.");
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IGlobalAttributeSchema? newAttributeSchema = Mutate(catalogSchema, (IGlobalAttributeSchema?) null);
+        IGlobalAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IGlobalAttributeSchema?) null);
         Assert.NotNull(
             newAttributeSchema,
             () => new InvalidSchemaMutationException(

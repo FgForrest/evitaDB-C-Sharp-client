@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Schemas;
@@ -39,12 +40,50 @@ public class InitialAssociatedDataBuilder : IAssociatedDataBuilder
             : null;
     }
 
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        AssociatedDataValue? associatedDataValue = AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName), out AssociatedDataValue? value)
+            ? value
+            : null;
+        
+        if (associatedDataValue == null)
+        {
+            return null;
+        }
+        
+        if (associatedDataValue.Value is ComplexDataObject complexDataObject)
+        {
+            return ComplexDataObjectConverter.ConvertFromComplexDataObject<T>(complexDataObject);
+        }
+        
+        return associatedDataValue.Value as T;
+    }
+
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
     {
         return AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName, locale),
             out AssociatedDataValue? value)
             ? value.Value
             : null;
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        AssociatedDataValue? associatedDataValue = AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName, locale), out AssociatedDataValue? value)
+            ? value
+            : null;
+        
+        if (associatedDataValue == null)
+        {
+            return null;
+        }
+        
+        if (associatedDataValue.Value is ComplexDataObject complexDataObject)
+        {
+            return ComplexDataObjectConverter.ConvertFromComplexDataObject<T>(complexDataObject);
+        }
+        
+        return associatedDataValue.Value as T;
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)

@@ -3,7 +3,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Filter;
 
-public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilterConstraint, IConstraintWithSuffix
+public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilterConstraint, IConstraintContainerWithSuffix
 {
     private const string Suffix = "self";
 

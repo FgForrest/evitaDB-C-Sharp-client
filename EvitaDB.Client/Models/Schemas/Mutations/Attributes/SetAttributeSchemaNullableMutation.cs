@@ -33,12 +33,12 @@ public class SetAttributeSchemaNullableMutation : IEntityAttributeSchemaMutation
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -48,13 +48,13 @@ public class SetAttributeSchemaNullableMutation : IEntityAttributeSchemaMutation
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             attributeSchema.Description,
@@ -64,10 +64,10 @@ public class SetAttributeSchemaNullableMutation : IEntityAttributeSchemaMutation
             attributeSchema.Sortable,
             attributeSchema.Localized,
             Nullable,
-            attributeSchema.GetType(),
+            attributeSchema.Type,
             attributeSchema.DefaultValue,
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
@@ -78,7 +78,7 @@ public class SetAttributeSchemaNullableMutation : IEntityAttributeSchemaMutation
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
-        IAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IEntityAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             entitySchema, existingAttributeSchema, updatedAttributeSchema
         );
@@ -93,7 +93,7 @@ public class SetAttributeSchemaNullableMutation : IEntityAttributeSchemaMutation
                                                              catalogSchema?.Name + "` schema!");
         IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema!
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 }

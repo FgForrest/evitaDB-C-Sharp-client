@@ -25,7 +25,7 @@ namespace EvitaDB.Client;
 
 public delegate void EvitaSessionTerminationCallback(EvitaClientSession session);
 
-public class EvitaClient : IClientContext, IDisposable
+public partial class EvitaClient : IClientContext, IDisposable
 {
     private static readonly ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcTopLevelCatalogSchemaMutation>
         CatalogSchemaMutationConverter = new DelegatingTopLevelCatalogSchemaMutationConverter();
@@ -40,9 +40,7 @@ public class EvitaClient : IClientContext, IDisposable
 
     public EvitaClientConfiguration Configuration { get; }
 
-    private static readonly Regex ErrorMessagePattern = new(@"(\w+:\w+:\w+): (.*)",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase
-    );
+    private static readonly Regex ErrorMessagePattern = MyRegex();
 
     public EvitaClient(EvitaClientConfiguration configuration)
     {
@@ -52,13 +50,9 @@ public class EvitaClient : IClientContext, IDisposable
             .SetClientCertificatePath(configuration.CertificateFileName)
             .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
             .SetClientCertificateKeyPassword(configuration.CertificateKeyPassword)
-            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate)
+            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host, configuration.SystemApiPort)
             .SetTrustedServerCertificate(configuration.UsingTrustedRootCaCertificate)
             .Build();
-        if (configuration.UseGeneratedCertificate)
-        {
-            certificateManager.GetCertificatesFromServer(configuration.Host, configuration.SystemApiPort);
-        }
 
         ChannelBuilder channelBuilder = new ChannelBuilder(
             configuration.Host,
@@ -376,4 +370,7 @@ public class EvitaClient : IClientContext, IDisposable
             throw new InstanceTerminatedException("client instance");
         }
     }
+
+    [GeneratedRegex("(\\w+:\\w+:\\w+): (.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    private static partial Regex MyRegex();
 }

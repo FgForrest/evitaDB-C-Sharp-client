@@ -287,9 +287,19 @@ public class InitialEntityBuilder : IEntityBuilder
         return AssociatedDataBuilder.GetAssociatedData(associatedDataName);
     }
 
+    public T? GetAssociatedData<T>(string associatedDataName) where T : class
+    {
+        return AssociatedDataBuilder.GetAssociatedData<T>(associatedDataName);
+    }
+
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
     {
         return AssociatedDataBuilder.GetAssociatedData(associatedDataName, locale);
+    }
+
+    public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
+    {
+        return AssociatedDataBuilder.GetAssociatedData<T>(associatedDataName, locale);
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)

@@ -20,7 +20,7 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
     public IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
-        IAttributeSchema existingAttributeSchema = referenceSchema.GetAttribute(Name) ?? throw new InvalidSchemaMutationException(
+        IAttributeSchema existingAttributeSchema = referenceSchema!.GetAttribute(Name) ?? throw new InvalidSchemaMutationException(
                 "The attribute `" + Name + "` is not defined in entity `" + entitySchema.Name +
                 "` schema for reference with name `" + referenceSchema.Name + "`!"
             );
@@ -35,8 +35,8 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
                 existingAttributeSchema.Sortable,
                 existingAttributeSchema.Localized,
                 existingAttributeSchema.Nullable,
-                existingAttributeSchema.GetType(),
-                EvitaDataTypes.ToTargetType(DefaultValue, existingAttributeSchema.GetType()),
+                existingAttributeSchema.Type,
+                EvitaDataTypes.ToTargetType(DefaultValue, existingAttributeSchema.Type),
                 existingAttributeSchema.IndexedDecimalPlaces
             );
             return (this as IReferenceAttributeSchemaMutation).ReplaceAttributeIfDifferent(
@@ -45,18 +45,18 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
         } catch (UnsupportedDataTypeException) {
             throw new InvalidSchemaMutationException(
                 "The value `" + DefaultValue + "` cannot be automatically converted to " +
-                "attribute `" + Name + "` type `" + existingAttributeSchema.GetType() +
+                "attribute `" + Name + "` type `" + existingAttributeSchema.Type +
                 "` in entity `" + entitySchema.Name + "` schema!"
             );
         }
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(GlobalAttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -66,15 +66,15 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
-                EvitaDataTypes.ToTargetType(DefaultValue, globalAttributeSchema.GetType()),
+                globalAttributeSchema.Type,
+                EvitaDataTypes.ToTargetType(DefaultValue, globalAttributeSchema.Type),
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
-            attributeSchema.NameVariants,
+            attributeSchema!.NameVariants,
             attributeSchema.Description,
             attributeSchema.DeprecationNotice,
             attributeSchema.Unique,
@@ -82,13 +82,13 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
             attributeSchema.Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
-            attributeSchema.GetType(),
-            EvitaDataTypes.ToTargetType(DefaultValue, attributeSchema.GetType()),
+            attributeSchema.Type,
+            EvitaDataTypes.ToTargetType(DefaultValue, attributeSchema.Type),
             attributeSchema.IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
@@ -108,8 +108,8 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
                 existingAttributeSchema.Sortable,
                 existingAttributeSchema.Localized,
                 existingAttributeSchema.Nullable,
-                existingAttributeSchema.GetType(),
-                EvitaDataTypes.ToTargetType(DefaultValue, existingAttributeSchema.GetType()),
+                existingAttributeSchema.Type,
+                EvitaDataTypes.ToTargetType(DefaultValue, existingAttributeSchema.Type),
                 existingAttributeSchema.IndexedDecimalPlaces
             );
             return (this as IEntityAttributeSchemaMutation).ReplaceAttributeIfDifferent(
@@ -120,13 +120,13 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
         {
             throw new InvalidSchemaMutationException(
                 "The value `" + DefaultValue + "` cannot be automatically converted to " +
-                "attribute `" + Name + "` type `" + existingAttributeSchema.GetType() +
+                "attribute `" + Name + "` type `" + existingAttributeSchema.Type +
                 "` in entity `" + entitySchema.Name + "` schema!"
             );
         }
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??
@@ -135,9 +135,9 @@ public class ModifyAttributeSchemaDefaultValueMutation : IEntityAttributeSchemaM
                                                              catalogSchema?.Name + "` schema!");
         try
         {
-            IGlobalAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+            IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
             return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-                catalogSchema, existingAttributeSchema, updatedAttributeSchema!
+                catalogSchema, existingAttributeSchema, updatedAttributeSchema
             );
         }
         catch (UnsupportedDataTypeException)

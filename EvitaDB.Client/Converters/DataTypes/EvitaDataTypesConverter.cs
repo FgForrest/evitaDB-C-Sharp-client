@@ -874,10 +874,7 @@ public static class EvitaDataTypesConverter
     {
         return new GrpcBigDecimal
         {
-            ValueString = decimalValue.ToString(CultureInfo.InvariantCulture),
-            Scale = decimalValue.Scale,
-            Precision = checked((uint) ((decimal.GetBits(decimalValue)[3] & 0x00FF0000) >> 16) + 1),
-            Value = ByteString.CopyFrom(decimal.GetBits(decimalValue).SelectMany(BitConverter.GetBytes).ToArray())
+            ValueString = EvitaDataTypes.FormatValue(decimalValue)
         };
     }
 

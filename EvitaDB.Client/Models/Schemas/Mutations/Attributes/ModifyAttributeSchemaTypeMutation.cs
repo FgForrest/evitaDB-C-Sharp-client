@@ -36,12 +36,12 @@ public class ModifyAttributeSchemaTypeMutation : IEntityAttributeSchemaMutation,
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -54,7 +54,7 @@ public class ModifyAttributeSchemaTypeMutation : IEntityAttributeSchemaMutation,
                 Type,
                 globalAttributeSchema.DefaultValue is not null ? EvitaDataTypes.ToTargetType(globalAttributeSchema.DefaultValue, Type) : null,
                 IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
         return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(

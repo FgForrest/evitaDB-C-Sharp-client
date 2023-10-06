@@ -8,7 +8,7 @@ public class CatalogSchema : ICatalogSchema
 {
     public int Version { get; }
     public string Name { get; }
-    public IDictionary<NamingConvention, string> NameVariants { get; }
+    public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public IDictionary<string, IGlobalAttributeSchema> Attributes { get; }
     private IDictionary<string, IGlobalAttributeSchema[]> AttributeNameIndex { get; }
@@ -17,7 +17,7 @@ public class CatalogSchema : ICatalogSchema
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes { get; }
     
     internal static CatalogSchema InternalBuild(
-        string name, IDictionary<NamingConvention, string> nameVariants,
+        string name, IDictionary<NamingConvention, string?> nameVariants,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         Func<string, IEntitySchema> entitySchemaAccessor
     )
@@ -30,7 +30,7 @@ public class CatalogSchema : ICatalogSchema
     internal static CatalogSchema InternalBuild(
         int version,
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         IDictionary<string, IGlobalAttributeSchema> attributes,
@@ -72,7 +72,7 @@ public class CatalogSchema : ICatalogSchema
     private CatalogSchema(
         int version,
         string name,
-        IDictionary<NamingConvention, string> nameVariants,
+        IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         IDictionary<string, IGlobalAttributeSchema> attributes,
@@ -96,7 +96,7 @@ public class CatalogSchema : ICatalogSchema
 
     public IEntitySchema? GetEntitySchema(string entityType) => EntitySchemaAccessor.Invoke(entityType);
 
-    public string GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out var nameVariant) ? nameVariant : Name;
+    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out var nameVariant) ? nameVariant : Name;
 
     public IDictionary<string, IGlobalAttributeSchema> GetAttributes()
     {

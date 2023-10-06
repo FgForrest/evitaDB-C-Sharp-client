@@ -15,12 +15,12 @@ public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMu
         UniqueGlobally = uniqueGlobally;
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
         {
-            return (TS) Convert.ChangeType(GlobalAttributeSchema.InternalBuild(
+            return (AttributeSchema.InternalBuild(
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
@@ -30,25 +30,25 @@ public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMu
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
-                globalAttributeSchema.GetType(),
+                globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
-            ), typeof(TS));
+            ) as TS)!;
         }
 
         throw new EvitaInternalError("Unexpected input!");
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??
                                                          throw new InvalidSchemaMutationException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
-        IGlobalAttributeSchema? updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema!
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 }

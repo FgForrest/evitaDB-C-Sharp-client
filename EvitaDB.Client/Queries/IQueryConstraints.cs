@@ -25,8 +25,8 @@ public interface IQueryConstraints
 
     static Not? Not(IFilterConstraint? constraint) => constraint is null ? null : new Not(constraint);
 
-    static ReferenceHaving? ReferenceHaving(string referenceName, params IFilterConstraint[]? constraints) =>
-        ArrayUtils.IsEmpty(constraints) ? null : new ReferenceHaving(referenceName, constraints!);
+    static ReferenceHaving? ReferenceHaving(string? referenceName, params IFilterConstraint[]? constraints) =>
+        referenceName is null ? null : new ReferenceHaving(referenceName, constraints!);
 
     static UserFilter? UserFilter(params IFilterConstraint[]? constraints) =>
         constraints is null ? null : new UserFilter(constraints);

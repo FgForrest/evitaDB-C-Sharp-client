@@ -108,9 +108,9 @@ public class PrettyPrintingVisitor : IConstraintVisitor
 
     private string NewLine() => _indent == null ? "" : "\n";
 
-    public StringBuilder NextArgument() => _result.Append(",");
+    public StringBuilder NextArgument() => _result.Append(',');
 
-    public StringBuilder NextConstraint() => FirstConstraint ? _result : _result.Append(",");
+    public StringBuilder NextConstraint() => FirstConstraint ? _result : _result.Append(',');
 
     private void Indent(string? indent, int repeatCount)
     {
@@ -122,7 +122,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
 
     private void PrintContainer(IConstraintContainer<IConstraint> constraint)
     {
-        if (constraint.Children.Length == 0 && constraint.AdditionalChildren.Length == 0)
+        if (constraint.ExplicitChildren.Length == 0 && constraint.ExplicitAdditionalChildren.Length == 0)
         {
             PrintLeaf(constraint);
             return;
@@ -131,20 +131,20 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         Level++;
         if (constraint.Applicable)
         {
-            IConstraint[] children = constraint.Children;
+            IConstraint[] children = constraint.ExplicitChildren;
             int childrenLength = children.Length;
 
-            IConstraint[] additionalChildren = constraint.AdditionalChildren;
+            IConstraint[] additionalChildren = constraint.ExplicitAdditionalChildren;
             int additionalChildrenLength = additionalChildren.Length;
 
-            object?[] arguments = constraint.Arguments;
-            int argumentsLength = arguments.Length;
+            object?[]? arguments = constraint.Arguments;
+            int? argumentsLength = arguments?.Length;
 
             // print arguments
             for (int i = 0; i < argumentsLength; i++)
             {
-                object? argument = arguments[i];
-                if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument))
+                object? argument = arguments?[i];
+                if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument!))
                 {
                     continue;
                 }
@@ -175,7 +175,14 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             // print additional children
             for (int i = 0; i < additionalChildren.Length; i++)
             {
-                var additionalChild = additionalChildren[i];
+                IConstraint additionalChild = additionalChildren[i];
+
+                if (constraint is IConstraintContainerWithSuffix cws &&
+                    cws.AdditionalChildImplicitForSuffix(additionalChild))
+                {
+                    continue;
+                }
+
                 additionalChild.Accept(this);
                 if (i + 1 < additionalChildren.Length || childrenLength > 0)
                 {
@@ -186,7 +193,13 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             // print children
             for (int i = 0; i < childrenLength; i++)
             {
-                var child = children[i];
+                IConstraint child = children[i];
+
+                if (constraint is IConstraintContainerWithSuffix cws && cws.ChildImplicitForSuffix(child))
+                {
+                    continue;
+                }
+
                 child.Accept(this);
                 if (i + 1 < childrenLength)
                 {

@@ -38,7 +38,7 @@ using Random = System.Random;
 
 namespace EvitaDB.Test;
 
-[Parallelizable(ParallelScope.All)]
+/*[Parallelizable(ParallelScope.All)]*/
 public class EvitaClientTest
 {
     private const int RandomSeed = 42;

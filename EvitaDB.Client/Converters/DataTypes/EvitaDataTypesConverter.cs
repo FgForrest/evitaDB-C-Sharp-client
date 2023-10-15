@@ -703,7 +703,7 @@ public static class EvitaDataTypesConverter
 
     public static decimal ToDecimal(GrpcBigDecimal bigDecimalValue)
     {
-        return decimal.Parse(bigDecimalValue.ValueString);
+        return decimal.Parse(bigDecimalValue.ValueString, CultureInfo.InvariantCulture);
     }
 
     public static decimal[] ToDecimalArray(GrpcBigDecimalArray arrayValue)

@@ -32,6 +32,12 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.X'   # setup dotnet 7
+         
+      - name: Restore solution
+        run: dotnet restore
+        
+      - name: Build solution
+        run: dotnet build
           
       - name: Run tests
         run: dotnet test EvitaDB.Test
@@ -62,7 +68,7 @@ jobs:
           recursive: true
           
       - name: Pack nuget
-        run: cd EvitaDB.Client && dotnet build && dotnet pack -c Release -p:PackageVersion=${{ steps.release_version.outputs.version }} --no-build --no-restore
+        run: cd EvitaDB.Client && dotnet pack -c Release -p:PackageVersion=${{ steps.release_version.outputs.version }} --no-build --no-restore
 
       - name: Publish nuget
         run: cd bin/Release && dotnet nuget push EvitaDB.Client.${{ steps.release_version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json

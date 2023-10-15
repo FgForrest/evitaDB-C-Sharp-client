@@ -18,7 +18,6 @@ using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
-using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Session;
 using EvitaDB.Client.Utils;

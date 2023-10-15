@@ -649,6 +649,7 @@ public static class EvitaDataTypesConverter
 
     public static DateTimeOffset ToDateTimeOffset(GrpcOffsetDateTime offsetDateTimeValue)
     {
+        Console.WriteLine($"{offsetDateTimeValue.Timestamp}   ---   {offsetDateTimeValue.Offset}");
         TimeSpan hourOffset = TimeSpan.FromHours(int.Parse(offsetDateTimeValue.Offset.Substring(1, 2)));
         bool add = offsetDateTimeValue.Offset.ElementAt(0) == '+';
         TimeSpan offset = add ? hourOffset : hourOffset.Negate();

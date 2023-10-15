@@ -83,15 +83,25 @@ public class EvitaClientTest
             ? "npipe://./pipe/docker_engine"
             : "unix:///var/run/docker.sock";
 
-        using var client = new DockerClientConfiguration(new Uri(dockerUri)).CreateClient();
+        using DockerClient client = new DockerClientConfiguration(new Uri(dockerUri)).CreateClient();
         // Get information about the locally cached image (if it exists)
-        var images = await client.Images.ListImagesAsync(new ImagesListParameters { All = true });
+        var images = await client.Images.ListImagesAsync(
+            new ImagesListParameters
+            {
+                Filters = new Dictionary<string, IDictionary<string, bool>>
+                {
+                    ["reference"] = new Dictionary<string, bool>
+                    {
+                        [ImageName] = true,
+                    },
+                }
+            });
         if (images.Count > 0)
         {
             var localImage = images[0];
 
             // Get information about the remote image from the Docker registry
-            var remoteImage = await client.Images.InspectImageAsync(ImageName);
+            ImageInspectResponse remoteImage = await client.Images.InspectImageAsync(ImageName);
 
             // Compare image timestamps to determine if the remote image is newer
             if (remoteImage.Created > localImage.Created)
@@ -135,12 +145,6 @@ public class EvitaClientTest
             .SetPort(container.GetMappedPublicPort(GrpcPort))
             .SetSystemApiPort(container.GetMappedPublicPort(SystemApiPort))
             .Build();
-        
-        /*EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
-            .SetHost(Host)
-            .SetPort(GrpcPort)
-            .SetSystemApiPort(SystemApiPort)
-            .Build();*/
 
         // create a new evita client with the specified configuration
         EvitaClient evitaClient = new EvitaClient(configuration);

@@ -43,7 +43,7 @@ jobs:
         run: dotnet build
           
       - name: Run tests
-        run: dotnet test EvitaDB.Test
+        run: dotnet test EvitaDB.Test --verbosity detailed
           
       - name: Resolve new release version
         id: release_version

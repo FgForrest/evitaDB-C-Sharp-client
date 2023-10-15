@@ -1,6 +1,6 @@
 ﻿namespace EvitaDB.Client.Models.ExtraResults;
 
-public interface IHistogramContract
+public interface IHistogram
 {
     public decimal Min { get; }
     public decimal Max { get; }

@@ -61,7 +61,7 @@ public class Prices : IPrices
         return PriceIndex.TryGetValue(priceKey, out IPrice? price) ? price : null;
     }
 
-    public List<IPrice> GetAllPricesForSale() => GetAllPricesForSale(null, null);
+    public IList<IPrice> GetAllPricesForSale() => GetAllPricesForSale(null, null);
     public bool Empty => PriceIndex.Count == 0;
 
     public bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode) =>
@@ -69,7 +69,7 @@ public class Prices : IPrices
 
     public bool PricesAvailable() => EntitySchema.WithPrice;
 
-    public List<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
         params string[] priceListPriority)
     {
         ISet<string> pLists = new HashSet<string>();

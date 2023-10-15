@@ -215,6 +215,16 @@ public class ExistingPricesBuilder : IPricesBuilder
         return BasePrices.PricesAvailable();
     }
 
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+    {
+        return BasePrices.GetAllPricesForSale(currency, atTheMoment, priceListPriority);
+    }
+
+    public IList<IPrice> GetAllPricesForSale()
+    {
+        return BasePrices.GetAllPricesForSale();
+    }
+
     public IPricesBuilder SetPrice(int priceId, string priceList, Currency currency, decimal priceWithoutTax,
         decimal taxRate, decimal priceWithTax, bool sellable)
     {

@@ -28,8 +28,7 @@ public class ClientCertificateManager
         }
         else
         {
-            certificateDirectory = IdentifyServerDirectory(host, port, clientCertificateFolderPath).GetAwaiter()
-                .GetResult();
+            certificateDirectory = IdentifyServerDirectory(host, port, clientCertificateFolderPath).GetAwaiter().GetResult();
         }
 
         ClientCertificateFolderPath = certificateDirectory;
@@ -161,14 +160,13 @@ public class ClientCertificateManager
 
     private static async Task<string> GetServerName(string apiEndpoint)
     {
-        using var client = new HttpClient();
+        using HttpClient client = new HttpClient();
         try
         {
             return await client.GetStringAsync(apiEndpoint + "server-name");
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine(ex.Message);
             throw new EvitaInvalidUsageException(ex.Message, "Failed to get server name", ex);
         }
     }

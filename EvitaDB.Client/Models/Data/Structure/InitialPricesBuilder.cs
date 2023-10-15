@@ -30,6 +30,29 @@ public class InitialPricesBuilder : IPricesBuilder
     }
 
     public bool PricesAvailable() => true;
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+    {
+        ISet<string> pLists = new HashSet<string>();
+        if (priceListPriority.Length > 0)
+        {
+            foreach (var priority in priceListPriority)
+            {
+                pLists.Add(priority);
+            }
+        }
+
+        return GetPrices()
+            .Where(x => x.Sellable)
+            .Where(it => currency == null || currency.Equals(it.Currency))
+            .Where(it => !atTheMoment.HasValue || it.Validity == null || it.Validity.ValidFor(atTheMoment.Value))
+            .Where(it => !pLists.Any() || pLists.Contains(it.PriceList))
+            .ToList();
+    }
+
+    public IList<IPrice> GetAllPricesForSale()
+    {
+        return GetAllPricesForSale(null, null);
+    }
 
     public IPrice? GetPrice(PriceKey priceKey)
     {

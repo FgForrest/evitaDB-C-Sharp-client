@@ -17,6 +17,7 @@ using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Pooling;
 using EvitaDB.Client.Services;
 using EvitaDB.Client.Session;
+using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Enum = System.Enum;
@@ -38,6 +39,8 @@ public partial class EvitaClient : IClientContext, IDisposable
     private readonly ConcurrentDictionary<Guid, EvitaClientSession> _activeSessions = new();
     private readonly ConcurrentDictionary<string, EvitaEntitySchemaCache> _entitySchemaCache = new();
 
+    private readonly Action _terminationCallback;
+
     public EvitaClientConfiguration Configuration { get; }
 
     private static readonly Regex ErrorMessagePattern = MyRegex();
@@ -50,7 +53,8 @@ public partial class EvitaClient : IClientContext, IDisposable
             .SetClientCertificatePath(configuration.CertificateFileName)
             .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
             .SetClientCertificateKeyPassword(configuration.CertificateKeyPassword)
-            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host, configuration.SystemApiPort)
+            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host,
+                configuration.SystemApiPort)
             .SetTrustedServerCertificate(configuration.UsingTrustedRootCaCertificate)
             .Build();
 
@@ -62,6 +66,21 @@ public partial class EvitaClient : IClientContext, IDisposable
         );
         _channelPool = new ChannelPool(channelBuilder, 10);
         _cdcChannel = channelBuilder.Build();
+
+        void TerminationCallback()
+        {
+            try
+            {
+                Assert.IsTrue(_channelPool.Shutdown(), () => new EvitaClientNotTerminatedException());
+            }
+            catch (Exception)
+            {
+                // terminated
+                Thread.CurrentThread.Interrupt();
+            }
+        }
+
+        _terminationCallback = TerminationCallback;
     }
 
     public IObservable<ChangeSystemCapture> RegisterSystemChangeCapture(ChangeSystemCaptureRequest request)
@@ -102,7 +121,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     public void TerminateSession(EvitaClientSession session)
     {
         AssertActive();
-        session.Close();
+        (this as IClientContext).ExecuteWithClientId(Configuration.ClientId, Close);
     }
 
     public ISet<string> GetCatalogNames()
@@ -118,12 +137,17 @@ public partial class EvitaClient : IClientContext, IDisposable
     public ICatalogSchemaBuilder DefineCatalog(string catalogName)
     {
         AssertActive();
-        if (!GetCatalogNames().Contains(catalogName))
+        
+        IClientContext context = this;
+        return context.ExecuteWithClientId(Configuration.ClientId, () =>
         {
-            Update(new CreateCatalogSchemaMutation(catalogName));
-        }
+            if (!GetCatalogNames().Contains(catalogName))
+            {
+                Update(new CreateCatalogSchemaMutation(catalogName));
+            }
 
-        return QueryCatalog(catalogName, x => x.GetCatalogSchema()).OpenForWrite();
+            return QueryCatalog(catalogName, x => x.GetCatalogSchema(this)).OpenForWrite();
+        });
     }
 
     public void RenameCatalog(string catalogName, string newCatalogName)
@@ -173,7 +197,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         bool success = grpcResponse.Success;
         if (success)
         {
-            _entitySchemaCache.TryRemove(catalogName, out _);
+            _entitySchemaCache.Remove(catalogName, out _);
         }
 
         return success;
@@ -195,16 +219,33 @@ public partial class EvitaClient : IClientContext, IDisposable
         params SessionFlags[] sessionFlags)
     {
         AssertActive();
-        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
-        return queryLogic.Invoke(session);
+        EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
+        try
+        {
+            IClientContext context = session;
+            return context.ExecuteWithClientId(Configuration.ClientId, () => queryLogic.Invoke(session));
+        }
+        finally
+        {
+            session.Close();
+        }
     }
 
     public void QueryCatalog(string catalogName, Action<EvitaClientSession> queryLogic,
         params SessionFlags[] sessionFlags)
     {
         AssertActive();
-        using EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
-        queryLogic.Invoke(session);
+        EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
+        try
+        {
+            IClientContext context = session;
+            context.ExecuteWithClientId(Configuration.ClientId, () => queryLogic.Invoke(session));
+        }
+        finally
+        {
+            session.Close();
+        }
+        
     }
 
     public T UpdateCatalog<T>(string catalogName, Func<EvitaClientSession, T> updater, params SessionFlags[]? flags)
@@ -218,8 +259,16 @@ public partial class EvitaClient : IClientContext, IDisposable
                     ? flags
                     : flags.Append(SessionFlags.ReadWrite).ToArray()
         );
-        using EvitaClientSession session = CreateSession(traits);
-        return session.Execute(updater);
+        EvitaClientSession session = CreateSession(traits);
+        try
+        {
+            IClientContext context = session;
+            return context.ExecuteWithClientId(Configuration.ClientId, () => session.Execute(updater));
+        }
+        finally
+        {
+            session.Close();
+        }
     }
 
     public void UpdateCatalog(string catalogName, Action<EvitaClientSession> updater, params SessionFlags[]? flags)
@@ -228,20 +277,22 @@ public partial class EvitaClient : IClientContext, IDisposable
             catalogName,
             evitaSession =>
             {
-                updater.Invoke(evitaSession);
+                IClientContext context = evitaSession;
+                context.ExecuteWithClientId(Configuration.ClientId, () => updater.Invoke(evitaSession));
                 return 0;
             },
             flags
         );
     }
-    
+
     public void Close()
     {
         if (Interlocked.CompareExchange(ref _active, 1, 0) == 1)
         {
-            _activeSessions.Values.ToList().ForEach(session => session.CloseTransaction());
+            _activeSessions.Values.ToList().ForEach(session => session.Close());
             _activeSessions.Clear();
             _channelPool.Shutdown();
+            _terminationCallback.Invoke();
         }
     }
 
@@ -271,7 +322,8 @@ public partial class EvitaClient : IClientContext, IDisposable
     private T ExecuteWithEvitaService<TS, T>(IChannelSupplier channelSupplier, Func<ChannelInvoker, TS> stubBuilder,
         Func<TS, T> logic)
     {
-        return (this as IClientContext).ExecuteWithClientAndRequestId(
+        IClientContext context = this;
+        return context.ExecuteWithClientAndRequestId(
             Configuration.ClientId,
             Guid.NewGuid().ToString(),
             () =>
@@ -333,7 +385,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         );
     }
 
-    private EvitaClientSession CreateSession(SessionTraits traits)
+    public EvitaClientSession CreateSession(SessionTraits traits)
     {
         AssertActive();
         GrpcEvitaSessionRequest grpcRequest = new()
@@ -347,6 +399,7 @@ public partial class EvitaClient : IClientContext, IDisposable
             : ExecuteWithBlockingEvitaService(evitaServiceClient =>
                 evitaServiceClient.CreateReadOnlySession(grpcRequest));
         EvitaClientSession session = new EvitaClientSession(
+            this,
             _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
             _channelPool,
             traits.CatalogName,
@@ -359,7 +412,7 @@ public partial class EvitaClient : IClientContext, IDisposable
                 traits.TerminationCallback?.Invoke(session);
             }
         );
-        SessionIdHolder.SetSessionId(traits.CatalogName, grpcResponse.SessionId);
+        _activeSessions.TryAdd(session.SessionId, session);
         return session;
     }
 

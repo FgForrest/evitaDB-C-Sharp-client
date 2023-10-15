@@ -11,10 +11,10 @@
         <Copyright>2023, FGForrest a.s.</Copyright>
         <PackageProjectUrl>https://evitadb.io/</PackageProjectUrl>
         <PackageLicenseUrl>Apache-2.0</PackageLicenseUrl>
-        <PackageIcon>icon.png</PackageIcon>
         <RepositoryUrl>https://github.com/FgForrest/evitaDB-C-Sharp-client</RepositoryUrl>
         <PackageTags>database in-memory no-sql ecommerce</PackageTags>
         <PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>
+        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -32,5 +32,7 @@
         <Protobuf ProtoRoot="Protos" Include="Protos\*.proto" GrpcServices="Client"/>
     </ItemGroup>
 
-
+    <ItemGroup>
+        <None Include="icon.png" Pack="true" PackagePath=""/>
+    </ItemGroup>
 </Project>

@@ -12,6 +12,10 @@ public interface IPrices : IVersioned
     bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode);
     IEnumerable<IPrice> GetPrices();
     bool PricesAvailable();
+    IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
+        params string[] priceListPriority);
+
+    IList<IPrice> GetAllPricesForSale();
 
     public static bool AnyPriceDifferBetween(IPrices first, IPrices second)
     {
@@ -19,7 +23,7 @@ public interface IPrices : IVersioned
         IEnumerable<IPrice> otherValues = second.PricesAvailable() ? second.GetPrices() : new List<IPrice>();
 
         var enumerable = thisValues.ToList();
-        if (enumerable.Count() != otherValues.Count())
+        if (enumerable.Count != otherValues.Count())
         {
             return true;
         }

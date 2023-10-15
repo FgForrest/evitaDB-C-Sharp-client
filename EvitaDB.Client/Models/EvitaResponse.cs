@@ -2,6 +2,7 @@
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Queries;
+using EvitaDB.Client.Queries.Requires;
 
 namespace EvitaDB.Client.Models;
 
@@ -34,8 +35,10 @@ public abstract class EvitaResponse<T> where T : IEntityClassifier
         return new HashSet<Type>(ExtraResults.Keys);
     }
     
-    public IEvitaResponseExtraResult? GetExtraResult(Type extraResultType)
+    public TE? GetExtraResult<TE>() where TE : class, IEvitaResponseExtraResult
     {
-        return ExtraResults[extraResultType];
+        return ExtraResults.TryGetValue(typeof(TE), out IEvitaResponseExtraResult? extraResult)
+            ? extraResult as TE
+            : null;
     }
 }

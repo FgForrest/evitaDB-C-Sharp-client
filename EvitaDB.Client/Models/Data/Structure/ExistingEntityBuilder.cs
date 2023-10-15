@@ -94,6 +94,16 @@ public class ExistingEntityBuilder : IEntityBuilder
         return PricesBuilder.PricesAvailable();
     }
 
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+    {
+        return ((IPrices) PricesBuilder).GetAllPricesForSale(currency, atTheMoment, priceListPriority);
+    }
+
+    public IList<IPrice> GetAllPricesForSale()
+    {
+        return ((IPrices) PricesBuilder).GetAllPricesForSale();
+    }
+
     public ExistingEntityBuilder(Entity baseEntity, ICollection<ILocalMutation> localMutations)
     {
         BaseEntity = baseEntity;

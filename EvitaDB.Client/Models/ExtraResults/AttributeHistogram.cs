@@ -4,16 +4,16 @@ namespace EvitaDB.Client.Models.ExtraResults;
 
 public class AttributeHistogram : IEvitaResponseExtraResult
 {
-    private readonly IDictionary<string, IHistogramContract> _histograms;
+    private readonly IDictionary<string, IHistogram> _histograms;
 
-    public IHistogramContract? GetHistogram(string attributeName)
+    public IHistogram? GetHistogram(string attributeName)
     {
-        return _histograms.TryGetValue(attributeName, out IHistogramContract? histogram) ? histogram : null;
+        return _histograms.TryGetValue(attributeName, out IHistogram? histogram) ? histogram : null;
     }
     
-    public IDictionary<string, IHistogramContract> Histograms => _histograms.ToImmutableDictionary();
+    public IDictionary<string, IHistogram> Histograms => _histograms.ToImmutableDictionary();
     
-    public AttributeHistogram(Dictionary<string, IHistogramContract> histograms)
+    public AttributeHistogram(Dictionary<string, IHistogram> histograms)
     {
         _histograms = histograms;
     }

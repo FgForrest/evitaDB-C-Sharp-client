@@ -29,11 +29,14 @@ public class ChannelPool
         _channels.Enqueue(channel);
     }
     
-    public async void Shutdown()
+    public bool Shutdown()
     {
-        while (_channels.TryDequeue(out var channel))
+        IList<Task> tasks = new List<Task>();
+        while (_channels.TryDequeue(out ChannelInvoker? channel))
         {
-            await channel.Channel.ShutdownAsync();
+            tasks.Add(channel.Channel.ShutdownAsync());
         }
+        Task.WhenAll(tasks);
+        return _channels.IsEmpty;
     }
 }

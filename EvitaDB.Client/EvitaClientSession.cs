@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Converters.Models;
+﻿using System.Text.RegularExpressions;
+using EvitaDB.Client.Converters.Models;
 using EvitaDB.Client.Converters.Models.Data;
 using EvitaDB.Client.Converters.Models.Data.Mutations;
 using EvitaDB.Client.Converters.Models.Schema;
@@ -6,6 +7,7 @@ using EvitaDB.Client.Converters.Models.Schema.Mutations;
 using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Interceptors;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
@@ -21,12 +23,13 @@ using EvitaDB.Client.Queries.Visitor;
 using EvitaDB.Client.Session;
 using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using static EvitaDB.Client.Queries.Visitor.PrettyPrintingVisitor;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Client;
 
-public class EvitaClientSession : IDisposable
+public class EvitaClientSession : IClientContext, IDisposable
 {
     private static readonly ISchemaMutationConverter<ILocalCatalogSchemaMutation, GrpcLocalCatalogSchemaMutation>
         CatalogSchemaMutationConverter = new DelegatingLocalCatalogSchemaMutationConverter();
@@ -45,10 +48,19 @@ public class EvitaClientSession : IDisposable
     private readonly SessionTraits _sessionTraits;
     private readonly Action<EvitaClientSession> _onTerminationCallback;
     private readonly AtomicReference<EvitaClientTransaction> _transactionAccessor = new();
-    private bool _active = true;
+
+    private static readonly Regex ErrorMessagePattern = new(
+        "(\\w+:\\w+:\\w+): (.*)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled
+    );
+
+    public bool Active { get; private set; } = true;
     private long _lastCall;
 
-    public EvitaClientSession(EvitaEntitySchemaCache schemaCache, ChannelPool channelPool, string catalogName,
+    private readonly string _clientId;
+
+    public EvitaClientSession(EvitaClient evitaClient, EvitaEntitySchemaCache schemaCache, ChannelPool channelPool,
+        string catalogName,
         CatalogState catalogState, Guid sessionId, SessionTraits sessionTraits,
         Action<EvitaClientSession> onTerminationCallback)
     {
@@ -59,12 +71,13 @@ public class EvitaClientSession : IDisposable
         SessionId = sessionId;
         _sessionTraits = sessionTraits;
         _onTerminationCallback = onTerminationCallback;
+        _clientId = evitaClient.Configuration.ClientId;
     }
 
     public IEntitySchemaBuilder DefineEntitySchema(string entityType)
     {
         AssertActive();
-        ISealedEntitySchema newEntitySchema = ExecuteInTransactionIfPossible(session =>
+        ISealedEntitySchema newEntitySchema = ExecuteInTransactionIfPossible(_ =>
         {
             GrpcDefineEntitySchemaRequest request = new GrpcDefineEntitySchemaRequest
             {
@@ -85,15 +98,79 @@ public class EvitaClientSession : IDisposable
     private T ExecuteWithEvitaSessionService<T>(
         Func<EvitaSessionService.EvitaSessionServiceClient, T> evitaSessionServiceClient)
     {
-        var channel = _channelPool.GetChannel();
-        try
-        {
-            return evitaSessionServiceClient.Invoke(new EvitaSessionService.EvitaSessionServiceClient(channel.Invoker));
-        }
-        finally
-        {
-            _channelPool.ReleaseChannel(channel);
-        }
+        IClientContext clientContext = this;
+        return clientContext.ExecuteWithClientId(
+            _clientId,
+            () =>
+            {
+                ChannelInvoker channel = _channelPool.GetChannel();
+                try
+                {
+                    SessionIdHolder.SetSessionId(CatalogName, SessionId.ToString());
+                    return evitaSessionServiceClient.Invoke(
+                        new EvitaSessionService.EvitaSessionServiceClient(channel.Invoker));
+                }
+                catch (RpcException rpcException)
+                {
+                    StatusCode statusCode = rpcException.StatusCode;
+                    string description = rpcException.Status.Detail;
+                    if (statusCode == StatusCode.Unauthenticated)
+                    {
+                        // close session and rethrow
+                        CloseInternally();
+                        throw new InstanceTerminatedException("session");
+                    }
+                    else if (statusCode == StatusCode.InvalidArgument)
+                    {
+                        Match expectedFormat = ErrorMessagePattern.Match(description);
+                        if (expectedFormat.Success)
+                        {
+                            throw EvitaInvalidUsageException.CreateExceptionWithErrorCode(
+                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
+                            );
+                        }
+                        else
+                        {
+                            throw new EvitaInvalidUsageException(description);
+                        }
+                    }
+                    else
+                    {
+                        Match expectedFormat = ErrorMessagePattern.Match(description);
+                        if (expectedFormat.Success)
+                        {
+                            throw EvitaInternalError.CreateExceptionWithErrorCode(
+                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
+                            );
+                        }
+                        else
+                        {
+                            throw new EvitaInternalError(description);
+                        }
+                    }
+                }
+                catch (EvitaInvalidUsageException)
+                {
+                    throw;
+                }
+                catch (EvitaInternalError)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    throw new EvitaInternalError(
+                        "Unexpected internal Evita error occurred: " + e.Message,
+                        "Unexpected internal Evita error occurred.",
+                        e
+                    );
+                }
+                finally
+                {
+                    _channelPool.ReleaseChannel(channel);
+                    SessionIdHolder.Reset();
+                }
+            });
     }
 
     public T Execute<T>(Func<EvitaClientSession, T> logic)
@@ -404,7 +481,7 @@ public class EvitaClientSession : IDisposable
     public int DeleteEntityAndItsHierarchy(string entityType, int primaryKey)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcDeleteEntityAndItsHierarchyResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntityAndItsHierarchy(
@@ -417,6 +494,12 @@ public class EvitaClientSession : IDisposable
             );
             return grpcResponse.DeletedEntities;
         });
+    }
+
+    public DeletedHierarchy<ISealedEntity> DeleteEntityAndItsHierarchy(string entityType, int primaryKey,
+        params IEntityContentRequire[] require)
+    {
+        return DeleteEntityHierarchyInternal(entityType, primaryKey, require);
     }
 
     public bool DeleteEntity(string entityType, int primaryKey)
@@ -437,6 +520,40 @@ public class EvitaClientSession : IDisposable
         });
     }
 
+    public ISealedEntity[] DeleteSealedEntitiesAndReturnBodies(Query query)
+    {
+        AssertActive();
+        return ExecuteInTransactionIfPossible(session =>
+        {
+            EvitaRequest evitaRequest = new EvitaRequest(
+                query,
+                DateTimeOffset.Now,
+                typeof(ISealedEntity)
+            );
+            StringWithParameters stringWithParameters = query.ToStringWithParametersExtraction();
+            GrpcDeleteEntitiesResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+                evitaSessionService.DeleteEntities(
+                    new GrpcDeleteEntitiesRequest
+                    {
+                        Query = stringWithParameters.Query,
+                        PositionalQueryParams =
+                            {stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam)}
+                    }
+                )
+            );
+            return grpcResponse.DeletedEntityBodies
+                .Select(
+                    it => EntityConverter.ToEntity<ISealedEntity>(
+                        entity => _schemaCache.GetEntitySchemaOrThrow(
+                            entity.EntityType, entity.SchemaVersion, FetchEntitySchema, GetCatalogSchema
+                        ),
+                        it,
+                        evitaRequest
+                    )
+                )
+                .ToArray();
+        });
+    }
 
     public ISealedEntity? DeleteEntity(string entityType, int primaryKey, params IEntityContentRequire[] require)
     {
@@ -598,7 +715,7 @@ public class EvitaClientSession : IDisposable
 
     public void Close()
     {
-        if (_active)
+        if (Active)
         {
             ExecuteWithEvitaSessionService(session =>
             {
@@ -611,8 +728,8 @@ public class EvitaClientSession : IDisposable
 
     private void CloseInternally()
     {
-        if (!_active) return;
-        _active = false;
+        if (!Active) return;
+        Active = false;
         _onTerminationCallback.Invoke(this);
     }
 
@@ -689,6 +806,23 @@ public class EvitaClientSession : IDisposable
     {
         AssertActive();
         return _schemaCache.GetLatestCatalogSchema(FetchCatalogSchema, GetEntitySchema);
+    }
+
+    public ISealedCatalogSchema GetCatalogSchema(EvitaClient evita)
+    {
+        AssertActive();
+        return _schemaCache.GetLatestCatalogSchema(
+            () => Active
+                ? FetchCatalogSchema()
+                : evita.QueryCatalog(
+                    CatalogName,
+                    session => session.FetchCatalogSchema()),
+            entityType => Active
+                ? GetEntitySchema(entityType)
+                : evita.QueryCatalog(
+                    CatalogName,
+                    session => session.GetEntitySchema(entityType))
+        );
     }
 
     private CatalogSchema FetchCatalogSchema()
@@ -916,6 +1050,34 @@ public class EvitaClientSession : IDisposable
 
     public IList<ISealedEntity> QueryListOfSealedEntities(Query query)
     {
+        if (query.Require == null)
+        {
+            return QueryList<ISealedEntity>(
+                IQueryConstraints.Query(
+                    query.Entities,
+                    query.FilterBy,
+                    query.OrderBy,
+                    Require(EntityFetch())
+                )
+            );
+        }
+
+        if (FinderVisitor.FindConstraints<IConstraint>(query.Require, x => x is EntityFetch,
+                y => y is ISeparateEntityContentRequireContainer).Count == 0)
+        {
+            return QueryList<ISealedEntity>(
+                IQueryConstraints.Query(
+                    query.Entities,
+                    query.FilterBy,
+                    query.OrderBy,
+                    (Require) query.Require.GetCopyWithNewChildren(
+                        new IRequireConstraint[] {Require(EntityFetch())}.Concat(query.Require.Children).ToArray(),
+                        query.Require.AdditionalChildren
+                    )
+                )
+            );
+        }
+
         return QueryList<ISealedEntity>(query);
     }
 
@@ -1017,7 +1179,7 @@ public class EvitaClientSession : IDisposable
 
     private void AssertActive()
     {
-        if (_active)
+        if (Active)
         {
             _lastCall = Environment.TickCount;
         }
@@ -1029,6 +1191,11 @@ public class EvitaClientSession : IDisposable
 
     public void Dispose()
     {
-        Close();
+        if (Active)
+        {
+            ExecuteWithEvitaSessionService(evitaSessionService => evitaSessionService.Close(new Empty()));
+        }
+
+        CloseInternally();
     }
 }

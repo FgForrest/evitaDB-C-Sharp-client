@@ -241,7 +241,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
                 ToAttributeMutation()
                     .Where(it => it is ModifyAttributeSchemaTypeMutation)
                     .Select(it => ((ModifyAttributeSchemaTypeMutation)it).Type)
-                    .FirstOrDefault(BaseSchema.GetType()),
+                    .FirstOrDefault(BaseSchema.Type),
                 indexedDecimalPlaces
             )
         );

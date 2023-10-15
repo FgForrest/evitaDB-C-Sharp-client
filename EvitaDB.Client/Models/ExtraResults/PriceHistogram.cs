@@ -1,8 +1,8 @@
 ﻿namespace EvitaDB.Client.Models.ExtraResults;
 
-public class PriceHistogram : IHistogramContract, IEvitaResponseExtraResult
+public class PriceHistogram : IHistogram, IEvitaResponseExtraResult
 {
-    private readonly IHistogramContract _histogram;
+    private readonly IHistogram _histogram;
     public decimal Min => _histogram.Min;
 
     public decimal Max => _histogram.Max;
@@ -11,7 +11,7 @@ public class PriceHistogram : IHistogramContract, IEvitaResponseExtraResult
 
     public Bucket[] Buckets => _histogram.Buckets;
 
-    public PriceHistogram(IHistogramContract histogram)
+    public PriceHistogram(IHistogram histogram)
     {
         _histogram = histogram;
     }

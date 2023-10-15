@@ -42,6 +42,7 @@ public class EvitaInvalidUsageException : ArgumentException, IEvitaError
     
     private EvitaInvalidUsageException(string privateMessage, string publicMessage, string errorCode) : base(privateMessage) {
         PublicMessage = publicMessage;
+        PrivateMessage = privateMessage;
         ErrorCode = errorCode;
     }
 }

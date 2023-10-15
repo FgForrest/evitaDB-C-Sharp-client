@@ -57,7 +57,7 @@ public class ModifyAttributeSchemaTypeMutation : IEntityAttributeSchemaMutation,
             ) as TS)!;
         }
 
-        return (TS) Convert.ChangeType(AttributeSchema.InternalBuild(
+        return (AttributeSchema.InternalBuild(
             Name,
             attributeSchema!.NameVariants,
             attributeSchema.Description,
@@ -70,7 +70,7 @@ public class ModifyAttributeSchemaTypeMutation : IEntityAttributeSchemaMutation,
             Type,
             attributeSchema.DefaultValue is not null ? EvitaDataTypes.ToTargetType(attributeSchema.DefaultValue, Type) : null,
             IndexedDecimalPlaces
-        ), typeof(TS));
+        ) as TS)!;
     }
 
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)

@@ -82,7 +82,7 @@ public class EvitaEntitySchemaCache
 
     public void SetLatestCatalogSchema(CatalogSchema catalogSchema)
     {
-        CachedSchemas[LatestCatalogSchema.Instance] = new SchemaWrapper(catalogSchema, CurrentTimeMillis());
+        CachedSchemas.GetOrAdd(LatestCatalogSchema.Instance, new SchemaWrapper(catalogSchema, CurrentTimeMillis()));
     }
 
     public void RemoveLatestCatalogSchema()
@@ -104,7 +104,7 @@ public class EvitaEntitySchemaCache
         Func<ICatalogSchema> catalogSchemaSupplier
     )
     {
-        EntitySchema? entitySchema = GetEntitySchema(entityType, version, schemaAccessor) ??
+        EntitySchema entitySchema = GetEntitySchema(entityType, version, schemaAccessor) ??
                                      throw new CollectionNotFoundException($"Schema for entity type {entityType} not found");
         return new EntitySchemaDecorator(catalogSchemaSupplier, entitySchema);
     }
@@ -178,22 +178,23 @@ public class EvitaEntitySchemaCache
             if (schemaRelevantToSession is not null)
             {
                 SchemaWrapper newCachedValue = new SchemaWrapper(schemaRelevantToSession, now);
-                CachedSchemas.GetOrAdd(
+                CachedSchemas.AddOrUpdate(
                     new EntitySchemaWithVersion(cacheKey.EntityType, schemaRelevantToSession.Version),
-                    newCachedValue
+                    newCachedValue,
+                    (_, _) => newCachedValue
                 );
                 // initialize the latest known entity schema if missing
                 LatestEntitySchema latestEntitySchema = new LatestEntitySchema(cacheKey.EntityType);
-                SchemaWrapper? latestCachedVersion =
-                    CachedSchemas.TryGetValue(latestEntitySchema, out SchemaWrapper? latest)
-                        ? latest
-                        : null;
-                CachedSchemas.GetOrAdd(latestEntitySchema, newCachedValue);
+                SchemaWrapper latestCachedVersion = CachedSchemas.GetOrAdd(latestEntitySchema, newCachedValue);
                 // if not missing verify the stored value is really the latest one and if not rewrite it
                 if (latestCachedVersion != null &&
                     latestCachedVersion.EntitySchema?.Version < newCachedValue.EntitySchema?.Version)
                 {
-                    CachedSchemas.GetOrAdd(latestEntitySchema, newCachedValue);
+                    CachedSchemas.AddOrUpdate(
+                        latestEntitySchema, 
+                        newCachedValue,
+                        (_, _) => newCachedValue
+                    );
                 }
             }
 

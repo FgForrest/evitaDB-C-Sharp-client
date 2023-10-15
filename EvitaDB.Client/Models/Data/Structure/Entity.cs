@@ -63,6 +63,11 @@ public class Entity : ISealedEntity
     
     public bool ParentAvailable() => Schema.WithHierarchy;
     public bool PricesAvailable() => Prices.PricesAvailable();
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+    {
+        return Prices.GetAllPricesForSale(currency, atTheMoment, priceListPriority);
+    }
+
     public bool AttributesAvailable() => Attributes.AttributesAvailable();
 
     public bool AttributesAvailable(CultureInfo locale)
@@ -951,7 +956,7 @@ public class Entity : ISealedEntity
         return Prices.GetPrice(priceId, priceList, currency);
     }
 
-    public List<IPrice> GetAllPricesForSale()
+    public IList<IPrice> GetAllPricesForSale()
     {
         return Prices.GetAllPricesForSale(null, null);
     }
@@ -986,6 +991,19 @@ public class Entity : ISealedEntity
     public bool DiffersFrom(IEntity? otherObject)
     {
         return (this as IEntity).DiffersFrom(otherObject);
+    }
+
+    public override bool Equals(object? o)
+    {
+        if (this == o) return true;
+        if (o == null || GetType() != o.GetType()) return false;
+        Entity entity = (Entity) o;
+        return Version == entity.Version && Type.Equals(entity.Type) && PrimaryKey == entity.PrimaryKey;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Version, Type, PrimaryKey);
     }
 
     public override string ToString()

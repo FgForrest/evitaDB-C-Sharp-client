@@ -17,19 +17,26 @@ public static class Data
     public const string AttributeValidity = "validity";
     public const string AttributeQuantity = "quantity";
     public const string AttributeAlias = "alias";
+    public const string AttributeCores = "cores";
+    public const string AttributeGraphics = "graphics";
     public const string AttributeCategoryPriority = "categoryPriority";
     public const string AssociatedDataReferencedFiles = "referencedFiles";
     public const string AssociatedDataLabels = "labels";
-    public static readonly Currency CurrencyCzk = new Currency("CZK");
-    public static readonly Currency CurrencyEur = new Currency("EUR");
-    public static readonly Currency CurrencyUsd = new Currency("USD");
-    public static readonly Currency CurrencyGbp = new Currency("GBP");
+    public static readonly Currency CurrencyCzk = new("CZK");
+    public static readonly Currency CurrencyEur = new("EUR");
+    public static readonly Currency CurrencyUsd = new("USD");
+    public static readonly Currency CurrencyGbp = new("GBP");
     public const string PriceListBasic = "basic";
     public const string PriceListReference = "reference";
     public const string PriceListSellout = "sellout";
     public const string PriceListVip = "vip";
     public const string PriceListB2B = "b2b";
     public const string PriceListIntroduction = "introduction";
+    public const string ReferenceCategories = "categories";
+    public const string ReferenceBrand = "brand";
+    public const string ReferenceRelatedProducts = "relatedProducts";
+    public const string ReferenceGroupType = "Group";
+    public const string HierarchyReferenceRoot = "megaMenu";
 
     public const string TestCatalog = nameof(TestCatalog);
 

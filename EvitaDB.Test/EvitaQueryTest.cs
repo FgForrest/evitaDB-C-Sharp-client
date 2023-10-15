@@ -9,6 +9,7 @@ using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
+using EvitaDB.Test.Utils;
 using NUnit.Framework;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 using static NUnit.Framework.Assert;
@@ -18,31 +19,31 @@ namespace EvitaDB.Test;
 public class EvitaQueryTest
 {
     private static EvitaClient? _client;
-    private static EvitaClientConfiguration EvitaClientConfiguration { get; }
+    private static EvitaClientConfiguration? EvitaClientConfiguration { get; set; }
 
     private const string ExistingCatalogWithData = "evita";
 
-    static EvitaQueryTest()
+    [OneTimeSetUp]
+    public static void Setup()
     {
-        // create a evita client configuration the the running instance of evita server
-
         EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
             .SetHost("demo.evitadb.io")
             .SetPort(5556)
             .SetUseGeneratedCertificate(false)
             .SetUsingTrustedRootCaCertificate(true)
             .Build();
-
-        /*EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
-            .SetHost("localhost")
-            .SetPort(5556)
-            .SetUseGeneratedCertificate(true)
-            .SetUsingTrustedRootCaCertificate(false)
-            .Build();*/
+        
+    }
+    
+    [SetUp]
+    public void BeforeEachTest()
+    {
+        // create a new evita client with the specified configuration
+        _client = new EvitaClient(EvitaClientConfiguration!);
     }
     
     [Test]
-    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_EntityReferences()
+    public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfEntityReferences()
     {
         EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
             session => session.Query<EvitaEntityReferenceResponse, EntityReference>(
@@ -78,11 +79,11 @@ public class EvitaQueryTest
         That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
         That(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}), Is.True);
         That(referenceResponse.ExtraResults.Count, Is.EqualTo(1));
-        That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
+        That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(Client.Models.ExtraResults.QueryTelemetry)));
     }
 
     [Test]
-    public void ShouldBeAbleTo_QueryCatalog_WithData_AndGet_DataChunkOf_SealedEntities()
+    public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfSealedEntities()
     {
         EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
             session.Query<EvitaEntityResponse, ISealedEntity>(
@@ -122,18 +123,11 @@ public class EvitaQueryTest
         That(entityResponse.RecordPage.Data.Any(x => x.GetPrices().Any()), Is.True);
 
         That(entityResponse.ExtraResults.Count, Is.EqualTo(1));
-        That(entityResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(QueryTelemetry)));
-    }
-
-    [SetUp]
-    public static void Setup()
-    {
-        // create a new evita client with the specified configuration
-        _client = new EvitaClient(EvitaClientConfiguration);
+        That(entityResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(Client.Models.ExtraResults.QueryTelemetry)));
     }
 
     [Test]
-    public void ShouldBe_WellSee()
+    public void ShouldBeAbleToExecuteComplexQueryAndGetResults()
     {
         EvitaEntityResponse evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
             session => session.Query<EvitaEntityResponse, ISealedEntity>(
@@ -143,7 +137,7 @@ public class EvitaQueryTest
                         Or(
                             AttributeInSet("visibility", "yes", "no"),
                             EntityLocaleEquals(new CultureInfo("cs-CZ")),
-                            HierarchyWithin("categories", AttributeEquals("url", "A"), ExcludingRoot()),
+                            HierarchyWithin("categories", null, ExcludingRoot()),
                             Not(
                                 ReferenceHaving(
                                     "groups",
@@ -178,24 +172,17 @@ public class EvitaQueryTest
                             PriceContentAll(),
                             ReferenceContentWithAttributes(
                                 "relatedProducts",
-                                FilterBy(AttributeContains("url", "w")),
+                                FilterBy(AttributeContains("category", "w")),
                                 OrderBy(EntityProperty(AttributeNatural("orderedQuantity", OrderDirection.Asc))),
                                 EntityFetch(AttributeContentAll())
                             ),
                             HierarchyContent(StopAt(Distance(2)), EntityFetch(AttributeContentAll()))
                         ),
-                        FacetSummary(
-                            FacetStatisticsDepth.Counts,
-                            FilterBy(AttributeContains("url", "test")),
-                            OrderBy(Random())
-                        ),
                         FacetSummaryOfReference(
                             "parameterValues",
                             FacetStatisticsDepth.Impact,
-                            FilterBy(EntityPrimaryKeyInSet(1, 2)),
-                            FilterGroupBy(EntityPrimaryKeyInSet(1, 2)),
-                            OrderBy(Random()),
-                            OrderGroupBy(Random())
+                            FilterBy(AttributeContains("code", "a")),
+                            OrderBy(AttributeNatural(Data.AttributeName, OrderDirection.Desc))
                         ),
                         FacetGroupsDisjunction("productSetItems", FilterBy(AttributeGreaterThanEquals("order", 5))),
                         AttributeHistogram(20, "response-time", "thickness"),
@@ -224,134 +211,6 @@ public class EvitaQueryTest
                 )
             )
         );
-        Console.WriteLine();
-    }
-
-    [Test]
-    public void ShouldBe_WellSee1()
-    {
-        EvitaResponse<ISealedEntity> evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
-            session => session.QuerySealedEntity(
-                Query(
-                    Collection("Category"),
-                    Require(
-                        HierarchyOfSelf(
-                            OrderBy(Random()),
-                            Children(
-                                "test",
-                                EntityFetch(ReferenceContentAllWithAttributes()),
-                                Statistics(StatisticsBase.CompleteFilter, StatisticsType.QueriedEntityCount)
-                            )
-                        )
-                    )
-                )
-            ));
-    }
-
-    [Test]
-    public void ShouldBe_Tmp()
-    {
-        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog("evita",
-            session => session.QuerySealedEntity(
-                Query(
-                    Collection("Product"),
-                    FilterBy(
-                        AttributeEquals("code", "amazfit-gtr-3"),
-                        EntityLocaleEquals(CultureInfo.GetCultureInfo("en"))
-                    ),
-                    Require(
-                        EntityFetch(
-                            ReferenceContent(
-                                "categories",
-                                EntityFetch(AttributeContent("code", "name"),
-                                    HierarchyContent(
-                                        EntityFetch(AttributeContent("code", "name"))
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        );
-
-        Console.WriteLine();
-    }
-
-    [Test]
-    public void ShouldTestCdc()
-    {
-        IObservable<ChangeSystemCapture> captures =
-            _client!.RegisterSystemChangeCapture(new ChangeSystemCaptureRequest(CaptureContent.Header));
-        var subscription = captures.Subscribe(c => { Console.WriteLine(c.Operation); });
-        subscription.Dispose();
-    }
-
-    [Test]
-    public void ShouldIdk()
-    {
-        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog(
-            "evita",
-            session => session.QuerySealedEntity(
-                Query(
-                    Collection("Product"),
-                    FilterBy(
-                        HierarchyWithin(
-                            "categories",
-                            AttributeEquals("code", "vouchers-for-shareholders")
-                        ),
-                        EntityLocaleEquals(CultureInfo.GetCultureInfo("cs"))
-                    ),
-                    Require(
-                        EntityFetch(
-                            AttributeContent("code", "name")
-                        )
-                    )
-                )
-            )
-        );
-        Console.WriteLine();
-    }
-
-    [Test]
-    public void ShouldTestCdo()
-    {
-        EvitaResponse<ISealedEntity> entities = _client!.QueryCatalog(
-            "evita",
-            session => session.QuerySealedEntity(
-                Query(
-                    Collection("Product"),
-                    Require(
-                        EntityFetch(
-                            AssociatedDataContentAll()
-                        )
-                    )
-                )
-            )
-        );
-
-        var session = _client.CreateReadWriteSession("evita");
-
-        var x = ComplexDataObjectConverter.ConvertFromComplexDataObject<TestAsDataObj[]>(
-            (entities.RecordData[0].GetAssociatedData("allActiveUrls") as ComplexDataObject)!);
-
-        Console.WriteLine(x);
-
-        var asData = new TestAsDataObj[]
-        {
-            new("cs", "/cs/macbook-pro-13-2022"),
-            new("en", "/en/macbook-pro-13-2022")
-        };
-        var initialBuilder = session.CreateNewEntity("Product", 6666666)
-            .SetAssociatedData("allActiveUrls", asData);
-        session.UpsertEntity(initialBuilder);
-        Console.WriteLine();
-    }
-
-    private record TestAsDataObj(string Locale, string Url)
-    {
-        public TestAsDataObj() : this("", "")
-        {
-        }
+        That(evitaEntityResponse.RecordData.Count, Is.GreaterThan(0));
     }
 }

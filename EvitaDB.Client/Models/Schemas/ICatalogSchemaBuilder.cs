@@ -11,13 +11,27 @@ public interface ICatalogSchemaBuilder : ICatalogSchemaEditor<ICatalogSchemaBuil
     void UpdateViaNewSession(EvitaClient evita)
     {
         using EvitaClientSession session = evita.CreateReadWriteSession(Name);
-        session.UpdateCatalogSchema(this);
+        try
+        {
+            session.UpdateCatalogSchema(this);
+        }
+        finally
+        {
+            session.Close();
+        }
     }
 
     void UpdateAndFetchViaNewSession(EvitaClient evita)
     {
         using EvitaClientSession session = evita.CreateReadWriteSession(Name);
-        session.UpdateAndFetchCatalogSchema(this);
+        try
+        {
+            session.UpdateAndFetchCatalogSchema(this);
+        }
+        finally
+        {
+            session.Close();
+        }
     }
 
     void UpdateVia(EvitaClientSession session)

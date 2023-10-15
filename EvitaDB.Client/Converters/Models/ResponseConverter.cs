@@ -238,7 +238,7 @@ public static class ResponseConverter
         );
     }
 
-    private static IHistogramContract ToHistogram(GrpcHistogram grpcHistogram)
+    private static IHistogram ToHistogram(GrpcHistogram grpcHistogram)
     {
         return new Histogram(
             grpcHistogram.Buckets

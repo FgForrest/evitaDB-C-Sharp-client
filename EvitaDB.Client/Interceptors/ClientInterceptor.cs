@@ -12,8 +12,8 @@ public class ClientInterceptor : Interceptor
 {
     private const string SessionIdHeader = "sessionId";
     private const string CatalogNameHeader = "catalogName";
-    private const string ClientIdHeader = "catalogName";
-    private const string RequestIdHeader = "catalogName";
+    private const string ClientIdHeader = "clientId";
+    private const string RequestIdHeader = "requestId";
 
     private readonly IClientContext? _clientContext;
 
@@ -74,7 +74,7 @@ public static class SessionIdHolder
     /// <summary>
     /// Context that holds current session in thread-local space.
     /// </summary>
-    private static ThreadLocal<SessionDescriptor> _sessionDescriptor = new();
+    private static readonly ThreadLocal<SessionDescriptor?> ThreadLocalSessionDescriptor = new();
 
     /// <summary>
     /// Sets sessionId to the context.
@@ -83,7 +83,7 @@ public static class SessionIdHolder
     /// <param name="sessionId">session to set</param>
     public static void SetSessionId(string catalogName, string sessionId)
     {
-        _sessionDescriptor = new ThreadLocal<SessionDescriptor>(() => new SessionDescriptor(catalogName, sessionId));
+        ThreadLocalSessionDescriptor.Value = new SessionDescriptor(catalogName, sessionId);
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public static class SessionIdHolder
     /// </summary>
     public static void Reset()
     {
-        _sessionDescriptor = new ThreadLocal<SessionDescriptor>();
+        ThreadLocalSessionDescriptor.Value = null;
     }
 
     /// <summary>
@@ -100,8 +100,8 @@ public static class SessionIdHolder
     /// <returns>sessionId if it exists</returns>
     public static string? GetSessionId()
     {
-        SessionDescriptor? descriptor = _sessionDescriptor.Value;
-        return descriptor == null ? null : _sessionDescriptor.Value?.SessionId;
+        SessionDescriptor? descriptor = ThreadLocalSessionDescriptor.Value;
+        return descriptor == null ? null : ThreadLocalSessionDescriptor.Value?.SessionId;
     }
 
     /// <summary>
@@ -110,8 +110,8 @@ public static class SessionIdHolder
     /// <returns>catalogName if a session is currently in use</returns>
     public static string? GetCatalogName()
     {
-        SessionDescriptor? descriptor = _sessionDescriptor.Value;
-        return descriptor == null ? null : _sessionDescriptor.Value?.CatalogName;
+        SessionDescriptor? descriptor = ThreadLocalSessionDescriptor.Value;
+        return descriptor == null ? null : ThreadLocalSessionDescriptor.Value?.CatalogName;
     }
 
     /// <summary>

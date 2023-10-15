@@ -356,10 +356,13 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         AssociatedDataSchemaBuilder associatedDataSchemaBuilder;
         if (existingAssociatedData is not null)
         {
+            Type typeToCompare = EvitaDataTypes.IsSupportedTypeOrItsArray(typeof(T))
+                ? typeof(T)
+                : typeof(ComplexDataObject);
             Assert.IsTrue(
-                typeof(T) == existingAssociatedData.Type,
+                typeToCompare == existingAssociatedData.Type,
                 () => new InvalidSchemaMutationException(
-                    "Associated data " + dataName + " has already assigned type " + existingAssociatedData.GetType() +
+                    "Associated data " + dataName + " has already assigned type " + existingAssociatedData.Type +
                     ", cannot change this type to: " + typeof(T) + "!"
                 )
             );

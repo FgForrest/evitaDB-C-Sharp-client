@@ -19,26 +19,26 @@ public class CatalogSchemaDecorator : ISealedCatalogSchema
 
     public ICatalogSchemaBuilder OpenForWrite()
     {
-        return new InternalCatalogSchemaBuilder(Delegate);
+        return new InternalCatalogSchemaBuilder(this);
     }
 
     public ICatalogSchemaBuilder OpenForWriteWithMutations(params ILocalCatalogSchemaMutation[] schemaMutations)
     {
-        return new InternalCatalogSchemaBuilder(Delegate, schemaMutations.ToList());
+        return new InternalCatalogSchemaBuilder(this, schemaMutations.ToList());
     }
 
     public ICatalogSchemaBuilder OpenForWriteWithMutations(ICollection<ILocalCatalogSchemaMutation> schemaMutations)
     {
-        return new InternalCatalogSchemaBuilder(Delegate, schemaMutations);
+        return new InternalCatalogSchemaBuilder(this, schemaMutations);
     }
 
     public string Name => Delegate.Name;
 
     public string? Description => Delegate.Description;
 
-    public IDictionary<NamingConvention, string> NameVariants => Delegate.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => Delegate.NameVariants;
 
-    public string GetNameVariant(NamingConvention namingConvention)
+    public string? GetNameVariant(NamingConvention namingConvention)
     {
         return Delegate.GetNameVariant(namingConvention);
     }

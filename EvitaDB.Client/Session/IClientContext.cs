@@ -22,7 +22,7 @@ public interface IClientContext
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 
@@ -42,7 +42,7 @@ public interface IClientContext
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 
@@ -53,12 +53,12 @@ public interface IClientContext
         {
             Assert.IsTrue(!(context == null || !context.Any()),
                 "When changing the request ID, the client ID must be set first!");
-            context.Push(new Context(context.Peek().ClientId, requestId));
+            context?.Push(new Context(context.Peek().ClientId, requestId));
             lambda.Invoke();
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 
@@ -78,7 +78,7 @@ public interface IClientContext
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 
@@ -98,7 +98,7 @@ public interface IClientContext
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 
@@ -109,12 +109,12 @@ public interface IClientContext
         {
             Assert.IsTrue(!(context == null || !context.Any()),
                 "When changing the request ID, the client ID must be set first!");
-            context.Push(new Context(context.Peek().ClientId, requestId));
+            context?.Push(new Context(context.Peek().ClientId, requestId));
             return lambda.Invoke();
         }
         finally
         {
-            context.Pop();
+            context?.Pop();
         }
     }
 

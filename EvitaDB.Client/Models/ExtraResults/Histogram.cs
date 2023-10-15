@@ -3,7 +3,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.ExtraResults;
 
-public class Histogram : IHistogramContract
+public class Histogram : IHistogram
 {
     public decimal Min => Buckets[0].Threshold;
     public decimal Max { get; }

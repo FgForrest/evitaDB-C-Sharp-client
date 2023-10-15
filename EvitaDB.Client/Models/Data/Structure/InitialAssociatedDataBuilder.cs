@@ -311,9 +311,9 @@ public class InitialAssociatedDataBuilder : IAssociatedDataBuilder
                     associatedDataSchema.Type.IsAssignableFrom(type),
                     () => new InvalidDataTypeMutationException(
                         "AssociatedData " + associatedDataName + " accepts only type " +
-                        associatedDataSchema.GetType().Name +
+                        associatedDataSchema.Type.Name +
                         " - value type is different: " + type.Name + "!",
-                        associatedDataSchema.GetType(), type
+                        associatedDataSchema.Type, type
                     )
                 );
             }

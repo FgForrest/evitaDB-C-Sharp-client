@@ -37,6 +37,16 @@ public class InitialEntityBuilder : IEntityBuilder
     }
 
     public bool PricesAvailable() => PricesBuilder.PricesAvailable();
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+    {
+        return PricesBuilder.GetAllPricesForSale(currency, atTheMoment, priceListPriority);
+    }
+
+    public IList<IPrice> GetAllPricesForSale()
+    {
+        return PricesBuilder.GetAllPricesForSale();
+    }
+
     public bool AssociatedDataAvailable => AssociatedDataBuilder.AssociatedDataAvailable();
     public bool AttributesAvailable() => AttributesBuilder.AttributesAvailable();
     public bool ReferencesAvailable() => true;

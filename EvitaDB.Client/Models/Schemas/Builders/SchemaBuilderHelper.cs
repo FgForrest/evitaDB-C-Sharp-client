@@ -49,19 +49,19 @@ public static class SchemaBuilderHelper
             .Where(it => !Equals(it.Name, newSchema.Name) && newSchema is IAttributeSchema)
             .SelectMany(it => it.NameVariants
                 .Where(
-                    nameVariant => nameVariant.Value.Equals(newSchema.GetNameVariant(nameVariant.Key)))
+                    nameVariant => nameVariant.Value!.Equals(newSchema.GetNameVariant(nameVariant.Key)))
                 .Select(nameVariant => new InternalEntitySchemaBuilder.AttributeNamingConventionConflict(it, null,
                     nameVariant.Key,
-                    nameVariant.Value))
+                    nameVariant.Value!))
             )
             .Concat(
                 compoundSchemas
                     .Where(it => !(Equals(it.Name, newSchema.Name) && newSchema is ISortableAttributeCompoundSchema))
                     .SelectMany(it => it.NameVariants
-                        .Where(nameVariant => nameVariant.Value.Equals(newSchema.GetNameVariant(nameVariant.Key)))
+                        .Where(nameVariant => nameVariant.Value!.Equals(newSchema.GetNameVariant(nameVariant.Key)))
                         .Select(
                             nameVariant => new InternalEntitySchemaBuilder.AttributeNamingConventionConflict(
-                                null, it, nameVariant.Key, nameVariant.Value
+                                null, it, nameVariant.Key, nameVariant.Value!
                             )
                         )
                     )
@@ -74,7 +74,7 @@ public static class SchemaBuilderHelper
                     if (conflict.ConflictingAttributeSchema == null)
                     {
                         throw new AttributeAlreadyPresentInEntitySchemaException(
-                            conflict.ConflictingCompoundSchema,
+                            conflict.ConflictingCompoundSchema!,
                             newAttributeSchema,
                             conflict.Convention, conflict.ConflictingName
                         );
@@ -92,7 +92,7 @@ public static class SchemaBuilderHelper
                     if (conflict.ConflictingAttributeSchema == null)
                     {
                         throw new AttributeAlreadyPresentInEntitySchemaException(
-                            conflict.ConflictingCompoundSchema,
+                            conflict.ConflictingCompoundSchema!,
                             newCompoundSchema,
                             conflict.Convention, conflict.ConflictingName
                         );
@@ -149,11 +149,11 @@ public static class SchemaBuilderHelper
             }
 
             Assert.IsTrue(
-                !attributeSchema.GetType().IsArray,
+                !attributeSchema.Type.IsArray,
                 () => new InvalidSchemaMutationException(
                     "Attribute `" + attributeElement.AttributeName + "` the sortable attribute compound" +
                     " `" + compoundSchemaName + "` consists of cannot be the array of " +
-                    attributeSchema.GetType() + "!"
+                    attributeSchema.Type + "!"
                 )
             );
         }
@@ -178,7 +178,7 @@ public static class SchemaBuilderHelper
             () => new SortableAttributeCompoundSchemaException(
                 "The attribute `" + attributeName + "` cannot be removed because there is sortable attribute compound" +
                 " relying on it! Please, remove the compound first. ",
-                conflictingCompounds
+                conflictingCompounds!
             )
         );
     }

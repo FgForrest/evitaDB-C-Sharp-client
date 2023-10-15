@@ -54,9 +54,9 @@ public class EntitySchemaDecorator : ISealedEntitySchema
 
     public string? Description => Delegate.Description;
 
-    public IDictionary<NamingConvention, string> NameVariants => Delegate.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => Delegate.NameVariants;
 
-    public string GetNameVariant(NamingConvention namingConvention)
+    public string? GetNameVariant(NamingConvention namingConvention)
     {
         return Delegate.GetNameVariant(namingConvention);
     }

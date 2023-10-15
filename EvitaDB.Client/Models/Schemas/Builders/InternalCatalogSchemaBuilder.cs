@@ -16,7 +16,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
 
     public int Version => _instance.Version;
 
@@ -111,24 +111,30 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
         Action<IGlobalAttributeSchemaBuilder>? whichIs)
     {
         IGlobalAttributeSchema? existingAttribute = GetAttribute(attributeName);
-        Assert.IsTrue(
-            typeof(TT) == existingAttribute?.GetType(),
-            () => new InvalidSchemaMutationException(
-                "Attribute " + attributeName + " has already assigned type " + existingAttribute?.GetType() +
-                ", cannot change this type to: " + typeof(TT) + "!"
-            )
-        );
-        GlobalAttributeSchemaBuilder attributeSchemaBuilder = existingAttribute is not null
-            ? new GlobalAttributeSchemaBuilder(BaseSchema, existingAttribute)
-            : new GlobalAttributeSchemaBuilder(BaseSchema, attributeName, typeof(TT));
-
+        GlobalAttributeSchemaBuilder attributeSchemaBuilder;
+        if (existingAttribute is not null)
+        {
+            Assert.IsTrue(
+                typeof(TT) == existingAttribute.Type,
+                () => new InvalidSchemaMutationException(
+                    "Attribute " + attributeName + " has already assigned type " + existingAttribute.Type +
+                    ", cannot change this type to: " + typeof(TT) + "!"
+                )
+            );
+            attributeSchemaBuilder = new GlobalAttributeSchemaBuilder(BaseSchema, existingAttribute);
+        }
+        else
+        {
+            attributeSchemaBuilder = new GlobalAttributeSchemaBuilder(BaseSchema, attributeName, typeof(TT));
+        }
+        
         whichIs?.Invoke(attributeSchemaBuilder);
         IGlobalAttributeSchema attributeSchema = attributeSchemaBuilder.ToInstance();
         SchemaBuilderHelper.CheckSortableTraits(attributeName, attributeSchema);
 
         // check the names in all naming conventions are unique in the catalog schema
         SchemaBuilderHelper.CheckNamesAreUniqueInAllNamingConventions(
-            GetAttributes().Values as ICollection<IAttributeSchema> ?? throw new InvalidOperationException(),
+            GetAttributes().Values as ICollection<IAttributeSchema> ?? new List<IAttributeSchema>(),
             new List<SortableAttributeCompoundSchema>(),
             attributeSchema
         );
@@ -179,7 +185,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
         return UpdatedSchema;
     }
 
-    public string GetNameVariant(NamingConvention namingConvention) => ToInstance().GetNameVariant(namingConvention);
+    public string? GetNameVariant(NamingConvention namingConvention) => ToInstance().GetNameVariant(namingConvention);
 
     public bool DiffersFrom(ICatalogSchema? otherObject) => otherObject?.DiffersFrom(this) ?? true;
 

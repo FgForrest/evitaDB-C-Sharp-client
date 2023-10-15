@@ -18,7 +18,7 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
     private IReferenceSchema? UpdatedSchema { get; set; }
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
     public string? DeprecationNotice => _instance.DeprecationNotice;
     public Cardinality Cardinality => _instance.Cardinality;
     public string ReferencedEntityType => _instance.ReferencedEntityType;
@@ -174,9 +174,9 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
 		if (existingAttribute is not null)
 		{
 			Assert.IsTrue(
-				typeof(T) == existingAttribute.GetType(),
+				typeof(T) == existingAttribute.Type,
 				() => new InvalidSchemaMutationException(
-					"Attribute " + attributeName + " has already assigned type " + existingAttribute.GetType() +
+					"Attribute " + attributeName + " has already assigned type " + existingAttribute.Type +
 					", cannot change this type to: " + typeof(T) + "!"
 				)
 			);
@@ -343,7 +343,7 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
 		return Mutations;
 	}
 	
-	public string GetNameVariant(NamingConvention namingConvention)
+	public string? GetNameVariant(NamingConvention namingConvention)
 	{
 		return _instance.GetNameVariant(namingConvention);
 	}
@@ -383,22 +383,22 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
 		return _instance.GetSortableAttributeCompoundsForAttribute(attributeName);
 	}
 
-	public IDictionary<NamingConvention, string> GetEntityTypeNameVariants(Func<string, EntitySchema> entitySchemaFetcher)
+	public IDictionary<NamingConvention, string?> GetEntityTypeNameVariants(Func<string?, EntitySchema> entitySchemaFetcher)
 	{
 		return _instance.GetEntityTypeNameVariants(entitySchemaFetcher);
 	}
 
-	public string GetReferencedEntityTypeNameVariants(NamingConvention namingConvention, Func<string, EntitySchema> entitySchemaFetcher)
+	public string? GetReferencedEntityTypeNameVariants(NamingConvention namingConvention, Func<string?, EntitySchema> entitySchemaFetcher)
 	{
 		return _instance.GetReferencedEntityTypeNameVariants(namingConvention, entitySchemaFetcher);
 	}
 
-	public IDictionary<NamingConvention, string> GetGroupTypeNameVariants(Func<string, EntitySchema> entitySchemaFetcher)
+	public IDictionary<NamingConvention, string?> GetGroupTypeNameVariants(Func<string?, EntitySchema> entitySchemaFetcher)
 	{
 		return _instance.GetGroupTypeNameVariants(entitySchemaFetcher);
 	}
 
-	public string GetReferencedGroupTypeNameVariants(NamingConvention namingConvention, Func<string, EntitySchema> entitySchemaFetcher)
+	public string? GetReferencedGroupTypeNameVariants(NamingConvention namingConvention, Func<string?, EntitySchema> entitySchemaFetcher)
 	{
 		return _instance.GetReferencedGroupTypeNameVariants(namingConvention, entitySchemaFetcher);
 	}

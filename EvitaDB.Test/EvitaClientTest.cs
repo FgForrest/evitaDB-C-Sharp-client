@@ -36,7 +36,6 @@ using QueryTelemetry = EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
 using IsExactlyTheSame = NUnit.DeepObjectCompare.Is;
 using Random = System.Random;
 
-[assembly: LevelOfParallelism(2)]
 namespace EvitaDB.Test;
 
 [Parallelizable(ParallelScope.All)]
@@ -79,11 +78,9 @@ public class EvitaClientTest
     [OneTimeSetUp]
     public async Task Setup()
     {
-        //string dockerUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)? "npipe://./pipe/docker_engine": "unix:///var/run/docker.sock";
-
-        //using DockerClient client = new DockerClientConfiguration().CreateClient();
+        using DockerClient client = new DockerClientConfiguration().CreateClient();
         // Get information about the locally cached image (if it exists)
-        /*var images = await client.Images.ListImagesAsync(
+        var images = await client.Images.ListImagesAsync(
             new ImagesListParameters
             {
                 Filters = new Dictionary<string, IDictionary<string, bool>>
@@ -114,7 +111,7 @@ public class EvitaClientTest
             // If the image is not cached locally, simply pull it
             await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName }, null,
                 new Progress<JSONMessage>());
-        }*/
+        }
 
         InitializeEvitaClient().GetAwaiter().GetResult();
     }

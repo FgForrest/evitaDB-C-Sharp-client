@@ -32,7 +32,10 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.X'   # setup dotnet 7
-         
+      
+      - name: Pull evitaDB docker image
+        run: docker pull evitadb/evitadb:canary
+      
       - name: Restore solution
         run: dotnet restore
         

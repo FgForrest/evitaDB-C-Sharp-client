@@ -64,14 +64,14 @@ public class EvitaClientTest : IAsyncDisposable
         } 
     };
     
-    private EvitaClient GetClient()
+    private async Task<EvitaClient> GetClient()
     {
         if (_clients.TryDequeue(out EvitaClient? client))
         {
             DeleteCreateAndSetupCatalog(client, Data.TestCatalog, true);
             return client;
         }
-        return InitializeEvitaClient().GetAwaiter().GetResult();
+        return await InitializeEvitaClient();
     }
 
     [OneTimeSetUp]
@@ -161,9 +161,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToCreateCatalogAndEntitySchemaAndInsertNewEntityWithAttribute()
+    public async Task ShouldBeAbleToCreateCatalogAndEntitySchemaAndInsertNewEntityWithAttribute()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         
         string testCollection = "testingCollection";
         string attributeDateTime = "attrDateTime";
@@ -261,9 +261,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldAllowCreatingCatalogAlongWithTheSchema()
+    public async Task ShouldAllowCreatingCatalogAlongWithTheSchema()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string someCatalogName = "differentCatalog";
         try
         {
@@ -281,9 +281,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldAllowCreatingCatalogAndEntityCollectionsInPrototypingMode()
+    public async Task ShouldAllowCreatingCatalogAndEntityCollectionsInPrototypingMode()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
 
         string someCatalogName = "differentCatalog";
         CultureInfo locale = Data.EnglishLocale;
@@ -363,9 +363,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldAllowCreatingCatalogAndEntityCollectionsSchemas()
+    public async Task ShouldAllowCreatingCatalogAndEntityCollectionsSchemas()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
 
         string someCatalogName = "differentCatalog";
         try
@@ -438,9 +438,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldBeAbleToRunParallelClients()
+    public async Task ShouldBeAbleToRunParallelClients()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         EvitaClient anotherParallelClient = new EvitaClient(client.Configuration);
         ListCatalogNames(anotherParallelClient);
         ListCatalogNames(client);
@@ -448,9 +448,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldAbleToFetchNonCachedEntitySchemaFromCatalogSchema()
+    public async Task ShouldAbleToFetchNonCachedEntitySchemaFromCatalogSchema()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         EvitaClient clientWithEmptyCache = new EvitaClient(client.Configuration);
         clientWithEmptyCache.QueryCatalog(
             Data.TestCatalog,
@@ -464,9 +464,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldListCatalogNames()
+    public async Task ShouldListCatalogNames()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         ISet<string> catalogNames = ListCatalogNames(client);
         That(catalogNames.Count, Is.EqualTo(1));
         That(catalogNames.Contains(Data.TestCatalog), Is.True);
@@ -479,9 +479,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldCreateCatalog()
+    public async Task ShouldCreateCatalog()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCatalogName = "newCatalog";
         try
         {
@@ -501,9 +501,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldRemoveCatalog()
+    public async Task ShouldRemoveCatalog()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCatalogName = "newCatalog";
         client.DefineCatalog(newCatalogName).UpdateViaNewSession(client);
         bool removed = client.DeleteCatalogIfExists(newCatalogName);
@@ -517,9 +517,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldReplaceCatalog()
+    public async Task ShouldReplaceCatalog()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCatalog = "newCatalog";
         client.DefineCatalog(newCatalog);
 
@@ -544,9 +544,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldRenameCatalog()
+    public async Task ShouldRenameCatalog()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCatalog = "newCatalog";
 
         ISet<string> catalogNames = client.GetCatalogNames();
@@ -568,9 +568,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldReplaceCollection()
+    public async Task ShouldReplaceCollection()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCollection = "newCollection";
         int? productCount = null;
         int? productSchemaVersion = null;
@@ -610,9 +610,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldRenameCollection()
+    public async Task ShouldRenameCollection()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         string newCollection = "newCollection";
         int? productCount = null;
         int? productSchemaVersion = null;
@@ -648,9 +648,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryCatalog()
+    public async Task ShouldQueryCatalog()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         ICatalogSchema catalogSchema = client.QueryCatalog(
             Data.TestCatalog,
             x => x.GetCatalogSchema()
@@ -662,9 +662,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryOneEntityReference()
+    public async Task ShouldQueryOneEntityReference()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         EntityReference entityReference = client.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryOneEntityReference(
@@ -683,9 +683,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldNotQueryOneMissingEntity()
+    public async Task ShouldNotQueryOneMissingEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         EntityReference? entityReference = client.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryOneEntityReference(
@@ -702,9 +702,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryOneSealedEntity()
+    public async Task ShouldQueryOneSealedEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         IList<ISealedEntity> products = CreatedEntities[Entities.Product];
         int primaryKey = products.ElementAt(Random.Next(products.Count)).PrimaryKey!.Value;
         ISealedEntity sealedEntity = client.QueryCatalog(
@@ -738,9 +738,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryListOfEntityReferences()
+    public async Task ShouldQueryListOfEntityReferences()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int[] requestedIds = { 1, 2, 5 };
         IList<EntityReference> entityReferences = client.QueryCatalog(
             Data.TestCatalog,
@@ -767,9 +767,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryListOfSealedEntities()
+    public async Task ShouldQueryListOfSealedEntities()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int[] requestedIds = { 1, 2, 5 };
         IList<ISealedEntity> products = CreatedEntities[Entities.Product];
         IList<ISealedEntity> sealedEntities = client.QueryCatalog(
@@ -801,9 +801,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldGetListWithExtraResults()
+    public async Task ShouldGetListWithExtraResults()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         ISealedEntity? someProductWithCategory = CreatedEntities[Entities.Product]
             .Where(it => it.GetReferences(Data.ReferenceCategories).Any())
             .FirstOrDefault(it => it.GetAllPricesForSale().Count > 0);
@@ -874,9 +874,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldGetSingleEntity()
+    public async Task ShouldGetSingleEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         ISealedEntity? sealedEntity = client.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
@@ -895,9 +895,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldEnrichSingleEntity()
+    public async Task ShouldEnrichSingleEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         IList<ISealedEntity> products = CreatedEntities[Entities.Product];
         ISealedEntity? sealedEntity = client.QueryCatalog(
             Data.TestCatalog,
@@ -932,9 +932,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldLimitSingleEntity()
+    public async Task ShouldLimitSingleEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         IList<ISealedEntity> products = CreatedEntities[Entities.Product];
         ISealedEntity? sealedEntity = client.QueryCatalog(
             Data.TestCatalog,
@@ -966,9 +966,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldRetrieveCollectionSize()
+    public async Task ShouldRetrieveCollectionSize()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int productCount = client.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntityCollectionSize(Entities.Product));
@@ -979,9 +979,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldQueryListOfSealedEntitiesEvenWithoutProperRequirements()
+    public async Task ShouldQueryListOfSealedEntitiesEvenWithoutProperRequirements()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         IList<ISealedEntity> sealedEntities = client.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryListOfSealedEntities(
@@ -998,9 +998,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldCallTerminationCallbackWhenClientClosesSession()
+    public async Task ShouldCallTerminationCallbackWhenClientClosesSession()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         Guid? terminatedSessionId = null;
         EvitaClientSession theSession = client.CreateSession(
             new SessionTraits(
@@ -1015,9 +1015,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldCallTerminationCallbackWhenClientIsClosed()
+    public async Task ShouldCallTerminationCallbackWhenClientIsClosed()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         Guid? terminatedSessionId = null;
         client.CreateSession(
             new SessionTraits(
@@ -1033,9 +1033,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldTranslateErrorCorrectlyAndLeaveSessionOpen()
+    public async Task ShouldTranslateErrorCorrectlyAndLeaveSessionOpen()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         using EvitaClientSession clientSession = client.CreateReadOnlySession(Data.TestCatalog);
         try
         {
@@ -1057,9 +1057,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldReturnEntitySchema()
+    public async Task ShouldReturnEntitySchema()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         EvitaClientSession evitaSession = client.CreateReadOnlySession(Data.TestCatalog);
         That(evitaSession.GetEntitySchema(Entities.Product), Is.Not.Null);
         That(evitaSession.GetEntitySchemaOrThrow(Entities.Product), Is.Not.Null);
@@ -1068,9 +1068,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldCreateAndDropEntityCollection()
+    public async Task ShouldCreateAndDropEntityCollection()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         client.UpdateCatalog(
             Data.TestCatalog,
             session =>
@@ -1090,9 +1090,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldUpsertNewEntity()
+    public async Task ShouldUpsertNewEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1128,9 +1128,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldUpsertAndFetchNewEntity()
+    public async Task ShouldUpsertAndFetchNewEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1157,9 +1157,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteExistingEntity()
+    public async Task ShouldDeleteExistingEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1188,9 +1188,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteAndFetchExistingEntity()
+    public async Task ShouldDeleteAndFetchExistingEntity()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1226,9 +1226,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteEntityByQuery()
+    public async Task ShouldDeleteEntityByQuery()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1266,9 +1266,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteEntitiesAndFetchByQuery()
+    public async Task ShouldDeleteEntitiesAndFetchByQuery()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         int? newProductId = null;
         client.UpdateCatalog(
             Data.TestCatalog,
@@ -1308,9 +1308,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteHierarchy()
+    public async Task ShouldDeleteHierarchy()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         client.UpdateCatalog(
             Data.TestCatalog,
             session =>
@@ -1342,9 +1342,9 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldDeleteHierarchyAndFetchRoot()
+    public async Task ShouldDeleteHierarchyAndFetchRoot()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         client.UpdateCatalog(
             Data.TestCatalog,
             session =>
@@ -1380,15 +1380,15 @@ public class EvitaClientTest : IAsyncDisposable
     }
 
     [Test]
-    public void ShouldThrowWhenAddingEntityThatViolatesSchema()
+    public async Task ShouldThrowWhenAddingEntityThatViolatesSchema()
     {
-        EvitaClient client = GetClient();
+        EvitaClient client = await GetClient();
         Throws<InvalidDataTypeMutationException>(() => CreateProductThatViolatesSchema(client, Entities.Product));
         _clients.Enqueue(client);
     }
     
     /*[Test]
-    public void ShouldTestCdc()
+    public async Task ShouldTestCdc()
     {
         IObservable<ChangeSystemCapture> captures =
             _client!.RegisterSystemChangeCapture(new ChangeSystemCaptureRequest(CaptureContent.Header));

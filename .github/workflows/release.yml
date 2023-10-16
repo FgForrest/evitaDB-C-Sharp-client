@@ -42,7 +42,8 @@ jobs:
         run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
       
       - name: Run tests
-        run: dotnet test ./EvitaDB.sln --configuration Release --no-build
+        run: cd EvitaDB.Test && chmod +x nunit-console && ./nunit-console bin/Release/net7.0/EvitaDB.Test.dll
+        #run: dotnet test ./EvitaDB.sln --configuration Release --no-build
           
       - name: Resolve new release version
         id: release_version

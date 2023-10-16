@@ -30,7 +30,6 @@ using static NUnit.Framework.Assert;
 using AttributeHistogram = EvitaDB.Client.Models.ExtraResults.AttributeHistogram;
 using FacetSummary = EvitaDB.Client.Models.ExtraResults.FacetSummary;
 using Is = NUnit.Framework.Is;
-using OSPlatform = System.Runtime.InteropServices.OSPlatform;
 using PriceHistogram = EvitaDB.Client.Models.ExtraResults.PriceHistogram;
 using QueryTelemetry = EvitaDB.Client.Models.ExtraResults.QueryTelemetry;
 using IsExactlyTheSame = NUnit.DeepObjectCompare.Is;
@@ -39,7 +38,7 @@ using Random = System.Random;
 namespace EvitaDB.Test;
 
 [Parallelizable(ParallelScope.All)]
-public class EvitaClientTest : IDisposable
+public class EvitaClientTest : IAsyncDisposable
 {
     private const int RandomSeed = 42;
     private const int GrpcPort = 5556;
@@ -55,6 +54,7 @@ public class EvitaClientTest : IDisposable
     private static readonly IDictionary<string, IEntitySchema> CreatedSchemas = new ConcurrentDictionary<string, IEntitySchema>();
     
     private readonly ConcurrentQueue<EvitaClient> _clients = new();
+    private readonly IDictionary<EvitaClient, IContainer> _clientContainers = new ConcurrentDictionary<EvitaClient, IContainer>();
     
     private readonly ComparisonConfig _entityComparisonConfig = new() 
     { 
@@ -113,7 +113,10 @@ public class EvitaClientTest : IDisposable
                 new Progress<JSONMessage>());
         }
 
-        InitializeEvitaClient().GetAwaiter().GetResult();
+        EvitaClient setupClient = await InitializeEvitaClient();
+        setupClient.Close();
+        await _clientContainers[setupClient].StopAsync();
+        _clientContainers.Remove(setupClient);
     }
 
     private async Task<EvitaClient> InitializeEvitaClient()
@@ -131,8 +134,7 @@ public class EvitaClientTest : IDisposable
             .Build();
 
         // Start the container.
-        await container.StartAsync()
-            .ConfigureAwait(false);
+        await container.StartAsync();
 
         // create a evita client configuration the the running instance of evita server
         EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
@@ -144,6 +146,8 @@ public class EvitaClientTest : IDisposable
         // create a new evita client with the specified configuration
         EvitaClient evitaClient = new EvitaClient(configuration);
         DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog, false, true);
+        
+        _clientContainers.Add(evitaClient, container);
         return evitaClient;
     }
 
@@ -1668,11 +1672,12 @@ public class EvitaClientTest : IDisposable
         guid = newValue;
     }
     
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        while (_clients.TryDequeue(out EvitaClient? client))
+        foreach (var (client, container) in _clientContainers)
         {
             client.Close();
+            await container.StopAsync();
         }
     }
 

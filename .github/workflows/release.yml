@@ -24,6 +24,7 @@ jobs:
 
     steps:
       - name: Checkout sources
+        timeout-minutes: 60 # Set the timeout to 60 minutes for this job
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}

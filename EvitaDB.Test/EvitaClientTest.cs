@@ -133,10 +133,17 @@ public class EvitaClientTest : IAsyncDisposable
             .Build();
 
         // Start the container.
-        await container.StartAsync()
-            .ConfigureAwait(false);
+        try
+        {
+            await container.StartAsync()
+                .ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
 
-        Console.WriteLine($"Container started with id {container.Id}");
 
         // create a evita client configuration the the running instance of evita server
         EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
@@ -1680,7 +1687,6 @@ public class EvitaClientTest : IAsyncDisposable
         {
             client.Close();
             await container.StopAsync();
-            Console.WriteLine($"Container started with id {container.Id}");
         }
     }
 

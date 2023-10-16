@@ -33,17 +33,14 @@ jobs:
         with:
           dotnet-version: '7.0.X'   # setup dotnet 7
       
-      - name: Pull evitaDB docker image
-        run: docker pull evitadb/evitadb:canary
-      
       - name: Restore solution
-        run: dotnet restore
+        run: dotnet restore ./EvitaDB.sln
         
       - name: Build solution
-        run: dotnet build --no-restore
+        run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
       
       - name: Run tests
-        run: dotnet test EvitaDB.Test --no-restore --no-build --verbosity normal
+        run: dotnet test ./Products.Api.sln --configuration Release --no-build
           
       - name: Resolve new release version
         id: release_version

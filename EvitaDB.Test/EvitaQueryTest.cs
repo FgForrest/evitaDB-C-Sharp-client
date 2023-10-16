@@ -1,10 +1,8 @@
 ﻿using System.Globalization;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
-using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
-using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
@@ -16,7 +14,7 @@ using static NUnit.Framework.Assert;
 
 namespace EvitaDB.Test;
 
-public class EvitaQueryTest
+public class EvitaQueryTest : IDisposable
 {
     private static EvitaClient? _client;
     private static EvitaClientConfiguration? EvitaClientConfiguration { get; set; }
@@ -212,5 +210,10 @@ public class EvitaQueryTest
             )
         );
         That(evitaEntityResponse.RecordData.Count, Is.GreaterThan(0));
+    }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
     }
 }

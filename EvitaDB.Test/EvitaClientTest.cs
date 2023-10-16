@@ -39,7 +39,7 @@ using Random = System.Random;
 namespace EvitaDB.Test;
 
 [Parallelizable(ParallelScope.All)]
-public class EvitaClientTest
+public class EvitaClientTest : IDisposable
 {
     private const int RandomSeed = 42;
     private const int GrpcPort = 5556;
@@ -1666,6 +1666,14 @@ public class EvitaClientTest
     private static void ModifyGuid(ref Guid? guid, Guid newValue)
     {
         guid = newValue;
+    }
+    
+    public void Dispose()
+    {
+        while (_clients.TryDequeue(out EvitaClient? client))
+        {
+            client.Close();
+        }
     }
 
     private record TestAsDataObj(string Locale, string Url)

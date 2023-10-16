@@ -15,10 +15,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Protobuf" Version="3.22.1"/>
-        <PackageReference Include="Grpc.Net.Client" Version="2.51.0"/>
-        <PackageReference Include="Grpc.Tools" Version="2.52.0"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0"/>
+        <PackageReference Include="Google.Protobuf" Version="3.24.4" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.57.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.58.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageReference Include="System.CodeDom" Version="7.0.0"/>
     </ItemGroup>

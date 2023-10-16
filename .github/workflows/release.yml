@@ -40,10 +40,10 @@ jobs:
         run: dotnet restore
         
       - name: Build solution
-        run: dotnet build
-          
+        run: dotnet build --no-restore
+      
       - name: Run tests
-        run: dotnet test EvitaDB.Test --verbosity detailed
+        run: dotnet test EvitaDB.Test --no-restore --no-build --verbosity normal
           
       - name: Resolve new release version
         id: release_version

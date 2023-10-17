@@ -106,7 +106,7 @@ public static class DataManipulationUtil
         return schema;
     }
 
-    public static IList<ISealedEntity> CreateProductsThatMatchSchema(EvitaClientSession session, string entityType, int count)
+    private static IList<ISealedEntity> CreateProductsThatMatchSchema(EvitaClientSession session, string entityType, int count)
     {
         List<ISealedEntity> entities = new List<ISealedEntity>();
 
@@ -172,7 +172,7 @@ public static class DataManipulationUtil
                 entityReference.Value.PrimaryKey!.Value, EntityFetchAllContent());
 
             Assert.NotNull(entity);
-            Assert.Equal(enAttributeName, entity!.GetAttribute(Data.AttributeName, Data.EnglishLocale));
+            Assert.Equal(enAttributeName, entity.GetAttribute(Data.AttributeName, Data.EnglishLocale));
             Assert.Equal(csAttributeName, entity.GetAttribute(Data.AttributeName, Data.CzechLocale));
             Assert.Equal(attributeCode, entity.GetAttribute(Data.AttributeCode));
             Assert.Equal(quantity, entity.GetAttribute(Data.AttributeQuantity));
@@ -200,7 +200,7 @@ public static class DataManipulationUtil
         builder.UpsertVia(rwSession);
     }
 
-    public static ISealedEntity? CreateSomeNewCategory(EvitaClientSession session, int primaryKey, int? parentPrimaryKey = null)
+    public static ISealedEntity? CreateSomeNewCategory(EvitaClientSession session, int primaryKey, int? parentPrimaryKey)
     {
         IEntityBuilder builder = session.CreateNewEntity(Entities.Category, primaryKey)
             .SetAttribute(Data.AttributeName, Data.EnglishLocale, "New category #" + primaryKey)
@@ -221,7 +221,7 @@ public static class DataManipulationUtil
         return session.GetEntity(Entities.Category, primaryKey, EntityFetchAllContent());
     }
 
-    private static IEntityMutation CreateSomeNewProduct(EvitaClientSession session)
+    public static IEntityMutation CreateSomeNewProduct(EvitaClientSession session)
     {
         return session.CreateNewEntity(Entities.Product)
             .SetAttribute(Data.AttributeName, Data.EnglishLocale, "New product")
@@ -250,7 +250,7 @@ public static class DataManipulationUtil
         
         if (!allEntityTypes.Contains(Entities.Category) || session.GetEntityCollectionSize(Entities.Category) == 0)
         {
-            ISealedEntity category1 = CreateSomeNewCategory(session, 1)!;
+            ISealedEntity category1 = CreateSomeNewCategory(session, 1, null)!;
             ISealedEntity category2 = CreateSomeNewCategory(session, 2, 1)!;
             createdEntities.Add(Entities.Category, new List<ISealedEntity> { category1, category2 });
         }

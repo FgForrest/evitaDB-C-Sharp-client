@@ -30,7 +30,7 @@ public class SetupFixture : IAsyncLifetime
             DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
             return evitaClient;
         }
-        return await InitializeEvitaClient();
+        return await InitializeEvitaContainerAndClientClient();
     }
     
     public void ReturnClient(EvitaClient client)
@@ -75,7 +75,7 @@ public class SetupFixture : IAsyncLifetime
                 new Progress<JSONMessage>());
         }
 
-        _ = await InitializeEvitaClient(true);
+        _ = await InitializeEvitaContainerAndClientClient(true);
     }
 
     public async Task DisposeAsync()
@@ -87,31 +87,36 @@ public class SetupFixture : IAsyncLifetime
         }
     }
     
-    private async Task<EvitaClient> InitializeEvitaClient(bool cacheCreatedEntities = false)
+    private async Task<EvitaClient> InitializeEvitaContainerAndClientClient(bool cacheCreatedEntities = false)
     {
-        IContainer container = new ContainerBuilder()
-            .WithName($"evita-{Guid.NewGuid().ToString()}")
-            // Set the image for the container to "evitadb/evitadb".
-            .WithImage(ImageName)
-            // Bind ports of the container.
-            .WithPortBinding(GrpcPort, true)
-            .WithPortBinding(SystemApiPort, true)
-            .WithEnvironment("EVITA_JAVA_OPTS", "-Duser.timezone=UTC")
-            .WithWaitStrategy(
-                Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
-            // Build the container configuration.
-            .Build();
-
-        // Start the container.
-        try
+        IContainer container;
+        using (var consumer = Consume.RedirectStdoutAndStderrToConsole())
         {
-            await container.StartAsync()
-                .ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
+            container = new ContainerBuilder()
+                .WithName($"evita-{Guid.NewGuid().ToString()}")
+                // Set the image for the container to "evitadb/evitadb".
+                .WithImage(ImageName)
+                // Bind ports of the container.
+                .WithPortBinding(GrpcPort, true)
+                .WithPortBinding(SystemApiPort, true)
+                .WithEnvironment("EVITA_JAVA_OPTS", "-Duser.timezone=UTC")
+                .WithWaitStrategy(
+                    Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
+                .WithOutputConsumer(consumer)
+                // Build the container configuration.
+                .Build();
+        
+            // Start the container.
+            try
+            {
+                await container.StartAsync()
+                    .ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
         
         // create a evita client configuration the the running instance of evita server
@@ -131,7 +136,6 @@ public class SetupFixture : IAsyncLifetime
         }
         
         _testSuites.Add(new EvitaTestSuite(evitaClient, container));
-        _clients.Enqueue(evitaClient);
         return evitaClient;
     }
 

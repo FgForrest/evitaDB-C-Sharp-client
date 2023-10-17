@@ -96,6 +96,7 @@ public class SetupFixture : IAsyncLifetime
             // Bind ports of the container.
             .WithPortBinding(GrpcPort, true)
             .WithPortBinding(SystemApiPort, true)
+            .WithEnvironment("EVITA_JAVA_OPTS", "-Duser.timezone=UTC")
             .WithWaitStrategy(
                 Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
             // Build the container configuration.

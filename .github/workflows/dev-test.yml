@@ -1,0 +1,38 @@
+# Builds and releases a new public version of evitaLab a puts it into `Releases` section of GitHub
+
+name: Test dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["dev"]
+    
+permissions:
+  contents: read
+
+jobs:
+  build-and-release:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        timeout-minutes: 60 # Set the timeout to 60 minutes for this job
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.X'   # setup dotnet 7
+      
+      - name: Restore solution
+        run: dotnet restore ./EvitaDB.sln
+        
+      - name: Build solution
+        run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
+      
+      - name: Run tests
+        run: dotnet test EvitaDB.TestX --configuration Release --no-build

@@ -81,9 +81,13 @@ jobs:
           dotnet pack -c Release -p:PackageVersion="${NEW_VERSION}" --no-build --no-restore
 
       - name: Publish nuget
-        env:
-          NUGET_VERSION: $( echo ${{ steps.release_version.outputs.version }} | sed 's/^v//')
-        run: cd bin/Release && dotnet nuget push EvitaDB.Client.${{ env.NUGET_VERSION }}.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
+        run: |
+          export CURRENT_VERSION="${{ steps.release_version.outputs.version }}"
+          echo "Current version: $CURRENT_VERSION"
+          export NEW_VERSION="$( echo ${CURRENT_VERSION} | sed 's/^v//')"
+          echo "New version: $NEW_VERSION"
+          cd bin/Release
+          dotnet nuget push EvitaDB.Client."${NEW_VERSION}".nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
 
       - name: Create release
         id: create_release

@@ -53,7 +53,10 @@ jobs:
           major-identifier: '(breaking)' # this should be placed somewhere in the commit message like "feat: (breaking) some message"
 
       - name: Build query validator
-        run: cd EvitaDB.QueryValidator && dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false && dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false && cd ..
+        run: |
+          cd EvitaDB.QueryValidator
+          dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false
+          dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
 
       - name: Zip 
         uses: vimtor/action-zip@v1
@@ -82,6 +85,7 @@ jobs:
         run: |
           export CURRENT_VERSION="${{ steps.release_version.outputs.version }}"
           export NEW_VERSION="$( echo ${CURRENT_VERSION} | sed 's/^v//')"
+          cd EvitaDB.Client
           cd bin
           cd Release
           dotnet nuget push EvitaDB.Client."${NEW_VERSION}".nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json

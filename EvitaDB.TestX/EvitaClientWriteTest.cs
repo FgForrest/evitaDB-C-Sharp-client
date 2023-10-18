@@ -32,13 +32,13 @@ public class EvitaClientWriteTest : BaseTest
         string nonExistingAttribute = "nonExistingAttribute";
 
         // delete test catalog if it exists
-        _client!.DeleteCatalogIfExists(Data.TestCatalog);
+        Client!.DeleteCatalogIfExists(Data.TestCatalog);
 
         // define new catalog
-        ICatalogSchema catalogSchema = _client.DefineCatalog(Data.TestCatalog).ToInstance();
+        ICatalogSchema catalogSchema = Client.DefineCatalog(Data.TestCatalog).ToInstance();
         Assert.Equal(Data.TestCatalog, catalogSchema.Name);
 
-        using (EvitaClientSession rwSession = _client.CreateReadWriteSession(Data.TestCatalog))
+        using (EvitaClientSession rwSession = Client.CreateReadWriteSession(Data.TestCatalog))
         {
             // create a new entity schema
             catalogSchema = rwSession.UpdateAndFetchCatalogSchema(new CreateEntitySchemaMutation(testCollection));
@@ -79,7 +79,7 @@ public class EvitaClientWriteTest : BaseTest
             rwSession.GoLiveAndClose();
         }
 
-        using EvitaClientSession newSession = _client.CreateReadWriteSession(Data.TestCatalog);
+        using EvitaClientSession newSession = Client.CreateReadWriteSession(Data.TestCatalog);
 
         // insert a new entity with one of attributes defined in the entity schema
         DateTimeOffset dateTimeNow = DateTimeOffset.Now;
@@ -121,14 +121,14 @@ public class EvitaClientWriteTest : BaseTest
         string someCatalogName = "differentCatalog";
         try
         {
-            _client!.DefineCatalog(someCatalogName)
+            Client!.DefineCatalog(someCatalogName)
                 .WithDescription("Some description.")
-                .UpdateVia(_client.CreateReadWriteSession(someCatalogName));
-            Assert.Contains(someCatalogName, _client.GetCatalogNames());
+                .UpdateVia(Client.CreateReadWriteSession(someCatalogName));
+            Assert.Contains(someCatalogName, Client.GetCatalogNames());
         }
         finally
         {
-            _client!.DeleteCatalogIfExists(someCatalogName);
+            Client!.DeleteCatalogIfExists(someCatalogName);
         }
     }
 
@@ -139,11 +139,11 @@ public class EvitaClientWriteTest : BaseTest
         CultureInfo locale = Data.EnglishLocale;
         try
         {
-            _client!.DefineCatalog(someCatalogName)
+            Client!.DefineCatalog(someCatalogName)
                 .WithDescription("This is a tutorial catalog.")
-                .UpdateViaNewSession(_client);
-            Assert.Contains(someCatalogName, _client.GetCatalogNames());
-            _client.UpdateCatalog(
+                .UpdateViaNewSession(Client);
+            Assert.Contains(someCatalogName, Client.GetCatalogNames());
+            Client.UpdateCatalog(
                 someCatalogName,
                 session =>
                 {
@@ -207,7 +207,7 @@ public class EvitaClientWriteTest : BaseTest
         }
         finally
         {
-            _client!.DeleteCatalogIfExists(someCatalogName);
+            Client!.DeleteCatalogIfExists(someCatalogName);
         }
     }
 
@@ -217,7 +217,7 @@ public class EvitaClientWriteTest : BaseTest
         string someCatalogName = "differentCatalog";
         try
         {
-            _client!.DefineCatalog(someCatalogName)
+            Client!.DefineCatalog(someCatalogName)
                 .WithDescription("This is a tutorial catalog.")
                 // define brand schema
                 .WithEntitySchema(
@@ -267,9 +267,9 @@ public class EvitaClientWriteTest : BaseTest
                         )
                 )
                 // and now push all the definitions (mutations) to the server
-                .UpdateViaNewSession(_client);
-            Assert.Contains(someCatalogName, _client.GetCatalogNames());
-            _client.QueryCatalog(someCatalogName, session =>
+                .UpdateViaNewSession(Client);
+            Assert.Contains(someCatalogName, Client.GetCatalogNames());
+            Client.QueryCatalog(someCatalogName, session =>
             {
                 ISet<string> allEntityTypes = session.GetAllEntityTypes();
                 Assert.Contains(Entities.Brand, allEntityTypes);
@@ -279,7 +279,7 @@ public class EvitaClientWriteTest : BaseTest
         }
         finally
         {
-            _client!.DeleteCatalogIfExists(someCatalogName);
+            Client!.DeleteCatalogIfExists(someCatalogName);
         }
     }
 
@@ -288,7 +288,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldBeAbleToFetchNonCachedEntitySchemaFromCatalogSchema()
     {
-        EvitaClient clientWithEmptyCache = new EvitaClient(_client!.Configuration);
+        EvitaClient clientWithEmptyCache = new EvitaClient(Client!.Configuration);
         clientWithEmptyCache.QueryCatalog(
             Data.TestCatalog,
             session =>
@@ -305,8 +305,8 @@ public class EvitaClientWriteTest : BaseTest
         string newCatalogName = "newCatalog";
         try
         {
-            _client!.DefineCatalog(newCatalogName);
-            ISet<string> catalogNames = _client.GetCatalogNames();
+            Client!.DefineCatalog(newCatalogName);
+            ISet<string> catalogNames = Client.GetCatalogNames();
 
             Assert.Equal(2 , catalogNames.Count);
             Assert.Contains(Data.TestCatalog, catalogNames);
@@ -314,7 +314,7 @@ public class EvitaClientWriteTest : BaseTest
         }
         finally
         {
-            _client!.DeleteCatalogIfExists(newCatalogName);
+            Client!.DeleteCatalogIfExists(newCatalogName);
         }
     }
 
@@ -322,11 +322,11 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldRemoveCatalog()
     {
         string newCatalogName = "newCatalog";
-        _client!.DefineCatalog(newCatalogName).UpdateViaNewSession(_client);
-        bool removed = _client.DeleteCatalogIfExists(newCatalogName);
+        Client!.DefineCatalog(newCatalogName).UpdateViaNewSession(Client);
+        bool removed = Client.DeleteCatalogIfExists(newCatalogName);
         Assert.True(removed);
 
-        ISet<string> catalogNames = _client.GetCatalogNames();
+        ISet<string> catalogNames = Client.GetCatalogNames();
         Assert.Equal(1, catalogNames.Count);
         Assert.Contains(Data.TestCatalog, catalogNames);
     }
@@ -335,21 +335,21 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldReplaceCatalog()
     {
         string newCatalog = "newCatalog";
-        _client!.DefineCatalog(newCatalog);
+        Client!.DefineCatalog(newCatalog);
 
-        ISet<string> catalogNames = _client.GetCatalogNames();
+        ISet<string> catalogNames = Client.GetCatalogNames();
         Assert.Equal(2, catalogNames.Count);
         Assert.Contains(newCatalog, catalogNames);
         Assert.Contains(Data.TestCatalog, catalogNames);
-        int initialSchemaVersion = _client.QueryCatalog(Data.TestCatalog,
+        int initialSchemaVersion = Client.QueryCatalog(Data.TestCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version);
 
-        _client.ReplaceCatalog(Data.TestCatalog, newCatalog);
+        Client.ReplaceCatalog(Data.TestCatalog, newCatalog);
 
-        ISet<string> catalogNamesAgain = _client.GetCatalogNames();
+        ISet<string> catalogNamesAgain = Client.GetCatalogNames();
         Assert.Equal(1, catalogNamesAgain.Count);
         Assert.Contains(newCatalog, catalogNamesAgain);
-        Assert.Equal(initialSchemaVersion + 1, _client.QueryCatalog(newCatalog,
+        Assert.Equal(initialSchemaVersion + 1, Client.QueryCatalog(newCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version));
     }
 
@@ -358,20 +358,20 @@ public class EvitaClientWriteTest : BaseTest
     {
         string newCatalog = "newCatalog";
 
-        ISet<string> catalogNames = _client!.GetCatalogNames();
+        ISet<string> catalogNames = Client!.GetCatalogNames();
         Assert.Equal(1, catalogNames.Count);
         Assert.Contains(Data.TestCatalog, catalogNames);
-        int initialSchemaVersion = _client.QueryCatalog(Data.TestCatalog,
+        int initialSchemaVersion = Client.QueryCatalog(Data.TestCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version);
 
-        _client.RenameCatalog(Data.TestCatalog, newCatalog);
+        Client.RenameCatalog(Data.TestCatalog, newCatalog);
 
-        ISet<string> catalogNamesAgain = _client.GetCatalogNames();
+        ISet<string> catalogNamesAgain = Client.GetCatalogNames();
         Assert.Equal(1, catalogNamesAgain.Count);
         Assert.Contains(newCatalog, catalogNamesAgain);
-        Assert.Equal(initialSchemaVersion + 1, _client.QueryCatalog(newCatalog,
+        Assert.Equal(initialSchemaVersion + 1, Client.QueryCatalog(newCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version));
-        _ = _client.DeleteCatalogIfExists(newCatalog);
+        _ = Client.DeleteCatalogIfExists(newCatalog);
     }
 
     [Fact]
@@ -380,7 +380,7 @@ public class EvitaClientWriteTest : BaseTest
         string newCollection = "newCollection";
         int? productCount = null;
         int? productSchemaVersion = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -394,13 +394,13 @@ public class EvitaClientWriteTest : BaseTest
                 productCount = session.GetEntityCollectionSize(Entities.Product);
             }
         );
-        _client.UpdateCatalog(
+        Client.UpdateCatalog(
             Data.TestCatalog,
             session => session.ReplaceCollection(
                 newCollection,
                 Entities.Product
             ));
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -419,7 +419,7 @@ public class EvitaClientWriteTest : BaseTest
         string newCollection = "newCollection";
         int? productCount = null;
         int? productSchemaVersion = null;
-        _client!.QueryCatalog(
+        Client!.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -429,13 +429,13 @@ public class EvitaClientWriteTest : BaseTest
                 productCount = session.GetEntityCollectionSize(Entities.Product);
             }
         );
-        _client.UpdateCatalog(
+        Client.UpdateCatalog(
             Data.TestCatalog,
             session => session.RenameCollection(
                 Entities.Product,
                 newCollection
             ));
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -452,7 +452,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldCallTerminationCallbackWhenClientClosesSession()
     {
         Guid? terminatedSessionId = null;
-        EvitaClientSession theSession = _client!.CreateSession(
+        EvitaClientSession theSession = Client!.CreateSession(
             new SessionTraits(
                 Data.TestCatalog,
                 session => terminatedSessionId = session.SessionId
@@ -466,20 +466,20 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldCallTerminationCallbackWhenClientIsClosed()
     {
         Guid? terminatedSessionId = null;
-        _client!.CreateSession(
+        Client!.CreateSession(
             new SessionTraits(
                 Data.TestCatalog,
                 session => { ModifyGuid(ref terminatedSessionId, session.SessionId); }
             )
         );
-        _client.Close();
+        Client.Close();
         Assert.NotNull(terminatedSessionId);
     }
 
     [Fact]
     public void ShouldTranslateErrorCorrectlyAndLeaveSessionOpen()
     {
-        using EvitaClientSession clientSession = _client!.CreateReadOnlySession(Data.TestCatalog);
+        using EvitaClientSession clientSession = Client!.CreateReadOnlySession(Data.TestCatalog);
         try
         {
             clientSession.GetEntity("nonExisting", 1, EntityFetchAll().Requirements!);
@@ -500,7 +500,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldReturnEntitySchema()
     {
-        EvitaClientSession evitaSession = _client!.CreateReadOnlySession(Data.TestCatalog);
+        EvitaClientSession evitaSession = Client!.CreateReadOnlySession(Data.TestCatalog);
         Assert.NotNull(evitaSession.GetEntitySchema(Entities.Product));
         Assert.NotNull(evitaSession.GetEntitySchemaOrThrow(Entities.Product));
     }
@@ -508,7 +508,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldCreateAndDropEntityCollection()
     {
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -528,7 +528,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldUpsertNewEntity()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -540,7 +540,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -553,7 +553,7 @@ public class EvitaClientWriteTest : BaseTest
         );
 
         // reset data
-        _client.UpdateCatalog(
+        Client.UpdateCatalog(
             Data.TestCatalog,
             session => { session.DeleteEntity(Entities.Product, newProductId!.Value); }
         );
@@ -563,7 +563,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldUpsertAndFetchNewEntity()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -579,7 +579,7 @@ public class EvitaClientWriteTest : BaseTest
         );
 
         // reset data
-        _client.UpdateCatalog(
+        Client.UpdateCatalog(
             Data.TestCatalog,
             session => { session.DeleteEntity(Entities.Product, newProductId!.Value); }
         );
@@ -589,7 +589,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldDeleteExistingEntity()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -602,7 +602,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -618,7 +618,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldDeleteAndFetchExistingEntity()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -638,7 +638,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -654,7 +654,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldDeleteEntityByQuery()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -676,7 +676,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -692,7 +692,7 @@ public class EvitaClientWriteTest : BaseTest
     public void ShouldDeleteEntitiesAndFetchByQuery()
     {
         int? newProductId = null;
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -716,7 +716,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -731,7 +731,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldDeleteHierarchy()
     {
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -748,7 +748,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -763,7 +763,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldDeleteHierarchyAndFetchRoot()
     {
-        _client!.UpdateCatalog(
+        Client!.UpdateCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -784,7 +784,7 @@ public class EvitaClientWriteTest : BaseTest
             }
         );
 
-        _client.QueryCatalog(
+        Client.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -799,7 +799,7 @@ public class EvitaClientWriteTest : BaseTest
     [Fact]
     public void ShouldThrowWhenAddingEntityThatViolatesSchema()
     {
-        Assert.Throws<InvalidDataTypeMutationException>(() => DataManipulationUtil.CreateProductThatViolatesSchema(_client!, Entities.Product));
+        Assert.Throws<InvalidDataTypeMutationException>(() => DataManipulationUtil.CreateProductThatViolatesSchema(Client!, Entities.Product));
     }
 
     private static void AssertSomeNewProductContent(ISealedEntity loadedEntity)

@@ -7,7 +7,7 @@ namespace EvitaDB.Client.Converters.Models.Schema;
 
 public static class CatalogSchemaConverter
 {
-    public static GrpcCatalogSchema Convert(ICatalogSchema catalogSchema)
+    public static GrpcCatalogSchema Convert(CatalogSchema catalogSchema)
     {
         return new GrpcCatalogSchema
         {

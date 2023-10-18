@@ -23,7 +23,7 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldQueryCatalog()
     {
-        ICatalogSchema catalogSchema = _client!.QueryCatalog(
+        ICatalogSchema catalogSchema = Client!.QueryCatalog(
             Data.TestCatalog,
             x => x.GetCatalogSchema()
         );
@@ -34,7 +34,7 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldQueryOneEntityReference()
     {
-        EntityReference entityReference = _client!.QueryCatalog(
+        EntityReference entityReference = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryOneEntityReference(
                 Query(
@@ -52,7 +52,7 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldNotQueryOneMissingEntity()
     {
-        EntityReference? entityReference = _client!.QueryCatalog(
+        EntityReference? entityReference = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryOneEntityReference(
                 Query(
@@ -68,9 +68,9 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldQueryOneSealedEntity()
     {
-        IList<ISealedEntity> products = _setupFixture.CreatedEntities[Entities.Product];
+        IList<ISealedEntity> products = SetupFixture.CreatedEntities[Entities.Product];
         int primaryKey = products.ElementAt(Random.Next(products.Count)).PrimaryKey!.Value;
-        ISealedEntity sealedEntity = _client!.QueryCatalog(
+        ISealedEntity sealedEntity = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryOneSealedEntity(
                 Query(
@@ -100,7 +100,7 @@ public class EvitaClientReadTest : BaseTest
     public void ShouldQueryListOfEntityReferences()
     {
         int[] requestedIds = { 1, 2, 5 };
-        IList<EntityReference> entityReferences = _client!.QueryCatalog(
+        IList<EntityReference> entityReferences = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryListOfEntityReferences(
                 Query(
@@ -126,8 +126,8 @@ public class EvitaClientReadTest : BaseTest
     public void ShouldQueryListOfSealedEntities()
     {
         int[] requestedIds = { 1, 2, 5 };
-        IList<ISealedEntity> products = _setupFixture.CreatedEntities[Entities.Product];
-        IList<ISealedEntity> sealedEntities = _client!.QueryCatalog(
+        IList<ISealedEntity> products = SetupFixture.CreatedEntities[Entities.Product];
+        IList<ISealedEntity> sealedEntities = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryListOfSealedEntities(
                 Query(
@@ -156,11 +156,11 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldGetListWithExtraResults()
     {
-        ISealedEntity? someProductWithCategory = _setupFixture.CreatedEntities[Entities.Product]
+        ISealedEntity? someProductWithCategory = SetupFixture.CreatedEntities[Entities.Product]
             .Where(it => it.GetReferences(Data.ReferenceCategories).Any())
             .FirstOrDefault(it => it.GetAllPricesForSale().Count > 0);
         IList<IPrice> allPricesForSale = someProductWithCategory!.GetAllPricesForSale();
-        EvitaResponse<ISealedEntity> result = _client!.QueryCatalog(
+        EvitaResponse<ISealedEntity> result = Client!.QueryCatalog(
             Data.TestCatalog,
             session =>
             {
@@ -226,7 +226,7 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldGetSingleEntity()
     {
-        ISealedEntity? sealedEntity = _client!.QueryCatalog(
+        ISealedEntity? sealedEntity = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
                 Entities.Product,
@@ -238,14 +238,14 @@ public class EvitaClientReadTest : BaseTest
         
         Assert.Equal(Entities.Product, sealedEntity.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
-        Assert.Equal(_setupFixture.CreatedEntities[Entities.Product].Single(x => x.PrimaryKey == 7), sealedEntity);
+        Assert.Equal(SetupFixture.CreatedEntities[Entities.Product].Single(x => x.PrimaryKey == 7), sealedEntity);
     }
 
     [Fact]
     public void ShouldEnrichSingleEntity()
     {
-        IList<ISealedEntity> products = _setupFixture.CreatedEntities[Entities.Product];
-        ISealedEntity? sealedEntity = _client!.QueryCatalog(
+        IList<ISealedEntity> products = SetupFixture.CreatedEntities[Entities.Product];
+        ISealedEntity? sealedEntity = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
                 Entities.Product,
@@ -257,7 +257,7 @@ public class EvitaClientReadTest : BaseTest
         Assert.Equal(7, sealedEntity.PrimaryKey);
         products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(sealedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
 
-        ISealedEntity? enrichedEntity = _client.QueryCatalog(
+        ISealedEntity? enrichedEntity = Client.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
                 Entities.Product,
@@ -276,8 +276,8 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldLimitSingleEntity()
     {
-        IList<ISealedEntity> products = _setupFixture.CreatedEntities[Entities.Product];
-        ISealedEntity? sealedEntity = _client!.QueryCatalog(
+        IList<ISealedEntity> products = SetupFixture.CreatedEntities[Entities.Product];
+        ISealedEntity? sealedEntity = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
                 Entities.Product,
@@ -289,7 +289,7 @@ public class EvitaClientReadTest : BaseTest
         Assert.Equal(7, sealedEntity.PrimaryKey);
         products.Single(x => x.PrimaryKey == 7).Should().BeEquivalentTo(sealedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
 
-        ISealedEntity? limitedEntity = _client.QueryCatalog(
+        ISealedEntity? limitedEntity = Client.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntity(
                 Entities.Product,
@@ -305,17 +305,17 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldRetrieveCollectionSize()
     {
-        int productCount = _client!.QueryCatalog(
+        int productCount = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.GetEntityCollectionSize(Entities.Product));
 
-        Assert.Equal(_setupFixture.CreatedEntities[Entities.Product].Count, productCount);
+        Assert.Equal(SetupFixture.CreatedEntities[Entities.Product].Count, productCount);
     }
 
     [Fact]
     public void ShouldQueryListOfSealedEntitiesEvenWithoutProperRequirements()
     {
-        IList<ISealedEntity> sealedEntities = _client!.QueryCatalog(
+        IList<ISealedEntity> sealedEntities = Client!.QueryCatalog(
             Data.TestCatalog,
             session => session.QueryListOfSealedEntities(
                 Query(
@@ -331,8 +331,8 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldListCatalogNames()
     {
-        ISet<string> catalogNames = ListCatalogNames(_client!);
-        _outputHelper.WriteLine(string.Join(", ", catalogNames));
+        ISet<string> catalogNames = ListCatalogNames(Client!);
+        OutputHelper.WriteLine(string.Join(", ", catalogNames));
         Assert.Equal(1, catalogNames.Count);
         Assert.Contains(Data.TestCatalog, catalogNames);
     }
@@ -340,9 +340,9 @@ public class EvitaClientReadTest : BaseTest
     [Fact]
     public void ShouldBeAbleToRunParallelClients()
     {
-        EvitaClient anotherParallelClient = new EvitaClient(_client!.Configuration);
+        EvitaClient anotherParallelClient = new EvitaClient(Client!.Configuration);
         _ = ListCatalogNames(anotherParallelClient);
-        _ = ListCatalogNames(_client);
+        _ = ListCatalogNames(Client);
     }
     
     private static ISet<string> ListCatalogNames(EvitaClient client)

@@ -22,13 +22,14 @@ public class SetupFixture : IAsyncLifetime
     private const int SystemApiPort = 5557;
     private const string Host = "localhost";
     private const string ImageName = "evitadb/evitadb:canary";
-
+    
     public async Task<EvitaClient> GetClient()
     {
         if (_clients.TryDequeue(out EvitaClient? evitaClient))
         {
             DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
-            return evitaClient;
+            evitaClient.Close();
+            return new EvitaClient(evitaClient.Configuration);
         }
         return await InitializeEvitaContainerAndClientClient();
     }
@@ -82,12 +83,16 @@ public class SetupFixture : IAsyncLifetime
     {
         foreach (var suite in _testSuites)
         {
-            suite.Client.Dispose();
             await suite.Container.StopAsync();
+        }
+
+        while (_clients.TryDequeue(out EvitaClient? evitaClient))
+        {
+            evitaClient.Close();
         }
     }
     
-    private async Task<EvitaClient> InitializeEvitaContainerAndClientClient(bool cacheCreatedEntities = false)
+    private async Task<EvitaClient> InitializeEvitaContainerAndClientClient(bool cacheCreatedEntitiesAndDestroySetupClient = false)
     {
         IContainer container;
         using (var consumer = Consume.RedirectStdoutAndStderrToConsole())
@@ -119,24 +124,26 @@ public class SetupFixture : IAsyncLifetime
             }
         }
         
-        // create a evita client configuration the the running instance of evita server
         EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
             .SetHost(Host)
-            .SetPort(container.GetMappedPublicPort(GrpcPort))
-            .SetSystemApiPort(container.GetMappedPublicPort(SystemApiPort))
+            .SetPort(GrpcPort)
+            .SetSystemApiPort(SystemApiPort)
             .Build();
-
-        // create a new evita client with the specified configuration
-        EvitaClient evitaClient = new EvitaClient(configuration);
-        IDictionary<string,IList<ISealedEntity>> createdData = DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
-
-        if (cacheCreatedEntities)
-        {
-            CreatedEntities = createdData;
-        }
         
-        _testSuites.Add(new EvitaTestSuite(evitaClient, container));
-        return evitaClient;
+        // create a new evita client with the specified configuration
+        using (EvitaClient setupClient = new EvitaClient(configuration))
+        {
+            if (cacheCreatedEntitiesAndDestroySetupClient)
+            {
+                CreatedEntities = DataManipulationUtil.DeleteCreateAndSetupCatalog(setupClient, Data.TestCatalog);
+            }
+        }
+
+        EvitaClient client = new EvitaClient(configuration);
+        
+        _testSuites.Add(new EvitaTestSuite(client, container));
+        
+        return client;
     }
 
     private class EvitaTestSuite

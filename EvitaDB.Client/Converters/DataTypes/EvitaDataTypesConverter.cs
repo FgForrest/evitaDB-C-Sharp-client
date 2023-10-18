@@ -649,19 +649,13 @@ public static class EvitaDataTypesConverter
 
     public static DateTimeOffset ToDateTimeOffset(GrpcOffsetDateTime offsetDateTimeValue)
     {
-        try
-        {
-            TimeSpan hourOffset = TimeSpan.FromHours(int.Parse(offsetDateTimeValue.Offset.Substring(1, 2)));
-            bool add = offsetDateTimeValue.Offset.ElementAt(0) == '+';
-            TimeSpan offset = add ? hourOffset : hourOffset.Negate();
-            return DateTimeOffset.FromUnixTimeSeconds(offsetDateTimeValue.Timestamp.Seconds)
-                .ToOffset(offset);
-        }
-        catch (Exception)
-        {
-            Console.WriteLine(offsetDateTimeValue.Timestamp + "       " +offsetDateTimeValue.Offset);
-            return DateTimeOffset.Now;
-        }
+        TimeSpan hourOffset = offsetDateTimeValue.Offset == "Z" ? 
+            TimeSpan.Zero : 
+            TimeSpan.FromHours(int.Parse(offsetDateTimeValue.Offset.Substring(1, 2)));
+        bool add = offsetDateTimeValue.Offset.ElementAt(0) == '+';
+        TimeSpan offset = add ? hourOffset : hourOffset.Negate();
+        return DateTimeOffset.FromUnixTimeSeconds(offsetDateTimeValue.Timestamp.Seconds)
+            .ToOffset(offset);
     }
 
     public static DateTimeOffset[] ToDateTimeOffsetArray(GrpcOffsetDateTimeArray arrayValue)

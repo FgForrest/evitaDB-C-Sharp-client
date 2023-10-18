@@ -82,7 +82,13 @@ public class EvitaEntitySchemaCache
 
     public void SetLatestCatalogSchema(CatalogSchema catalogSchema)
     {
-        CachedSchemas.GetOrAdd(LatestCatalogSchema.Instance, new SchemaWrapper(catalogSchema, CurrentTimeMillis()));
+        if (!CachedSchemas.ContainsKey(LatestCatalogSchema.Instance))
+        {
+            CachedSchemas.AddOrUpdate(
+                LatestCatalogSchema.Instance,
+                new SchemaWrapper(catalogSchema, CurrentTimeMillis()),
+                (_, _) => new SchemaWrapper(catalogSchema, CurrentTimeMillis()));
+        }
     }
 
     public void RemoveLatestCatalogSchema()

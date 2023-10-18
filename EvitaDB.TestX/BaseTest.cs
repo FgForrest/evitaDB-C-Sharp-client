@@ -5,29 +5,29 @@ namespace EvitaDB.TestX;
 
 public abstract class BaseTest : IClassFixture<SetupFixture>, IAsyncLifetime
 {
-    protected readonly ITestOutputHelper _outputHelper;
-    protected readonly SetupFixture _setupFixture;
+    protected readonly ITestOutputHelper OutputHelper;
+    protected readonly SetupFixture SetupFixture;
     
-    protected EvitaClient? _client;
+    protected EvitaClient? Client;
     
     private const int RandomSeed = 42;
     protected static readonly Random Random = new(RandomSeed);
     protected const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
     
-    public BaseTest(ITestOutputHelper outputHelper, SetupFixture setupFixture)
+    protected BaseTest(ITestOutputHelper outputHelper, SetupFixture setupFixture)
     {
-        _outputHelper = outputHelper;
-        _setupFixture = setupFixture;
+        OutputHelper = outputHelper;
+        SetupFixture = setupFixture;
     }
     
     public async Task InitializeAsync()
     {
-        _client = await _setupFixture.GetClient();
+        Client = await SetupFixture.GetClient();
     }
 
     public Task DisposeAsync()
     {
-        _setupFixture.ReturnClient(_client!);
+        SetupFixture.ReturnClient(Client!);
         return Task.CompletedTask;
     }
 }

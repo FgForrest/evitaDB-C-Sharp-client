@@ -123,11 +123,11 @@ public class SetupFixture : IAsyncLifetime
                 throw;
             }
         }
-        
+
         EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
             .SetHost(Host)
-            .SetPort(GrpcPort)
-            .SetSystemApiPort(SystemApiPort)
+            .SetPort(container.GetMappedPublicPort(GrpcPort))
+            .SetSystemApiPort(container.GetMappedPublicPort(SystemApiPort))
             .Build();
         
         // create a new evita client with the specified configuration

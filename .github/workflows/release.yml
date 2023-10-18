@@ -9,6 +9,9 @@ on:
     
 permissions:
   contents: read
+  
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build-and-release:
@@ -85,9 +88,7 @@ jobs:
         run: |
           export CURRENT_VERSION="${{ steps.release_version.outputs.version }}"
           export NEW_VERSION="$( echo ${CURRENT_VERSION} | sed 's/^v//')"
-          cd EvitaDB.Client
-          cd bin
-          cd Release
+          cd EvitaDB.Client/bin/Release
           dotnet nuget push EvitaDB.Client."${NEW_VERSION}".nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
 
       - name: Create release

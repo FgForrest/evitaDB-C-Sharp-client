@@ -10,7 +10,7 @@
         <Description>evitaDB C# client allows connecting to a remote evitaDB server through gRPC API from .NET environment.</Description>
         <Copyright>2023, FGForrest a.s.</Copyright>
         <PackageProjectUrl>https://evitadb.io/</PackageProjectUrl>
-        <PackageLicenseUrl>Apache-2.0</PackageLicenseUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/FgForrest/evitaDB-C-Sharp-client</RepositoryUrl>
         <PackageTags>database in-memory no-sql ecommerce</PackageTags>
         <PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>

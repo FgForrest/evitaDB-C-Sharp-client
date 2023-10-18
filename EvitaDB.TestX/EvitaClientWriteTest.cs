@@ -614,6 +614,7 @@ public class EvitaClientWriteTest : BaseTest
         );
     }
 
+    [Fact]
     public void ShouldDeleteAndFetchExistingEntity()
     {
         int? newProductId = null;

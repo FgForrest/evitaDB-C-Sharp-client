@@ -142,6 +142,7 @@ public class SetupFixture : IAsyncLifetime
         EvitaClient client = new EvitaClient(configuration);
         
         _testSuites.Add(new EvitaTestSuite(client, container));
+        _clients.Enqueue(client);
         
         return client;
     }

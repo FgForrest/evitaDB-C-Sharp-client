@@ -223,6 +223,7 @@ public class EvitaClientReadTest : BaseTest
         Assert.True(facetSummary.GetFacetGroupStatistics().Count > 0);
     }
 
+    [Fact]
     public void ShouldGetSingleEntity()
     {
         ISealedEntity? sealedEntity = Client!.QueryCatalog(

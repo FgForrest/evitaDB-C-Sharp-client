@@ -72,7 +72,12 @@ jobs:
       - name: Pack nuget
         env:
           NUGET_VERSION: $( echo ${{ steps.release_version.outputs.version }} | sed 's/^v//')
-        run: cd EvitaDB.Client && dotnet pack -c Release -p:PackageVersion=${{ env.NUGET_VERSION }} --no-build --no-restore
+        run: |
+          export CURRENT_VERSION=${{ steps.release_version.outputs.version }}
+          echo "Current version: $CURRENT_VERSION"
+          export NEW_VERSION=$( echo ${{ $CURRENT_VERSION }} | sed 's/^v//')
+          echo "New version: $NEW_VERSION"
+          cd EvitaDB.Client && dotnet pack -c Release -p:PackageVersion=$NEW_VERSION --no-build --no-restore
 
       - name: Publish nuget
         env:

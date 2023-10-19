@@ -6,12 +6,12 @@ using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Requires;
-using EvitaDB.TestX.Utils;
+using EvitaDB.Test.Utils;
 using FluentAssertions;
 using Xunit.Abstractions;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
-namespace EvitaDB.TestX;
+namespace EvitaDB.Test.Tests;
 
 public class EvitaClientReadTest : BaseTest
 {

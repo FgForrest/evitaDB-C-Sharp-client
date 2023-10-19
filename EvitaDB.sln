@@ -2,11 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvitaDB.Client", "EvitaDB.Client\EvitaDB.Client.csproj", "{892FF3BB-1CC9-47C3-BA0D-52B4BE50D5A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvitaDB.Test", "EvitaDB.Test\EvitaDB.Test.csproj", "{0C8746A4-F2D0-46BD-8E20-155C7F4A9412}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvitaDB.QueryValidator", "EvitaDB.QueryValidator\EvitaDB.QueryValidator.csproj", "{C45F566D-8029-4B12-A175-FC57E7390E42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvitaDB.TestX", "EvitaDB.TestX\EvitaDB.TestX.csproj", "{796BD828-F924-4DAA-8A7D-4F45B83205D3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvitaDB.Test", "EvitaDB.Test\EvitaDB.Test.csproj", "{C7B60729-DE98-4168-9203-4877F147E81A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,10 +16,6 @@ Global
 		{892FF3BB-1CC9-47C3-BA0D-52B4BE50D5A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{892FF3BB-1CC9-47C3-BA0D-52B4BE50D5A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{892FF3BB-1CC9-47C3-BA0D-52B4BE50D5A6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C8746A4-F2D0-46BD-8E20-155C7F4A9412}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C8746A4-F2D0-46BD-8E20-155C7F4A9412}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C8746A4-F2D0-46BD-8E20-155C7F4A9412}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C8746A4-F2D0-46BD-8E20-155C7F4A9412}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C45F566D-8029-4B12-A175-FC57E7390E42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C45F566D-8029-4B12-A175-FC57E7390E42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C45F566D-8029-4B12-A175-FC57E7390E42}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -30,5 +24,9 @@ Global
 		{796BD828-F924-4DAA-8A7D-4F45B83205D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{796BD828-F924-4DAA-8A7D-4F45B83205D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{796BD828-F924-4DAA-8A7D-4F45B83205D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7B60729-DE98-4168-9203-4877F147E81A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7B60729-DE98-4168-9203-4877F147E81A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7B60729-DE98-4168-9203-4877F147E81A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7B60729-DE98-4168-9203-4877F147E81A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

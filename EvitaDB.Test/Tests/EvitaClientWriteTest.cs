@@ -10,11 +10,11 @@ using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Session;
-using EvitaDB.TestX.Utils;
+using EvitaDB.Test.Utils;
 using Xunit.Abstractions;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
-namespace EvitaDB.TestX;
+namespace EvitaDB.Test.Tests;
 
 public class EvitaClientWriteTest : BaseTest
 {

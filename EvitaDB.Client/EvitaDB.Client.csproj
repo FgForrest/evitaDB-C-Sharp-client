@@ -15,6 +15,7 @@
         <PackageTags>database in-memory no-sql ecommerce</PackageTags>
         <PackageReleaseNotes>Initial prerelease version.</PackageReleaseNotes>
         <PackageIcon>icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,5 +35,8 @@
 
     <ItemGroup>
         <None Include="icon.png" Pack="true" PackagePath=""/>
+        <None Include="..\README.md" Pack="true" PackagePath="">
+            <Link>README.md</Link>
+        </None>
     </ItemGroup>
 </Project>

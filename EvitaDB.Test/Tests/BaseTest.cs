@@ -3,7 +3,7 @@ using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace EvitaDB.TestX;
+namespace EvitaDB.Test.Tests;
 
 public abstract class BaseTest : IClassFixture<SetupFixture>, IAsyncLifetime
 {

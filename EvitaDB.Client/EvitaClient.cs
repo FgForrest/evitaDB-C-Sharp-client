@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using EvitaDB.Client.Cdc;
 using EvitaDB.Client.Certificate;
@@ -21,6 +22,8 @@ using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Enum = System.Enum;
+
+[assembly: InternalsVisibleTo("EvitaDB.Test")]
 
 namespace EvitaDB.Client;
 

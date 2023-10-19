@@ -6,9 +6,9 @@ using DotNet.Testcontainers.Containers;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
 using EvitaDB.Client.Models.Data;
-using EvitaDB.TestX.Utils;
+using EvitaDB.Test.Utils;
 
-namespace EvitaDB.TestX;
+namespace EvitaDB.Test;
 
 public class SetupFixture : IAsyncLifetime
 {

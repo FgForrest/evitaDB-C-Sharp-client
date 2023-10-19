@@ -1,4 +1,4 @@
-namespace EvitaDB.TestX.Utils;
+namespace EvitaDB.Test.Utils;
 
 public record TestAsDataObj(string Locale, string Url)
 {

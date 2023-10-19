@@ -8,8 +8,9 @@ using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Session;
 using EvitaDB.Client.Utils;
 using static EvitaDB.Client.Queries.IQueryConstraints;
+using Assert = Xunit.Assert;
 
-namespace EvitaDB.TestX.Utils;
+namespace EvitaDB.Test.Utils;
 
 public static class DataManipulationUtil
 {

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
 using EvitaDB.Client.DataTypes;
@@ -8,39 +8,29 @@ using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Test.Utils;
-using NUnit.Framework;
 using static EvitaDB.Client.Queries.IQueryConstraints;
-using static NUnit.Framework.Assert;
 
-namespace EvitaDB.Test;
+namespace EvitaDB.Test.Tests;
 
-public class EvitaQueryTest : IDisposable
+public class EvitaClientDemoQueryTest : IDisposable
 {
+    private static readonly EvitaClientConfiguration? EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
+        .SetHost("demo.evitadb.io")
+        .SetPort(5556)
+        .SetUseGeneratedCertificate(false)
+        .SetUsingTrustedRootCaCertificate(true)
+        .Build();
+    
     private static EvitaClient? _client;
-    private static EvitaClientConfiguration? EvitaClientConfiguration { get; set; }
 
     private const string ExistingCatalogWithData = "evita";
 
-    [OneTimeSetUp]
-    public static void Setup()
+    public EvitaClientDemoQueryTest()
     {
-        EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
-            .SetHost("demo.evitadb.io")
-            .SetPort(5556)
-            .SetUseGeneratedCertificate(false)
-            .SetUsingTrustedRootCaCertificate(true)
-            .Build();
-        
-    }
-    
-    [SetUp]
-    public void BeforeEachTest()
-    {
-        // create a new evita client with the specified configuration
         _client = new EvitaClient(EvitaClientConfiguration!);
     }
     
-    [Test]
+    [Fact]
     public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfEntityReferences()
     {
         EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
@@ -73,14 +63,14 @@ public class EvitaQueryTest : IDisposable
                     )
                 )
             ));
-
-        That(referenceResponse.RecordPage.Data!.Count, Is.EqualTo(20));
-        That(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}), Is.True);
-        That(referenceResponse.ExtraResults.Count, Is.EqualTo(1));
-        That(referenceResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(Client.Models.ExtraResults.QueryTelemetry)));
+        
+        Assert.Equal(20, referenceResponse.RecordPage.Data!.Count);
+        Assert.True(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}));
+        Assert.Equal(1, referenceResponse.ExtraResults.Count);
+        Assert.Equal(typeof(Client.Models.ExtraResults.QueryTelemetry), referenceResponse.ExtraResults.Values.ToList()[0].GetType());
     }
 
-    [Test]
+    [Fact]
     public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfSealedEntities()
     {
         EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
@@ -114,17 +104,17 @@ public class EvitaQueryTest : IDisposable
                     )
                 )
             ));
+        
+        Assert.Equal(20, entityResponse.RecordPage.Data!.Count);
+        Assert.Contains(entityResponse.RecordPage.Data, x => x.GetAttributeValues().Any());
+        Assert.Contains(entityResponse.RecordPage.Data, x => x.GetReferences().Any());
+        Assert.Contains(entityResponse.RecordPage.Data, x => x.GetPrices().Any());
 
-        That(entityResponse.RecordPage.Data!.Count, Is.EqualTo(20));
-        That(entityResponse.RecordPage.Data.Any(x => x.GetAttributeValues().Any()), Is.True);
-        That(entityResponse.RecordPage.Data.Any(x => x.GetReferences().Any()), Is.True);
-        That(entityResponse.RecordPage.Data.Any(x => x.GetPrices().Any()), Is.True);
-
-        That(entityResponse.ExtraResults.Count, Is.EqualTo(1));
-        That(entityResponse.ExtraResults.Values.ToList()[0].GetType(), Is.EqualTo(typeof(Client.Models.ExtraResults.QueryTelemetry)));
+        Assert.Equal(1, entityResponse.ExtraResults.Count);
+        Assert.Equal(typeof(Client.Models.ExtraResults.QueryTelemetry), entityResponse.ExtraResults.Values.ToList()[0].GetType());
     }
 
-    [Test]
+    [Fact]
     public void ShouldBeAbleToExecuteComplexQueryAndGetResults()
     {
         EvitaEntityResponse evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
@@ -209,7 +199,8 @@ public class EvitaQueryTest : IDisposable
                 )
             )
         );
-        That(evitaEntityResponse.RecordData.Count, Is.GreaterThan(0));
+        
+        Assert.True(evitaEntityResponse.RecordData.Count > 0);
     }
 
     public void Dispose()

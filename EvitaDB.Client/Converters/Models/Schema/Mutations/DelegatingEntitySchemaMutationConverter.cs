@@ -76,6 +76,9 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             case SetAttributeSchemaNullableMutation setAttributeSchemaNullableMutation:
                 grpcEntitySchemaMutation.SetAttributeSchemaNullableMutation = new SetAttributeSchemaNullableMutationConverter().Convert(setAttributeSchemaNullableMutation);
                 break;
+            case SetAttributeSchemaRepresentativeMutation setAttributeSchemaRepresentativeMutation:
+                grpcEntitySchemaMutation.SetAttributeSchemaRepresentativeMutation = new SetAttributeSchemaRepresentativeMutationConverter().Convert(setAttributeSchemaRepresentativeMutation);
+                break;
             case SetAttributeSchemaSortableMutation setAttributeSchemaSortableMutation:
                 grpcEntitySchemaMutation.SetAttributeSchemaSortableMutation = new SetAttributeSchemaSortableMutationConverter().Convert(setAttributeSchemaSortableMutation);
                 break;
@@ -183,6 +186,7 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaFilterableMutation => new SetAttributeSchemaFilterableMutationConverter().Convert(mutation.SetAttributeSchemaFilterableMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaLocalizedMutation => new SetAttributeSchemaLocalizedMutationConverter().Convert(mutation.SetAttributeSchemaLocalizedMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaNullableMutation => new SetAttributeSchemaNullableMutationConverter().Convert(mutation.SetAttributeSchemaNullableMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaRepresentativeMutation => new SetAttributeSchemaRepresentativeMutationConverter().Convert(mutation.SetAttributeSchemaRepresentativeMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaSortableMutation => new SetAttributeSchemaSortableMutationConverter().Convert(mutation.SetAttributeSchemaSortableMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaUniqueMutation => new SetAttributeSchemaUniqueMutationConverter().Convert(mutation.SetAttributeSchemaUniqueMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.UseGlobalAttributeSchemaMutation => new UseGlobalAttributeSchemaMutationConverter().Convert(mutation.UseGlobalAttributeSchemaMutation),

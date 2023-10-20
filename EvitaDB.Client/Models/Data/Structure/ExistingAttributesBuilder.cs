@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas;
@@ -13,65 +12,66 @@ namespace EvitaDB.Client.Models.Data.Structure;
 /// (see <see cref="AttributeMutation"/> and its implementations) and mutations can be then processed transactionally by
 /// the engine.
 /// </summary>
-public class ExistingAttributesBuilder : IAttributesBuilder
+public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
+    where TS : IAttributeSchema
+    where T : ExistingAttributesBuilder<TS, T>
 {
     private IEntitySchema EntitySchema { get; }
-    private IReferenceSchema? ReferenceSchema { get; }
-    private Attributes BaseAttributes { get; }
+    protected Attributes<TS> BaseAttributes { get; }
     private bool SuppressVerification { get; }
     private IDictionary<AttributeKey, AttributeMutation> AttributeMutations { get; }
 
-    public ExistingAttributesBuilder(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
-        ICollection<AttributeValue> attributes, IDictionary<string, IAttributeSchema> attributeTypes)
+    public ExistingAttributesBuilder(IEntitySchema entitySchema,
+        ICollection<AttributeValue> attributes, IDictionary<string, TS> attributeTypes)
     {
         EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
         AttributeMutations = new Dictionary<AttributeKey, AttributeMutation>();
-        BaseAttributes = new Attributes(entitySchema, referenceSchema, attributes, attributeTypes);
+        BaseAttributes = CreateAttributesContainer(entitySchema, attributes, attributeTypes);
         SuppressVerification = false;
     }
-    
-    internal ExistingAttributesBuilder(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
-        ICollection<AttributeValue> attributes, IDictionary<string, IAttributeSchema> attributeTypes,
+
+    internal ExistingAttributesBuilder(IEntitySchema entitySchema,
+        ICollection<AttributeValue> attributes, IDictionary<string, TS> attributeTypes,
         bool suppressVerification)
     {
         EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
         AttributeMutations = new Dictionary<AttributeKey, AttributeMutation>();
-        BaseAttributes = new Attributes(entitySchema, referenceSchema, attributes, attributeTypes);
+        BaseAttributes = CreateAttributesContainer(entitySchema, attributes, attributeTypes);
         SuppressVerification = suppressVerification;
     }
 
-    public ExistingAttributesBuilder(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
-        Attributes attributes)
+    public ExistingAttributesBuilder(IEntitySchema entitySchema, Attributes<TS> attributes)
     {
         EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
         AttributeMutations = new Dictionary<AttributeKey, AttributeMutation>();
         BaseAttributes = attributes;
         SuppressVerification = false;
     }
-    
-    internal ExistingAttributesBuilder(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
-        Attributes attributes, bool suppressVerification)
+
+    internal ExistingAttributesBuilder(IEntitySchema entitySchema, Attributes<TS> attributes, bool suppressVerification)
     {
         EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
         AttributeMutations = new Dictionary<AttributeKey, AttributeMutation>();
         BaseAttributes = attributes;
         SuppressVerification = suppressVerification;
     }
 
-    bool IAttributes.AttributesAvailable() => BaseAttributes.AttributesAvailable();
+    public bool AttributesAvailable()
+    {
+        return BaseAttributes.AttributesAvailable();
+    }
 
-    bool IAttributes.AttributesAvailable(CultureInfo locale) => BaseAttributes.AttributesAvailable(locale);
+    public bool AttributesAvailable(CultureInfo locale)
+    {
+        return BaseAttributes.AttributesAvailable(locale);
+    }
 
     public bool AttributeAvailable(string attributeName) => BaseAttributes.AttributeAvailable(attributeName);
 
     public bool AttributeAvailable(string attributeName, CultureInfo locale) =>
         BaseAttributes.AttributeAvailable(attributeName, locale);
 
-    public ExistingAttributesBuilder AddMutation(AttributeMutation localMutation)
+    public T AddMutation(AttributeMutation localMutation)
     {
         if (localMutation is UpsertAttributeMutation upsertAttributeMutation)
         {
@@ -79,9 +79,9 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             object attributeValue = upsertAttributeMutation.Value;
             if (!SuppressVerification)
             {
-                InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(
-                    BaseAttributes.EntitySchema,
-                    attributeKey.AttributeName, attributeValue.GetType(), attributeKey.Locale!
+                AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(
+                    BaseAttributes.EntitySchema, attributeKey.AttributeName,
+                    attributeValue.GetType(), attributeKey.Locale!, GetLocationResolver()
                 );
             }
 
@@ -126,7 +126,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             throw new EvitaInternalError("Unknown Evita attribute mutation: `" + localMutation.GetType() + "`!");
         }
 
-        return this;
+        return (this as T)!;
     }
 
     public object? GetAttribute(string attributeName)
@@ -161,11 +161,13 @@ public class ExistingAttributesBuilder : IAttributesBuilder
 
     public AttributeValue? GetAttributeValue(AttributeKey attributeKey)
     {
-        return GetAttributeValueInternal(attributeKey) ?? 
-               (attributeKey.Localized ? GetAttributeValueInternal(new AttributeKey(attributeKey.AttributeName)) : null);
+        return GetAttributeValueInternal(attributeKey) ??
+               (attributeKey.Localized
+                   ? GetAttributeValueInternal(new AttributeKey(attributeKey.AttributeName))
+                   : null);
     }
 
-    public IAttributeSchema? GetAttributeSchema(string attributeName)
+    public TS? GetAttributeSchema(string attributeName)
     {
         return BaseAttributes.GetAttributeSchema(attributeName);
     }
@@ -178,7 +180,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
     public ISet<AttributeKey> GetAttributeKeys()
     {
         return GetAttributeValues()
-            .Select(x=>x.Key)
+            .Select(x => x.Key)
             .ToHashSet();
     }
 
@@ -190,7 +192,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
     public ICollection<AttributeValue> GetAttributeValues(string attributeName)
     {
         return GetAttributeValuesWithoutPredicate()
-            .Where(x=>x.Key.AttributeName == attributeName).ToList();
+            .Where(x => x.Key.AttributeName == attributeName).ToList();
     }
 
     public ISet<CultureInfo> GetAttributeLocales()
@@ -201,7 +203,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             .ToHashSet()!;
     }
 
-    public IAttributesBuilder RemoveAttribute(string attributeName)
+    public IAttributesBuilder<TS> RemoveAttribute(string attributeName)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName);
         VerifyAttributeExists(attributeKey);
@@ -212,16 +214,20 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, object? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, object? attributeValue)
     {
-        if (attributeValue == null) {
+        if (attributeValue == null)
+        {
             return RemoveAttribute(attributeName);
         }
 
         AttributeKey attributeKey = new AttributeKey(attributeName);
-        if (!SuppressVerification) {
-            InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName, attributeValue.GetType());
+        if (!SuppressVerification)
+        {
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName,
+                attributeValue.GetType(), GetLocationResolver());
         }
+
         AttributeMutations.Add(
             attributeKey,
             new UpsertAttributeMutation(attributeKey, attributeValue)
@@ -229,16 +235,20 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, object[]? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, object[]? attributeValue)
     {
-        if (attributeValue == null) {
+        if (attributeValue == null)
+        {
             return RemoveAttribute(attributeName);
         }
 
         AttributeKey attributeKey = new AttributeKey(attributeName);
-        if (!SuppressVerification) {
-            InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName, attributeValue.GetType());
+        if (!SuppressVerification)
+        {
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName,
+                attributeValue.GetType(), GetLocationResolver());
         }
+
         AttributeMutations.Add(
             attributeKey,
             new UpsertAttributeMutation(attributeKey, attributeValue)
@@ -246,7 +256,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder RemoveAttribute(string attributeName, CultureInfo locale)
+    public IAttributesBuilder<TS> RemoveAttribute(string attributeName, CultureInfo locale)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         VerifyAttributeExists(attributeKey);
@@ -257,16 +267,20 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
     {
-        if (attributeValue == null) {
+        if (attributeValue == null)
+        {
             return RemoveAttribute(attributeName, locale);
         }
 
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
-        if (!SuppressVerification) {
-            InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName, attributeValue.GetType(), locale);
+        if (!SuppressVerification)
+        {
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema,
+               attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
+
         AttributeMutations.Add(
             attributeKey,
             new UpsertAttributeMutation(attributeKey, attributeValue)
@@ -274,16 +288,20 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
     {
-        if (attributeValue == null) {
+        if (attributeValue == null)
+        {
             return RemoveAttribute(attributeName, locale);
         }
 
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
-        if (!SuppressVerification) {
-            InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema, attributeName, attributeValue.GetType(), locale);
+        if (!SuppressVerification)
+        {
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(BaseAttributes.EntitySchema,
+                attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
+
         AttributeMutations.Add(
             attributeKey,
             new UpsertAttributeMutation(attributeKey, attributeValue)
@@ -291,7 +309,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
         return this;
     }
 
-    public IAttributesBuilder MutateAttribute(AttributeMutation mutation)
+    public IAttributesBuilder<TS> MutateAttribute(AttributeMutation mutation)
     {
         AttributeMutations.Add(mutation.AttributeKey, mutation);
         return this;
@@ -305,36 +323,17 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             .Where(it =>
             {
                 AttributeValue? existingValue = builtAttributes.TryGetValue(it.AttributeKey, out AttributeValue? value)
-                    ? value : null;
+                    ? value
+                    : null;
                 AttributeValue newAttribute = it.MutateLocal(EntitySchema, existingValue);
                 builtAttributes.Add(it.AttributeKey, newAttribute);
                 return existingValue == null || newAttribute.Version > existingValue.Version;
             });
     }
 
-    public Attributes Build()
-    {
-        if (!AnyChangeInMutations())
-        {
-            return BaseAttributes;
-        }
+    public abstract Attributes<TS> Build();
 
-        ICollection<AttributeValue> newAttributeValues = GetAttributeValuesWithoutPredicate();
-        IDictionary<string, IAttributeSchema> newAttributeTypes = BaseAttributes.AttributeTypes.Values
-            .Concat(newAttributeValues
-                .Where(it => !BaseAttributes.AttributeTypes.ContainsKey(it.Key.AttributeName))
-                .Select(IAttributesBuilder.CreateImplicitSchema))
-            .ToImmutableDictionary(x => x.Name, x => x);
-
-        return new Attributes(
-            BaseAttributes.EntitySchema,
-            BaseAttributes.ReferenceSchema,
-            newAttributeValues,
-            newAttributeTypes
-        );
-    }
-
-    private List<AttributeValue> GetAttributeValuesWithoutPredicate()
+    protected List<AttributeValue> GetAttributeValuesWithoutPredicate()
     {
         List<AttributeValue> result = new List<AttributeValue>();
         foreach (var (key, value) in BaseAttributes.AttributeValues)
@@ -372,7 +371,7 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             .Any(t => t);
     }
 
-    public bool Differs(Attributes attributes) => BaseAttributes != attributes;
+    public bool Differs(Attributes<TS> attributes) => !BaseAttributes.Equals(attributes);
 
     private void VerifyAttributeExists(AttributeKey attributeKey)
     {
@@ -383,9 +382,24 @@ public class ExistingAttributesBuilder : IAttributesBuilder
             "Attribute `" + attributeKey + "` doesn't exist!"
         );
     }
-    
-    private AttributeValue? GetAttributeValueInternal(AttributeKey attributeKey) {
-        AttributeValue? attributeValue = BaseAttributes.AttributeValues.TryGetValue(attributeKey, out AttributeValue? value) ? value : null;
-        return AttributeMutations.TryGetValue(attributeKey, out AttributeMutation? mutation) ? mutation.MutateLocal(EntitySchema, attributeValue) : null;
+
+    private AttributeValue? GetAttributeValueInternal(AttributeKey attributeKey)
+    {
+        AttributeValue? attributeValue =
+            BaseAttributes.AttributeValues.TryGetValue(attributeKey, out AttributeValue? value) ? value : null;
+        return AttributeMutations.TryGetValue(attributeKey, out AttributeMutation? mutation)
+            ? mutation.MutateLocal(EntitySchema, attributeValue)
+            : null;
     }
+
+    /// <summary>
+    /// Creates new container for attributes.
+    /// </summary>
+    protected abstract Attributes<TS> CreateAttributesContainer(
+        IEntitySchema entitySchema,
+        ICollection<AttributeValue> attributes,
+        IDictionary<string, TS> attributeTypes
+    );
+
+    public abstract Func<string> GetLocationResolver();
 }

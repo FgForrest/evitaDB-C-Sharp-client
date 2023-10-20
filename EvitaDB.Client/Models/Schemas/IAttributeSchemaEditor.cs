@@ -130,7 +130,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// When attribute is nullable, its values may be missing in the entities. Otherwise, the system will enforce
     /// non-null checks upon upserting of the entity.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>builder to continue with configuration</returns>
     new T Nullable();
     
     /// <summary>

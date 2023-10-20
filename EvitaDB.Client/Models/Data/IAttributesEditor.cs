@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data;
 
@@ -10,7 +11,10 @@ namespace EvitaDB.Client.Models.Data;
 /// the data that are available on the read-only <see cref="IAttributes"/> interface.
 /// </summary>
 /// <typeparam name="TW">attribute altering editor type</typeparam>
-public interface IAttributesEditor<out TW> : IAttributes where TW : IAttributesEditor<TW>
+/// <typeparam name="TS">attribute schema type</typeparam>
+public interface IAttributesEditor<out TW, TS> : IAttributes<TS> 
+	where TW : IAttributesEditor<TW, TS>
+	where TS : IAttributeSchema
 {
 	/// <summary>
 	/// Removes value associated with the key or null when the attribute is missing.

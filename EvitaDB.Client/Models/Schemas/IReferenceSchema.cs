@@ -3,7 +3,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas;
 
-public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider
+public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider<IAttributeSchema>
 {
     Cardinality Cardinality { get; }
     string ReferencedEntityType { get; }

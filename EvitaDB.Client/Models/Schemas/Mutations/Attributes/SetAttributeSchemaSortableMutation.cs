@@ -34,13 +34,13 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                                                        "` schema for reference with name `" + referenceSchema.Name +
                                                        "`!"
                                                    );
-        IAttributeSchema updatedAttributeSchema = Mutate(null, existingAttributeSchema);
+        IAttributeSchema updatedAttributeSchema = Mutate(null, existingAttributeSchema, typeof(IAttributeSchema));
         return (this as IReferenceAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             referenceSchema, existingAttributeSchema, updatedAttributeSchema
         );
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         if (attributeSchema is GlobalAttributeSchema globalAttributeSchema)
@@ -55,9 +55,28 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                 Sortable,
                 globalAttributeSchema.Localized,
                 globalAttributeSchema.Nullable,
+                globalAttributeSchema.Representative,
                 globalAttributeSchema.Type,
                 globalAttributeSchema.DefaultValue,
                 globalAttributeSchema.IndexedDecimalPlaces
+            ) as TS)!;
+        }
+        
+        if (attributeSchema is EntityAttributeSchema entityAttributeSchema)
+        {
+            return (EntityAttributeSchema.InternalBuild(
+                Name,
+                entityAttributeSchema.Description,
+                entityAttributeSchema.DeprecationNotice,
+                entityAttributeSchema.Unique,
+                entityAttributeSchema.Filterable,
+                Sortable,
+                entityAttributeSchema.Localized,
+                entityAttributeSchema.Nullable,
+                entityAttributeSchema.Representative,
+                entityAttributeSchema.Type,
+                entityAttributeSchema.DefaultValue,
+                entityAttributeSchema.IndexedDecimalPlaces
             ) as TS)!;
         }
 
@@ -80,12 +99,12 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
+        IEntityAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
                                                    throw new InvalidSchemaMutationException(
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
-        IAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IEntityAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema, typeof(IEntityAttributeSchema));
         return (this as IEntityAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             entitySchema, existingAttributeSchema, updatedAttributeSchema
         );
@@ -98,7 +117,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
                                                          throw new InvalidSchemaMutationException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
-        IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema);
+        IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema, typeof(IGlobalAttributeSchema));
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
             catalogSchema, existingAttributeSchema, updatedAttributeSchema
         );

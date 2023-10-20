@@ -5,7 +5,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas;
 
-public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider
+public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider<IEntityAttributeSchema>
 {
     bool WithGeneratedPrimaryKey { get; }
     bool WithHierarchy { get; }
@@ -14,9 +14,9 @@ public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISorta
     ISet<CultureInfo> Locales { get; }
     ISet<Currency> Currencies { get; }
     ISet<EvolutionMode> EvolutionModes { get; }
-    IEnumerable<IAttributeSchema> NonNullableAttributes { get; }
+    IEnumerable<IEntityAttributeSchema> NonNullableAttributes { get; }
     IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData { get; }
-    IDictionary<string, IAttributeSchema> Attributes { get; }
+    IDictionary<string, IEntityAttributeSchema> Attributes { get; }
     IDictionary<string, IAssociatedDataSchema> AssociatedData { get; }
     IDictionary<string, IReferenceSchema> References { get; }
     bool IsBlank();
@@ -26,9 +26,7 @@ public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISorta
     IReferenceSchema? GetReference(string name);
     IReferenceSchema? GetReferenceByName(string dataName, NamingConvention namingConvention);
     IReferenceSchema GetReferenceOrThrowException(string referenceName);
-    new IAttributeSchema? GetAttribute(string name);
     IAttributeSchema GetAttributeOrThrow(string name);
-    new IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention);
     bool DiffersFrom(IEntitySchema? otherSchema);
     ISet<EvolutionMode> GetEvolutionMode();
     bool Allows(EvolutionMode evolutionMode);

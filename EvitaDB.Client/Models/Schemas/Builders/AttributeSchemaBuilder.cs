@@ -36,6 +36,7 @@ public class AttributeSchemaBuilder : AbstractAttributeSchemaBuilder<IAttributeS
                 BaseSchema.Sortable,
                 BaseSchema.Localized,
                 BaseSchema.Nullable,
+                false,
                 BaseSchema.Type,
                 BaseSchema.DefaultValue,
                 BaseSchema.IndexedDecimalPlaces
@@ -67,5 +68,10 @@ public class AttributeSchemaBuilder : AbstractAttributeSchemaBuilder<IAttributeS
         return new List<IReferenceSchemaMutation>(Mutations
             .Select(it =>
                 new ModifyReferenceAttributeSchemaMutation(referenceName, (it as IReferenceSchemaMutation)!)));
+    }
+
+    protected override Type GetAttributeSchemaType()
+    {
+        return typeof(IAttributeSchema);
     }
 }

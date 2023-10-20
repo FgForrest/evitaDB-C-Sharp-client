@@ -4,7 +4,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Data;
 
-public interface IAttributes
+public interface IAttributes<TS> where TS : IAttributeSchema
 {
     bool AttributesAvailable();
     bool AttributesAvailable(CultureInfo locale);
@@ -17,14 +17,14 @@ public interface IAttributes
     AttributeValue? GetAttributeValue(string attributeName);
     AttributeValue? GetAttributeValue(string attributeName, CultureInfo locale);
     AttributeValue? GetAttributeValue(AttributeKey attributeKey);
-    IAttributeSchema? GetAttributeSchema(string attributeName);
+    TS? GetAttributeSchema(string attributeName);
     ISet<string> GetAttributeNames();
     ISet<AttributeKey> GetAttributeKeys();
     ICollection<AttributeValue> GetAttributeValues();
     ICollection<AttributeValue> GetAttributeValues(string attributeName);
     ISet<CultureInfo> GetAttributeLocales();
 
-    static bool AnyAttributeDifferBetween(IAttributes first, IAttributes second)
+    static bool AnyAttributeDifferBetween(IAttributes<TS> first, IAttributes<TS> second)
     {
         IEnumerable<AttributeValue> thisValues =
             first.AttributesAvailable() ? first.GetAttributeValues() : new List<AttributeValue>();

@@ -20,10 +20,10 @@ public class EntitySchema : IEntitySchema
     public ISet<CultureInfo> Locales { get; }
     public ISet<Currency> Currencies { get; }
     public ISet<EvolutionMode> EvolutionModes { get; }
-    public IEnumerable<IAttributeSchema> NonNullableAttributes { get; }
+    public IEnumerable<IEntityAttributeSchema> NonNullableAttributes { get; }
     public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData { get; }
-    public IDictionary<string, IAttributeSchema> Attributes { get; }
-    private IDictionary<string, IAttributeSchema[]> AttributeNameIndex { get; }
+    public IDictionary<string, IEntityAttributeSchema> Attributes { get; }
+    private IDictionary<string, IEntityAttributeSchema[]> AttributeNameIndex { get; }
     private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
     private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
@@ -44,7 +44,7 @@ public class EntitySchema : IEntitySchema
         int indexedPricePlaces,
         ISet<CultureInfo> locales,
         ISet<Currency> currencies,
-        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IEntityAttributeSchema> attributes,
         IDictionary<string, IAssociatedDataSchema> associatedData,
         IDictionary<string, IReferenceSchema> references,
         ISet<EvolutionMode> evolutionMode,
@@ -139,12 +139,12 @@ public class EntitySchema : IEntitySchema
         return ReferenceNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
     
-    public IDictionary<string, IAttributeSchema> GetAttributes()
+    public IDictionary<string, IEntityAttributeSchema> GetAttributes()
     {
         return Attributes;
     }
 
-    public IAttributeSchema? GetAttribute(string name)
+    public IEntityAttributeSchema? GetAttribute(string name)
     {
         return Attributes.TryGetValue(name, out var result) ? result : null;
     }
@@ -157,7 +157,7 @@ public class EntitySchema : IEntitySchema
                                                    "` schema!");
     }
 
-    public IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention)
+    public IEntityAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention)
     {
         return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
     }
@@ -171,7 +171,7 @@ public class EntitySchema : IEntitySchema
             2,
             new HashSet<CultureInfo>().ToImmutableHashSet(),
             new HashSet<Currency>().ToImmutableHashSet(),
-            new Dictionary<string, IAttributeSchema>().ToImmutableDictionary(),
+            new Dictionary<string, IEntityAttributeSchema>().ToImmutableDictionary(),
             new Dictionary<string, IAssociatedDataSchema>().ToImmutableDictionary(),
             new Dictionary<string, IReferenceSchema>().ToImmutableDictionary(),
             new HashSet<EvolutionMode>(Enum.GetValues<EvolutionMode>()).ToImmutableHashSet(),
@@ -190,7 +190,7 @@ public class EntitySchema : IEntitySchema
         int indexedPricePlaces,
         ISet<CultureInfo> locales,
         ISet<Currency> currencies,
-        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IEntityAttributeSchema> attributes,
         IDictionary<string, IAssociatedDataSchema> associatedData,
         IDictionary<string, IReferenceSchema> references,
         ISet<EvolutionMode> evolutionMode,
@@ -224,7 +224,7 @@ public class EntitySchema : IEntitySchema
         int indexedPricePlaces,
         ISet<CultureInfo> locales,
         ISet<Currency> currencies,
-        IDictionary<string, IAttributeSchema> attributes,
+        IDictionary<string, IEntityAttributeSchema> attributes,
         IDictionary<string, IAssociatedDataSchema> associatedData,
         IDictionary<string, IReferenceSchema> references,
         ISet<EvolutionMode> evolutionMode,
@@ -260,7 +260,7 @@ public class EntitySchema : IEntitySchema
         if (!Currencies.Equals(otherSchema.Currencies)) return true;
 
         if (Attributes.Count != otherSchema.Attributes.Count) return true;
-        foreach (KeyValuePair<string, IAttributeSchema> entry in Attributes)
+        foreach (KeyValuePair<string, IEntityAttributeSchema> entry in Attributes)
         {
             IAttributeSchema? otherAttributeSchema = otherSchema.GetAttribute(entry.Key);
             if (!entry.Value.Equals(otherAttributeSchema))
@@ -394,6 +394,23 @@ public class EntitySchema : IEntitySchema
             referenceSchemaContract.IsFaceted,
             referenceSchemaContract.GetAttributes(),
             referenceSchemaContract.GetSortableAttributeCompounds()
+        );
+    }
+    
+    internal static AttributeSchema ToReferenceAttributeSchema(IAttributeSchema attributeSchemaContract) {
+        return attributeSchemaContract as AttributeSchema ?? AttributeSchema.InternalBuild(
+            attributeSchemaContract.Name,
+            attributeSchemaContract.NameVariants,
+            attributeSchemaContract.Description,
+            attributeSchemaContract.DeprecationNotice,
+            attributeSchemaContract.Unique,
+            attributeSchemaContract.Filterable,
+            attributeSchemaContract.Sortable,
+            attributeSchemaContract.Localized,
+            attributeSchemaContract.Nullable,
+            attributeSchemaContract.Type,
+            attributeSchemaContract.DefaultValue,
+            attributeSchemaContract.IndexedDecimalPlaces
         );
     }
 

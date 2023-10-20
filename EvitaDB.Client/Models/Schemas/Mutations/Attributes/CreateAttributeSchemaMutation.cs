@@ -15,13 +15,14 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
     public bool Sortable { get; }
     public bool Localized { get; }
     public bool Nullable { get; }
+    public bool Representative { get; }
     public Type Type { get; }
     public object? DefaultValue { get; }
     public int IndexedDecimalPlaces { get; }
 
     public CreateAttributeSchemaMutation(string name, string? description, string? deprecationNotice, bool unique,
-        bool filterable, bool sortable, bool localized, bool nullable, Type type, object? defaultValue,
-        int indexedDecimalPlaces)
+        bool filterable, bool sortable, bool localized, bool nullable, bool representative, Type type,
+        object? defaultValue, int indexedDecimalPlaces)
     {
         ClassifierUtils.ValidateClassifierFormat(ClassifierType.Attribute, name);
         Name = name;
@@ -32,17 +33,39 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         Sortable = sortable;
         Localized = localized;
         Nullable = nullable;
+        Representative = representative;
         Type = type;
         DefaultValue = defaultValue;
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
     {
-        return (AttributeSchema.InternalBuild(
-            Name, Description, DeprecationNotice, Unique, Filterable, Sortable, Localized, Nullable, Type, DefaultValue,
-            IndexedDecimalPlaces
-        ) as TS)!;
+        if (schemaType == typeof(IGlobalAttributeSchema))
+        {
+            return (AttributeSchema.InternalBuild(
+                Name, Description, DeprecationNotice, Unique, false, Filterable, Sortable, Localized, 
+                Nullable, Representative, Type, DefaultValue, IndexedDecimalPlaces
+            ) as TS)!;
+        }
+        
+        if (schemaType == typeof(IEntityAttributeSchema))
+        {
+            return (EntityAttributeSchema.InternalBuild(
+                Name, Description, DeprecationNotice, Unique, Filterable, Sortable, Localized, 
+                Nullable, Representative, Type, DefaultValue, IndexedDecimalPlaces
+            ) as TS)!;
+        }
+        
+        if (schemaType == typeof(IAttributeSchema))
+        {
+            return (AttributeSchema.InternalBuild(
+                Name, Description, DeprecationNotice, Unique, Filterable, Sortable, Localized, 
+                Nullable, Type, DefaultValue, IndexedDecimalPlaces
+            ) as TS)!;
+        }
+        
+        throw new InvalidSchemaMutationException("Unsupported schema type: " + schemaType);
     }
 
     public IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
@@ -98,7 +121,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IAttributeSchema?) null);
+        IEntityAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IEntityAttributeSchema?) null, typeof(IEntityAttributeSchema));
         IAttributeSchema? existingAttributeSchema = entitySchema!.GetAttribute(Name);
         if (existingAttributeSchema == null)
         {

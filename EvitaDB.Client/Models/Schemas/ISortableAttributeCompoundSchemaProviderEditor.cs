@@ -7,8 +7,9 @@ namespace EvitaDB.Client.Models.Schemas;
 /// Interface follows the <a href="https://en.wikipedia.org/wiki/Builder_pattern">builder pattern</a> allowing to alter
 /// the data that are available on the read-only <see cref="ISortableAttributeCompoundSchema"/> interface.
 /// </summary>
-public interface ISortableAttributeCompoundSchemaProviderEditor<T> : ISortableAttributeCompoundSchemaProvider 
-    where T : ISortableAttributeCompoundSchemaProviderEditor<T>
+public interface ISortableAttributeCompoundSchemaProviderEditor<out T, TS> : ISortableAttributeCompoundSchemaProvider<TS>
+    where T : ISortableAttributeCompoundSchemaProviderEditor<T, TS>
+	where TS : IAttributeSchema
 {
     /// <summary>
     /// <remarks>

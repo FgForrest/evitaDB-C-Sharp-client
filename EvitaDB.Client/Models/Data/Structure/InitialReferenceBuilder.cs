@@ -8,7 +8,7 @@ namespace EvitaDB.Client.Models.Data.Structure;
 public class InitialReferenceBuilder : IReferenceBuilder
 {
     private IEntitySchema EntitySchema { get; }
-    private IAttributesBuilder AttributesBuilder { get; }
+    private IAttributesBuilder<IAttributeSchema> AttributesBuilder { get; }
     public ReferenceKey ReferenceKey { get; }
 
     public GroupEntityReference? Group =>
@@ -25,32 +25,7 @@ public class InitialReferenceBuilder : IReferenceBuilder
     private int? GroupId { get; set; }
     public int Version => 1;
     public bool Dropped => false;
-
-    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
-        IEntitySchema entitySchema,
-        IReferenceSchema? referenceSchema,
-        string attributeName,
-        Type? type
-    )
-    {
-        IAttributeSchema? attributeSchema = referenceSchema?.GetAttribute(attributeName);
-        InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, referenceSchema, attributeName,
-            type, null, attributeSchema);
-    }
-
-    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
-        IEntitySchema entitySchema,
-        IReferenceSchema? referenceSchema,
-        string attributeName,
-        Type? type,
-        CultureInfo locale
-    )
-    {
-        IAttributeSchema? attributeSchema = referenceSchema?.GetAttribute(attributeName);
-        InitialAttributesBuilder.VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, referenceSchema, attributeName,
-            type, locale, attributeSchema);
-    }
-
+    
     public InitialReferenceBuilder(
         IEntitySchema entitySchema,
         string referenceName,
@@ -65,7 +40,7 @@ public class InitialReferenceBuilder : IReferenceBuilder
         ReferencedEntityType = referencedEntityType;
         GroupId = null;
         GroupType = null;
-        AttributesBuilder = new InitialAttributesBuilder(
+        AttributesBuilder = new InitialReferenceAttributesBuilder(
             entitySchema,
             entitySchema
                 .GetReference(referenceName) ?? Reference
@@ -193,7 +168,7 @@ public class InitialReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceKey.ReferenceName);
-        VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType());
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
@@ -206,7 +181,7 @@ public class InitialReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceKey.ReferenceName);
-        VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType());
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
@@ -225,8 +200,8 @@ public class InitialReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceKey.ReferenceName);
-        VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(),
-            locale);
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(),
+            locale, AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
@@ -239,8 +214,8 @@ public class InitialReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceKey.ReferenceName);
-        VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(),
-            locale);
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(),
+            locale, AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
@@ -248,7 +223,7 @@ public class InitialReferenceBuilder : IReferenceBuilder
     public IReferenceBuilder MutateAttribute(AttributeMutation mutation)
     {
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceKey.ReferenceName);
-        VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, mutation.AttributeKey.AttributeName, null);
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, mutation.AttributeKey.AttributeName, null, AttributesBuilder.GetLocationResolver());
         AttributesBuilder.MutateAttribute(mutation);
         return this;
     }

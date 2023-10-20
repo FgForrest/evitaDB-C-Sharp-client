@@ -34,6 +34,28 @@ public static class EvitaEnumConverter
         };
     }
 
+    public static GrpcAttributeSchemaType ToGrpcAttributeSchemaType<T>() where T : IAttributeSchema
+    {
+        if (typeof(IGlobalAttributeSchema).IsAssignableFrom(typeof(T)))
+        {
+            return GrpcAttributeSchemaType.Global;
+        }
+
+        if (typeof(IEntityAttributeSchema).IsAssignableFrom(typeof(T)))
+        {
+            return GrpcAttributeSchemaType.Entity;
+        }
+
+        if (typeof(IAttributeSchema).IsAssignableFrom(typeof(T)))
+        {
+            return GrpcAttributeSchemaType.Reference;
+        }
+        else
+        {
+            throw new EvitaInternalError("Unrecognized attribute schema type: " + typeof(T));
+        }
+    }
+
     public static QueryPriceMode ToQueryPriceMode(GrpcQueryPriceMode grpcQueryPriceMode)
     {
         return grpcQueryPriceMode switch
@@ -286,7 +308,7 @@ public static class EvitaEnumConverter
             _ => throw new EvitaInternalError("Unrecognized remote evolution mode: " + grpcEvolutionMode)
         };
     }
-    
+
     public static GrpcCatalogEvolutionMode ToGrpcCatalogEvolutionMode(CatalogEvolutionMode evolutionMode)
     {
         return evolutionMode switch

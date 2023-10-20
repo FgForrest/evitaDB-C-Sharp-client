@@ -2,7 +2,7 @@
 
 namespace EvitaDB.Client.Models.Data;
 
-public interface IReference : IAttributes, IDroppable
+public interface IReference : IAttributes<IAttributeSchema>, IDroppable
 {
     public ReferenceKey ReferenceKey { get; }
     public GroupEntityReference? Group { get; }

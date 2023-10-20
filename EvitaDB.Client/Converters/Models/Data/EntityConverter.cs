@@ -69,9 +69,8 @@ public static class EntityConverter
             grpcEntity.References
                 .Select(it => ToReference(entitySchema, entitySchemaProvider, it, evitaRequest))
                 .ToList(),
-            new Attributes(
+            new EntityAttributes(
                 entitySchema,
-                null,
                 ToAttributeValues(
                     grpcEntity.GlobalAttributes,
                     grpcEntity.LocalizedAttributes

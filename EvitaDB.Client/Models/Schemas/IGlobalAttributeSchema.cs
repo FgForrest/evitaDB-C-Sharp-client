@@ -1,6 +1,6 @@
 ﻿namespace EvitaDB.Client.Models.Schemas;
 
-public interface IGlobalAttributeSchema : IAttributeSchema
+public interface IGlobalAttributeSchema : IEntityAttributeSchema
 {
     bool UniqueGlobally { get; }
 }

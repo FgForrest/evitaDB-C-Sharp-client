@@ -4,10 +4,10 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
 public interface IEntityAttributeSchemaMutation : IAttributeSchemaMutation, IEntitySchemaMutation
 {
-    IEntitySchema ReplaceAttributeIfDifferent(
+    public IEntitySchema ReplaceAttributeIfDifferent(
         IEntitySchema entitySchema,
         IAttributeSchema existingAttributeSchema,
-        IAttributeSchema updatedAttributeSchema)
+        IEntityAttributeSchema updatedAttributeSchema)
     {
         if (existingAttributeSchema.Equals(updatedAttributeSchema))
         {

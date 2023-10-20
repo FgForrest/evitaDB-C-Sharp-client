@@ -19,6 +19,7 @@ public class CreateGlobalAttributeSchemaMutationConverter : ISchemaMutationConve
             Sortable = mutation.Sortable,
             Localized = mutation.Localized,
             Nullable = mutation.Nullable,
+            Representative = mutation.Representative,
             Type = EvitaDataTypesConverter.ToGrpcEvitaDataType(mutation.Type),
             DefaultValue = mutation.DefaultValue is not null
                 ? EvitaDataTypesConverter.ToGrpcEvitaValue(mutation.DefaultValue)
@@ -31,7 +32,7 @@ public class CreateGlobalAttributeSchemaMutationConverter : ISchemaMutationConve
     {
         return new CreateGlobalAttributeSchemaMutation(mutation.Name, mutation.Description, mutation.DeprecationNotice,
             mutation.Unique, mutation.UniqueGlobally, mutation.Filterable, mutation.Sortable, mutation.Localized,
-            mutation.Nullable, EvitaDataTypesConverter.ToEvitaDataType(mutation.Type),
+            mutation.Nullable, mutation.Representative, EvitaDataTypesConverter.ToEvitaDataType(mutation.Type),
             mutation.DefaultValue is not null ? EvitaDataTypesConverter.ToEvitaValue(mutation.DefaultValue) : null,
             mutation.IndexedDecimalPlaces);
     }

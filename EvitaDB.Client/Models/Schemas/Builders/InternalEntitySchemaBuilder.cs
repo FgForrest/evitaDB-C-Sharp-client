@@ -8,6 +8,7 @@ using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 using EvitaDB.Client.Models.Schemas.Mutations.Entities;
 using EvitaDB.Client.Models.Schemas.Mutations.References;
+using EvitaDB.Client.Models.Schemas.Mutations.SortableAttributeCompounds;
 using EvitaDB.Client.Utils;
 using static EvitaDB.Client.Models.Schemas.Builders.SchemaBuilderHelper;
 
@@ -20,7 +21,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     private Func<ICatalogSchema> CatalogSchemaAccessor { get; set; }
     private bool UpdatedSchemaDirty { get; set; }
     private IEntitySchema? UpdatedSchema { get; set; }
-    
+
     private readonly IEntitySchema _instance;
 
     public int Version => _instance.Version;
@@ -35,9 +36,9 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     public ISet<CultureInfo> Locales => _instance.Locales;
     public ISet<Currency> Currencies => _instance.Currencies;
     public ISet<EvolutionMode> EvolutionModes => _instance.EvolutionModes;
-    public IEnumerable<IAttributeSchema> NonNullableAttributes => _instance.NonNullableAttributes;
+    public IEnumerable<IEntityAttributeSchema> NonNullableAttributes => _instance.NonNullableAttributes;
     public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData => _instance.NonNullableAssociatedData;
-    public IDictionary<string, IAttributeSchema> Attributes => _instance.Attributes;
+    public IDictionary<string, IEntityAttributeSchema> Attributes => _instance.Attributes;
     public IDictionary<string, IAssociatedDataSchema> AssociatedData => _instance.AssociatedData;
     public IDictionary<string, IReferenceSchema> References => _instance.References;
 
@@ -117,6 +118,100 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         UpdatedSchemaDirty = AddMutations(
             CatalogSchemaAccessor.Invoke(), BaseSchema, Mutations,
             new RemoveAttributeSchemaMutation(attributeName)
+        );
+        return this;
+    }
+
+    public IEntitySchemaBuilder WithSortableAttributeCompound(
+        string name,
+        params AttributeElement[] attributeElements
+    )
+    {
+        return WithSortableAttributeCompound(
+            name, attributeElements, null
+        );
+    }
+
+    public IEntitySchemaBuilder WithSortableAttributeCompound(
+        string name,
+        AttributeElement[] attributeElements,
+        Action<SortableAttributeCompoundSchemaBuilder>? whichIs
+    )
+    {
+        ISortableAttributeCompoundSchema? existingCompound = GetSortableAttributeCompound(name);
+        ICatalogSchema catalogSchema = CatalogSchemaAccessor.Invoke();
+        SortableAttributeCompoundSchemaBuilder builder = new SortableAttributeCompoundSchemaBuilder(
+            catalogSchema,
+            this,
+            null,
+            existingCompound,
+            name,
+            attributeElements.ToList(),
+            new List<IEntitySchemaMutation>(),
+            true
+        );
+        SortableAttributeCompoundSchemaBuilder schemaBuilder;
+        if (existingCompound is not null)
+        {
+            Assert.IsTrue(
+                existingCompound.AttributeElements.SequenceEqual(attributeElements.ToList()),
+                () => new AttributeAlreadyPresentInEntitySchemaException(
+                    existingCompound, builder.ToInstance(), null, name
+                )
+            );
+            schemaBuilder = builder;
+        }
+        else
+        {
+            schemaBuilder = builder;
+        }
+
+        whichIs?.Invoke(schemaBuilder);
+        ISortableAttributeCompoundSchema compoundSchema = schemaBuilder.ToInstance();
+        Assert.IsTrue(
+            compoundSchema.AttributeElements.Count > 1,
+            ()=> new SortableAttributeCompoundSchemaException(
+                "Sortable attribute compound requires more than one attribute element!",
+                compoundSchema
+            )
+            );
+        Assert.IsTrue(
+            compoundSchema.AttributeElements.Count ==
+            compoundSchema.AttributeElements
+                .Select(x=>x.AttributeName)
+                .Distinct()
+                .Count(),
+            ()=> new SortableAttributeCompoundSchemaException(
+                "Attribute names of elements in sortable attribute compound must be unique!",
+                compoundSchema
+            )
+            );
+        CheckSortableTraits(name, compoundSchema, GetAttributes());
+
+        // check the names in all naming conventions are unique in the catalog schema
+        CheckNamesAreUniqueInAllNamingConventions(
+            GetAttributes().Values,
+            GetSortableAttributeCompounds().Values,
+            compoundSchema
+        );
+
+        UpdatedSchemaDirty = AddMutations(
+            catalogSchema, this, Mutations,
+            new CreateSortableAttributeCompoundSchemaMutation(
+                compoundSchema.Name,
+                compoundSchema.Description,
+                compoundSchema.DeprecationNotice,
+                attributeElements
+            )
+        );
+        return this;
+    }
+
+    public IEntitySchemaBuilder WithoutSortableAttributeCompound(string name)
+    {
+        UpdatedSchemaDirty = AddMutations(
+            CatalogSchemaAccessor.Invoke(), BaseSchema, Mutations,
+            new RemoveSortableAttributeCompoundSchemaMutation(name)
         );
         return this;
     }
@@ -292,7 +387,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
 
     public IEntitySchemaBuilder WithAttribute<T>(
         string attributeName,
-        Action<IAttributeSchemaBuilder>? whichIs)
+        Action<IEntityAttributeSchemaBuilder>? whichIs)
     {
         ICatalogSchema catalogSchema = CatalogSchemaAccessor.Invoke();
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema.GetAttribute(attributeName);
@@ -303,13 +398,13 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
             );
         }
 
-        IAttributeSchema? existingAttribute = BaseSchema.GetAttribute(attributeName);
+        IEntityAttributeSchema? existingAttribute = BaseSchema.GetAttribute(attributeName);
 
-        IAttributeSchemaBuilder attributeSchemaBuilder;
+        EntityAttributeSchemaBuilder attributeSchemaBuilder;
 
         if (existingAttribute is not null)
         {
-            attributeSchemaBuilder = new AttributeSchemaBuilder(BaseSchema, existingAttribute);
+            attributeSchemaBuilder = new EntityAttributeSchemaBuilder(BaseSchema, existingAttribute);
             Assert.IsTrue(
                 typeof(T) == existingAttribute.Type,
                 () => new AttributeAlreadyPresentInEntitySchemaException(existingAttribute,
@@ -319,11 +414,11 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         else
         {
             attributeSchemaBuilder =
-                new AttributeSchemaBuilder(BaseSchema, attributeName, typeof(T));
+                new EntityAttributeSchemaBuilder(BaseSchema, attributeName, typeof(T));
         }
 
         whichIs?.Invoke(attributeSchemaBuilder);
-        IAttributeSchema attributeSchema = attributeSchemaBuilder.ToInstance();
+        IEntityAttributeSchema attributeSchema = attributeSchemaBuilder.ToInstance();
         CheckSortableTraits(attributeName, attributeSchema);
 
         // check the names in all naming conventions are unique in the catalog schema
@@ -418,7 +513,8 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return WithReferenceTo(name, externalEntityType, cardinality, null);
     }
 
-    public IEntitySchemaBuilder WithReferenceTo(string name, string externalEntityType, Cardinality cardinality, Action<IReferenceSchemaBuilder>? whichIs)
+    public IEntitySchemaBuilder WithReferenceTo(string name, string externalEntityType, Cardinality cardinality,
+        Action<IReferenceSchemaBuilder>? whichIs)
     {
         IEntitySchema currentSchema = ToInstance();
         IReferenceSchema? existingReference = currentSchema.GetReference(name);
@@ -446,7 +542,8 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return WithReferenceToEntity(name, entityType, cardinality, null);
     }
 
-    public IEntitySchemaBuilder WithReferenceToEntity(string name, string entityType, Cardinality cardinality, Action<IReferenceSchemaBuilder>? whichIs)
+    public IEntitySchemaBuilder WithReferenceToEntity(string name, string entityType, Cardinality cardinality,
+        Action<IReferenceSchemaBuilder>? whichIs)
     {
         IEntitySchema currentSchema = ToInstance();
         IReferenceSchema? existingReference = currentSchema.GetReference(name);
@@ -504,13 +601,15 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return UpdatedSchema;
     }
 
-    
+
     void RedefineReferenceType(
         ReferenceSchemaBuilder referenceSchemaBuilder,
         IReferenceSchema? existingReference
-    ) {
+    )
+    {
         IReferenceSchema newReference = referenceSchemaBuilder.ToInstance();
-        if (!Equals(existingReference, newReference)) {
+        if (!Equals(existingReference, newReference))
+        {
             // remove all existing mutations for the reference schema (it needs to be replaced)
             Mutations.RemoveAll(it =>
                 it is IReferenceSchemaMutation referenceSchemaMutation &&
@@ -522,8 +621,10 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
                 .Where(it => !Equals(it.Name, referenceSchemaBuilder.Name))
                 .SelectMany(
                     it => it.NameVariants
-                    .Where(nameVariant => nameVariant.Value!.Equals(referenceSchemaBuilder.GetNameVariant(nameVariant.Key)))
-                    .Select(nameVariant => new ReferenceNamingConventionConflict(it, nameVariant.Key, nameVariant.Value!))
+                        .Where(nameVariant =>
+                            nameVariant.Value!.Equals(referenceSchemaBuilder.GetNameVariant(nameVariant.Key)))
+                        .Select(nameVariant =>
+                            new ReferenceNamingConventionConflict(it, nameVariant.Key, nameVariant.Value!))
                 )
                 .ToList()
                 .ForEach(conflict => throw new ReferenceAlreadyPresentInEntitySchemaException(
@@ -566,19 +667,9 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     }
 
 
-    public IDictionary<string, IAttributeSchema> GetAttributes()
+    public IDictionary<string, IEntityAttributeSchema> GetAttributes()
     {
         return _instance.GetAttributes();
-    }
-
-    IAttributeSchema? IEntitySchema.GetAttribute(string name)
-    {
-        return _instance.GetAttribute(name);
-    }
-
-    IAttributeSchema? IEntitySchema.GetAttributeByName(string dataName, NamingConvention namingConvention)
-    {
-        return GetAttributeByName(dataName, namingConvention);
     }
 
     public bool DiffersFrom(IEntitySchema? otherSchema)
@@ -641,12 +732,12 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return _instance.GetReferenceOrThrowException(referenceName);
     }
 
-    public IAttributeSchema? GetAttribute(string name)
+    public IEntityAttributeSchema? GetAttribute(string name)
     {
         return _instance.GetAttribute(name);
     }
 
-    public IAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
+    public IEntityAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
     {
         return _instance.GetAttributeByName(name, namingConvention);
     }

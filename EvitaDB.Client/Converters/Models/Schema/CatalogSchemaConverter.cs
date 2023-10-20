@@ -85,6 +85,7 @@ public static class CatalogSchemaConverter
             attributeSchema.Sortable,
             attributeSchema.Localized,
             attributeSchema.Nullable,
+            attributeSchema.Representative,
             EvitaDataTypesConverter.ToEvitaDataType(attributeSchema.Type),
             attributeSchema.DefaultValue is not null
                 ? EvitaDataTypesConverter.ToEvitaValue(attributeSchema.DefaultValue)

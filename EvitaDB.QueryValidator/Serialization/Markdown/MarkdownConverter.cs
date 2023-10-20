@@ -164,6 +164,7 @@ public static partial class MarkdownConverter
                                 .Select(x => x.ReferencedPrimaryKey)
                                 .Select(refEntity => RefEntityLink + refEntitySplit[1] + AttrLink + refEntity));
                         }
+
                         attributeKey = ToAttributeKey(refAttr[1]);
                         if (refAttr[0].Contains(RefEntityLink))
                         {
@@ -294,14 +295,14 @@ public static partial class MarkdownConverter
             .Distinct();
     }
 
-    private static IEnumerable<string> TransformLocalizedAttributes(
+    private static IEnumerable<string> TransformLocalizedAttributes<T>(
         Func<IEnumerable<ISealedEntity>> response,
         string attributeName,
         ISet<CultureInfo> entityLocales,
-        IAttributeSchemaProvider<IAttributeSchema> schema,
-        Func<ISealedEntity, IEnumerable<IAttributes>> attributesProvider,
+        IAttributeSchemaProvider<T> schema,
+        Func<ISealedEntity, IEnumerable<IAttributes<T>>> attributesProvider,
         string? prefix
-    )
+    ) where T : IAttributeSchema
     {
         bool localized = schema.GetAttribute(attributeName)?.Localized ??
                          throw new ArgumentException("Attribute not found: " + attributeName);

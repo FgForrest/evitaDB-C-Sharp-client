@@ -6,7 +6,7 @@ using EvitaDB.Client.Queries.Filter;
 namespace EvitaDB.Client.Models.Schemas;
 
 public interface IReferenceSchemaEditor<TS> : IReferenceSchema, INamedSchemaWithDeprecationEditor<TS>, 
-    IAttributeProviderSchemaEditor<TS, IAttributeSchema, IAttributeSchemaBuilder>, ISortableAttributeCompoundSchemaProviderEditor<TS>
+    IAttributeProviderSchemaEditor<TS, IAttributeSchema, IAttributeSchemaBuilder>, ISortableAttributeCompoundSchemaProviderEditor<TS, IAttributeSchema>
     where TS : IReferenceSchemaEditor<TS>
 {
     /// <summary>

@@ -1,9 +1,6 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
-using EvitaDB.Client.Exceptions;
+﻿using System.Globalization;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Schemas;
-using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Data.Structure;
 
@@ -12,12 +9,13 @@ namespace EvitaDB.Client.Models.Data.Structure;
 /// Due to performance reasons, there is special implementation or the situation when entity is newly created.
 /// In this case we know everything is new and we don't need to closely monitor the changes so this can speed things up.
 /// </summary>
-public class InitialAttributesBuilder : IAttributesBuilder
+public abstract class InitialAttributesBuilder<TS, T> : IAttributesBuilder<TS>
+    where TS : class, IAttributeSchema
+    where T : InitialAttributesBuilder<TS, T>
 {
-    private IEntitySchema EntitySchema { get; }
-    private IReferenceSchema? ReferenceSchema { get; }
+    protected IEntitySchema EntitySchema { get; }
     private bool SuppressVerification { get; }
-    private Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
+    protected Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
     public bool AttributesAvailable() => true;
     public bool AttributesAvailable(CultureInfo locale) => true;
     public bool AttributeAvailable(string attributeName) => true;
@@ -36,143 +34,7 @@ public class InitialAttributesBuilder : IAttributesBuilder
         AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
         SuppressVerification = suppressVerification;
     }
-
-    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
-        IEntitySchema entitySchema,
-        string attributeName,
-        Type? type
-    )
-    {
-        IAttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
-        VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, null, attributeSchema);
-    }
-
-    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
-        IEntitySchema entitySchema,
-        string attributeName,
-        Type type,
-        CultureInfo locale
-    )
-    {
-        IAttributeSchema? attributeSchema = entitySchema.GetAttribute(attributeName);
-        VerifyAttributeIsInSchemaAndTypeMatch(entitySchema, null, attributeName, type, locale, attributeSchema);
-    }
-
-    internal static void VerifyAttributeIsInSchemaAndTypeMatch(
-        IEntitySchema entitySchema,
-        IReferenceSchema? referenceSchema,
-        string attributeName,
-        Type? type,
-        CultureInfo? locale,
-        IAttributeSchema? attributeSchema
-    )
-    {
-        Assert.IsTrue(
-            attributeSchema != null || entitySchema.Allows(EvolutionMode.AddingAttributes),
-            () => new InvalidMutationException(
-                "Attribute " + attributeName + " is not configured in entity `" + entitySchema.Name + "`" +
-                (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                " schema and automatic evolution is not enabled for attributes!"
-            )
-        );
-        if (attributeSchema != null)
-        {
-            if (type != null)
-            {
-                Assert.IsTrue(attributeSchema.Type.IsAssignableFrom(type),
-                    () => new InvalidDataTypeMutationException(
-                        "Attribute " + attributeName + " in entity `" + entitySchema.Name + "`" +
-                        (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                        " schema accepts only type " + attributeSchema.Type.Name +
-                        " - value type is different: " + type.Name + "!",
-                        attributeSchema.Type, type
-                    )
-                );
-                if (attributeSchema.Sortable)
-                {
-                    Assert.IsTrue(!type.IsArray,
-                        () => new InvalidDataTypeMutationException(
-                            "Attribute " + attributeName + " in entity `" + entitySchema.Name + "`" +
-                            (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                            " schema is sortable and can't hold arrays of " + type.Name + "!",
-                            attributeSchema.Type, type
-                        )
-                    );
-                }
-            }
-
-            if (locale == null)
-            {
-                Assert.IsTrue(
-                    !attributeSchema.Localized,
-                    () => new InvalidMutationException(
-                        "Attribute `" + attributeName + "` in entity `" + entitySchema.Name + "`" +
-                        (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                        " schema is localized and doesn't accept non-localized attributes!"
-                    )
-                );
-            }
-            else
-            {
-                Assert.IsTrue(
-                    attributeSchema.Localized,
-                    () => new InvalidMutationException(
-                        "Attribute `" + attributeName + "` in entity `" + entitySchema.Name + "`" +
-                        (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                        " schema is not localized and doesn't accept localized attributes!"
-                    )
-                );
-                Assert.IsTrue(
-                    entitySchema.SupportsLocale(locale) || entitySchema.Allows(EvolutionMode.AddingLocales),
-                    () => new InvalidMutationException(
-                        "Attribute `" + attributeName + "` in entity `" + entitySchema.Name + "`" +
-                        (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                        " schema is localized, but schema doesn't support locale " + locale + "! " +
-                        "Supported locales are: " +
-                        string.Join(", ", entitySchema.Locales.Select(x => x.IetfLanguageTag))
-                    )
-                );
-            }
-        }
-        else if (locale != null)
-        {
-            // at least verify supported locale
-            Assert.IsTrue(
-                entitySchema.SupportsLocale(locale) || entitySchema.Allows(EvolutionMode.AddingLocales),
-                () => new InvalidMutationException(
-                    "Attribute `" + attributeName + "` in entity `" + entitySchema.Name + "`" +
-                    (referenceSchema == null ? "" : " reference `" + referenceSchema.Name + "`") +
-                    " schema is localized, but schema doesn't support locale " + locale + "! " +
-                    "Supported locales are: " +
-                    string.Join(", ", entitySchema.Locales.Select(x => x.IetfLanguageTag))
-                )
-            );
-        }
-    }
-
-    internal InitialAttributesBuilder(
-        IEntitySchema entitySchema,
-        IReferenceSchema? referenceSchema
-    )
-    {
-        EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
-        AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
-        SuppressVerification = false;
-    }
-
-    internal InitialAttributesBuilder(
-        IEntitySchema entitySchema,
-        IReferenceSchema? referenceSchema,
-        bool suppressVerification
-    )
-    {
-        EntitySchema = entitySchema;
-        ReferenceSchema = referenceSchema;
-        AttributeValues = new Dictionary<AttributeKey, AttributeValue>();
-        SuppressVerification = suppressVerification;
-    }
-
+    
     public object? GetAttribute(string attributeName)
     {
         if (AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue))
@@ -240,9 +102,9 @@ public class InitialAttributesBuilder : IAttributesBuilder
         return null;
     }
 
-    public IAttributeSchema? GetAttributeSchema(string attributeName)
+    public TS? GetAttributeSchema(string attributeName)
     {
-        return EntitySchema.GetAttribute(attributeName);
+        return EntitySchema.GetAttribute(attributeName) as TS;
     }
 
     public ISet<string> GetAttributeNames()
@@ -276,14 +138,14 @@ public class InitialAttributesBuilder : IAttributesBuilder
             .ToHashSet()!;
     }
 
-    public IAttributesBuilder RemoveAttribute(string attributeName)
+    public IAttributesBuilder<TS> RemoveAttribute(string attributeName)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName);
         AttributeValues.Remove(attributeKey);
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, object? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, object? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -293,14 +155,14 @@ public class InitialAttributesBuilder : IAttributesBuilder
         AttributeKey attributeKey = new AttributeKey(attributeName);
         if (!SuppressVerification)
         {
-            VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType());
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), GetLocationResolver());
         }
 
         AttributeValues.Add(attributeKey, new AttributeValue(1, attributeKey, attributeValue));
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, object[]? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, object[]? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -310,21 +172,21 @@ public class InitialAttributesBuilder : IAttributesBuilder
         AttributeKey attributeKey = new AttributeKey(attributeName);
         if (!SuppressVerification)
         {
-            VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType());
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), GetLocationResolver());
         }
 
         AttributeValues.Add(attributeKey, new AttributeValue(1, attributeKey, attributeValue));
         return this;
     }
 
-    public IAttributesBuilder RemoveAttribute(string attributeName, CultureInfo locale)
+    public IAttributesBuilder<TS> RemoveAttribute(string attributeName, CultureInfo locale)
     {
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         AttributeValues.Remove(attributeKey);
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, CultureInfo locale, object? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -334,14 +196,14 @@ public class InitialAttributesBuilder : IAttributesBuilder
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         if (!SuppressVerification)
         {
-            VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), locale);
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
 
         AttributeValues.Add(attributeKey, new AttributeValue(1, attributeKey, attributeValue));
         return this;
     }
 
-    public IAttributesBuilder SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
+    public IAttributesBuilder<TS> SetAttribute(string attributeName, CultureInfo locale, object[]? attributeValue)
     {
         if (attributeValue == null)
         {
@@ -351,14 +213,14 @@ public class InitialAttributesBuilder : IAttributesBuilder
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         if (!SuppressVerification)
         {
-            VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), locale);
+            AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
 
         AttributeValues.Add(attributeKey, new AttributeValue(1, attributeKey, attributeValue));
         return this;
     }
 
-    public IAttributesBuilder MutateAttribute(AttributeMutation mutation)
+    public IAttributesBuilder<TS> MutateAttribute(AttributeMutation mutation)
     {
         throw new NotSupportedException("You cannot apply mutation when entity is just being created!");
     }
@@ -368,30 +230,7 @@ public class InitialAttributesBuilder : IAttributesBuilder
         throw new NotSupportedException("Initial entity creation doesn't support change monitoring - it has no sense.");
     }
 
-    public Attributes Build()
-    {
-        IAttributeSchemaProvider<IAttributeSchema> attributeSchemaProvider =
-            ReferenceSchema as IAttributeSchemaProvider<IAttributeSchema> ?? EntitySchema;
-        IDictionary<string, IAttributeSchema> newAttributes = AttributeValues
-            .Where(entry => attributeSchemaProvider.GetAttribute(entry.Key.AttributeName) is null)
-            .Select(entry => entry.Value)
-            .Select(IAttributesBuilder.CreateImplicitSchema)
-            .ToDictionary(
-                attributeType => attributeType.Name,
-                attributeType => attributeType
-            );
-        return new Attributes(
-            EntitySchema,
-            ReferenceSchema,
-            AttributeValues.Values,
-            !newAttributes.Any()
-                ? attributeSchemaProvider.GetAttributes().ToImmutableDictionary()
-                : attributeSchemaProvider.GetAttributes()
-                    .Concat(newAttributes)
-                    .ToImmutableDictionary(
-                        entry => entry.Key,
-                        entry => entry.Value
-                    )
-        );
-    }
+    public abstract Attributes<TS> Build();
+
+    public abstract Func<string> GetLocationResolver();
 }

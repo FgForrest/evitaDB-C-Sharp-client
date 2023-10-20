@@ -13,7 +13,7 @@ public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
         Name = name;
     }
 
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         return (TS) catalogSchema!.GetAttribute(Name)! ?? throw new EvitaInvalidUsageException(
@@ -23,7 +23,7 @@ public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IGlobalAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IGlobalAttributeSchema?) null);
+        IGlobalAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IGlobalAttributeSchema?) null, typeof(IGlobalAttributeSchema));
         Assert.NotNull(
             newAttributeSchema,
             () => new InvalidSchemaMutationException(

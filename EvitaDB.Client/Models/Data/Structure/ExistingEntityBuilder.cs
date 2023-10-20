@@ -22,7 +22,7 @@ namespace EvitaDB.Client.Models.Data.Structure;
 public class ExistingEntityBuilder : IEntityBuilder
 {
     private Entity BaseEntity { get; }
-    private ExistingAttributesBuilder AttributesBuilder { get; }
+    private ExistingEntityAttributesBuilder AttributesBuilder { get; }
     private ExistingAssociatedDataBuilder AssociatedDataBuilder { get; }
     private ExistingPricesBuilder PricesBuilder { get; }
     private IDictionary<ReferenceKey, List<ReferenceMutation>> ReferenceMutations { get; }
@@ -115,7 +115,7 @@ public class ExistingEntityBuilder : IEntityBuilder
         ReferencePredicate = baseEntity.ReferencePredicate;
         PricePredicate = baseEntity.PricePredicate;
         
-        AttributesBuilder = new ExistingAttributesBuilder(BaseEntity.Schema, null, BaseEntity.Attributes);
+        AttributesBuilder = new ExistingEntityAttributesBuilder(BaseEntity.Schema, BaseEntity.Attributes);
         AssociatedDataBuilder = new ExistingAssociatedDataBuilder(BaseEntity.Schema, BaseEntity.AssociatedData);
         PricesBuilder = new ExistingPricesBuilder(BaseEntity.Schema, BaseEntity.Prices, PricePredicate);
         ReferenceMutations = new Dictionary<ReferenceKey, List<ReferenceMutation>>();
@@ -670,12 +670,12 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public bool AttributesAvailable()
     {
-        return ((IAttributes)AttributesBuilder).AttributesAvailable();
+        return AttributesBuilder.AttributesAvailable();
     }
 
     public bool AttributesAvailable(CultureInfo locale)
     {
-        return ((IAttributes)AttributesBuilder).AttributesAvailable(locale);
+        return AttributesBuilder.AttributesAvailable(locale);
     }
 
     public bool AttributeAvailable(string attributeName)
@@ -723,7 +723,7 @@ public class ExistingEntityBuilder : IEntityBuilder
         return AttributesBuilder.GetAttributeValue(attributeKey);
     }
 
-    public IAttributeSchema? GetAttributeSchema(string attributeName)
+    public IEntityAttributeSchema? GetAttributeSchema(string attributeName)
     {
         return AttributesBuilder.GetAttributeSchema(attributeName);
     }

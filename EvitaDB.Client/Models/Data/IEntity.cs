@@ -3,7 +3,7 @@ using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data;
 
-public interface IEntity : IEntityClassifierWithParent, IAttributes, IAssociatedData, IPrices, IDroppable,
+public interface IEntity : IEntityClassifierWithParent, IAttributes<IEntityAttributeSchema>, IAssociatedData, IPrices, IDroppable,
     IContentComparator<IEntity>
 {
     IEntitySchema Schema { get; }

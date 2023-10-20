@@ -3,7 +3,7 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas;
 
-public interface ISortableAttributeCompoundSchemaProvider : IAttributeSchemaProvider<IAttributeSchema>
+public interface ISortableAttributeCompoundSchemaProvider<T> : IAttributeSchemaProvider<T> where T : IAttributeSchema
 {
     IDictionary<string, SortableAttributeCompoundSchema> GetSortableAttributeCompounds();
     SortableAttributeCompoundSchema? GetSortableAttributeCompound(string name);

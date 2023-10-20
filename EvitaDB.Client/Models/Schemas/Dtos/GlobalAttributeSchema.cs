@@ -5,6 +5,7 @@ namespace EvitaDB.Client.Models.Schemas.Dtos;
 public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
 {
     public bool UniqueGlobally { get; }
+    public bool Representative { get; }
 
     public new bool Unique => base.Unique || UniqueGlobally;
 
@@ -19,23 +20,26 @@ public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
         bool sortable,
         bool localized,
         bool nullable,
+        bool representative,
         Type type,
         object? defaultValue,
         int indexedDecimalPlaces) : base(name, nameVariants, description, deprecationNotice, unique, filterable,
         sortable, localized, nullable, type, defaultValue, indexedDecimalPlaces)
     {
         UniqueGlobally = uniqueGlobally;
+        Representative = representative;
     }
-    
+
     internal new static GlobalAttributeSchema InternalBuild(
         string name,
-    Type type,
-    bool localized
-    ) {
+        Type type,
+        bool localized
+    )
+    {
         return new GlobalAttributeSchema(
             name, NamingConventionHelper.Generate(name),
             null, null,
-            false, false, false, false, localized, false,
+            false, false, false, false, localized, false, false,
             type, null,
             0
         );

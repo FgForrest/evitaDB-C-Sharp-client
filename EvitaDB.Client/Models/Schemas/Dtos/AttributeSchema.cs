@@ -87,6 +87,7 @@ public class AttributeSchema : IAttributeSchema
         bool sortable,
         bool localized,
         bool nullable,
+        bool representative,
         Type type,
         object? defaultValue,
         int indexedDecimalPlaces
@@ -95,7 +96,7 @@ public class AttributeSchema : IAttributeSchema
         return new GlobalAttributeSchema(
             name, NamingConventionHelper.Generate(name),
             description, deprecationNotice,
-            unique, uniqueGlobally, filterable, sortable, localized, nullable,
+            unique, uniqueGlobally, filterable, sortable, localized, nullable, representative,
             type, defaultValue,
             indexedDecimalPlaces
         );

@@ -40,6 +40,7 @@ public class GlobalAttributeSchemaBuilder :
                 BaseSchema.Sortable,
                 BaseSchema.Localized,
                 BaseSchema.Nullable,
+                BaseSchema.Representative,
                 BaseSchema.Type,
                 BaseSchema.DefaultValue,
                 BaseSchema.IndexedDecimalPlaces
@@ -82,6 +83,26 @@ public class GlobalAttributeSchemaBuilder :
         );
         return this;
     }
+    
+    public IGlobalAttributeSchemaBuilder Representative() {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaRepresentativeMutation(
+                BaseSchema.Name,
+                true
+            )
+        );
+        return this;
+    }
+    
+    public IGlobalAttributeSchemaBuilder Representative(Func<bool> decider) {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaRepresentativeMutation(
+                BaseSchema.Name,
+                decider.Invoke()
+            )
+        );
+        return this;
+    }
 
     public ICollection<ILocalCatalogSchemaMutation> ToMutation()
     {
@@ -91,5 +112,10 @@ public class GlobalAttributeSchemaBuilder :
     public new IGlobalAttributeSchema ToInstance()
     {
         return base.ToInstance();
+    }
+    
+    protected override Type GetAttributeSchemaType()
+    {
+        return typeof(IGlobalAttributeSchema);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
@@ -49,7 +50,7 @@ public static class EntitySchemaConverter
                 .Select(EvitaDataTypesConverter.ToCurrency)
                 .ToHashSet(),
             entitySchema.Attributes
-                .ToDictionary(x => x.Key, x => ToAttributeSchema(x.Value)),
+                .ToDictionary(x => x.Key, x => ToAttributeSchema<IEntityAttributeSchema>(x.Value)),
             entitySchema.AssociatedData
                 .ToDictionary(x => x.Key, x => ToAssociatedDataSchema(x.Value)),
             entitySchema.References
@@ -62,30 +63,60 @@ public static class EntitySchemaConverter
         );
     }
 
-    private static IAttributeSchema ToAttributeSchema(GrpcAttributeSchema attributeSchema)
+    private static T ToAttributeSchema<T>(GrpcAttributeSchema attributeSchema) where T : class, IAttributeSchema
     {
-        if (attributeSchema.Global)
+        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.Global)
         {
-            return new GlobalAttributeSchema(
-                attributeSchema.Name,
-                NamingConventionHelper.Generate(attributeSchema.Name),
-                string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
-                string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-                attributeSchema.Unique,
-                attributeSchema.UniqueGlobally,
-                attributeSchema.Filterable,
-                attributeSchema.Sortable,
-                attributeSchema.Localized,
-                attributeSchema.Nullable,
-                EvitaDataTypesConverter.ToEvitaDataType(attributeSchema.Type),
-                attributeSchema.DefaultValue is null
-                    ? null
-                    : EvitaDataTypesConverter.ToEvitaValue(attributeSchema.DefaultValue),
-                attributeSchema.IndexedDecimalPlaces
-            );
+            if (typeof(T).IsAssignableFrom(typeof(GlobalAttributeSchema)))
+            {
+                return (new GlobalAttributeSchema(
+                    attributeSchema.Name,
+                    NamingConventionHelper.Generate(attributeSchema.Name),
+                    string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
+                    string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
+                    attributeSchema.Unique,
+                    attributeSchema.UniqueGlobally,
+                    attributeSchema.Filterable,
+                    attributeSchema.Sortable,
+                    attributeSchema.Localized,
+                    attributeSchema.Nullable,
+                    attributeSchema.Representative,
+                    EvitaDataTypesConverter.ToEvitaDataType(attributeSchema.Type),
+                    attributeSchema.DefaultValue is null
+                        ? null
+                        : EvitaDataTypesConverter.ToEvitaValue(attributeSchema.DefaultValue),
+                    attributeSchema.IndexedDecimalPlaces
+                ) as T)!;
+            }
+            throw new EvitaInvalidUsageException("Expected global attribute, but `" + attributeSchema.SchemaType + "` was provided!");
         }
 
-        return AttributeSchema.InternalBuild(
+        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.Entity)
+        {
+            if (typeof(T).IsAssignableFrom(typeof(IEntityAttributeSchema)))
+            {
+                return (EntityAttributeSchema.InternalBuild(
+                    attributeSchema.Name,
+                    NamingConventionHelper.Generate(attributeSchema.Name),
+                    string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
+                    string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
+                    attributeSchema.Unique,
+                    attributeSchema.Filterable,
+                    attributeSchema.Sortable,
+                    attributeSchema.Localized,
+                    attributeSchema.Nullable,
+                    attributeSchema.Representative,
+                    EvitaDataTypesConverter.ToEvitaDataType(attributeSchema.Type),
+                    attributeSchema.DefaultValue is null
+                        ? null
+                        : EvitaDataTypesConverter.ToEvitaValue(attributeSchema.DefaultValue),
+                    attributeSchema.IndexedDecimalPlaces
+                ) as T)!;
+            }
+            throw new EvitaInvalidUsageException("Expected entity attribute, but `" + attributeSchema.SchemaType + "` was provided!");
+        }
+        
+        return (AttributeSchema.InternalBuild(
             attributeSchema.Name,
             NamingConventionHelper.Generate(attributeSchema.Name),
             string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
@@ -100,7 +131,7 @@ public static class EntitySchemaConverter
                 ? null
                 : EvitaDataTypesConverter.ToEvitaValue(attributeSchema.DefaultValue),
             attributeSchema.IndexedDecimalPlaces
-        );
+        ) as T)!;
     }
 
     private static IAssociatedDataSchema ToAssociatedDataSchema(GrpcAssociatedDataSchema associatedDataSchema)
@@ -128,20 +159,20 @@ public static class EntitySchemaConverter
             string.IsNullOrEmpty(referenceSchema.DeprecationNotice) ? null : referenceSchema.DeprecationNotice,
             referenceSchema.EntityType,
             referenceSchema.EntityTypeRelatesToEntity
-                ? new Dictionary<NamingConvention, string>()
+                ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(referenceSchema.EntityType),
             referenceSchema.EntityTypeRelatesToEntity,
             EvitaEnumConverter.ToCardinality(referenceSchema.Cardinality) ?? new Cardinality(),
             referenceSchema.GroupType,
             referenceSchema.GroupTypeRelatesToEntity
-                ? new Dictionary<NamingConvention, string>()
+                ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(referenceSchema.GroupType),
             referenceSchema.GroupTypeRelatesToEntity,
             referenceSchema.Indexed,
             referenceSchema.Faceted,
             referenceSchema.Attributes.ToDictionary(
                 x => x.Key,
-                x => ToAttributeSchema(x.Value)
+                x => ToAttributeSchema<IAttributeSchema>(x.Value)
             ),
             referenceSchema.SortableAttributeCompounds.ToDictionary(
                 x => x.Key,
@@ -209,11 +240,11 @@ public static class EntitySchemaConverter
             .ToList();
     }
 
-    private static IDictionary<string, GrpcAttributeSchema> ToGrpcAttributeSchemas(
-        IDictionary<string, IAttributeSchema> originalAttributeSchemas)
+    private static IDictionary<string, GrpcAttributeSchema> ToGrpcAttributeSchemas<T>(
+        IDictionary<string, T> originalAttributeSchemas) where T : IAttributeSchema
     {
         IDictionary<string, GrpcAttributeSchema> attributeSchemas = new Dictionary<string, GrpcAttributeSchema>();
-        foreach (var entry in originalAttributeSchemas)
+        foreach (KeyValuePair<string, T> entry in originalAttributeSchemas)
         {
             attributeSchemas.Add(entry.Key, ToGrpcAttributeSchema(entry.Value));
         }
@@ -224,10 +255,10 @@ public static class EntitySchemaConverter
     private static GrpcAttributeSchema ToGrpcAttributeSchema(IAttributeSchema attributeSchema)
     {
         bool isGlobal = attributeSchema is IGlobalAttributeSchema;
-        return new GrpcAttributeSchema
+        bool isEntity = attributeSchema is IEntityAttributeSchema;
+        GrpcAttributeSchema grpcAttributeSchema = new GrpcAttributeSchema
         {
             Name = attributeSchema.Name,
-            Global = isGlobal,
             Unique = attributeSchema.Unique,
             UniqueGlobally = isGlobal && ((IGlobalAttributeSchema) attributeSchema).UniqueGlobally,
             Filterable = attributeSchema.Filterable,
@@ -242,6 +273,19 @@ public static class EntitySchemaConverter
             Description = attributeSchema.Description,
             DeprecationNotice = attributeSchema.DeprecationNotice
         };
+        
+        if (isEntity) {
+            IEntityAttributeSchema globalAttributeSchema = (IEntityAttributeSchema) attributeSchema;
+            grpcAttributeSchema.Representative = globalAttributeSchema.Representative;
+        }
+
+        if (isGlobal) {
+            IGlobalAttributeSchema globalAttributeSchema = (IGlobalAttributeSchema) attributeSchema;
+            grpcAttributeSchema.Representative= globalAttributeSchema.Representative;
+            grpcAttributeSchema.UniqueGlobally= globalAttributeSchema.UniqueGlobally;
+        }
+
+        return grpcAttributeSchema;
     }
 
     private static IDictionary<string, GrpcAssociatedDataSchema> ToGrpcAssociatedDataSchemas(

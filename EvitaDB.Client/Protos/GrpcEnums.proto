@@ -185,6 +185,16 @@ enum GrpcCatalogEvolutionMode {
   ADDING_ENTITY_TYPES = 0;
 }
 
+// Defines the type of the attribute schema
+enum GrpcAttributeSchemaType {
+  // attribute schema is GlobalAttributeSchemaContract
+  GLOBAL = 0;
+  // attribute schema is EntityAttributeSchemaContract
+  ENTITY = 1;
+  // attribute schema is AttributeSchemaContract
+  REFERENCE = 2;
+}
+
 // This enum contains all supported types in evitaDB query context.
 enum GrpcEvitaDataType {
   // Represents string data type.
@@ -425,11 +435,12 @@ enum GrpcEntityExistence {
   MUST_EXIST = 2;
 }
 
-
 enum GrpcOperation {
   CREATE = 0;
   UPDATE = 1;
   REMOVE = 2;
+  TRANSACTION_BEGIN = 3;
+  TRANSACTION_END = 4;
 }
 
 enum GrpcCaptureArea {
@@ -438,12 +449,13 @@ enum GrpcCaptureArea {
 }
 
 enum GrpcClassifierType {
-  CATALOG = 0;
-  ENTITY = 1;
-  ATTRIBUTE = 2;
-  ASSOCIATED_DATA = 3;
-  REFERENCE = 4;
-  REFERENCE_ATTRIBUTE = 5;
+  SERVER_NAME = 0;
+  CATALOG = 1;
+  ENTITY_TEMP = 2;
+  ATTRIBUTE = 3;
+  ASSOCIATED_DATA = 4;
+  REFERENCE_TEMP = 5;
+  REFERENCE_ATTRIBUTE = 6;
 }
 
 enum GrpcCaptureContent {

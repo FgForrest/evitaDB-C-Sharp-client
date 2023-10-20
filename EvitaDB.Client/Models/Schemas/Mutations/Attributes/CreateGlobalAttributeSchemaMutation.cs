@@ -16,6 +16,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
     public bool Sortable { get; }
     public bool Localized { get; }
     public bool Nullable { get; }
+    public bool Representative { get; }
     public Type Type { get; }
     public object? DefaultValue { get; }
     public int IndexedDecimalPlaces { get; }
@@ -30,6 +31,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         bool sortable,
         bool localized,
         bool nullable,
+        bool representative,
         Type type,
         object? defaultValue,
         int indexedDecimalPlaces
@@ -45,12 +47,13 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         Sortable = sortable;
         Localized = localized;
         Nullable = nullable;
+        Representative = representative;
         Type = type;
         DefaultValue = defaultValue;
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
     
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
     {
         return (AttributeSchema.InternalBuild(
             Name,
@@ -62,6 +65,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
             Sortable,
             Localized,
             Nullable,
+            Representative,
             Type,
             DefaultValue,
             IndexedDecimalPlaces) as TS)!;
@@ -70,7 +74,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
     public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
-        IGlobalAttributeSchema newAttributeSchema = Mutate<IGlobalAttributeSchema>(catalogSchema, null);
+        IGlobalAttributeSchema newAttributeSchema = Mutate<IGlobalAttributeSchema>(catalogSchema, null, typeof(IGlobalAttributeSchema));
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema?.GetAttribute(Name);
         if (existingAttributeSchema == null) {
             return CatalogSchema.InternalBuild(

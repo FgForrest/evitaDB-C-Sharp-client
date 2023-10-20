@@ -13,9 +13,9 @@ public class CatalogSchema : ICatalogSchema
     public IDictionary<string, IGlobalAttributeSchema> Attributes { get; }
     private IDictionary<string, IGlobalAttributeSchema[]> AttributeNameIndex { get; }
     public Func<string, IEntitySchema?> EntitySchemaAccessor { get; }
-    
+
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes { get; }
-    
+
     internal static CatalogSchema InternalBuild(
         string name, IDictionary<NamingConvention, string?> nameVariants,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
@@ -23,7 +23,8 @@ public class CatalogSchema : ICatalogSchema
     )
     {
         return new CatalogSchema(
-            1, name, nameVariants, null, catalogEvolutionModes, new Dictionary<string, IGlobalAttributeSchema>(), entitySchemaAccessor
+            1, name, nameVariants, null, catalogEvolutionModes, new Dictionary<string, IGlobalAttributeSchema>(),
+            entitySchemaAccessor
         );
     }
 
@@ -61,12 +62,16 @@ public class CatalogSchema : ICatalogSchema
 
     private static IGlobalAttributeSchema ToAttributeSchema(IGlobalAttributeSchema attributeSchema)
     {
-        return new GlobalAttributeSchema(
-            attributeSchema.Name, attributeSchema.NameVariants, attributeSchema.Description,
-            attributeSchema.DeprecationNotice, attributeSchema.Unique, attributeSchema.UniqueGlobally,
-            attributeSchema.Filterable, attributeSchema.Sortable, attributeSchema.Localized, attributeSchema.Nullable,
-            attributeSchema.Type, attributeSchema.DefaultValue, attributeSchema.IndexedDecimalPlaces
-        );
+        return attributeSchema is GlobalAttributeSchema
+            ? attributeSchema
+            : AttributeSchema.InternalBuild(
+                attributeSchema.Name, attributeSchema.Description,
+                attributeSchema.DeprecationNotice, attributeSchema.Unique, attributeSchema.UniqueGlobally,
+                attributeSchema.Filterable, attributeSchema.Sortable, attributeSchema.Localized,
+                attributeSchema.Nullable,
+                attributeSchema.Representative, attributeSchema.Type, attributeSchema.DefaultValue,
+                attributeSchema.IndexedDecimalPlaces
+            );
     }
 
     private CatalogSchema(
@@ -96,14 +101,17 @@ public class CatalogSchema : ICatalogSchema
 
     public IEntitySchema? GetEntitySchema(string entityType) => EntitySchemaAccessor.Invoke(entityType);
 
-    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out var nameVariant) ? nameVariant : Name;
+    public string? GetNameVariant(NamingConvention namingConvention) =>
+        NameVariants.TryGetValue(namingConvention, out var nameVariant) ? nameVariant : Name;
 
     public IDictionary<string, IGlobalAttributeSchema> GetAttributes()
     {
         return Attributes;
     }
 
-    public IGlobalAttributeSchema? GetAttribute(string attributeName) => Attributes.TryGetValue(attributeName, out var attributeSchema) ? attributeSchema : null;
+    public IGlobalAttributeSchema? GetAttribute(string attributeName) =>
+        Attributes.TryGetValue(attributeName, out var attributeSchema) ? attributeSchema : null;
+
     public IGlobalAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
     {
         return AttributeNameIndex.TryGetValue(name, out var nameVariants)

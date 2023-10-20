@@ -50,11 +50,11 @@ public class EvitaClientWriteTest : BaseTest
             // create two attributes schema mutations
             CreateAttributeSchemaMutation createAttributeDateTime = new CreateAttributeSchemaMutation(
                 attributeDateTime, nameof(attributeDateTime), null, false, true, true, false, true,
-                typeof(DateTimeOffset), null, 0
+                false, typeof(DateTimeOffset), null, 0
             );
             CreateAttributeSchemaMutation createAttributeDecimalRange = new CreateAttributeSchemaMutation(
                 attributeDecimalRange, nameof(attributeDecimalRange), null, false, true, true, false, true,
-                typeof(DecimalNumberRange), null, 2
+                false, typeof(DecimalNumberRange), null, 2
             );
 
             // add the two attributes to the entity schema

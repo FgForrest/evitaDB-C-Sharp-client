@@ -24,7 +24,7 @@ public class Entity : ISealedEntity
     public int? PrimaryKey { get; }
     [JsonIgnore] public IEntitySchema Schema { get; }
     public IDictionary<ReferenceKey, IReference> References { get; }
-    public Attributes Attributes { get; }
+    public EntityAttributes Attributes { get; }
     public AssociatedData AssociatedData { get; }
     public Prices Prices { get; }
     public ISet<CultureInfo> Locales { get; }
@@ -136,7 +136,7 @@ public class Entity : ISealedEntity
         int? parent,
         IEntityClassifierWithParent? parentEntity,
         IEnumerable<Reference> references,
-        Attributes attributes,
+        EntityAttributes attributes,
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
@@ -171,7 +171,7 @@ public class Entity : ISealedEntity
         int? parent,
         IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference>? references,
-        Attributes? attributes,
+        EntityAttributes? attributes,
         AssociatedData? associatedData,
         Prices? prices,
         ISet<CultureInfo>? locales,
@@ -204,7 +204,7 @@ public class Entity : ISealedEntity
         int? parent,
         IEntityClassifierWithParent? parentEntity,
         ICollection<IReference> references,
-        Attributes attributes,
+        EntityAttributes attributes,
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
@@ -247,7 +247,7 @@ public class Entity : ISealedEntity
         int? parent,
         IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference> references,
-        Attributes attributes,
+        EntityAttributes attributes,
         AssociatedData associatedData,
         Prices prices,
         IEnumerable<CultureInfo> locales,
@@ -291,7 +291,7 @@ public class Entity : ISealedEntity
         int? parent,
         IEntityClassifierWithParent? parentEntity,
         IEnumerable<IReference> references,
-        Attributes attributes,
+        EntityAttributes attributes,
         AssociatedData associatedData,
         Prices prices,
         ISet<CultureInfo> locales,
@@ -346,7 +346,7 @@ public class Entity : ISealedEntity
         _parent = null;
         _parentEntity = null;
         References = new Dictionary<ReferenceKey, IReference>();
-        Attributes = new Attributes(Schema);
+        Attributes = new EntityAttributes(Schema);
         AssociatedData = new AssociatedData(Schema);
         Prices = new Prices(Schema, 1, new HashSet<IPrice>(), PriceInnerRecordHandling.None);
         Locales = new HashSet<CultureInfo>().ToImmutableHashSet();
@@ -434,7 +434,7 @@ public class Entity : ISealedEntity
         }
 
         // create or reuse existing attribute container
-        Attributes newAttributeContainer = RecreateAttributeContainer(entitySchema, entity, newAttributes);
+        EntityAttributes newAttributeContainer = RecreateAttributeContainer(entitySchema, entity, newAttributes);
 
         // create or reuse existing associated data container
         AssociatedData newAssociatedDataContainer =
@@ -753,16 +753,16 @@ public class Entity : ISealedEntity
         return mutatedValue.Version > originalValue?.Version ? mutatedValue : default;
     }
 
-    private static Attributes RecreateAttributeContainer(
+    private static EntityAttributes RecreateAttributeContainer(
         IEntitySchema entitySchema,
         Entity? possibleEntity,
         Dictionary<AttributeKey, AttributeValue> newAttributes
     )
     {
-        Attributes newAttributeContainer;
+        EntityAttributes newAttributeContainer;
         if (!newAttributes.Any())
         {
-            newAttributeContainer = possibleEntity?.Attributes ?? new Attributes(entitySchema);
+            newAttributeContainer = possibleEntity?.Attributes ?? new EntityAttributes(entitySchema);
         }
         else
         {
@@ -770,11 +770,11 @@ public class Entity : ISealedEntity
                 ? new List<AttributeValue>()
                 : possibleEntity.GetAttributeValues().Where(x => !newAttributes.ContainsKey(x.Key)).ToList();
             attributeValues.AddRange(newAttributes.Values);
-            List<IAttributeSchema> attributeSchemas = entitySchema.Attributes.Values.ToList();
+            List<IEntityAttributeSchema> attributeSchemas = entitySchema.Attributes.Values.ToList();
             attributeSchemas.AddRange(newAttributes.Values
                 .Where(x => !entitySchema.Attributes.ContainsKey(x.Key.AttributeName))
-                .Select(IAttributesBuilder.CreateImplicitSchema));
-            newAttributeContainer = new Attributes(entitySchema, null, attributeValues,
+                .Select(IAttributesBuilder<IAttributeSchema>.CreateImplicitEntityAttributeSchema));
+            newAttributeContainer = new EntityAttributes(entitySchema, attributeValues,
                 attributeSchemas.ToDictionary(x => x.Name, x => x));
         }
 
@@ -835,7 +835,7 @@ public class Entity : ISealedEntity
         return Attributes.GetAttributeValue(attributeName, locale);
     }
 
-    public IAttributeSchema? GetAttributeSchema(string attributeName)
+    public IEntityAttributeSchema? GetAttributeSchema(string attributeName)
     {
         return Attributes.GetAttributeSchema(attributeName);
     }

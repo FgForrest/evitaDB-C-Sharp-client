@@ -13,7 +13,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
 {
     private IReference BaseReference { get; }
     private IEntitySchema EntitySchema { get; }
-    private ExistingAttributesBuilder AttributesBuilder { get; }
+    private ExistingReferenceAttributesBuilder AttributesBuilder { get; }
     private ReferenceMutation? ReferenceGroupMutation { get; set; }
     public int Version => BaseReference.Version;
     public bool Dropped => BaseReference.Dropped;
@@ -58,9 +58,9 @@ public class ExistingReferenceBuilder : IReferenceBuilder
     {
         BaseReference = reference;
         EntitySchema = entitySchema;
-        AttributesBuilder = new ExistingAttributesBuilder(
+        AttributesBuilder = new ExistingReferenceAttributesBuilder(
             entitySchema,
-            BaseReference.ReferenceSchema,
+            BaseReference.ReferenceSchema!,
             BaseReference.GetAttributeValues(),
             BaseReference.ReferenceSchema?.GetAttributes() ?? new Dictionary<string, IAttributeSchema>(),
             true
@@ -80,7 +80,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceName);
-        InitialReferenceBuilder.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType());
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
@@ -92,7 +92,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceName);
-        InitialReferenceBuilder.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType());
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, attributeValue);
         return this;
     }
@@ -110,7 +110,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceName);
-        InitialReferenceBuilder.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), locale);
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), locale, AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
@@ -122,7 +122,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
         }
 
         IReferenceSchema? referenceSchema = EntitySchema.GetReference(ReferenceName);
-        InitialReferenceBuilder.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), locale);
+        AttributeVerificationUtils.VerifyAttributeIsInSchemaAndTypeMatch(EntitySchema, referenceSchema, attributeName, attributeValue.GetType(), locale, AttributesBuilder.GetLocationResolver());
         AttributesBuilder.SetAttribute(attributeName, locale, attributeValue);
         return this;
     }
@@ -190,7 +190,7 @@ public class ExistingReferenceBuilder : IReferenceBuilder
     public IReference Build()
     {
         GroupEntityReference? newGroup = Group;
-        Attributes newAttributes = AttributesBuilder.Build();
+        Attributes<IAttributeSchema> newAttributes = AttributesBuilder.Build();
         bool groupDiffers = BaseReference.Group?.DiffersFrom(newGroup) ?? newGroup is not null;
 
         if (groupDiffers || AttributesBuilder.AnyChangeInMutations())
@@ -210,12 +210,12 @@ public class ExistingReferenceBuilder : IReferenceBuilder
 
     public bool AttributesAvailable()
     {
-        return ((IAttributes) AttributesBuilder).AttributesAvailable();
+        return AttributesBuilder.AttributesAvailable();
     }
 
     public bool AttributesAvailable(CultureInfo locale)
     {
-        return ((IAttributes) AttributesBuilder).AttributesAvailable(locale);
+        return AttributesBuilder.AttributesAvailable(locale);
     }
 
     public bool AttributeAvailable(string attributeName)

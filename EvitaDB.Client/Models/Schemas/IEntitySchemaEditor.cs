@@ -5,7 +5,8 @@ using EvitaDB.Client.Models.Schemas.Dtos;
 namespace EvitaDB.Client.Models.Schemas;
 
 public interface IEntitySchemaEditor<out TS> : IEntitySchema, INamedSchemaWithDeprecationEditor<TS>,
-	IAttributeProviderSchemaEditor<TS, IAttributeSchema, IAttributeSchemaBuilder>
+	IAttributeProviderSchemaEditor<TS, IEntityAttributeSchema, IEntityAttributeSchemaBuilder>,
+	ISortableAttributeCompoundSchemaProviderEditor<TS, IEntityAttributeSchema>
 	where TS : IEntitySchemaEditor<TS>
 {
 	TS CooperatingWith(Func<CatalogSchema> catalogSupplier);

@@ -63,21 +63,11 @@ public class EntitySchemaDecorator : ISealedEntitySchema
 
     public string? DeprecationNotice => Delegate.DeprecationNotice;
 
-    public IDictionary<string, IAttributeSchema> GetAttributes()
+    public IDictionary<string, IEntityAttributeSchema> GetAttributes()
     {
         return Delegate.GetAttributes();
     }
-
-    IAttributeSchema? IEntitySchema.GetAttribute(string name)
-    {
-        return Delegate.GetAttribute(name);
-    }
-
-    IAttributeSchema? IEntitySchema.GetAttributeByName(string dataName, NamingConvention namingConvention)
-    {
-        return Delegate.GetAttributeByName(dataName, namingConvention);
-    }
-
+    
     public bool DiffersFrom(IEntitySchema? otherSchema)
     {
         return Delegate.DiffersFrom(otherSchema);
@@ -116,13 +106,11 @@ public class EntitySchemaDecorator : ISealedEntitySchema
     public ISet<Currency> Currencies => Delegate.Currencies;
 
     public ISet<EvolutionMode> EvolutionModes => Delegate.EvolutionModes;
-
-    public IEnumerable<IAttributeSchema> NonNullableAttributes => Delegate.NonNullableAttributes;
-
+    public IEnumerable<IEntityAttributeSchema> NonNullableAttributes => Delegate.NonNullableAttributes;
+    
     public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData => Delegate.NonNullableAssociatedData;
-
-    public IDictionary<string, IAttributeSchema> Attributes => Delegate.Attributes;
-
+    public IDictionary<string, IEntityAttributeSchema> Attributes => Delegate.Attributes;
+    
     public IDictionary<string, IAssociatedDataSchema> AssociatedData => Delegate.AssociatedData;
 
     public IDictionary<string, IReferenceSchema> References => Delegate.References;
@@ -162,12 +150,12 @@ public class EntitySchemaDecorator : ISealedEntitySchema
         return Delegate.GetReferenceOrThrowException(referenceName);
     }
 
-    public IAttributeSchema? GetAttribute(string name)
+    public IEntityAttributeSchema? GetAttribute(string name)
     {
         return Delegate.GetAttribute(name);
     }
 
-    public IAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
+    public IEntityAttributeSchema? GetAttributeByName(string name, NamingConvention namingConvention)
     {
         return Delegate.GetAttributeByName(name, namingConvention);
     }

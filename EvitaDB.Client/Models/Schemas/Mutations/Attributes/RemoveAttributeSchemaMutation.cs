@@ -45,7 +45,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema) where TS : class, IAttributeSchema
+    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         return default;
@@ -54,7 +54,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
     public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        IAttributeSchema? existingAttributeSchema = entitySchema!.GetAttribute(Name);
+        IEntityAttributeSchema? existingAttributeSchema = entitySchema!.GetAttribute(Name);
         if (existingAttributeSchema is null)
         {
             // the attribute schema was already removed - or just doesn't exist,

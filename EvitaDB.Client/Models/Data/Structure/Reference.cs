@@ -11,7 +11,7 @@ public class Reference : IReference
     public ReferenceKey ReferenceKey { get; }
     public GroupEntityReference? Group { get; }
     public ISealedEntity? GroupEntity { get; }
-    private Attributes Attributes { get; }
+    private Attributes<IAttributeSchema> Attributes { get; }
     public bool Dropped { get; }
     public ISealedEntity? ReferencedEntity { get; }
     public IReferenceSchema? ReferenceSchema => EntitySchema.GetReference(ReferenceKey.ReferenceName);
@@ -44,7 +44,7 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
-		Attributes = new Attributes(
+		Attributes = new ReferenceAttributes(
 			entitySchema, 
 			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
 			new List<AttributeValue>(),
@@ -73,7 +73,7 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
-		Attributes = new Attributes(
+		Attributes = new ReferenceAttributes(
 			entitySchema, 
 			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
 			new List<AttributeValue>(),
@@ -92,7 +92,7 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
-		Attributes attributes,
+		Attributes<IAttributeSchema> attributes,
 		ISealedEntity? referencedEntity = null,
 		ISealedEntity? groupEntity = null,
 		bool dropped = false
@@ -129,7 +129,7 @@ public class Reference : IReference
 		_referencedEntityType = referencedEntityType;
 		Group = group;
 		IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
-		Attributes = new Attributes(
+		Attributes = new ReferenceAttributes(
 			entitySchema, 
 			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
 			attributes,
@@ -147,7 +147,7 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
-		Attributes attributes,
+		Attributes<IAttributeSchema> attributes,
 		ISealedEntity? referencedEntity = null,
 		ISealedEntity? groupEntity = null,
 		bool dropped = false

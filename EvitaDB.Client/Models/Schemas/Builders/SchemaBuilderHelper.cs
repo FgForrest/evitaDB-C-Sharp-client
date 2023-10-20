@@ -40,10 +40,10 @@ public static class SchemaBuilderHelper
      * Method checks that the attribute schema has all its possible variants for all {@link io.evitadb.utils.NamingConvention}
      * unique among all other attribute schemas on the same level of the parent schema.
      */
-    public static void CheckNamesAreUniqueInAllNamingConventions(
-        ICollection<IAttributeSchema> attributeSchemas,
+    public static void CheckNamesAreUniqueInAllNamingConventions<T>(
+        ICollection<T> attributeSchemas,
         ICollection<SortableAttributeCompoundSchema> compoundSchemas,
-        INamedSchema newSchema)
+        INamedSchema newSchema) where T : IAttributeSchema
     {
         attributeSchemas
             .Where(it => !Equals(it.Name, newSchema.Name) && newSchema is IAttributeSchema)
@@ -127,16 +127,16 @@ public static class SchemaBuilderHelper
         }
     }
 
-    public static void CheckSortableTraits(
+    public static void CheckSortableTraits<T> (
         string compoundSchemaName,
         ISortableAttributeCompoundSchema compoundSchemaContract,
-        IDictionary<string, IAttributeSchema> attributeSchemas
-    )
+        IDictionary<string, T> attributeSchemas
+    ) where T : IAttributeSchema
     {
         foreach (AttributeElement attributeElement in compoundSchemaContract.AttributeElements)
         {
             IAttributeSchema? attributeSchema =
-                attributeSchemas.TryGetValue(attributeElement.AttributeName, out IAttributeSchema? result)
+                attributeSchemas.TryGetValue(attributeElement.AttributeName, out T? result)
                     ? result
                     : null;
             if (attributeSchema == null)

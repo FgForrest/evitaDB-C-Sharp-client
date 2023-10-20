@@ -10,8 +10,8 @@ namespace EvitaDB.Client.Models.Data;
 /// the data that are available on the read-only <see cref="IEntity"/> interface.
 /// </summary>
 /// <typeparam name="TW">entity or its data editors type</typeparam>
-public interface IEntityEditor<out TW> : IEntity, IAttributesEditor<TW>, IAssociatedDataEditor<TW>, IPricesEditor<TW>
-    where TW : IEntityEditor<TW> //TODO: OTHER EDITORS
+public interface IEntityEditor<out TW> : IEntity, IAttributesEditor<TW, IEntityAttributeSchema>, IAssociatedDataEditor<TW>, IPricesEditor<TW>
+    where TW : IEntityEditor<TW>
 {
     /// <summary>
     /// Sets hierarchy information of the entity. Hierarchy information allows to compose hierarchy tree composed of
@@ -24,7 +24,7 @@ public interface IEntityEditor<out TW> : IEntity, IAttributesEditor<TW>, IAssoci
 
     /// <summary>
     /// Removes existing parent of the entity. If there are other entities, that refer transitively via
-    /// <see cref="IEntity.Parent"/> this entity their will become "orphans" and their parent needs to be removed
+    /// <see cref="IEntity.ParentEntity"/> this entity their will become "orphans" and their parent needs to be removed
     /// as well, or it must be "rewired" to another parent.
     /// </summary>
     /// <returns>self (builder pattern)</returns>

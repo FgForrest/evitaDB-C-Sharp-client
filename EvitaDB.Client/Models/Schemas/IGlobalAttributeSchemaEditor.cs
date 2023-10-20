@@ -1,6 +1,6 @@
 ﻿namespace EvitaDB.Client.Models.Schemas;
 
-public interface IGlobalAttributeSchemaEditor<out T> : IAttributeSchemaEditor<T>
+public interface IGlobalAttributeSchemaEditor<out T> : IEntityAttributeSchemaEditor<T>
     where T : IGlobalAttributeSchemaEditor<T>
 {
     T UniqueGlobally();

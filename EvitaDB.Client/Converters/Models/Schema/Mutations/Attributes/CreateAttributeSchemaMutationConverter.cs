@@ -15,6 +15,7 @@ public class CreateAttributeSchemaMutationConverter : ISchemaMutationConverter<C
             Sortable = mutation.Sortable,
             Localized = mutation.Localized,
             Nullable = mutation.Nullable,
+            Representative = mutation.Representative,
             Type = EvitaDataTypesConverter.ToGrpcEvitaDataType(mutation.Type),
             IndexedDecimalPlaces = mutation.IndexedDecimalPlaces,
             Description = mutation.Description,
@@ -34,6 +35,7 @@ public class CreateAttributeSchemaMutationConverter : ISchemaMutationConverter<C
             mutation.Sortable,
             mutation.Localized,
             mutation.Nullable,
+            mutation.Representative,
             EvitaDataTypesConverter.ToEvitaDataType(mutation.Type),
             EvitaDataTypesConverter.ToEvitaValue(mutation.DefaultValue),
             mutation.IndexedDecimalPlaces

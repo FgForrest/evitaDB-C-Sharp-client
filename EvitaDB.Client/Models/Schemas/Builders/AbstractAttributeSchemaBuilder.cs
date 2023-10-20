@@ -258,7 +258,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
             TS? currentSchema = BaseSchema;
             foreach (IAttributeSchemaMutation mutation in ToAttributeMutation())
             {
-                currentSchema = mutation.Mutate(null, currentSchema);
+                currentSchema = mutation.Mutate(null, currentSchema, GetAttributeSchemaType());
                 if (currentSchema == null)
                 {
                     throw new EvitaInternalError("Attribute unexpectedly removed from inside!");
@@ -272,6 +272,8 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
 
         return UpdatedSchema;
     }
+    
+    protected abstract Type GetAttributeSchemaType();
 
     /// <summary>
     /// Method allows adding specific mutation on the fly.

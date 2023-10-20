@@ -33,15 +33,15 @@ public class ReferenceAttributeMutation : ReferenceMutation
                                                " - reference doesn't exist!")
         );
         // this is kind of expensive, let's hope references will not have many attributes on them that frequently change
-        ExistingAttributesBuilder attributeBuilder = new ExistingAttributesBuilder(
+        ExistingReferenceAttributesBuilder attributeBuilder = new ExistingReferenceAttributesBuilder(
             entitySchema,
-            existingValue!.ReferenceSchema,
-            existingValue.GetAttributeValues()!,
+            existingValue!.ReferenceSchema!,
+            existingValue.GetAttributeValues(),
             existingValue.ReferenceSchema is not null
                 ? existingValue.ReferenceSchema.GetAttributes()
                 : new Dictionary<string, IAttributeSchema>()
         );
-        Structure.Attributes newAttributes = attributeBuilder
+        Attributes<IAttributeSchema> newAttributes = attributeBuilder
             .MutateAttribute(AttributeMutation)
             .Build();
 

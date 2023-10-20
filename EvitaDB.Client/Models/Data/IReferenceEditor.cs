@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data;
 
@@ -7,7 +8,7 @@ namespace EvitaDB.Client.Models.Data;
 /// Interface follows the <a href="https://en.wikipedia.org/wiki/Builder_pattern">builder pattern</a> allowing to alter
 /// the data that are available on the read-only <see cref="IReference"/> interface.
 /// </summary>
-public interface IReferenceEditor<out TW> : IReference, IAttributesEditor<TW> where TW : IReferenceEditor<TW>
+public interface IReferenceEditor<out TW> : IReference, IAttributesEditor<TW, IAttributeSchema> where TW : IReferenceEditor<TW>
 {
     /// <summary>
     /// Sets group id to the reference. The group type must be already known by the entity schema.

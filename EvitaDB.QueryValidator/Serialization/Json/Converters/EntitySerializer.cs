@@ -1,6 +1,7 @@
 ﻿using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Schemas;
 using Newtonsoft.Json;
 
 namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
@@ -187,7 +188,7 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
     /**
      * Writes all attributes from {@link AttributesContract} to a JSON.
      */
-    private static void WriteAttributes(JsonWriter writer, IAttributes value)
+    private static void WriteAttributes<T>(JsonWriter writer, IAttributes<T> value) where T : IAttributeSchema
     {
         if (value.AttributesAvailable() && value.GetAttributeValues().Any())
         {

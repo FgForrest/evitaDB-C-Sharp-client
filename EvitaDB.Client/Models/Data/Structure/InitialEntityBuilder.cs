@@ -25,7 +25,7 @@ public class InitialEntityBuilder : IEntityBuilder
     public int Version => 1;
     public IEntitySchema Schema { get; }
     public int? Parent { get; private set; }
-    private IAttributesBuilder AttributesBuilder { get; }
+    private InitialEntityAttributesBuilder AttributesBuilder { get; }
     private IAssociatedDataBuilder AssociatedDataBuilder { get; }
     private IPricesBuilder PricesBuilder { get; }
     private IDictionary<ReferenceKey, IReference> References { get; }
@@ -49,6 +49,11 @@ public class InitialEntityBuilder : IEntityBuilder
 
     public bool AssociatedDataAvailable => AssociatedDataBuilder.AssociatedDataAvailable();
     public bool AttributesAvailable() => AttributesBuilder.AttributesAvailable();
+    public bool AttributesAvailable(CultureInfo locale)
+    {
+        return AttributesBuilder.AttributesAvailable(locale);
+    }
+
     public bool ReferencesAvailable() => true;
 
     public bool ParentAvailable() => true;
@@ -77,7 +82,7 @@ public class InitialEntityBuilder : IEntityBuilder
         Type = entitySchema.Name;
         Schema = entitySchema;
         PrimaryKey = primaryKey;
-        AttributesBuilder = new InitialAttributesBuilder(entitySchema);
+        AttributesBuilder = new InitialEntityAttributesBuilder(entitySchema);
         foreach (AttributeValue attributeValue in attributeValues)
         {
             AttributeKey attributeKey = attributeValue.Key;
@@ -148,7 +153,7 @@ public class InitialEntityBuilder : IEntityBuilder
         Type = schema.Name;
         Schema = schema;
         PrimaryKey = primaryKey;
-        AttributesBuilder = new InitialAttributesBuilder(schema, null);
+        AttributesBuilder = new InitialEntityAttributesBuilder(schema);
         AssociatedDataBuilder = new InitialAssociatedDataBuilder(schema);
         PricesBuilder = new InitialPricesBuilder(schema);
         References = new Dictionary<ReferenceKey, IReference>();
@@ -196,11 +201,7 @@ public class InitialEntityBuilder : IEntityBuilder
     }
 
     public IEntityClassifierWithParent? ParentEntity => null;
-
-    bool IAttributes.AttributesAvailable() => AttributesBuilder.AttributesAvailable();
-
-    bool IAttributes.AttributesAvailable(CultureInfo locale) => AttributesBuilder.AttributesAvailable(locale);
-
+    
     public bool AttributeAvailable(string attributeName) => AttributesBuilder.AttributeAvailable(attributeName);
 
     public bool AttributeAvailable(string attributeName, CultureInfo locale) =>
@@ -241,7 +242,7 @@ public class InitialEntityBuilder : IEntityBuilder
         return AttributesBuilder.GetAttributeValue(attributeKey);
     }
 
-    public IAttributeSchema? GetAttributeSchema(string attributeName)
+    public IEntityAttributeSchema? GetAttributeSchema(string attributeName)
     {
         return AttributesBuilder.GetAttributeSchema(attributeName);
     }

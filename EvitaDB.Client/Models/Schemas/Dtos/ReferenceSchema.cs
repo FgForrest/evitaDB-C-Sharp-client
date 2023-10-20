@@ -18,11 +18,11 @@ public class ReferenceSchema : IReferenceSchema
     public bool ReferencedGroupTypeManaged { get; }
     public bool IsIndexed { get; }
     public bool IsFaceted { get; }
-    public ICollection<IAttributeSchema> NonNullableAttributes { get; }
-    public IDictionary<string, IAttributeSchema> Attributes { get; }
+    public ICollection<AttributeSchema> NonNullableAttributes { get; }
+    public IDictionary<string, AttributeSchema> Attributes { get; }
     private IDictionary<NamingConvention, string?> EntityTypeNameVariants { get; }
     private IDictionary<NamingConvention, string?> GroupTypeNameVariants { get; }
-    private IDictionary<string, IAttributeSchema[]> AttributeNameIndex { get; }
+    private IDictionary<string, AttributeSchema[]> AttributeNameIndex { get; }
     private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
     private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
@@ -204,7 +204,7 @@ public class ReferenceSchema : IReferenceSchema
         ReferencedGroupTypeManaged = referencedGroupTypeManaged;
         IsIndexed = indexed;
         IsFaceted = faceted;
-        Attributes = attributes.ToDictionary(x => x.Key, x => x.Value);
+        Attributes = attributes.ToDictionary(x => x.Key, x => EntitySchema.ToReferenceAttributeSchema(x.Value));
         AttributeNameIndex = EntitySchema.InternalGenerateNameVariantIndex(
             Attributes.Values, x => x.NameVariants
         );
@@ -266,7 +266,7 @@ public class ReferenceSchema : IReferenceSchema
 
     public IDictionary<string, IAttributeSchema> GetAttributes()
     {
-        return Attributes;
+        return Attributes.ToDictionary(x=>x.Key, x => (IAttributeSchema) x.Value);
     }
 
     public IAttributeSchema? GetAttribute(string name)

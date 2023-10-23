@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
-using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Enum = System.Enum;
 using Type = System.Type;
@@ -654,8 +653,14 @@ public static class EvitaDataTypesConverter
             TimeSpan.FromHours(int.Parse(offsetDateTimeValue.Offset.Substring(1, 2)));
         bool add = offsetDateTimeValue.Offset.ElementAt(0) == '+';
         TimeSpan offset = add ? hourOffset : hourOffset.Negate();
-        return DateTimeOffset.FromUnixTimeSeconds(offsetDateTimeValue.Timestamp.Seconds)
+        return ToDateTimeOffset(offsetDateTimeValue.Timestamp)
             .ToOffset(offset);
+    }
+    
+    private static DateTimeOffset ToDateTimeOffset(Timestamp timestamp)
+    {
+        int milliseconds = timestamp.Nanos / 1000000;
+        return DateTimeOffset.UnixEpoch.AddSeconds(timestamp.Seconds).AddMilliseconds(milliseconds);
     }
 
     public static DateTimeOffset[] ToDateTimeOffsetArray(GrpcOffsetDateTimeArray arrayValue)
@@ -665,7 +670,7 @@ public static class EvitaDataTypesConverter
 
     public static DateTime ToDateTime(GrpcOffsetDateTime offsetDateTimeValue)
     {
-        return DateTimeOffset.FromUnixTimeSeconds(offsetDateTimeValue.Timestamp.Seconds).DateTime;
+        return ToDateTimeOffset(offsetDateTimeValue.Timestamp).DateTime;
     }
 
     public static DateTime[] ToDateTimeArray(GrpcOffsetDateTimeArray arrayValue)
@@ -890,7 +895,7 @@ public static class EvitaDataTypesConverter
         TimeSpan offset = dateTimeValue.Offset;
         return new GrpcOffsetDateTime
         {
-            Timestamp = new Timestamp {Seconds = dateTimeValue.ToUnixTimeSeconds()},
+            Timestamp = new Timestamp {Seconds = dateTimeValue.ToUnixTimeSeconds(), Nanos = dateTimeValue.Nanosecond},
             Offset = $"{(offset < TimeSpan.Zero ? "-" : "+")}{offset:hh\\:mm}"
         };
     }

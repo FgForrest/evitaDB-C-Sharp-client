@@ -21,7 +21,7 @@ public class SetupFixture : IAsyncLifetime
     private const int GrpcPort = 5556;
     private const int SystemApiPort = 5557;
     private const string Host = "localhost";
-    private const string ImageName = "evitadb/evitadb:canary";
+    private const string ImageName = "evitadb/evitadb:latest";
     
     public async Task<EvitaClient> GetClient()
     {

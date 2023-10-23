@@ -21,7 +21,7 @@ public class AssociatedDataSchemaBuilder : IAssociatedDataSchemaEditor
 
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
     public string? DeprecationNotice => _instance.DeprecationNotice;
 
     public bool Nullable => _instance.Nullable;
@@ -67,9 +67,11 @@ public class AssociatedDataSchemaBuilder : IAssociatedDataSchemaEditor
         _instance ??= ToInstance();
     }
 
-    public string GetNameVariant(NamingConvention namingConvention)
+    public string? GetNameVariant(NamingConvention namingConvention)
     {
-        return NameVariants[namingConvention];
+        return NameVariants.TryGetValue(namingConvention, out string? nameVariant)
+            ? nameVariant
+            : null;
     }
 
     public IAssociatedDataSchemaEditor WithDescription(string? description)

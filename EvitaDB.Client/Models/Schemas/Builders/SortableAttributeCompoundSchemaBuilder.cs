@@ -21,7 +21,7 @@ public class SortableAttributeCompoundSchemaBuilder : ISortableAttributeCompound
 
     public string Name => _instance.Name;
     public string? Description => _instance.Description;
-    public IDictionary<NamingConvention, string> NameVariants => _instance.NameVariants;
+    public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
     public string? DeprecationNotice => _instance.DeprecationNotice;
     public IList<AttributeElement> AttributeElements => _instance.AttributeElements;
 
@@ -67,7 +67,7 @@ public class SortableAttributeCompoundSchemaBuilder : ISortableAttributeCompound
         _instance ??= ToInstance();
     }
 
-    public string GetNameVariant(NamingConvention namingConvention)
+    public string? GetNameVariant(NamingConvention namingConvention)
     {
         return _instance.GetNameVariant(namingConvention);
     }

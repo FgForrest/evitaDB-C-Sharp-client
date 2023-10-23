@@ -274,11 +274,11 @@ public static class EvitaDataTypes
         }
         if (value is DateTimeOffset dateTimeOffsetValue)
         {
-            return dateTimeOffsetValue.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
+            return dateTimeOffsetValue.ToString($"yyyy-MM-ddTHH:mm:ss{DateTimeMillisecondFormat(dateTimeOffsetValue.Millisecond)}zzz", CultureInfo.InvariantCulture);
         }
         if (value is DateTime dateTimeValue)
         {
-            return dateTimeValue.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
+            return dateTimeValue.ToString($"yyyy-MM-ddTHH:mm:ss{DateTimeMillisecondFormat(dateTimeValue.Millisecond)}", CultureInfo.InvariantCulture);
         }
         if (value is DateOnly dateOnlyValue)
         {
@@ -286,7 +286,7 @@ public static class EvitaDataTypes
         }
         if (value is TimeOnly timeOnlyValue)
         {
-            return timeOnlyValue.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+            return timeOnlyValue.ToString($"HH:mm:ss{DateTimeMillisecondFormat(timeOnlyValue.Millisecond)}", CultureInfo.InvariantCulture);
         }
         if (value is CultureInfo cultureInfoValue)
         {
@@ -316,5 +316,29 @@ public static class EvitaDataTypes
         }
 
         throw new UnsupportedDataTypeException(value.GetType());
+    }
+
+    private static string DateTimeMillisecondFormat(int milliseconds)
+    {
+        if (milliseconds == 0)
+        {
+            // No milliseconds, format with seconds precision
+            return "";
+        }
+
+        if (milliseconds % 100 == 0)
+        {
+            // One digit in milliseconds, format with one millisecond
+            return  ".f";
+        }
+
+        if (milliseconds % 10 == 0)
+        {
+            // Two digits in milliseconds, format with two milliseconds
+            return  ".ff";
+        }
+
+        // Three or more digits in milliseconds, format with three milliseconds
+        return  ".fff";
     }
 }

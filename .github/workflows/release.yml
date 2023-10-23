@@ -1,4 +1,4 @@
-# Builds and releases a new public version of evitaLab a puts it into `Releases` section of GitHub
+# Builds and releases a new public version of C# evitaDB driver a puts it into `Releases` section of GitHub
 
 name: Release
 

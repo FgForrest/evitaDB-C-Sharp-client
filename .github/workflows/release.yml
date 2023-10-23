@@ -96,7 +96,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./Validator.zip
-          asset_name: Validator (linux)
+          asset_name: Validator.zip
           asset_content_type: application/zip
 
       - name: Upload Validator-win.zip to release
@@ -104,7 +104,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./Validator-win.zip
-          asset_name: Validator (win)
+          asset_name: Validator-win.zip
           asset_content_type: application/gzip
 
       - name: Publish nuget

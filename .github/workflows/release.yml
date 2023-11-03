@@ -58,8 +58,8 @@ jobs:
       - name: Build query validator
         run: |
           cd EvitaDB.QueryValidator
-          dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false
-          dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
+          dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false --no-build
+          dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false --no-build
 
       - name: Zip 
         uses: vimtor/action-zip@v1

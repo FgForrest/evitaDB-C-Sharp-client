@@ -8,4 +8,4 @@ public interface IHistogram
     public Bucket[] Buckets { get; }
 }
 
-public record Bucket(int Index, decimal Threshold, int Occurrences);
+public record Bucket(int Index, decimal Threshold, int Occurrences, bool Requested);

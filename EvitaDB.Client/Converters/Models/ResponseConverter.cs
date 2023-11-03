@@ -221,6 +221,7 @@ public static class ResponseConverter
             grpcLevelInfo.Entity is not null
                 ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcLevelInfo.Entity, evitaRequest)
                 : EntityConverter.ToEntityReference(grpcLevelInfo.EntityReference),
+            grpcLevelInfo.Requested,
             grpcLevelInfo.QueriedEntityCount,
             grpcLevelInfo.ChildrenCount,
             grpcLevelInfo.Items.Select(it => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, it)).ToList()
@@ -254,7 +255,8 @@ public static class ResponseConverter
         return new Bucket(
             grpcBucket.Index,
             EvitaDataTypesConverter.ToDecimal(grpcBucket.Threshold),
-            grpcBucket.Occurrences
+            grpcBucket.Occurrences,
+            grpcBucket.Requested
         );
     }
 }

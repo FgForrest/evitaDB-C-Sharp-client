@@ -182,10 +182,10 @@ public class Hierarchy : IEvitaResponseExtraResult
     }
 }
 
-public record LevelInfo(IEntityClassifier Entity, int? QueriedEntityCount, int? ChildrenCount, List<LevelInfo> Children)
+public record LevelInfo(IEntityClassifier Entity, bool Requested, int? QueriedEntityCount, int? ChildrenCount, List<LevelInfo> Children)
 {
-    public LevelInfo(LevelInfo levelInfo, List<LevelInfo> children) : this(levelInfo.Entity,
-        levelInfo.QueriedEntityCount, levelInfo.ChildrenCount, children)
+    public LevelInfo(LevelInfo levelInfo, List<LevelInfo> children) : 
+        this(levelInfo.Entity, levelInfo.Requested, levelInfo.QueriedEntityCount, levelInfo.ChildrenCount, children)
     {
     }
 

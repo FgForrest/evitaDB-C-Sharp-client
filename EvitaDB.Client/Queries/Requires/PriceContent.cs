@@ -32,7 +32,7 @@ public class PriceContent : AbstractRequireConstraintLeaf, IEntityContentRequire
     public string[] AdditionalPriceListsToFetch =>
         (Arguments.Length > 1 ? Arguments.Skip(1).ToArray() as string[] : EmptyPriceLists)!;
 
-    private PriceContent(params object[] arguments) : base(arguments)
+    private PriceContent(params object?[] arguments) : base(arguments)
     {
     }
 

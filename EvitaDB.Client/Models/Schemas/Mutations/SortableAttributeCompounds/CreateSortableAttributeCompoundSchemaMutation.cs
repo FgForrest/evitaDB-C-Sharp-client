@@ -21,11 +21,11 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
         AttributeElements = attributeElements;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        SortableAttributeCompoundSchema newCompoundSchema = Mutate(entitySchema, null, null);
-        SortableAttributeCompoundSchema? existingCompoundSchema = entitySchema.GetSortableAttributeCompound(Name);
+        SortableAttributeCompoundSchema newCompoundSchema = Mutate(entitySchema!, null, null);
+        SortableAttributeCompoundSchema? existingCompoundSchema = entitySchema!.GetSortableAttributeCompound(Name);
         if (existingCompoundSchema == null)
         {
             return EntitySchema.InternalBuild(
@@ -67,7 +67,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
     public IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
-        SortableAttributeCompoundSchema? newCompoundSchema = Mutate(entitySchema, referenceSchema, null);
+        SortableAttributeCompoundSchema newCompoundSchema = Mutate(entitySchema, referenceSchema, null);
         SortableAttributeCompoundSchema? existingCompoundSchema = referenceSchema!.GetSortableAttributeCompound(Name);
         if (existingCompoundSchema == null)
         {
@@ -78,14 +78,14 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
                 referenceSchema.DeprecationNotice,
                 referenceSchema.ReferencedEntityType,
                 referenceSchema.ReferencedEntityTypeManaged
-                    ? new Dictionary<NamingConvention, string>()
-                    : referenceSchema.GetEntityTypeNameVariants(s => default),
+                    ? new Dictionary<NamingConvention, string?>()
+                    : referenceSchema.GetEntityTypeNameVariants(_ => null!),
                 referenceSchema.ReferencedEntityTypeManaged,
                 referenceSchema.Cardinality,
                 referenceSchema.ReferencedGroupType,
                 referenceSchema.ReferencedGroupTypeManaged
-                    ? new Dictionary<NamingConvention, string>()
-                    : referenceSchema.GetGroupTypeNameVariants(s => null),
+                    ? new Dictionary<NamingConvention, string?>()
+                    : referenceSchema.GetGroupTypeNameVariants(_ => null!),
                 referenceSchema.ReferencedGroupTypeManaged,
                 referenceSchema.IsIndexed,
                 referenceSchema.IsFaceted,
@@ -110,7 +110,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
         );
     }
 
-    public SortableAttributeCompoundSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
+    public SortableAttributeCompoundSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
         ISortableAttributeCompoundSchema? sortableAttributeCompoundSchema)
     {
         return SortableAttributeCompoundSchema.InternalBuild(

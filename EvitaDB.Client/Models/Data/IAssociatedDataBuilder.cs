@@ -18,7 +18,7 @@ public interface IAssociatedDataBuilder : IAssociatedDataEditor<IAssociatedDataB
             null, null,
             associatedDataValue.Key.Localized,
             true,
-            associatedDataValue.Value.GetType()
+            associatedDataValue.Value?.GetType()!
         );
     }
 }

@@ -8,13 +8,13 @@ public class FilterGroupBy : AbstractFilterConstraintContainer
     {
     }
     
-    public FilterGroupBy(params IFilterConstraint[] children) : base(children)
+    public FilterGroupBy(params IFilterConstraint?[] children) : base(children)
     {
     }
     
     public new bool Necessary => Applicable;
     
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint[] children, IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(additionalChildren.Length == 0, "FilterGroupBy doesn't accept other than filtering constraints!");
         return children.Length > 0 ? new FilterGroupBy(children) : new FilterGroupBy();

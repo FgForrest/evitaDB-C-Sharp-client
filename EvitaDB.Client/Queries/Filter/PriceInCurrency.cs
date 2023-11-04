@@ -17,6 +17,4 @@ public class PriceInCurrency : AbstractFilterConstraintLeaf
     public PriceInCurrency(Currency currency) : base(currency)
     {
     }
-    
-    
 }

@@ -25,14 +25,14 @@ public interface IReferenceSortableAttributeCompoundSchemaMutation : ISortableAt
             referenceSchema.DeprecationNotice,
             referenceSchema.ReferencedEntityType,
             referenceSchema.ReferencedEntityTypeManaged
-                ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetEntityTypeNameVariants(s => null),
+                ? new Dictionary<NamingConvention, string?>()
+                : referenceSchema.GetEntityTypeNameVariants(_ => null!),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
             referenceSchema.ReferencedGroupTypeManaged
-                ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetGroupTypeNameVariants(s => null),
+                ? new Dictionary<NamingConvention, string?>()
+                : referenceSchema.GetGroupTypeNameVariants(_ => null!),
             referenceSchema.ReferencedGroupTypeManaged,
             referenceSchema.IsIndexed,
             referenceSchema.IsFaceted,

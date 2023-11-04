@@ -2,7 +2,7 @@
 
 public class AttributeStartsWith : AbstractAttributeFilterConstraintLeaf
 {
-    private AttributeStartsWith(params object[] arguments) : base(arguments)
+    private AttributeStartsWith(params object?[] arguments) : base(arguments)
     {
     }
     

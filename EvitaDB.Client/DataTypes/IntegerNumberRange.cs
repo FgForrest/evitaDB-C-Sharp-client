@@ -51,7 +51,7 @@ public class IntegerNumberRange : NumberRange<int>
         {
             return Convert.ToInt32(toBeNumber);
         }
-        catch (FormatException ex)
+        catch (FormatException)
         {
             throw new DataTypeParseException("String " + toBeNumber + " is not a integer number!");
         }

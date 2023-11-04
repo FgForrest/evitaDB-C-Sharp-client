@@ -27,7 +27,7 @@ public interface IEntitySchemaEditor<out TS> : IEntitySchema, INamedSchemaWithDe
 	
 	new TS WithPrice();
 	
-	TS WithPrice(int indexedDecimalPlaces);
+	new TS WithPrice(int indexedDecimalPlaces);
 	
 	TS WithPriceInCurrency(params Currency[] currency);
 	

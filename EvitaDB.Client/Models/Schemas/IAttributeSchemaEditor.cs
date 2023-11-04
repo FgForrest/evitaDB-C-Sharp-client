@@ -51,7 +51,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be filtered</param>
     /// <returns>builder to continue with configuration</returns>
-    T Filterable(Func<bool> decider);
+    new T Filterable(Func<bool> decider);
     
     /// <summary>
     /// <remarks>
@@ -90,7 +90,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be filtered</param>
     /// <returns>builder to continue with configuration</returns>
-    T Unique(Func<bool> decider);
+    new T Unique(Func<bool> decider);
     
     /// <summary>
     /// When attribute is sortable, it is possible to sort entities by this attribute. Do not mark attribute
@@ -109,7 +109,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be sortable</param>
     /// <returns>builder to continue with configuration</returns>
-    T Sortable(Func<bool> decider);
+    new T Sortable(Func<bool> decider);
     
     /// <summary>
     /// Localized attribute has to be ALWAYS used in connection with specific <see cref="CultureInfo"/>. In other
@@ -124,7 +124,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be localized</param>
     /// <returns>builder to continue with configuration</returns>
-    T Localized(Func<bool> decider);
+    new T Localized(Func<bool> decider);
     
     /// <summary>
     /// When attribute is nullable, its values may be missing in the entities. Otherwise, the system will enforce
@@ -139,7 +139,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be nullable</param>
     /// <returns>builder to continue with configuration</returns>
-    T Nullable(Func<bool> decider);
+    new T Nullable(Func<bool> decider);
     
     /// <summary>
     /// Determines how many fractional places are important when entities are compared during filtering or sorting. It is

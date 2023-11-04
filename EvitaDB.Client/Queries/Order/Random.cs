@@ -3,7 +3,7 @@
 public class Random : AbstractOrderConstraintLeaf
 {
     public new bool Applicable => true;
-    private Random(params object[] arguments) : base(arguments)
+    private Random(params object?[] arguments) : base(arguments)
     {
     }
     

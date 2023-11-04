@@ -4,7 +4,7 @@ public class PriceNatural : AbstractOrderConstraintLeaf
 {
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
     public OrderDirection Direction => (OrderDirection) Arguments[0]!;
-    private PriceNatural(params object[] args) : base(args)
+    private PriceNatural(params object?[] args) : base(args)
     {
     }
     

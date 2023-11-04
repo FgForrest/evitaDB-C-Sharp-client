@@ -6,7 +6,7 @@ public class AttributeEquals<T> : AbstractAttributeFilterConstraintLeaf
     
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 2;
     
-    private AttributeEquals(params object[] arguments) : base(arguments)
+    private AttributeEquals(params object?[] arguments) : base(arguments)
     {
     }
     

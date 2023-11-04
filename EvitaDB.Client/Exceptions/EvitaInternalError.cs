@@ -43,6 +43,7 @@ public class EvitaInternalError : ArgumentException, IEvitaError
     private EvitaInternalError(string privateMessage, string publicMessage, string errorCode) : base(privateMessage)
     {
         PublicMessage = publicMessage;
+        PrivateMessage = privateMessage;
         ErrorCode = errorCode;
     }
 }

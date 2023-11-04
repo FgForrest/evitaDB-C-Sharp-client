@@ -10,7 +10,7 @@ public class HierarchyLevel : AbstractRequireConstraintLeaf, IHierarchyStopAtReq
     public int Level => (int) Arguments[0]!;
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
     
-    private HierarchyLevel(params object[] arguments) : base(ConstraintName, arguments)
+    private HierarchyLevel(params object?[] arguments) : base(ConstraintName, arguments)
     {
     }
 

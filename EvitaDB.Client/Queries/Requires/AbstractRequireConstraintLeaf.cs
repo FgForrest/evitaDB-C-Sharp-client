@@ -2,11 +2,11 @@
 
 public abstract class AbstractRequireConstraintLeaf : ConstraintLeaf, IRequireConstraint
 {
-    protected AbstractRequireConstraintLeaf(params object[] arguments) : base(arguments)
+    protected AbstractRequireConstraintLeaf(params object?[] arguments) : base(arguments)
     {
     }
 
-    protected AbstractRequireConstraintLeaf(string name, params object[] arguments) : base(name, arguments)
+    protected AbstractRequireConstraintLeaf(string name, params object?[] arguments) : base(name, arguments)
     {
     }
 

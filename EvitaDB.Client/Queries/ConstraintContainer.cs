@@ -53,7 +53,7 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         return (children.Any(x => x is null)
             ?
             //noinspection unchecked
-            children.Where(x => x is not null).ToArray()!
+            children.Where(x => x is not null).ToArray()
             : children)!;
     }
 
@@ -69,7 +69,7 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         IConstraint?[] newAdditionalChildren;
         if (additionalChildren.Any(x => x is null))
         {
-            newAdditionalChildren = additionalChildren.Where(x => x is not null).ToArray()!;
+            newAdditionalChildren = additionalChildren.Where(x => x is not null).ToArray();
         }
         else
         {
@@ -138,16 +138,16 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
         return Children.ToList().GetEnumerator();
     }
 
-    public abstract T GetCopyWithNewChildren(T?[] children, IConstraint[] additionalChildren);
+    public abstract T GetCopyWithNewChildren(T?[] children, IConstraint?[] additionalChildren);
 
-    protected ConstraintContainer(object[] arguments, T?[] children, params IConstraint[] additionalChildren) :
+    protected ConstraintContainer(object?[] arguments, T?[] children, params IConstraint?[] additionalChildren) :
         base(arguments)
     {
         Children = ValidateAndFilterChildren(children);
         AdditionalChildren = ValidateAndFilterAdditionalChildren(additionalChildren);
     }
 
-    protected ConstraintContainer(object[] arguments, params T?[] children) : this(arguments, children,
+    protected ConstraintContainer(object?[] arguments, params T?[] children) : this(arguments, children,
         NoAdditionalChildren)
     {
     }
@@ -156,19 +156,19 @@ public abstract class ConstraintContainer<T> : BaseConstraint, IConstraintContai
     {
     }
 
-    protected ConstraintContainer(T[] children, params IConstraint[] additionalChildren) : this(NoArguments, children,
+    protected ConstraintContainer(T?[] children, params IConstraint?[] additionalChildren) : this(NoArguments, children,
         additionalChildren)
     {
     }
 
-    protected ConstraintContainer(string? name, object[] arguments, T[] children,
-        params IConstraint[] additionalChildren) : base(name, arguments)
+    protected ConstraintContainer(string? name, object?[] arguments, T?[] children,
+        params IConstraint?[] additionalChildren) : base(name, arguments)
     {
         Children = ValidateAndFilterChildren(children);
         AdditionalChildren = ValidateAndFilterAdditionalChildren(additionalChildren);
     }
 
-    protected ConstraintContainer(string? name, object[] arguments, params T[] children) : this(name, arguments,
+    protected ConstraintContainer(string? name, object?[] arguments, params T?[] children) : this(name, arguments,
         children, NoAdditionalChildren)
     {
     }

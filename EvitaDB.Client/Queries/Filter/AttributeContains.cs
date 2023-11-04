@@ -5,7 +5,7 @@ public class AttributeContains : AbstractAttributeFilterConstraintLeaf
     public string TextToSearch => (string) Arguments[1]!;
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 2;
 
-    private AttributeContains(params object[] arguments) : base(arguments)
+    private AttributeContains(params object?[] arguments) : base(arguments)
     {
     }
     

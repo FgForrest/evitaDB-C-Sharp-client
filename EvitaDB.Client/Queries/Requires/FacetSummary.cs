@@ -22,11 +22,11 @@ public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequ
 
     public new bool Applicable => true;
 
-    private FacetSummary(object[] arguments, IRequireConstraint[] children, params IConstraint[] additionalChildren) : base(
+    private FacetSummary(object?[] arguments, IRequireConstraint?[] children, params IConstraint?[] additionalChildren) : base(
         arguments, children, additionalChildren)
     {
         Assert.NotNull(FacetStatisticsDepth, "Facet summary requires a facet statistics depth specification.");
-        foreach (IRequireConstraint child in children)
+        foreach (IRequireConstraint? child in children)
         {
             Assert.IsTrue(child is EntityFetch or EntityGroupFetch,
                 "Facet summary accepts only `EntityFetch` and `EntityGroupFetch` constraints.");
@@ -36,14 +36,14 @@ public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequ
             "Facet summary accepts only one `EntityFetch` constraint.");
         Assert.IsTrue(children.Count(x => x is EntityGroupFetch) <= 1,
             "Facet summary accepts only one `EntityGroupFetch` constraint.");
-        foreach (IConstraint child in additionalChildren)
+        foreach (IConstraint? child in additionalChildren)
         {
             Assert.IsTrue(child is Filter.FilterBy or Filter.FilterGroupBy or Order.OrderBy or Order.OrderGroupBy,
                 "Facet summary accepts only `FilterBy`, `FilterGroupBy`, `OrderBy` and `OrderGroupBy` constraints.");
         }
     }
 
-    public FacetSummary() : base(new object[] {FacetStatisticsDepth.Counts}, Array.Empty<IEntityContentRequire>())
+    public FacetSummary() : base(new object?[] {FacetStatisticsDepth.Counts}, Array.Empty<IEntityContentRequire?>())
     {
     }
 
@@ -51,28 +51,28 @@ public class FacetSummary : AbstractRequireConstraintContainer, IExtraResultRequ
     {
     }
 
-    public FacetSummary(FacetStatisticsDepth facetStatisticsDepth, params IEntityRequire[] requirements) :
+    public FacetSummary(FacetStatisticsDepth facetStatisticsDepth, params IEntityRequire?[] requirements) :
         this(new object[] {facetStatisticsDepth}, requirements)
     {
     }
 
-    public FacetSummary(FacetStatisticsDepth facetStatisticsDepth, FilterBy filterBy, FilterGroupBy filterGroupBy,
-        OrderBy orderBy, OrderGroupBy orderGroupBy, params IEntityRequire[] requirements) :
+    public FacetSummary(FacetStatisticsDepth facetStatisticsDepth, FilterBy? filterBy, FilterGroupBy? filterGroupBy,
+        OrderBy? orderBy, OrderGroupBy? orderGroupBy, params IEntityRequire?[] requirements) :
         base(
-            new object[] {facetStatisticsDepth},
+            new object?[] {facetStatisticsDepth},
             requirements, filterBy, filterGroupBy, orderBy, orderGroupBy)
     {
         Assert.IsTrue(requirements.Length <= 2,
             $"Expected maximum number of 2 entity requirements. Found {requirements.Length}.");
         if (requirements.Length == 2)
         {
-            Assert.IsTrue(requirements[0].GetType() != requirements[1].GetType(),
+            Assert.IsTrue(requirements[0]!.GetType() != requirements[1]!.GetType(),
                 "Cannot have two same entity requirements.");
         }
     }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         return new FacetSummary(Arguments, children, additionalChildren);
     }

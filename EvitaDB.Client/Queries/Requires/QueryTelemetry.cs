@@ -2,7 +2,7 @@
 
 public class QueryTelemetry : AbstractRequireConstraintLeaf
 {
-    private QueryTelemetry(params object[] arguments) : base(arguments)
+    private QueryTelemetry(params object?[] arguments) : base(arguments)
     {
     }
     

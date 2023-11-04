@@ -16,7 +16,7 @@ public class ModifySortableAttributeCompoundSchemaDescriptionMutation : IEntityS
         Description = description;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         SortableAttributeCompoundSchema existingCompoundSchema = entitySchema!.GetSortableAttributeCompound(Name) ??
@@ -26,7 +26,7 @@ public class ModifySortableAttributeCompoundSchemaDescriptionMutation : IEntityS
                                                                      entitySchema.Name + "` schema!"
                                                                  );
 
-        SortableAttributeCompoundSchema? updatedAttributeSchema = Mutate(entitySchema, null, existingCompoundSchema);
+        SortableAttributeCompoundSchema updatedAttributeSchema = Mutate(entitySchema, null, existingCompoundSchema);
         return (this as ISortableAttributeCompoundSchemaMutation).ReplaceSortableAttributeCompoundIfDifferent(
             entitySchema, existingCompoundSchema, updatedAttributeSchema
         );
@@ -44,14 +44,14 @@ public class ModifySortableAttributeCompoundSchemaDescriptionMutation : IEntityS
                                                                      referenceSchema.Name + "`!"
                                                                  );
 
-        SortableAttributeCompoundSchema? updatedAttributeSchema =
+        SortableAttributeCompoundSchema updatedAttributeSchema =
             Mutate(entitySchema, null, existingCompoundSchema);
         return (this as IReferenceSortableAttributeCompoundSchemaMutation).ReplaceSortableAttributeCompoundIfDifferent(
             referenceSchema, existingCompoundSchema, updatedAttributeSchema
         );
     }
 
-    public SortableAttributeCompoundSchema? Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
+    public SortableAttributeCompoundSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema,
         ISortableAttributeCompoundSchema? sortableAttributeCompoundSchema)
     {
         Assert.IsPremiseValid(sortableAttributeCompoundSchema != null,

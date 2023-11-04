@@ -4,7 +4,7 @@ public class PriceHistogram : AbstractRequireConstraintLeaf, IExtraResultRequire
 {
     public int RequestedBucketCount => (int) Arguments[0]!;
     
-    private PriceHistogram(params object[] arguments) : base(arguments)
+    private PriceHistogram(params object?[] arguments) : base(arguments)
     {
     }
     

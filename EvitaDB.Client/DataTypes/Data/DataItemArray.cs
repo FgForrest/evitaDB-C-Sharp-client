@@ -32,6 +32,6 @@ public sealed record DataItemArray(IDataItem?[] Children) : IDataItem
 
     public override string ToString()
     {
-        return $"[{string.Join(", ", Children.Select(c => c.ToString()))}]";
+        return $"[{string.Join(", ", Children.Select(c => c?.ToString()))}]";
     }
 }

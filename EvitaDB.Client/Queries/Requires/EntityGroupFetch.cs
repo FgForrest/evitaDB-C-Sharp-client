@@ -2,7 +2,7 @@
 
 public class EntityGroupFetch : AbstractRequireConstraintContainer, IEntityFetchRequire
 {
-    private EntityGroupFetch(IRequireConstraint[] requireConstraints) : base(requireConstraints)
+    private EntityGroupFetch(IRequireConstraint?[] requireConstraints) : base(requireConstraints)
     {
     }
     
@@ -10,7 +10,7 @@ public class EntityGroupFetch : AbstractRequireConstraintContainer, IEntityFetch
     {
     }
     
-    public EntityGroupFetch(params IEntityContentRequire[] requirements) : base(requirements)
+    public EntityGroupFetch(params IEntityContentRequire?[] requirements) : base(requirements)
     {
     }
     
@@ -20,7 +20,7 @@ public class EntityGroupFetch : AbstractRequireConstraintContainer, IEntityFetch
         .Select(x => x as IEntityContentRequire)
         .ToArray();
     
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         return new EntityGroupFetch(children);
     }

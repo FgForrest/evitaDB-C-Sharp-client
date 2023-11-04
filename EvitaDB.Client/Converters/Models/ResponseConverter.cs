@@ -205,7 +205,7 @@ public static class ResponseConverter
                     rootHierarchyConstraint,
                     cnt => cnt is IHierarchyRequireConstraint hrc && x.Key == hrc.OutputName
                 );
-                EntityFetch? entityFetch = QueryUtils.FindConstraint<EntityFetch>(hierarchyConstraint);
+                EntityFetch? entityFetch = QueryUtils.FindConstraint<EntityFetch>(hierarchyConstraint!);
                 return x.Value.LevelInfos.Select(y => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, y)).ToList();
             });
     }

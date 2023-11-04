@@ -10,7 +10,7 @@ public class HierarchyContent : AbstractRequireConstraintContainer, ISeparateEnt
     public new bool Applicable => true;
     public bool AllRequested => Arguments.Length == 0;
     
-    private HierarchyContent(IRequireConstraint[] requirements) : base(NoArguments, requirements)
+    private HierarchyContent(IRequireConstraint?[] requirements) : base(NoArguments, requirements)
     {
     }
 
@@ -30,7 +30,7 @@ public class HierarchyContent : AbstractRequireConstraintContainer, ISeparateEnt
     {
     }
     
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(additionalChildren.Length == 0, "Additional children are not supported for HierarchyContent!");
         return new HierarchyContent(children);

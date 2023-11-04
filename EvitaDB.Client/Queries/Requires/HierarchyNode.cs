@@ -14,14 +14,14 @@ public class HierarchyNode : AbstractRequireConstraintContainer, IHierarchyStopA
     {
     }
     
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(children.Length == 0, "Inner constraints of different type than FilterBy are not expected.");
         Assert.IsTrue(additionalChildren.Length == 1, "HierarchyNode expect FilterBy inner constraint!");
-        foreach (IConstraint constraint in additionalChildren)
+        foreach (IConstraint? constraint in additionalChildren)
         {
             Assert.IsTrue(constraint is FilterBy, "Constraint HierarchyNode accepts only FilterBy as inner constraint!");
         }
-        return new HierarchyNode((FilterBy) additionalChildren[0]);
+        return new HierarchyNode((FilterBy) additionalChildren[0]!);
     }
 }

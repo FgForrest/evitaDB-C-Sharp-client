@@ -51,7 +51,7 @@ public class LongNumberRange : NumberRange<long>
         {
             return Convert.ToInt64(toBeNumber);
         }
-        catch (FormatException ex)
+        catch (FormatException)
         {
             throw new DataTypeParseException("String " + toBeNumber + " is not a long number!");
         }

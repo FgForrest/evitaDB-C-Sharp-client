@@ -2,5 +2,5 @@
 
 public interface IEntityFetchRequire : IRequireConstraint, IEntityRequire, ISeparateEntityContentRequireContainer
 {
-    IEntityContentRequire[] Requirements { get; }
+    IEntityContentRequire?[] Requirements { get; }
 }

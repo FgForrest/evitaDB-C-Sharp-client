@@ -10,7 +10,7 @@ public class HierarchyDistance : AbstractRequireConstraintLeaf, IHierarchyStopAt
     public int Distance => (int) Arguments[0]!;
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
 
-    private HierarchyDistance(params object[] arguments) : base(ConstraintName, arguments)
+    private HierarchyDistance(params object?[] arguments) : base(ConstraintName, arguments)
     {
     }
     

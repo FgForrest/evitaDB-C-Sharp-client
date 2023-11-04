@@ -2,7 +2,7 @@
 
 public class EntityPrimaryKeyExact : AbstractOrderConstraintLeaf
 {
-    private EntityPrimaryKeyExact(params object[] args) : base(args)
+    private EntityPrimaryKeyExact(params object?[] args) : base(args)
     {
     }
     

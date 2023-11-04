@@ -2,7 +2,7 @@
 
 public class AttributeEndsWith : AbstractAttributeFilterConstraintLeaf
 {
-    private AttributeEndsWith(params object[] arguments) : base(arguments)
+    private AttributeEndsWith(params object?[] arguments) : base(arguments)
     {
     }
     

@@ -131,14 +131,14 @@ public class PrettyPrintingVisitor : IConstraintVisitor
         Level++;
         if (constraint.Applicable)
         {
-            IConstraint[] children = constraint.ExplicitChildren;
+            IConstraint?[] children = constraint.ExplicitChildren;
             int childrenLength = children.Length;
 
-            IConstraint[] additionalChildren = constraint.ExplicitAdditionalChildren;
+            IConstraint?[] additionalChildren = constraint.ExplicitAdditionalChildren;
             int additionalChildrenLength = additionalChildren.Length;
 
             object?[]? arguments = constraint.Arguments;
-            int? argumentsLength = arguments?.Length;
+            int? argumentsLength = arguments.Length;
 
             // print arguments
             for (int i = 0; i < argumentsLength; i++)
@@ -175,7 +175,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             // print additional children
             for (int i = 0; i < additionalChildren.Length; i++)
             {
-                IConstraint additionalChild = additionalChildren[i];
+                IConstraint? additionalChild = additionalChildren[i];
 
                 if (constraint is IConstraintContainerWithSuffix cws &&
                     cws.AdditionalChildImplicitForSuffix(additionalChild))
@@ -183,7 +183,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
                     continue;
                 }
 
-                additionalChild.Accept(this);
+                additionalChild?.Accept(this);
                 if (i + 1 < additionalChildren.Length || childrenLength > 0)
                 {
                     NextConstraint();
@@ -193,14 +193,14 @@ public class PrettyPrintingVisitor : IConstraintVisitor
             // print children
             for (int i = 0; i < childrenLength; i++)
             {
-                IConstraint child = children[i];
+                IConstraint? child = children[i];
 
                 if (constraint is IConstraintContainerWithSuffix cws && cws.ChildImplicitForSuffix(child))
                 {
                     continue;
                 }
 
-                child.Accept(this);
+                child?.Accept(this);
                 if (i + 1 < childrenLength)
                 {
                     NextConstraint();

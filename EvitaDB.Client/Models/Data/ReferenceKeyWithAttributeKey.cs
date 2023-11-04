@@ -13,8 +13,8 @@ public class ReferenceKeyWithAttributeKey : IComparable<ReferenceKeyWithAttribut
     
     public int CompareTo(ReferenceKeyWithAttributeKey? o)
     {
-        int entityReferenceComparison = ReferenceKey.CompareTo(o.ReferenceKey);
-        return entityReferenceComparison == 0 ? AttributeKey.CompareTo(o.AttributeKey) : entityReferenceComparison;
+        int entityReferenceComparison = ReferenceKey.CompareTo(o?.ReferenceKey);
+        return entityReferenceComparison == 0 ? AttributeKey.CompareTo(o?.AttributeKey) : entityReferenceComparison;
     }
 
     public override bool Equals(object? o)

@@ -2,7 +2,7 @@
 
 public abstract class AbstractFilterConstraintLeaf : ConstraintLeaf, IFilterConstraint
 {
-    public AbstractFilterConstraintLeaf(string? name, params object[] arguments) : base(name, arguments)
+    public AbstractFilterConstraintLeaf(string? name, params object?[] arguments) : base(name, arguments)
     {
     }
     protected AbstractFilterConstraintLeaf(params object?[] arguments) : base(arguments)

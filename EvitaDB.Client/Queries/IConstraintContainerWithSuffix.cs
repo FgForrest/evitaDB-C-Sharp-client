@@ -2,11 +2,11 @@
 
 public interface IConstraintContainerWithSuffix : IConstraintWithSuffix
 {
-    bool ChildImplicitForSuffix(IConstraint child) {
+    bool ChildImplicitForSuffix(IConstraint? child) {
         return false;
     }
     
-    bool AdditionalChildImplicitForSuffix(IConstraint child) {
+    bool AdditionalChildImplicitForSuffix(IConstraint? child) {
         return false;
     }
 }

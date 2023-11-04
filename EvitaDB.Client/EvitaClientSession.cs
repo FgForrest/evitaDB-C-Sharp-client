@@ -254,7 +254,7 @@ public class EvitaClientSession : IClientContext, IDisposable
 
         if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
         {
-            return EntityConverter.ToEntityReferences(grpcResponse.EntityReferences) as IList<TS>;
+            return (IList<TS>) EntityConverter.ToEntityReferences(grpcResponse.EntityReferences);
         }
 
         if (typeof(ISealedEntity).IsAssignableFrom(typeof(TS)))
@@ -344,7 +344,7 @@ public class EvitaClientSession : IClientContext, IDisposable
                     query.FilterBy,
                     query.OrderBy,
                     (Require) query.Require.GetCopyWithNewChildren(
-                        new IRequireConstraint[] {Require(EntityFetch())}
+                        new IRequireConstraint?[] {Require(EntityFetch())}
                             .Concat(query.Require.Children).ToArray(),
                         query.Require.AdditionalChildren
                     )
@@ -438,7 +438,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public int UpdateCatalogSchema(params ILocalCatalogSchemaMutation[] schemaMutation)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             List<GrpcLocalCatalogSchemaMutation>
                 grpcSchemaMutations = schemaMutation
@@ -505,7 +505,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public bool DeleteEntity(string entityType, int primaryKey)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcDeleteEntityResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntity(
@@ -523,7 +523,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public ISealedEntity[] DeleteSealedEntitiesAndReturnBodies(Query query)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             EvitaRequest evitaRequest = new EvitaRequest(
                 query,
@@ -564,7 +564,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public int DeleteEntities(Query query)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             StringWithParameters stringWithParameters = ToStringWithParameterExtraction(query);
             GrpcDeleteEntitiesResponse grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
@@ -627,7 +627,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public int UpdateEntitySchema(ModifyEntitySchemaMutation schemaMutation)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcModifyEntitySchemaMutation grpcSchemaMutation =
                 ModifyEntitySchemaMutationConverter.Convert(schemaMutation);
@@ -654,7 +654,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public ISealedEntitySchema UpdateAndFetchEntitySchema(ModifyEntitySchemaMutation schemaMutation)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcModifyEntitySchemaMutation grpcSchemaMutation =
                 ModifyEntitySchemaMutationConverter.Convert(schemaMutation);
@@ -736,7 +736,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public ISealedCatalogSchema UpdateAndFetchCatalogSchema(params ILocalCatalogSchemaMutation[] schemaMutation)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             List<GrpcLocalCatalogSchemaMutation> grpcSchemaMutations = schemaMutation
                 .Select(CatalogSchemaMutationConverter.Convert)
@@ -887,7 +887,7 @@ public class EvitaClientSession : IClientContext, IDisposable
     public ISealedEntity UpsertAndFetchEntity(IEntityMutation entityMutation, params IEntityContentRequire[] require)
     {
         AssertActive();
-        return ExecuteInTransactionIfPossible(session =>
+        return ExecuteInTransactionIfPossible(_ =>
         {
             GrpcEntityMutation grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
             StringWithParameters stringWithParameters = ToStringWithParameterExtraction(require);
@@ -989,7 +989,7 @@ public class EvitaClientSession : IClientContext, IDisposable
             evitaSessionService.OpenTransaction(new Empty())
         );
 
-        EvitaClientTransaction? tx = new EvitaClientTransaction(this, grpcResponse.TransactionId);
+        EvitaClientTransaction tx = new EvitaClientTransaction(this, grpcResponse.TransactionId);
         _transactionAccessor.GetAndSet(transaction =>
         {
             Assert.IsPremiseValid(transaction == null, "Transaction unexpectedly found!");
@@ -1071,7 +1071,7 @@ public class EvitaClientSession : IClientContext, IDisposable
                     query.FilterBy,
                     query.OrderBy,
                     (Require) query.Require.GetCopyWithNewChildren(
-                        new IRequireConstraint[] {Require(EntityFetch())}.Concat(query.Require.Children).ToArray(),
+                        new IRequireConstraint?[] {Require(EntityFetch())}.Concat(query.Require.Children).ToArray(),
                         query.Require.AdditionalChildren
                     )
                 )

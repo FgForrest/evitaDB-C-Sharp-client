@@ -13,10 +13,10 @@ public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
 
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 0 && AdditionalChildren.Length > 0;
 
-    private FacetGroupsDisjunction(object[] arguments, params IConstraint[] additionalChildren) : base(arguments,
+    private FacetGroupsDisjunction(object?[] arguments, params IConstraint?[] additionalChildren) : base(arguments,
         NoChildren, additionalChildren)
     {
-        foreach (IConstraint child in additionalChildren)
+        foreach (IConstraint? child in additionalChildren)
         {
             Assert.IsPremiseValid(child is FilterBy,
                 "Only FilterBy constraints are allowed in FacetGroupsDisjunction.");
@@ -29,7 +29,7 @@ public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
     }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         Assert.IsPremiseValid(children.Length == 0, "Children must be empty.");
         return new FacetGroupsDisjunction(Arguments, additionalChildren);

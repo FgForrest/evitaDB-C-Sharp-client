@@ -10,7 +10,7 @@ public class ReferenceHaving : AbstractFilterConstraintContainer
     {
     }
     
-    public ReferenceHaving(string referenceName, params IFilterConstraint[] filter) : base(new object[] {referenceName}, filter)
+    public ReferenceHaving(string referenceName, params IFilterConstraint?[] filter) : base(new object[] {referenceName}, filter)
     {
     }
     
@@ -18,7 +18,7 @@ public class ReferenceHaving : AbstractFilterConstraintContainer
     
     public new bool Necessary => Arguments.Length == 1 && Children.Length == 1;
     
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint?[] additionalChildren)
     {
         return Children.Length == 0 ? new ReferenceHaving(ReferenceName) : new ReferenceHaving(ReferenceName, children);
     }

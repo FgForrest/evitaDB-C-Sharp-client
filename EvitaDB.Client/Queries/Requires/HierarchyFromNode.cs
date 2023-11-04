@@ -5,7 +5,7 @@ namespace EvitaDB.Client.Queries.Requires;
 public class HierarchyFromNode : AbstractRequireConstraintContainer, IHierarchyRequireConstraint
 {
     private const string ConstraintName = "fromNode";
-    public string? OutputName => (string?) Arguments[0];
+    public string OutputName => Arguments[0]?.ToString()!;
 
     public HierarchyNode FromNode => (HierarchyNode) (Children.FirstOrDefault(x => x is HierarchyNode) ??
                                                       throw new InvalidOperationException(
@@ -23,10 +23,10 @@ public class HierarchyFromNode : AbstractRequireConstraintContainer, IHierarchyR
 
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1 && Children.Length >= 1;
 
-    private HierarchyFromNode(string outputName, IRequireConstraint[] children, params IConstraint[] additionalChildren)
+    private HierarchyFromNode(string outputName, IRequireConstraint?[] children, params IConstraint?[] additionalChildren)
         : base(ConstraintName, new object[] {outputName}, children, additionalChildren)
     {
-        foreach (IRequireConstraint requireConstraint in children)
+        foreach (IRequireConstraint? requireConstraint in children)
         {
             Assert.IsTrue(
                 requireConstraint is HierarchyNode or IHierarchyOutputRequireConstraint or Requires.EntityFetch,
@@ -40,9 +40,9 @@ public class HierarchyFromNode : AbstractRequireConstraintContainer, IHierarchyR
     }
 
     public HierarchyFromNode(string outputName, HierarchyNode node, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements)
+        params IHierarchyOutputRequireConstraint?[] requirements)
         : base(ConstraintName, new object[] {outputName},
-            new IRequireConstraint[] {node, entityFetch}.Concat(requirements).ToArray())
+            new IRequireConstraint?[] {node, entityFetch}.Concat(requirements).ToArray())
     {
     }
 
@@ -58,7 +58,7 @@ public class HierarchyFromNode : AbstractRequireConstraintContainer, IHierarchyR
     }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         return new HierarchyFromNode(OutputName, children, additionalChildren);
     }

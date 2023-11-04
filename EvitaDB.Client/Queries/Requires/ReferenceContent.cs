@@ -51,7 +51,7 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     private const string SuffixAll = "all";
     private const string SuffixWithAttributes = "withAttributes";
     private const string SuffixAllWithAttributes = "allWithAttributes";
-    private static readonly ReferenceContent AllReferences = new ReferenceContent();
+    private static readonly ReferenceContent AllReferences = new();
     
     public string ReferenceName
     {
@@ -66,12 +66,12 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     public string[] ReferencedNames => Arguments.Select(obj => (string) obj!).ToArray();
 
 
-    private ReferenceContent(string[] referencedEntityType, IRequireConstraint[] requirements,
-        IConstraint[] additionalChildren) : base(referencedEntityType, requirements, additionalChildren)
+    private ReferenceContent(string?[] referencedEntityType, IRequireConstraint?[] requirements,
+        IConstraint?[] additionalChildren) : base(referencedEntityType, requirements, additionalChildren)
     {
     }
 
-    public ReferenceContent(params string[] referenceNames) : base(referenceNames)
+    public ReferenceContent(params string?[] referenceNames) : base(referenceNames)
     {
     }
 
@@ -86,25 +86,25 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     }
 
     public ReferenceContent(string referenceName, EntityFetch? entityFetch, EntityGroupFetch? entityGroupFetch)
-        : base(new[] {referenceName}, entityFetch, entityGroupFetch)
+        : base(new object?[] {referenceName}, entityFetch, entityGroupFetch)
     {
     }
 
-    public ReferenceContent(string[] referenceNames, EntityFetch? entityFetch, EntityGroupFetch? entityGroupFetch)
+    public ReferenceContent(string?[] referenceNames, EntityFetch? entityFetch, EntityGroupFetch? entityGroupFetch)
         : base(referenceNames, entityFetch, entityGroupFetch)
     {
     }
 
     public ReferenceContent(string referenceName, FilterBy? filterBy, OrderBy? orderBy,
         EntityFetch? entityFetch, EntityGroupFetch? entityGroupFetch)
-        : base(new[] {referenceName}, new IRequireConstraint[] {entityFetch, entityGroupFetch},
+        : base(new object?[] {referenceName}, new IRequireConstraint?[] {entityFetch, entityGroupFetch},
             filterBy, orderBy)
     {
     }
 
     public ReferenceContent(string referenceName, FilterBy? filterBy, OrderBy? orderBy,
         AttributeContent? attributeContent, EntityFetch? entityFetch, EntityGroupFetch? entityGroupFetch)
-        : base(new[] {referenceName}, new IRequireConstraint[] {attributeContent, entityFetch, entityGroupFetch},
+        : base(new object?[] {referenceName}, new IRequireConstraint?[] {attributeContent, entityFetch, entityGroupFetch},
             filterBy, orderBy)
     {
     }
@@ -123,17 +123,17 @@ public class ReferenceContent : AbstractRequireConstraintContainer, IEntityConte
     {
     }
 
-    public ReferenceContent(string referencedEntityType) : base(new[] {referencedEntityType})
+    public ReferenceContent(string referencedEntityType) : base(new object?[] {referencedEntityType})
     {
     }
 
-    public bool ChildImplicitForSuffix(IConstraint child)
+    public bool ChildImplicitForSuffix(IConstraint? child)
     {
         return child is AttributeContent {AllRequested: true};
     }
 
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint[] children,
-        IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
+        IConstraint?[] additionalChildren)
     {
         if (AdditionalChildren.Length > 2 || (AdditionalChildren.Length == 2 &&
                                               !AdditionalChildren[0].GetType()

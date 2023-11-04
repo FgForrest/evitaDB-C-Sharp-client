@@ -2,7 +2,7 @@
 
 public class EntityPrimaryKeyInFilter : AbstractOrderConstraintLeaf
 {
-    private EntityPrimaryKeyInFilter(params object[] args) : base(args)
+    private EntityPrimaryKeyInFilter(params object?[] args) : base(args)
     {
     }
     

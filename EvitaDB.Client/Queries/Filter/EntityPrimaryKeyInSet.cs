@@ -2,7 +2,7 @@
 
 public class EntityPrimaryKeyInSet : AbstractFilterConstraintLeaf
 {
-    private EntityPrimaryKeyInSet(params object[] arguments) : base(arguments)
+    private EntityPrimaryKeyInSet(params object?[] arguments) : base(arguments)
     {
         
     }

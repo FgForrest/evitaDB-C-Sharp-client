@@ -51,7 +51,7 @@ public class ByteNumberRange : NumberRange<byte>
         {
             return Convert.ToByte(toBeNumber);
         }
-        catch (FormatException ex)
+        catch (FormatException)
         {
             throw new DataTypeParseException("String " + toBeNumber + " is not a byte number!");
         }

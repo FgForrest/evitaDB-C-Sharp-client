@@ -6,7 +6,7 @@ public class AssociatedDataContent : AbstractRequireConstraintLeaf, IEntityConte
     private const string Suffix = "all";
     public bool AllRequested => AssociatedDataNames.Length == 0;
     
-    private AssociatedDataContent(params object[] arguments) : base(arguments)
+    private AssociatedDataContent(params object?[] arguments) : base(arguments)
     {
     }
 

@@ -72,7 +72,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 	/// This method is for internal purposes only. It could be used for reconstruction of GlobalAttributeSchema from
 	/// different package than current, but still internal code of the Evita ecosystems.
 	/// </summary>
-	public new static EntityAttributeSchema InternalBuild(
+	public static EntityAttributeSchema InternalBuild(
 		string name,
 		string? description,
 		string? deprecationNotice,

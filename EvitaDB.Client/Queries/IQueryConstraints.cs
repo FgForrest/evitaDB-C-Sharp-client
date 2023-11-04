@@ -25,10 +25,10 @@ public interface IQueryConstraints
 
     static Not? Not(IFilterConstraint? constraint) => constraint is null ? null : new Not(constraint);
 
-    static ReferenceHaving? ReferenceHaving(string? referenceName, params IFilterConstraint[]? constraints) =>
+    static ReferenceHaving? ReferenceHaving(string? referenceName, params IFilterConstraint?[]? constraints) =>
         referenceName is null ? null : new ReferenceHaving(referenceName, constraints!);
 
-    static UserFilter? UserFilter(params IFilterConstraint[]? constraints) =>
+    static UserFilter? UserFilter(params IFilterConstraint?[]? constraints) =>
         constraints is null ? null : new UserFilter(constraints);
 
     static AttributeBetween<T>? AttributeBetween<T>(string attributeName, T? from, T? to) where T : IComparable =>
@@ -87,7 +87,7 @@ public interface IQueryConstraints
     }
 
     static HierarchyWithin? HierarchyWithin(string referenceName, IFilterConstraint? ofParent,
-        params IHierarchySpecificationFilterConstraint[]? with)
+        params IHierarchySpecificationFilterConstraint?[]? with)
     {
         if (ofParent is null)
         {
@@ -98,18 +98,18 @@ public interface IQueryConstraints
             return new HierarchyWithin(referenceName, ofParent);
         }
 
-        return new HierarchyWithin(referenceName, ofParent, with);
+        return new HierarchyWithin(referenceName, ofParent, with!);
     }
 
-    static HierarchyWithinRoot HierarchyWithinRootSelf(params IHierarchySpecificationFilterConstraint[]? with) =>
+    static HierarchyWithinRoot HierarchyWithinRootSelf(params IHierarchySpecificationFilterConstraint?[]? with) =>
         with is null ? new HierarchyWithinRoot() : new HierarchyWithinRoot(with);
 
     static HierarchyWithinRoot HierarchyWithinRoot(string referenceName,
-        params IHierarchySpecificationFilterConstraint[]? with) =>
+        params IHierarchySpecificationFilterConstraint?[]? with) =>
         with is null ? new HierarchyWithinRoot() : new HierarchyWithinRoot(referenceName, with);
 
 
-    static HierarchyHaving? Having(params IFilterConstraint[]? includeChildTreeConstraints) =>
+    static HierarchyHaving? Having(params IFilterConstraint?[]? includeChildTreeConstraints) =>
         ArrayUtils.IsEmpty(includeChildTreeConstraints) ? null : new HierarchyHaving(includeChildTreeConstraints!);
 
     static HierarchyExcluding? Excluding(params IFilterConstraint[]? excludeChildTreeConstraints) =>
@@ -166,7 +166,7 @@ public interface IQueryConstraints
             return new AttributeInSet<T>(attributeName, set);
         }
 
-        T[] limitedSet = (T[]) Array.CreateInstance(set.GetType().GetElementType(), args.Count);
+        T[] limitedSet = (T[]) Array.CreateInstance(set.GetType().GetElementType()!, args.Count);
         for (int i = 0; i < args.Count; i++)
         {
             limitedSet[i] = args[i];
@@ -196,23 +196,23 @@ public interface IQueryConstraints
 
     static PriceValidIn PriceValidNow() => new PriceValidIn();
 
-    static FacetHaving? FacetHaving(string referenceName, params IFilterConstraint[]? constraints) =>
+    static FacetHaving? FacetHaving(string referenceName, params IFilterConstraint?[]? constraints) =>
         ArrayUtils.IsEmpty(constraints) ? null : new FacetHaving(referenceName, constraints!);
 
 
     static EntityPrimaryKeyInSet? EntityPrimaryKeyInSet(params int[]? primaryKeys) =>
         primaryKeys == null ? null : new EntityPrimaryKeyInSet(primaryKeys);
 
-    static OrderBy? OrderBy(params IOrderConstraint[]? constraints) =>
+    static OrderBy? OrderBy(params IOrderConstraint?[]? constraints) =>
         constraints is null ? null : new OrderBy(constraints);
 
-    static OrderGroupBy? OrderGroupBy(params IOrderConstraint[]? constraints) =>
+    static OrderGroupBy? OrderGroupBy(params IOrderConstraint?[]? constraints) =>
         constraints is null ? null : new OrderGroupBy(constraints);
 
     static EntityPrimaryKeyInFilter EntityPrimaryKeyInFilter() => new EntityPrimaryKeyInFilter();
 
     static EntityPrimaryKeyExact? EntityPrimaryKeyExact(params int[]? primaryKeys) =>
-        ArrayUtils.IsEmpty(primaryKeys) ? null : new EntityPrimaryKeyExact(primaryKeys);
+        ArrayUtils.IsEmpty(primaryKeys) ? null : new EntityPrimaryKeyExact(primaryKeys!);
 
     static AttributeSetInFilter? AttributeSetInFilter(string? attributeName) =>
         string.IsNullOrEmpty(attributeName) ? null : new AttributeSetInFilter(attributeName);
@@ -222,33 +222,33 @@ public interface IQueryConstraints
             ? null
             : new AttributeSetExact(attributeName, attributeValues!);
 
-    static ReferenceProperty? ReferenceProperty(string propertyName, params IOrderConstraint[]? constraints) =>
+    static ReferenceProperty? ReferenceProperty(string propertyName, params IOrderConstraint?[]? constraints) =>
         constraints is null ? null : new ReferenceProperty(propertyName, constraints);
 
-    static EntityProperty? EntityProperty(params IOrderConstraint[]? constraints) =>
+    static EntityProperty? EntityProperty(params IOrderConstraint?[]? constraints) =>
         constraints is null ? null : new EntityProperty(constraints);
 
-    static EntityGroupProperty? EntityGroupProperty(params IOrderConstraint[]? constraints) =>
+    static EntityGroupProperty? EntityGroupProperty(params IOrderConstraint?[]? constraints) =>
         constraints == null ? null : new EntityGroupProperty(constraints);
 
-    static AttributeNatural AttributeNatural(string attributeName) => new AttributeNatural(attributeName);
+    static AttributeNatural AttributeNatural(string attributeName) => new(attributeName);
 
     static AttributeNatural AttributeNatural(string attributeName, OrderDirection orderDirection) =>
         new AttributeNatural(attributeName, orderDirection);
 
-    static PriceNatural PriceNatural() => new PriceNatural();
+    static PriceNatural PriceNatural() => new();
 
-    static PriceNatural PriceNatural(OrderDirection orderDirection) => new PriceNatural(orderDirection);
+    static PriceNatural PriceNatural(OrderDirection orderDirection) => new(orderDirection);
 
-    static Random Random() => new Random();
+    static Random Random() => new();
 
-    static Require? Require(params IRequireConstraint[]? constraints) =>
+    static Require? Require(params IRequireConstraint?[]? constraints) =>
         constraints is null ? null : new Require(constraints);
 
     static AttributeHistogram? AttributeHistogram(int requestedBucketCount, params string[]? attributeNames) =>
         ArrayUtils.IsEmpty(attributeNames) ? null : new AttributeHistogram(requestedBucketCount, attributeNames!);
 
-    static PriceHistogram PriceHistogram(int requestedBucketCount) => new PriceHistogram(requestedBucketCount);
+    static PriceHistogram PriceHistogram(int requestedBucketCount) => new(requestedBucketCount);
 
     static FacetGroupsConjunction? FacetGroupsConjunction(string referenceName, FilterBy? filterBy) =>
         filterBy is null || !filterBy.Applicable ? null : new FacetGroupsConjunction(referenceName, filterBy);
@@ -259,23 +259,23 @@ public interface IQueryConstraints
     static FacetGroupsNegation? FacetGroupsNegation(string referenceName, FilterBy? filterBy) =>
         filterBy is null || !filterBy.Applicable ? null : new FacetGroupsNegation(referenceName, filterBy);
 
-    static HierarchyOfSelf? HierarchyOfSelf(params IHierarchyRequireConstraint[]? requirements) =>
+    static HierarchyOfSelf? HierarchyOfSelf(params IHierarchyRequireConstraint?[]? requirements) =>
         ArrayUtils.IsEmpty(requirements) ? null : new HierarchyOfSelf(null, requirements!);
 
-    static HierarchyOfSelf? HierarchyOfSelf(OrderBy? orderBy, params IHierarchyRequireConstraint[]? requirements) =>
+    static HierarchyOfSelf? HierarchyOfSelf(OrderBy? orderBy, params IHierarchyRequireConstraint?[]? requirements) =>
         ArrayUtils.IsEmpty(requirements) ? null : new HierarchyOfSelf(orderBy, requirements!);
 
     static HierarchyOfReference? HierarchyOfReference(string referenceName,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         HierarchyOfReference(referenceName, null, null, requirements!);
 
     static HierarchyOfReference? HierarchyOfReference(string referenceName, OrderBy orderBy,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         HierarchyOfReference(referenceName, null, orderBy, requirements!);
 
     static HierarchyOfReference? HierarchyOfReference(string? referenceName,
         EmptyHierarchicalEntityBehaviour? emptyHierarchicalEntityBehaviour,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         referenceName is null || ArrayUtils.IsEmpty(requirements)
             ? null
             : new HierarchyOfReference(referenceName,
@@ -284,7 +284,7 @@ public interface IQueryConstraints
     static HierarchyOfReference? HierarchyOfReference(string? referenceName,
         EmptyHierarchicalEntityBehaviour? emptyHierarchicalEntityBehaviour,
         OrderBy? orderBy,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         referenceName is null || ArrayUtils.IsEmpty(requirements)
             ? null
             : new HierarchyOfReference(
@@ -304,73 +304,74 @@ public interface IQueryConstraints
 
     static HierarchyOfReference? HierarchyOfReference(string[]? referenceNames,
         EmptyHierarchicalEntityBehaviour? emptyHierarchicalEntityBehaviour,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         ArrayUtils.IsEmpty(referenceNames) || ArrayUtils.IsEmpty(requirements)
             ? null
-            : new HierarchyOfReference(referenceNames,
+            : new HierarchyOfReference(referenceNames!,
                 emptyHierarchicalEntityBehaviour ?? EmptyHierarchicalEntityBehaviour.RemoveEmpty, requirements!);
 
     static HierarchyOfReference? HierarchyOfReference(string[]? referenceNames,
         EmptyHierarchicalEntityBehaviour? emptyHierarchicalEntityBehaviour, OrderBy? orderBy,
-        params IHierarchyRequireConstraint[]? requirements) =>
+        params IHierarchyRequireConstraint?[]? requirements) =>
         ArrayUtils.IsEmpty(referenceNames) || ArrayUtils.IsEmpty(requirements)
             ? null
-            : new HierarchyOfReference(referenceNames,
+            : new HierarchyOfReference(referenceNames!,
                 emptyHierarchicalEntityBehaviour ?? EmptyHierarchicalEntityBehaviour.RemoveEmpty, orderBy,
                 requirements!);
 
-    static HierarchyFromRoot? FromRoot(string? outputName, params IHierarchyOutputRequireConstraint[]? requirements) =>
+    static HierarchyFromRoot? FromRoot(string? outputName, params IHierarchyOutputRequireConstraint?[]? requirements) =>
         outputName is null ? null :
         requirements is null ? new HierarchyFromRoot(outputName) : new HierarchyFromRoot(outputName, requirements);
 
     static HierarchyFromRoot? FromRoot(string? outputName, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) =>
+        params IHierarchyOutputRequireConstraint?[]? requirements) =>
         outputName is null ? null :
         requirements is null ? new HierarchyFromRoot(outputName, entityFetch) :
         new HierarchyFromRoot(outputName, entityFetch, requirements);
 
-    static HierarchyFromNode? FromNode(string? outputName, HierarchyNode node,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null ? null :
+    static HierarchyFromNode? FromNode(string? outputName, HierarchyNode? node,
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null || node is null ? null :
         requirements is null ? new HierarchyFromNode(outputName, node) :
-        new HierarchyFromNode(outputName, node, requirements);
+        new HierarchyFromNode(outputName, node, requirements!);
 
-    static HierarchyFromNode? FromNode(string? outputName, HierarchyNode node, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null ? null :
+    static HierarchyFromNode? FromNode(string? outputName, HierarchyNode? node, EntityFetch? entityFetch,
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null || node is null ? null :
         entityFetch is null ? new HierarchyFromNode(outputName, node) :
-        new HierarchyFromNode(outputName, node, entityFetch, requirements);
+        new HierarchyFromNode(outputName, node, entityFetch, requirements!);
 
     static HierarchyChildren? Children(string? outputName, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null
         ? null
-        : new HierarchyChildren(outputName, entityFetch, requirements);
+        : new HierarchyChildren(outputName, entityFetch, requirements!);
 
-    static HierarchyChildren? Children(string? outputName, params IHierarchyOutputRequireConstraint[]? requirements) =>
-        outputName is null ? null : new HierarchyChildren(outputName, requirements);
+    static HierarchyChildren? Children(string? outputName, params IHierarchyOutputRequireConstraint?[]? requirements) =>
+        outputName is null ? null 
+            : new HierarchyChildren(outputName, requirements!);
 
     static HierarchySiblings? Siblings(string? outputName, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null
         ? null
-        : new HierarchySiblings(outputName, entityFetch, requirements);
+        : new HierarchySiblings(outputName, entityFetch, requirements!);
 
     static HierarchySiblings? Siblings(string? outputName,
         params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
         ? null
-        : new HierarchySiblings(outputName, requirements);
+        : new HierarchySiblings(outputName, requirements!);
 
     static HierarchySiblings Siblings(EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) =>
-        new HierarchySiblings(null, entityFetch, requirements);
+        params IHierarchyOutputRequireConstraint?[]? requirements) =>
+        new(null, entityFetch, requirements!);
 
-    static HierarchySiblings? Siblings(params IHierarchyOutputRequireConstraint[]? requirements) =>
-        new HierarchySiblings(null, requirements);
+    static HierarchySiblings? Siblings(params IHierarchyOutputRequireConstraint?[]? requirements) =>
+        new(null, requirements!);
 
     static HierarchyParents? Parents(string? outputName, EntityFetch? entityFetch,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null
         ? null
-        : new HierarchyParents(outputName, entityFetch, requirements);
+        : new HierarchyParents(outputName, entityFetch, requirements!);
 
     static HierarchyParents? Parents(string? outputName, EntityFetch? entityFetch, HierarchySiblings? siblings,
-        params IHierarchyOutputRequireConstraint[]? requirements)
+        params IHierarchyOutputRequireConstraint?[]? requirements)
     {
         if (outputName is null)
         {
@@ -380,26 +381,26 @@ public interface IQueryConstraints
         if (siblings is null)
         {
             return entityFetch is null
-                ? new HierarchyParents(outputName, requirements)
-                : new HierarchyParents(outputName, entityFetch, requirements);
+                ? new HierarchyParents(outputName, requirements!)
+                : new HierarchyParents(outputName, entityFetch, requirements!);
         }
 
         return entityFetch is null
-            ? new HierarchyParents(outputName, siblings, requirements)
-            : new HierarchyParents(outputName, entityFetch, siblings, requirements);
+            ? new HierarchyParents(outputName, siblings, requirements!)
+            : new HierarchyParents(outputName, entityFetch, siblings, requirements!);
     }
 
     static HierarchyParents? Parents(string? outputName,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null
         ? null
-        : new HierarchyParents(outputName, requirements);
+        : new HierarchyParents(outputName, requirements!);
 
     static HierarchyParents? Parents(string? outputName, HierarchySiblings? siblings,
-        params IHierarchyOutputRequireConstraint[]? requirements) => outputName is null
+        params IHierarchyOutputRequireConstraint?[]? requirements) => outputName is null
         ? null
         : siblings is null
-            ? new HierarchyParents(outputName, requirements)
-            : new HierarchyParents(outputName, siblings, requirements);
+            ? new HierarchyParents(outputName, requirements!)
+            : new HierarchyParents(outputName, siblings, requirements!);
 
     static HierarchyStopAt? StopAt(IHierarchyStopAtRequireConstraint? stopConstraint) => stopConstraint is null
         ? null
@@ -423,23 +424,23 @@ public interface IQueryConstraints
                 ? new HierarchyStatistics(statisticsBase.Value)
                 : new HierarchyStatistics(statisticsBase.Value, types);
 
-    static EntityFetch EntityFetch(params IEntityContentRequire[]? requirements) =>
+    static EntityFetch EntityFetch(params IEntityContentRequire?[]? requirements) =>
         requirements is null ? new EntityFetch() : new EntityFetch(requirements);
 
-    static EntityGroupFetch EntityGroupFetch(params IEntityContentRequire[]? requirements) =>
+    static EntityGroupFetch EntityGroupFetch(params IEntityContentRequire?[]? requirements) =>
         requirements is null ? new EntityGroupFetch() : new EntityGroupFetch(requirements);
 
-    static AttributeContent AttributeContentAll() => new AttributeContent();
+    static AttributeContent AttributeContentAll() => new();
 
     static AttributeContent AttributeContent(params string[]? attributeNames) =>
         attributeNames is null ? new AttributeContent() : new AttributeContent(attributeNames);
 
-    static AssociatedDataContent AssociatedDataContentAll() => new AssociatedDataContent();
+    static AssociatedDataContent AssociatedDataContentAll() => new();
 
     static AssociatedDataContent AssociatedDataContent(params string[]? associatedDataNames) =>
         associatedDataNames is null ? new AssociatedDataContent() : new AssociatedDataContent(associatedDataNames);
 
-    static DataInLocales DataInLocalesAll() => new DataInLocales();
+    static DataInLocales DataInLocalesAll() => new();
     
     static DataInLocales DataInLocales(params CultureInfo[]? locales) => locales is null
         ? new DataInLocales()
@@ -995,43 +996,43 @@ public interface IQueryConstraints
             return stopAt is null ? new HierarchyContent(entityFetch) : new HierarchyContent(stopAt, entityFetch);
         }
 
-        return new HierarchyContent(stopAt);
+        return new HierarchyContent(stopAt!);
     }
 
     static PriceContent? PriceContent(PriceContentMode? contentMode, params string[]? priceLists) => contentMode is null
         ? null
         : ArrayUtils.IsEmpty(priceLists)
             ? new PriceContent(contentMode.Value)
-            : new PriceContent(contentMode.Value, priceLists);
+            : new PriceContent(contentMode.Value, priceLists!);
 
     static PriceContent PriceContentAll() => Requires.PriceContent.All();
 
     static PriceContent PriceContentRespectingFilter(params string[] priceLists) =>
         Requires.PriceContent.RespectingFilter(priceLists);
 
-    static PriceType PriceType(QueryPriceMode priceMode) => new PriceType(priceMode);
+    static PriceType PriceType(QueryPriceMode priceMode) => new(priceMode);
 
-    static Page Page(int? pageNumber, int? pageSize) => new Page(pageNumber, pageSize);
+    static Page Page(int? pageNumber, int? pageSize) => new(pageNumber, pageSize);
 
-    static Strip Strip(int? offset, int? limit) => new Strip(offset, limit);
+    static Strip Strip(int? offset, int? limit) => new(offset, limit);
 
-    static FacetSummary FacetSummary() => new FacetSummary();
+    static FacetSummary FacetSummary() => new();
 
     static FacetSummary FacetSummary(FacetStatisticsDepth? statisticsDepth) => statisticsDepth is null
         ? new FacetSummary(FacetStatisticsDepth.Counts)
         : new FacetSummary(statisticsDepth.Value);
 
     static FacetSummary FacetSummary(FacetStatisticsDepth? statisticsDepth, FilterBy? facetFilterBy,
-        OrderBy? facetOrderBy, params IEntityRequire[]? requirements) => FacetSummary(statisticsDepth, facetFilterBy,
-        null, facetOrderBy, null, requirements);
+        OrderBy? facetOrderBy, params IEntityRequire?[]? requirements) => FacetSummary(statisticsDepth, facetFilterBy,
+        null, facetOrderBy, null, requirements!);
 
     static FacetSummary FacetSummary(FacetStatisticsDepth? statisticsDepth, FilterGroupBy? facetFilterGroupBy,
-        OrderGroupBy? facetOrderGroupBy, params IEntityRequire[]? requirements) => FacetSummary(statisticsDepth, null,
-        facetFilterGroupBy, null, facetOrderGroupBy, requirements);
+        OrderGroupBy? facetOrderGroupBy, params IEntityRequire?[]? requirements) => FacetSummary(statisticsDepth, null,
+        facetFilterGroupBy, null, facetOrderGroupBy, requirements!);
 
     static FacetSummary FacetSummary(FacetStatisticsDepth? statisticsDepth, FilterBy? facetFilterBy,
         FilterGroupBy? facetGroupFilterBy, OrderBy? facetOrderBy, OrderGroupBy? facetGroupOrderBy,
-        params IEntityRequire[] requirements)
+        params IEntityRequire?[]? requirements)
     {
         if (statisticsDepth is null)
         {
@@ -1045,12 +1046,12 @@ public interface IQueryConstraints
         }
 
         return new FacetSummary(statisticsDepth.Value, facetFilterBy, facetGroupFilterBy, facetOrderBy,
-            facetGroupOrderBy, requirements);
+            facetGroupOrderBy, requirements!);
     }
 
     static FacetSummaryOfReference
         FacetSummaryOfReference(string referenceName, params IEntityRequire[] requirements) =>
-        new FacetSummaryOfReference(referenceName, FacetStatisticsDepth.Counts, requirements);
+        new(referenceName, FacetStatisticsDepth.Counts, requirements);
 
     static FacetSummaryOfReference FacetSummaryOfReference(string referenceName, FacetStatisticsDepth? statisticsDepth,
         params IEntityRequire[] requirements) => statisticsDepth is null
@@ -1082,18 +1083,16 @@ public interface IQueryConstraints
         }
 
         return new FacetSummaryOfReference(referenceName, statisticsDepth.Value, facetFilterBy, facetGroupFilterBy,
-            facetOrderBy, facetGroupOrderBy, requirements);
+            facetOrderBy, facetGroupOrderBy, requirements!);
     }
 
-    static QueryTelemetry QueryTelemetry() => new QueryTelemetry();
-
-    static Debug Debug(params DebugMode[] debugModes) => new Debug(debugModes);
-
+    static QueryTelemetry QueryTelemetry() => new();
+    
     static EntityFetch EntityFetchAll() => EntityFetch(AttributeContentAll(), AssociatedDataContentAll(),
         PriceContentAll(),
         ReferenceContentAllWithAttributes(), DataInLocales());
 
-    static IRequireConstraint[] EntityFetchAllAnd(params IRequireConstraint[] combineWith)
+    static IRequireConstraint?[] EntityFetchAllAnd(params IRequireConstraint?[] combineWith)
     {
         if (ArrayUtils.IsEmpty(combineWith))
         {
@@ -1109,33 +1108,33 @@ public interface IQueryConstraints
         DataInLocales()
     };
 
-    static Query Query(FilterBy? filter) => new Query(null, filter, null, null);
+    static Query Query(FilterBy? filter) => new(null, filter, null, null);
 
-    static Query Query(FilterBy? filter, OrderBy? order) => new Query(null, filter, order, null);
+    static Query Query(FilterBy? filter, OrderBy? order) => new(null, filter, order, null);
 
-    static Query Query(FilterBy? filter, OrderBy? order, Require? require) => new Query(null, filter, order, require);
+    static Query Query(FilterBy? filter, OrderBy? order, Require? require) => new(null, filter, order, require);
 
-    static Query Query(FilterBy? filter, Require? require) => new Query(null, filter, null, require);
+    static Query Query(FilterBy? filter, Require? require) => new(null, filter, null, require);
 
-    static Query Query(Collection entityType) => new Query(entityType, null, null, null);
-    static Query Query(Collection entityType, FilterBy? filter) => new Query(entityType, filter, null, null);
+    static Query Query(Collection? entityType) => new(entityType, null, null, null);
+    static Query Query(Collection? entityType, FilterBy? filter) => new(entityType, filter, null, null);
 
-    static Query Query(Collection entityType, FilterBy? filter, OrderBy? order) =>
-        new Query(entityType, filter, order, null);
+    static Query Query(Collection? entityType, FilterBy? filter, OrderBy? order) =>
+        new(entityType, filter, order, null);
 
-    static Query Query(Collection entityType, FilterBy? filter, OrderBy? order, Require? require) =>
-        new Query(entityType, filter, order, require);
+    static Query Query(Collection? entityType, FilterBy? filter, OrderBy? order, Require? require) =>
+        new(entityType, filter, order, require);
 
-    static Query Query(Collection entityType, FilterBy? filter, Require? require, OrderBy? order) =>
-        new Query(entityType, filter, order, require);
+    static Query Query(Collection? entityType, FilterBy? filter, Require? require, OrderBy? order) =>
+        new(entityType, filter, order, require);
 
-    static Query Query(Collection entityType, OrderBy? order) => new Query(entityType, null, order, null);
+    static Query Query(Collection? entityType, OrderBy? order) => new(entityType, null, order, null);
 
-    static Query Query(Collection entityType, OrderBy? order, Require? require) =>
-        new Query(entityType, null, order, require);
+    static Query Query(Collection? entityType, OrderBy? order, Require? require) =>
+        new(entityType, null, order, require);
 
-    static Query Query(Collection entityType, FilterBy? filter, Require? require) =>
-        new Query(entityType, filter, null, require);
+    static Query Query(Collection? entityType, FilterBy? filter, Require? require) =>
+        new(entityType, filter, null, require);
 
-    static Query Query(Collection entityType, Require? require) => new Query(entityType, null, null, require);
+    static Query Query(Collection? entityType, Require? require) => new(entityType, null, null, require);
 }

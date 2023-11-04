@@ -4,7 +4,7 @@ public class HierarchyExcludingRoot : AbstractFilterConstraintLeaf, IHierarchySp
 {
     private const string ConstraintName = "excludingRoot";
     
-    private HierarchyExcludingRoot(params object[] arguments) : base(ConstraintName, arguments)
+    private HierarchyExcludingRoot(params object?[] arguments) : base(ConstraintName, arguments)
     {
     }
     

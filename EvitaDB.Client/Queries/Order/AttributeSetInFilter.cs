@@ -2,7 +2,7 @@
 
 public class AttributeSetInFilter : AbstractOrderConstraintLeaf
 {
-    private AttributeSetInFilter(params object[] args) : base(args)
+    private AttributeSetInFilter(params object?[] args) : base(args)
     {
     }
     

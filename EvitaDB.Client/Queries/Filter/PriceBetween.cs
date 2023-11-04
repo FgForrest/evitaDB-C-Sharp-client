@@ -2,7 +2,7 @@
 
 public class PriceBetween : AbstractFilterConstraintLeaf
 {
-    private PriceBetween(params object[] arguments) : base(arguments)
+    private PriceBetween(params object?[] arguments) : base(arguments)
     {
     }
     

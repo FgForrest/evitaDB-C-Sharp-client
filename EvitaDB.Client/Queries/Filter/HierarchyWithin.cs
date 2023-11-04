@@ -34,8 +34,8 @@ public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilt
     public new bool Applicable => Children.Length > 0;
     public string? SuffixIfApplied => ReferenceName is not null ? null : Suffix;
     bool IConstraintWithSuffix.ArgumentImplicitForSuffix(object argument) => false;
-    private HierarchyWithin(object[] argument, IFilterConstraint[] fineGrainedConstraints,
-        IConstraint[] additionalChildren) : base(argument, fineGrainedConstraints)
+    private HierarchyWithin(object?[] argument, IFilterConstraint?[] fineGrainedConstraints,
+        IConstraint?[] additionalChildren) : base(argument, fineGrainedConstraints)
     {
         Assert.IsPremiseValid(additionalChildren.Length == 0,
             "Constraint hierarchyWithin accepts only filtering inner constraints!");
@@ -52,8 +52,8 @@ public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilt
     {
     }
 
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint[] children,
-        IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children,
+        IConstraint?[] additionalChildren)
     {
         return new HierarchyWithin(Arguments, children, additionalChildren);
     }

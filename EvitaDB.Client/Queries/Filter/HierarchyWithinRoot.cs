@@ -43,11 +43,11 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateE
     public new bool Applicable => true;
     public string? SuffixIfApplied => ReferenceName is not null ? null : Suffix;
     public bool ArgumentImplicitForSuffix(object argument) => false;
-    private HierarchyWithinRoot(object[] argument, IFilterConstraint[] fineGrainedConstraints,
-        params IConstraint[] additionalChildren) : base(argument, fineGrainedConstraints, additionalChildren)
+    private HierarchyWithinRoot(object?[] argument, IFilterConstraint?[] fineGrainedConstraints,
+        params IConstraint?[] additionalChildren) : base(argument, fineGrainedConstraints, additionalChildren)
     {
         string? referenceName = ReferenceName;
-        foreach (IFilterConstraint filterConstraint in fineGrainedConstraints)
+        foreach (IFilterConstraint? filterConstraint in fineGrainedConstraints)
         {
             Assert.IsTrue(
                 filterConstraint is HierarchyExcluding or HierarchyHaving ||
@@ -61,18 +61,18 @@ public class HierarchyWithinRoot : AbstractFilterConstraintContainer, ISeparateE
                 "Excluding when it targets different entity type")} as inner query!");
     }
 
-    public HierarchyWithinRoot(params IHierarchySpecificationFilterConstraint[] with) : this(
+    public HierarchyWithinRoot(params IHierarchySpecificationFilterConstraint?[] with) : this(
         NoArguments, with)
     {
     }
 
-    public HierarchyWithinRoot(string referenceName, params IHierarchySpecificationFilterConstraint[] with) : this(
+    public HierarchyWithinRoot(string referenceName, params IHierarchySpecificationFilterConstraint?[] with) : this(
         new object[] {referenceName}, with)
     {
     }
 
     public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         return new HierarchyWithinRoot(Arguments, children, additionalChildren);
     }

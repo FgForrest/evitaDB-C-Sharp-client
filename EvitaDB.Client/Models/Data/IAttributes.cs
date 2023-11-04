@@ -41,7 +41,7 @@ public interface IAttributes<TS> where TS : IAttributeSchema
             {
                 object? thisValue = it.Value;
                 AttributeKey key = it.Key;
-                AttributeValue? other = second.GetAttributeValue(key.AttributeName, key.Locale);
+                AttributeValue? other = second.GetAttributeValue(key.AttributeName, key.Locale!);
                 if (other == null)
                 {
                     return true;

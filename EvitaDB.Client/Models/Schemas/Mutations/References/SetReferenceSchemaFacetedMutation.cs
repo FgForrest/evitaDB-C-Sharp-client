@@ -28,14 +28,14 @@ public class SetReferenceSchemaFacetedMutation : AbstractModifyReferenceDataSche
             referenceSchema.DeprecationNotice,
             referenceSchema.ReferencedEntityType,
             referenceSchema.ReferencedEntityTypeManaged
-                ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetEntityTypeNameVariants(_ => default),
+                ? new Dictionary<NamingConvention, string?>()
+                : referenceSchema.GetEntityTypeNameVariants(_ => null!),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
             referenceSchema.ReferencedGroupTypeManaged
-                ? new Dictionary<NamingConvention, string>()
-                : referenceSchema.GetGroupTypeNameVariants(_ => default),
+                ? new Dictionary<NamingConvention, string?>()
+                : referenceSchema.GetGroupTypeNameVariants(_ => null!),
             referenceSchema.ReferencedGroupTypeManaged,
             referenceSchema.IsIndexed,
             Faceted,

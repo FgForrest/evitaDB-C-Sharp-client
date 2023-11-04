@@ -4,7 +4,7 @@ namespace EvitaDB.Client.Queries.Filter;
 
 public class EntityLocaleEquals : AbstractFilterConstraintLeaf
 {
-    private EntityLocaleEquals(params object[] arguments) : base(arguments)
+    private EntityLocaleEquals(params object?[] arguments) : base(arguments)
     {
     }
     

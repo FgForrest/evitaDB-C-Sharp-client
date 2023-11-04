@@ -2,13 +2,13 @@
 
 public class AttributeContent : AbstractRequireConstraintLeaf, IEntityContentRequire, IConstraintWithSuffix
 {
-    public static readonly AttributeContent AllAttributes = new AttributeContent();
+    public static readonly AttributeContent AllAttributes = new();
     public new bool Applicable => true;
     private const string Suffix = "all";
     
     public bool AllRequested => Arguments.Length == 0;
     
-    private AttributeContent(params object[] arguments) : base(arguments)
+    private AttributeContent(params object?[] arguments) : base(arguments)
     {
     }
     

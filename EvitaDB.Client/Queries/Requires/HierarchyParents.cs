@@ -18,10 +18,10 @@ public class HierarchyParents : AbstractRequireConstraintContainer, IHierarchyRe
 
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
 
-    private HierarchyParents(string outputName, IRequireConstraint[] children) : base(ConstraintName,
+    private HierarchyParents(string outputName, IRequireConstraint?[] children) : base(ConstraintName,
         new object[] {outputName}, children)
     {
-        foreach (IRequireConstraint requireConstraint in children)
+        foreach (IRequireConstraint? requireConstraint in children)
         {
             Assert.IsTrue(
                 requireConstraint is IHierarchyOutputRequireConstraint or HierarchySiblings or Requires.EntityFetch,
@@ -30,27 +30,27 @@ public class HierarchyParents : AbstractRequireConstraintContainer, IHierarchyRe
     }
 
     public HierarchyParents(string outputName, EntityFetch? entityFetch, params IHierarchyOutputRequireConstraint[] requirements)
-        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{entityFetch}.Concat(requirements).ToArray())
+        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint?[]{entityFetch}.Concat(requirements).ToArray())
     {
     }
     
     public HierarchyParents(string outputName, EntityFetch? entityFetch, HierarchySiblings? hierarchySiblings, params IHierarchyOutputRequireConstraint[] requirements)
-        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{entityFetch, hierarchySiblings}.Concat(requirements).ToArray())
+        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint?[]{entityFetch, hierarchySiblings}.Concat(requirements).ToArray())
     {
     }
     
-    public HierarchyParents(string outputName, params IHierarchyOutputRequireConstraint[] requirements)
-        : base(ConstraintName, new object[]{outputName}, requirements)
+    public HierarchyParents(string outputName, params IHierarchyOutputRequireConstraint?[] requirements)
+        : base(ConstraintName, new object?[]{outputName}, requirements)
     {
     }
     
-    public HierarchyParents(string outputName, HierarchySiblings siblings, params IHierarchyOutputRequireConstraint[] requirements)
-        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{siblings}.Concat(requirements).ToArray())
+    public HierarchyParents(string outputName, HierarchySiblings? siblings, params IHierarchyOutputRequireConstraint?[] requirements)
+        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint?[]{siblings}.Concat(requirements).ToArray())
     {
     }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(additionalChildren.Length == 0,
             "Inner constraints of different type than `require` are not expected.");

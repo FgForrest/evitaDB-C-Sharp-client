@@ -12,7 +12,7 @@ public class HierarchyStopAt : AbstractRequireConstraintContainer, IHierarchyOut
     public HierarchyNode? Node => Children.FirstOrDefault(x => x is HierarchyNode) as HierarchyNode;
     public new bool Applicable => GetChildrenCount() >= 1;
 
-    private HierarchyStopAt(IRequireConstraint[] children) : base(ConstraintName, children)
+    private HierarchyStopAt(IRequireConstraint?[] children) : base(ConstraintName, children)
     {
     }
 
@@ -20,7 +20,7 @@ public class HierarchyStopAt : AbstractRequireConstraintContainer, IHierarchyOut
     {
     }
 
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         foreach (IRequireConstraint? requireConstraint in children)
         {

@@ -42,12 +42,12 @@ public static class ComplexDataObjectConverter
 
     public static ComplexDataObject ConvertToGenericType<T>(T container)
     {
-        IDataItem rootNode = ConvertToIDataItem(container);
+        IDataItem rootNode = ConvertToIDataItem(container!)!;
 
         ComplexDataObject result = new ComplexDataObject(rootNode);
         Assert.IsTrue(
             !result.Empty,
-            "No usable properties found on " + container.GetType().Name + ". This is probably a problem."
+            "No usable properties found on " + container?.GetType().Name + ". This is probably a problem."
         );
         return result;
     }
@@ -71,7 +71,7 @@ public static class ComplexDataObjectConverter
             // Add each item in the list to the DataItemArray
             foreach (object item in list)
             {
-                dataItemArray.Add(ConvertToIDataItem(item));
+                dataItemArray.Add(ConvertToIDataItem(item)!);
             }
 
             return new DataItemArray(dataItemArray.ToArray());
@@ -85,10 +85,10 @@ public static class ComplexDataObjectConverter
             // Add each key-value pair in the dictionary to the DataItemMap
             foreach (DictionaryEntry entry in dictionary)
             {
-                dataItemMap.Add(entry.Key.ToString(), ConvertToIDataItem(entry.Value));
+                dataItemMap.Add(entry.Key.ToString()!, ConvertToIDataItem(entry.Value!)!);
             }
 
-            return new DataItemMap(dataItemMap);
+            return new DataItemMap(dataItemMap!);
         }
 
         if (properties.Length > 0)
@@ -103,10 +103,10 @@ public static class ComplexDataObjectConverter
                 object? value = property.GetValue(obj);
 
                 // Add the property to the DataItemMap
-                dataItemMap.Add(property.Name, ConvertToIDataItem(value));
+                dataItemMap.Add(property.Name, ConvertToIDataItem(value!)!);
             }
 
-            return new DataItemMap(dataItemMap);
+            return new DataItemMap(dataItemMap!);
         }
 
         return null;
@@ -128,14 +128,14 @@ public static class ComplexDataObjectConverter
         if (dataItem is DataItemArray dataItemArray)
         {
             // Create a list to hold the elements
-            Type arrayType = type.IsArray ? type.GetElementType() : type;
-            Array array = (Array)Activator.CreateInstance(arrayType.MakeArrayType(), dataItemArray.Children.Length);
+            Type arrayType = type.IsArray ? type.GetElementType()! : type;
+            Array array = (Array)Activator.CreateInstance(arrayType.MakeArrayType(), dataItemArray.Children.Length)!;
 
             // Convert each IDataItem in the DataItemArray and add it to the list
             for (int i = 0; i < dataItemArray.Children.Length; i++)
             {
                 IDataItem? item = dataItemArray.Children[i];
-                array.SetValue(ConvertFromIComplexDataObject(item, type.GetElementType()), i);
+                array.SetValue(ConvertFromIComplexDataObject(item!, type.GetElementType()!), i);
             }
 
             return array;
@@ -146,12 +146,12 @@ public static class ComplexDataObjectConverter
             // Create an instance of the specified type
             object? obj = Activator.CreateInstance(type);
             // Use reflection to set the properties of the new object
-            foreach (KeyValuePair<string, IDataItem> entry in dataItemMap.ChildrenIndex)
+            foreach (KeyValuePair<string, IDataItem?> entry in dataItemMap.ChildrenIndex)
             {
-                PropertyInfo? property = type.GetProperty(StringUtils.Capitalize(entry.Key));
+                PropertyInfo? property = type.GetProperty(StringUtils.Capitalize(entry.Key)!);
                 if (property != null)
                 {
-                    property.SetValue(obj, ConvertFromIComplexDataObject(entry.Value, property.PropertyType));
+                    property.SetValue(obj, ConvertFromIComplexDataObject(entry.Value!, property.PropertyType));
                 }
             }
 

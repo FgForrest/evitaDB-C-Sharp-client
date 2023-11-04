@@ -6,7 +6,7 @@ public class HierarchyHaving : AbstractFilterConstraintContainer, IHierarchySpec
 {
     private const string ConstraintName = "having";
     
-    public HierarchyHaving(params IFilterConstraint[] children) : base(ConstraintName, NoArguments, children)
+    public HierarchyHaving(params IFilterConstraint?[] children) : base(ConstraintName, NoArguments, children)
     {
     }
     
@@ -16,7 +16,7 @@ public class HierarchyHaving : AbstractFilterConstraintContainer, IHierarchySpec
     
     public new  bool Applicable => Children.Length > 0;
     
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint[] children, IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(
             additionalChildren.Length == 0,

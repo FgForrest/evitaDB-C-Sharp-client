@@ -102,19 +102,19 @@ public static class EvitaDataTypes
         if (unknownObject.GetType().IsArray)
         {
             int inputArrayLength = (unknownObject as object[])!.Length;
-            result = Array.CreateInstance(baseRequestedType, inputArrayLength);
+            result = Array.CreateInstance(baseRequestedType!, inputArrayLength);
             for (int i = 0; i < inputArrayLength; i++)
             {
-                (result as object[])[i] = ConvertSingleObject(
-                    (unknownObject as object[])[i],
-                    baseRequestedType,
+                (result as object[])![i] = ConvertSingleObject(
+                    (unknownObject as object[])?[i]!,
+                    baseRequestedType!,
                     allowedDecimalPlaces
                 );
             }
         }
         else
         {
-            result = ConvertSingleObject(unknownObject, baseRequestedType, allowedDecimalPlaces);
+            result = ConvertSingleObject(unknownObject, baseRequestedType!, allowedDecimalPlaces);
         }
 
         if (requestedType.IsArray)
@@ -124,8 +124,8 @@ public static class EvitaDataTypes
                 return result;
             }
 
-            object[] wrappedResult = Array.CreateInstance(baseRequestedType, 1) as object[];
-            wrappedResult[0] = result;
+            object[]? wrappedResult = Array.CreateInstance(baseRequestedType!, 1) as object[];
+            wrappedResult![0] = result;
             return wrappedResult;
         }
 

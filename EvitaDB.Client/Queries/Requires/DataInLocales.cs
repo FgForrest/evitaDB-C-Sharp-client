@@ -9,7 +9,7 @@ public class DataInLocales : AbstractRequireConstraintLeaf, IEntityContentRequir
     public bool AllRequested => Arguments.Length == 0;
     private const string SuffixAll = "all";
     
-    private DataInLocales(params object[] arguments) : base(arguments)
+    private DataInLocales(params object?[] arguments) : base(arguments)
     {
     }
     

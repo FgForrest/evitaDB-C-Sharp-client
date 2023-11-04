@@ -14,9 +14,9 @@ public class HierarchyFromRoot : AbstractRequireConstraintContainer, IHierarchyR
     
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
     
-    public HierarchyFromRoot(string outputName, IRequireConstraint[] children, params IConstraint[] additionalChildren) : base(ConstraintName, new object[] {outputName}, children, additionalChildren)
+    public HierarchyFromRoot(string outputName, IRequireConstraint?[] children, params IConstraint?[] additionalChildren) : base(ConstraintName, new object[] {outputName}, children, additionalChildren)
     {
-        foreach (IRequireConstraint requireConstraint in children)
+        foreach (IRequireConstraint? requireConstraint in children)
         {
             Assert.IsTrue(
                 requireConstraint is IHierarchyOutputRequireConstraint or Requires.EntityFetch,
@@ -26,11 +26,11 @@ public class HierarchyFromRoot : AbstractRequireConstraintContainer, IHierarchyR
         Assert.IsTrue(AdditionalChildren.Length == 0, "Constraint HierarchyFromRoot accepts only HierarchyStopAt, HierarchyStatistics and EntityFetch as inner constraints!");
     }
     
-    public HierarchyFromRoot(string outputName, EntityFetch? entityFetch, params IHierarchyOutputRequireConstraint[] requirements) : base(ConstraintName, new object[] {outputName}, new IRequireConstraint[] {entityFetch}.Concat(requirements).ToArray()) 
+    public HierarchyFromRoot(string outputName, EntityFetch? entityFetch, params IHierarchyOutputRequireConstraint?[] requirements) : base(ConstraintName, new object[] {outputName}, new IRequireConstraint?[] {entityFetch}.Concat(requirements).ToArray()) 
     {
     }
 
-    public HierarchyFromRoot(string outputName, params IHierarchyOutputRequireConstraint[] requirements) : base(ConstraintName, new object[] {outputName}, requirements)
+    public HierarchyFromRoot(string outputName, params IHierarchyOutputRequireConstraint?[] requirements) : base(ConstraintName, new object[] {outputName}, requirements)
     {
     }
     
@@ -38,7 +38,7 @@ public class HierarchyFromRoot : AbstractRequireConstraintContainer, IHierarchyR
     {
     }
     
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         return new HierarchyFromRoot(OutputName, children, additionalChildren);
     }

@@ -43,7 +43,7 @@ public interface IReferenceSchemaEditor<TS> : IReferenceSchema, INamedSchemaWith
 	/// </remarks>
 	/// </summary>
 	/// <returns>builder to continue with configuration</returns>
-	new TS Indexed();
+	TS Indexed();
 
 	/// <summary>
 	/// Makes reference as non-faceted. This means reference information will be available on entity when loaded but
@@ -61,7 +61,7 @@ public interface IReferenceSchemaEditor<TS> : IReferenceSchema, INamedSchemaWith
 	/// indexed reference occupies (memory/disk) space in the form of index.
 	/// </summary>
 	/// <returns>builder to continue with configuration</returns>
-	new TS Faceted();
+	TS Faceted();
 
 	/// <summary>
 	/// Makes reference as non-faceted. This means reference information will be available on entity when loaded but

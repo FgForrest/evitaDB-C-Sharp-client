@@ -6,7 +6,7 @@ public class HierarchyExcluding : AbstractFilterConstraintContainer, IHierarchyS
 {
     private const string ConstraintName = "excluding";
     
-    public HierarchyExcluding(params IFilterConstraint[] filtering) : base(ConstraintName, NoArguments, filtering)
+    public HierarchyExcluding(params IFilterConstraint?[] filtering) : base(ConstraintName, NoArguments, filtering)
     {
     }
     
@@ -15,7 +15,7 @@ public class HierarchyExcluding : AbstractFilterConstraintContainer, IHierarchyS
     public override bool Applicable => Children.Length > 0;
     public new bool Necessary => Children.Length > 0;
     
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint[] children, IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint?[] additionalChildren)
     {
         Assert.IsTrue(
             additionalChildren.Length == 0,

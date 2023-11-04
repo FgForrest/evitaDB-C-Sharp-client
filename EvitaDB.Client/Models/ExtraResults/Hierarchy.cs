@@ -7,7 +7,7 @@ public class Hierarchy : IEvitaResponseExtraResult
 {
     private readonly IDictionary<string, List<LevelInfo>>? _selfHierarchy;
     private readonly IDictionary<string, Dictionary<string, List<LevelInfo>>>? _referenceHierarchies;
-
+    
     public IDictionary<string, List<LevelInfo>> GetSelfHierarchy() =>
         _selfHierarchy ?? new Dictionary<string, List<LevelInfo>>();
 
@@ -17,7 +17,8 @@ public class Hierarchy : IEvitaResponseExtraResult
     public List<LevelInfo> GetReferenceHierarchy(string referenceName, string outputName) =>
         _referenceHierarchies?[referenceName][outputName] ?? new List<LevelInfo>();
 
-    public IDictionary<string, List<LevelInfo>>? GetReferenceHierarchy(string referenceName) => _referenceHierarchies?[referenceName] ?? new Dictionary<string, List<LevelInfo>>();
+    public IDictionary<string, List<LevelInfo>>? GetReferenceHierarchy(string referenceName) =>
+        _referenceHierarchies?.TryGetValue(referenceName, out Dictionary<string, List<LevelInfo>>? value) != null ? value : null;
     public IDictionary<string, Dictionary<string, List<LevelInfo>>>? GetReferenceHierarchies() => _referenceHierarchies;
 
     public Hierarchy(IDictionary<string, List<LevelInfo>>? selfHierarchy,
@@ -152,20 +153,23 @@ public class Hierarchy : IEvitaResponseExtraResult
             }
         }
 
-        foreach (KeyValuePair<string, Dictionary<string, List<LevelInfo>>> statisticsEntry in _referenceHierarchies)
+        if (_referenceHierarchies is not null)
         {
-            treeBuilder.Append(statisticsEntry.Key).Append(Environment.NewLine);
-            foreach (KeyValuePair<string, List<LevelInfo>> statisticsByType in statisticsEntry.Value)
+            foreach (KeyValuePair<string, Dictionary<string, List<LevelInfo>>> statisticsEntry in _referenceHierarchies)
             {
-                treeBuilder.Append("    ").Append(statisticsByType.Key).Append(Environment.NewLine);
-
-                foreach (LevelInfo levelInfo in statisticsByType.Value)
+                treeBuilder.Append(statisticsEntry.Key).Append(Environment.NewLine);
+                foreach (KeyValuePair<string, List<LevelInfo>> statisticsByType in statisticsEntry.Value)
                 {
-                    AppendLevelInfoTreeString(treeBuilder, levelInfo, 2);
+                    treeBuilder.Append("    ").Append(statisticsByType.Key).Append(Environment.NewLine);
+
+                    foreach (LevelInfo levelInfo in statisticsByType.Value)
+                    {
+                        AppendLevelInfoTreeString(treeBuilder, levelInfo, 2);
+                    }
                 }
             }
         }
-
+        
         return treeBuilder.ToString();
     }
 

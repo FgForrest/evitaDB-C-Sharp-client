@@ -74,7 +74,7 @@ public class JsonToComplexDataObjectConverter
 
         if (jsonNode.Type == JTokenType.String)
         {
-            var value = jsonNode.Value<string>();
+            string value = jsonNode.Value<string>()!;
             if (LongNumber.IsMatch(value))
             {
                 return new DataItemValue(long.Parse(value));

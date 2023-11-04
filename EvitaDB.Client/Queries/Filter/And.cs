@@ -6,7 +6,7 @@ public class And : AbstractFilterConstraintContainer
     {
     }
     
-    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint[] children, IConstraint[] additionalChildren)
+    public override IFilterConstraint GetCopyWithNewChildren(IFilterConstraint?[] children, IConstraint?[] additionalChildren)
     {
         return new And(children);
     }

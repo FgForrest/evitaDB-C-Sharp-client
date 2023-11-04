@@ -447,7 +447,8 @@ public static class EvitaEnumConverter
         return captureContent switch
         {
             CaptureContent.Header => GrpcCaptureContent.Header,
-            CaptureContent.Body => GrpcCaptureContent.Body
+            CaptureContent.Body => GrpcCaptureContent.Body,
+            _ => throw new ArgumentOutOfRangeException(nameof(captureContent), captureContent, null)
         };
     }
 
@@ -468,7 +469,8 @@ public static class EvitaEnumConverter
         {
             Operation.Create => GrpcOperation.Create,
             Operation.Update => GrpcOperation.Update,
-            Operation.Remove => GrpcOperation.Remove
+            Operation.Remove => GrpcOperation.Remove,
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null)
         };
     }
 }

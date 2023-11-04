@@ -2,7 +2,7 @@
 
 public class EntityFetch : AbstractRequireConstraintContainer, IEntityFetchRequire
 {
-    protected EntityFetch(IRequireConstraint[] requireConstraints) : base(requireConstraints)
+    protected EntityFetch(IRequireConstraint?[] requireConstraints) : base(requireConstraints)
     {
     }
 
@@ -10,11 +10,11 @@ public class EntityFetch : AbstractRequireConstraintContainer, IEntityFetchRequi
     {
     }
 
-    public EntityFetch(params IEntityContentRequire[] requirements) : base(requirements)
+    public EntityFetch(params IEntityContentRequire?[] requirements) : base(requirements)
     {
     }
     
-    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint[] children, IConstraint[] additionalChildren)
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children, IConstraint?[] additionalChildren)
     {
         return new EntityFetch(children);
     }

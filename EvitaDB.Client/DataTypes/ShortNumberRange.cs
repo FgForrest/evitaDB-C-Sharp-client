@@ -51,7 +51,7 @@ public class ShortNumberRange : NumberRange<short>
         {
             return Convert.ToInt16(toBeNumber);
         }
-        catch (FormatException ex)
+        catch (FormatException)
         {
             throw new DataTypeParseException("String " + toBeNumber + " is not a short number!");
         }

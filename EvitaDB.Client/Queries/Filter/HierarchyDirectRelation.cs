@@ -4,7 +4,7 @@ public class HierarchyDirectRelation : AbstractFilterConstraintLeaf, IHierarchyS
 {
     private const string ConstraintName = "directRelation";
     
-    private HierarchyDirectRelation(params object[] arguments) : base(ConstraintName, arguments)
+    private HierarchyDirectRelation(params object?[] arguments) : base(ConstraintName, arguments)
     {
     }
     

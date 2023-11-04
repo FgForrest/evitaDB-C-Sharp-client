@@ -12,10 +12,10 @@ public class HierarchyChildren : AbstractRequireConstraintContainer, IHierarchyR
     
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 1;
     
-    private HierarchyChildren(string outputName, IRequireConstraint[] children, params IConstraint[] additionalChildren)
+    private HierarchyChildren(string outputName, IRequireConstraint?[] children, params IConstraint?[] additionalChildren)
         : base(ConstraintName, new object[] {outputName}, children, additionalChildren)
     {
-        foreach (IRequireConstraint requireConstraint in children)
+        foreach (IRequireConstraint? requireConstraint in children)
         {
             Assert.IsTrue(
                 requireConstraint is IHierarchyOutputRequireConstraint or Requires.EntityFetch,
@@ -25,7 +25,8 @@ public class HierarchyChildren : AbstractRequireConstraintContainer, IHierarchyR
         Assert.IsTrue(AdditionalChildren.Length == 0, "Constraint HierarchyChildren accepts only HierarchyStopAt, HierarchyStatistics and EntityFetch as inner constraints!");
     }
 
-    public HierarchyChildren(string outputName, EntityFetch entityFetch, params IHierarchyOutputRequireConstraint[] requirements) : base(ConstraintName, new object[]{outputName}, new IRequireConstraint[]{entityFetch}.Concat(requirements).ToArray())
+    public HierarchyChildren(string outputName, EntityFetch? entityFetch, params IHierarchyOutputRequireConstraint[] requirements)
+        : base(ConstraintName, new object[]{outputName}, new IRequireConstraint?[]{entityFetch}.Concat(requirements).ToArray())
     {
     }
     
@@ -34,7 +35,7 @@ public class HierarchyChildren : AbstractRequireConstraintContainer, IHierarchyR
     }
 
     public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
-        IConstraint[] additionalChildren)
+        IConstraint?[] additionalChildren)
     {
         return new HierarchyChildren(OutputName, children, additionalChildren);
     }

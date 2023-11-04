@@ -12,7 +12,7 @@ public class RemoveSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
         Name = name;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         SortableAttributeCompoundSchema? existingAttributeSchema = entitySchema!.GetSortableAttributeCompound(Name);
@@ -60,11 +60,11 @@ public class RemoveSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
             referenceSchema.Description,
             referenceSchema.DeprecationNotice,
             referenceSchema.ReferencedEntityType,
-            referenceSchema.GetEntityTypeNameVariants(_ => null),
+            referenceSchema.GetEntityTypeNameVariants(_ => null!),
             referenceSchema.ReferencedEntityTypeManaged,
             referenceSchema.Cardinality,
             referenceSchema.ReferencedGroupType,
-            referenceSchema.GetGroupTypeNameVariants(_ => null),
+            referenceSchema.GetGroupTypeNameVariants(_ => null!),
             referenceSchema.ReferencedGroupTypeManaged,
             referenceSchema.IsIndexed,
             referenceSchema.IsFaceted,

@@ -77,13 +77,13 @@ public class FinderVisitor : IConstraintVisitor
             return;
         }
         IConstraintContainer<IConstraint> constraintContainer = (IConstraintContainer<IConstraint>) constraint;
-        foreach (IConstraint child in constraintContainer.Children)
+        foreach (IConstraint? child in constraintContainer.Children)
         {
-            child.Accept(this);
+            child?.Accept(this);
         }
-        foreach (IConstraint additionalChild in constraintContainer.AdditionalChildren)
+        foreach (IConstraint? additionalChild in constraintContainer.AdditionalChildren)
         {
-            additionalChild.Accept(this);
+            additionalChild?.Accept(this);
         }
     }
 }

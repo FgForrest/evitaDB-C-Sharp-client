@@ -17,7 +17,7 @@ public interface IAssociatedDataSchemaEditor : IAssociatedDataSchema, INamedSche
     /// </summary>
     /// <param name="decider">decider returns true when attribute should be localized</param>
     /// <returns>builder to continue with configuration</returns>
-    IAssociatedDataSchemaEditor Localized(Func<bool> decider);
+    new IAssociatedDataSchemaEditor Localized(Func<bool> decider);
     
     /// <summary>
     /// When attribute is nullable, its values may be missing in the entities. Otherwise, the system will enforce
@@ -32,5 +32,5 @@ public interface IAssociatedDataSchemaEditor : IAssociatedDataSchema, INamedSche
     /// </summary>
     /// <param name="decider">decider returns true when attribute should be localized</param>
     /// <returns>builder to continue with configuration</returns>
-    IAssociatedDataSchemaEditor Nullable(Func<bool> decider);
+    new IAssociatedDataSchemaEditor Nullable(Func<bool> decider);
 }

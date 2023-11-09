@@ -1,5 +1,4 @@
-﻿using EvitaDB.Client.Exceptions;
-using EvitaDB.Client.Queries.Filter;
+﻿using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Requires;
@@ -8,10 +7,9 @@ public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
 {
     public string ReferenceName => (string) Arguments[0]!;
 
-    public FilterBy FacetGroups => AdditionalChildren.OfType<FilterBy>().FirstOrDefault() ??
-                                   throw new EvitaInvalidUsageException("FacetGroupsDisjunction requires FilterBy constraint.");
+    public FilterBy? FacetGroups => AdditionalChildren.OfType<FilterBy>().FirstOrDefault();
 
-    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 0 && AdditionalChildren.Length > 0;
+    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 0;
 
     private FacetGroupsDisjunction(object?[] arguments, params IConstraint?[] additionalChildren) : base(arguments,
         NoChildren, additionalChildren)
@@ -23,7 +21,7 @@ public class FacetGroupsDisjunction : AbstractRequireConstraintContainer
         }
     }
 
-    public FacetGroupsDisjunction(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
+    public FacetGroupsDisjunction(string referenceName, FilterBy? filterBy) : base(new object[] {referenceName},
         NoChildren, filterBy)
     {
     }

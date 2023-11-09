@@ -194,7 +194,7 @@ public interface IQueryConstraints
     static PriceValidIn? PriceValidIn(DateTimeOffset? theMoment) =>
         theMoment is null ? null : new PriceValidIn(theMoment.Value);
 
-    static PriceValidIn PriceValidNow() => new PriceValidIn();
+    static PriceValidIn PriceValidInNow() => new();
 
     static FacetHaving? FacetHaving(string referenceName, params IFilterConstraint?[]? constraints) =>
         ArrayUtils.IsEmpty(constraints) ? null : new FacetHaving(referenceName, constraints!);
@@ -362,7 +362,7 @@ public interface IQueryConstraints
         params IHierarchyOutputRequireConstraint?[]? requirements) =>
         new(null, entityFetch, requirements!);
 
-    static HierarchySiblings? Siblings(params IHierarchyOutputRequireConstraint?[]? requirements) =>
+    static HierarchySiblings Siblings(params IHierarchyOutputRequireConstraint?[]? requirements) =>
         new(null, requirements!);
 
     static HierarchyParents? Parents(string? outputName, EntityFetch? entityFetch,
@@ -413,7 +413,7 @@ public interface IQueryConstraints
     static HierarchyDistance? Distance(int? distance) =>
         distance is null ? null : new HierarchyDistance(distance.Value);
 
-    static HierarchyStatistics? Statistics(params StatisticsType[]? types) => types is null
+    static HierarchyStatistics Statistics(params StatisticsType[]? types) => types is null
         ? new HierarchyStatistics(StatisticsBase.WithoutUserFilter)
         : new HierarchyStatistics(StatisticsBase.WithoutUserFilter, types);
 
@@ -1034,10 +1034,7 @@ public interface IQueryConstraints
         FilterGroupBy? facetGroupFilterBy, OrderBy? facetOrderBy, OrderGroupBy? facetGroupOrderBy,
         params IEntityRequire?[]? requirements)
     {
-        if (statisticsDepth is null)
-        {
-            statisticsDepth = FacetStatisticsDepth.Counts;
-        }
+        statisticsDepth ??= FacetStatisticsDepth.Counts;
 
         if (ArrayUtils.IsEmpty(requirements))
         {
@@ -1071,10 +1068,7 @@ public interface IQueryConstraints
         FilterBy? facetFilterBy, FilterGroupBy? facetGroupFilterBy, OrderBy? facetOrderBy,
         OrderGroupBy? facetGroupOrderBy, params IEntityRequire[]? requirements)
     {
-        if (statisticsDepth is null)
-        {
-            statisticsDepth = FacetStatisticsDepth.Counts;
-        }
+        statisticsDepth ??= FacetStatisticsDepth.Counts;
 
         if (ArrayUtils.IsEmpty(requirements))
         {

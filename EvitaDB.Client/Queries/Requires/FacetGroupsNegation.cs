@@ -8,10 +8,9 @@ public class FacetGroupsNegation : AbstractRequireConstraintContainer
 {
     public string ReferenceName => (string) Arguments[0]!;
 
-    public FilterBy FacetGroups => AdditionalChildren.OfType<FilterBy>().FirstOrDefault() ??
-                                   throw new EvitaInvalidUsageException("FacetGroupsNegation requires FilterBy constraint.");
+    public FilterBy? FacetGroups => AdditionalChildren.OfType<FilterBy>().FirstOrDefault();
 
-    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 0 && AdditionalChildren.Length > 0;
+    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 0;
 
     private FacetGroupsNegation(object?[] arguments, params IConstraint?[] additionalChildren) : base(arguments,
         NoChildren, additionalChildren)
@@ -23,7 +22,7 @@ public class FacetGroupsNegation : AbstractRequireConstraintContainer
         }
     }
 
-    public FacetGroupsNegation(string referenceName, FilterBy filterBy) : base(new object[] {referenceName},
+    public FacetGroupsNegation(string referenceName, FilterBy? filterBy) : base(new object[] {referenceName},
         NoChildren, filterBy)
     {
     }

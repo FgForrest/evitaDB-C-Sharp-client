@@ -139,7 +139,7 @@ public class EvitaClientDemoQueryTest : IDisposable
                                 PriceInPriceLists("vip", "basic"),
                                 PriceInCurrency("CZK"),
                                 PriceBetween(100m, 200.5m),
-                                PriceValidNow()
+                                PriceValidInNow()
                             ),
                             AttributeBetween("frekvence-od", 20m, 95.3m),
                             UserFilter(

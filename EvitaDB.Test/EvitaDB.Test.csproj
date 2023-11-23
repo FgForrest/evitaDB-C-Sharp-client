@@ -4,19 +4,13 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <IsPackable>false</IsPackable>
-
         <AssemblyName>EvitaDB.Test</AssemblyName>
-
         <RootNamespace>EvitaDB.Test</RootNamespace>
-
         <PackageId>EvitaDB.Test</PackageId>
-
         <Authors>EvitaDB.Test</Authors>
-
         <Company>EvitaDB.Test</Company>
-
         <Product>EvitaDB.Test</Product>
     </PropertyGroup>
 

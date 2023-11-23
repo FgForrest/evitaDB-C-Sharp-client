@@ -16,9 +16,9 @@ public static partial class MarkdownConverter
 {
     private static readonly IDictionary<CultureInfo, string> Locales = new Dictionary<CultureInfo, string>
     {
-        {new CultureInfo("cs"), "\uD83C\uDDE8\uD83C\uDDFF"},
-        {new CultureInfo("en"), "\uD83C\uDDEC\uD83C\uDDE7"},
-        {new CultureInfo("de"), "\uD83C\uDDE9\uD83C\uDDEA"}
+        { new CultureInfo("cs"), "\uD83C\uDDE8\uD83C\uDDFF" },
+        { new CultureInfo("en"), "\uD83C\uDDEC\uD83C\uDDE7" },
+        { new CultureInfo("de"), "\uD83C\uDDE9\uD83C\uDDEA" }
     };
 
     private const string PredecessorHeadSymbol = "⎆";
@@ -29,6 +29,7 @@ public static partial class MarkdownConverter
     private const string AttrLink = ": ";
     private const string PriceLink = "\uD83E\uDE99 ";
     private const string PriceForSale = PriceLink + "Price for sale";
+    private const string Prices = PriceLink + "Prices found";
     private const string EntityPrimaryKey = "entityPrimaryKey";
 
     private static readonly Regex AttrLinkParser = MyRegex();
@@ -48,9 +49,13 @@ public static partial class MarkdownConverter
                                   .Any(filterBy => QueryUtils.FindConstraint<EntityLocaleEquals>(filterBy) != null) ||
                               query.Require is not null && query.Require
                                   .Any(require => QueryUtils.FindConstraint<DataInLocales>(require) != null);
+        bool allPriceForSaleConstraintsSet = query.FilterBy is not null &&
+                                             QueryUtils.FindConstraint<PriceInPriceLists>(query.FilterBy) is not null &&
+                                             QueryUtils.FindConstraint<PriceInCurrency>(query.FilterBy) is not null &&
+                                             QueryUtils.FindConstraint<PriceValidIn>(query.FilterBy) is not null;
 
         // collect headers for the MarkDown table
-        var headers = new List<string> {EntityPrimaryKey};
+        var headers = new List<string> { EntityPrimaryKey };
         if (entityFetch is not null)
         {
             headers.AddRange(GetEntityHeaders(entityFetch, () => response.RecordData,
@@ -110,16 +115,17 @@ public static partial class MarkdownConverter
             QueryUtils.FindConstraints<PriceContent, ISeparateEntityContentRequireContainer>(entityFetch!);
         headers.AddRange(
             priceContents
-                .Select(priceCnt =>
+                .SelectMany(priceCnt =>
                 {
                     if (priceCnt.FetchMode == PriceContentMode.RespectingFilter)
                     {
-                        return PriceForSale;
+                        return allPriceForSaleConstraintsSet
+                            ? new List<string> { PriceForSale }
+                            : new List<string> { PriceForSale, Prices };
                     }
 
-                    return null;
+                    return new List<string>();
                 })
-                .Where(x => x != null)!
         );
 
         // define the table with header line
@@ -138,7 +144,7 @@ public static partial class MarkdownConverter
             .Select(QueryUtils.FindConstraint<PriceInCurrency>)
             .Select(f => f?.Currency.CurrencyCode)
             .FirstOrDefault() ?? new CultureInfo("de-DE").NumberFormat.CurrencySymbol;
-        var priceFormatter = new CultureInfo(locale.Name) {NumberFormat = {CurrencySymbol = currency}};
+        var priceFormatter = new CultureInfo(locale.Name) { NumberFormat = { CurrencySymbol = currency } };
 
         // add rows
         foreach (var sealedEntity in response.RecordData)
@@ -205,6 +211,20 @@ public static partial class MarkdownConverter
                             : "N/A";
                     }
 
+                    if (header == Prices)
+                    {
+                        List<IPrice> prices = sealedEntity.GetPrices().ToList();
+                        if (!prices.Any())
+                        {
+                            return "N/A";
+                        }
+
+                        return string.Join(", ",
+                                   prices.Take(3).Select(price =>
+                                       PriceLink + string.Format(priceFormatter, "{0:C}", price.PriceWithTax))) +
+                               (prices.Count > 3 ? $" ... and {prices.Count - 3} other prices" : "");
+                    }
+
                     attributeKey = ToAttributeKey(header);
                     return sealedEntity.GetAttributeValue(attributeKey) is not null
                         ? FormatValue(
@@ -214,7 +234,7 @@ public static partial class MarkdownConverter
         }
 
         // generate MarkDown
-        PaginatedList<ISealedEntity> recordPage = (PaginatedList<ISealedEntity>) response.RecordPage;
+        PaginatedList<ISealedEntity> recordPage = (PaginatedList<ISealedEntity>)response.RecordPage;
         return tableBuilder.Build().Serialize() + "\n\n###### **Page** " + recordPage.PageNumber + "/" +
                recordPage.LastPageNumber + " **(Total number of results: " + recordPage.TotalRecordCount +
                ")**";
@@ -249,7 +269,10 @@ public static partial class MarkdownConverter
         bool localizedQuery
     )
     {
-        return new[] {RefLink + " " + referenceSchema.Name + " " + RefEntityLink + referenceSchema.ReferencedEntityType}
+        return new[]
+            {
+                RefLink + " " + referenceSchema.Name + " " + RefEntityLink + referenceSchema.ReferencedEntityType
+            }
             .Concat(
                 QueryUtils.FindConstraints<EntityFetch, ISeparateEntityContentRequireContainer>(referenceContent)
                     .SelectMany(
@@ -288,7 +311,7 @@ public static partial class MarkdownConverter
             })
             .SelectMany(
                 attributeName => TransformLocalizedAttributes(
-                    entityCollectionAccessor, attributeName, entitySchema.Locales, entitySchema, x => new[] {x},
+                    entityCollectionAccessor, attributeName, entitySchema.Locales, entitySchema, x => new[] { x },
                     prefix
                 )
             )
@@ -327,7 +350,7 @@ public static partial class MarkdownConverter
                 .Select(it => prefix is null ? it : prefix + attributeName);
         }
 
-        return prefix is null ? new[] {attributeName} : new[] {prefix + attributeName};
+        return prefix is null ? new[] { attributeName } : new[] { prefix + attributeName };
     }
 
     private static string FormatValue(object? value)

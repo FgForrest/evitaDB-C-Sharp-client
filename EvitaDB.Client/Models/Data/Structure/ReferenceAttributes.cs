@@ -11,11 +11,21 @@ public class ReferenceAttributes : Attributes<IAttributeSchema>
     private IReferenceSchema ReferenceSchema { get; }
 
     public ReferenceAttributes(IEntitySchema entitySchema, IReferenceSchema referenceSchema)
-        : base(entitySchema, new List<AttributeValue>(), referenceSchema.GetAttributes())
+        : base(entitySchema, new Dictionary<AttributeKey, AttributeValue>(), referenceSchema.GetAttributes())
     {
         ReferenceSchema = referenceSchema;
     }
 
+    public ReferenceAttributes(
+        IEntitySchema entitySchema,
+        IReferenceSchema referenceSchema,
+        IDictionary<AttributeKey, AttributeValue> attributeValues,
+        IDictionary<string, IAttributeSchema> attributeTypes
+    ) : base(entitySchema, attributeValues, attributeTypes)
+    {
+        ReferenceSchema = referenceSchema;
+    }
+    
     public ReferenceAttributes(
         IEntitySchema entitySchema,
         IReferenceSchema referenceSchema,

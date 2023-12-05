@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using EvitaDB.Client.Utils;
+using Newtonsoft.Json;
 
 namespace EvitaDB.Client.Models.ExtraResults;
 

@@ -47,7 +47,7 @@ public class Reference : IReference
 		Attributes = new ReferenceAttributes(
 			entitySchema, 
 			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
-			new List<AttributeValue>(),
+			new Dictionary<AttributeKey, AttributeValue>(),
 			referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
 		);
 		ReferencedEntity = referencedEntity;
@@ -76,7 +76,7 @@ public class Reference : IReference
 		Attributes = new ReferenceAttributes(
 			entitySchema, 
 			referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
-			new List<AttributeValue>(),
+			new Dictionary<AttributeKey, AttributeValue>(),
 			referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
 		);
 		ReferencedEntity = referencedEntity;
@@ -117,7 +117,7 @@ public class Reference : IReference
 		string? referencedEntityType,
 		Cardinality? cardinality,
 		GroupEntityReference? group,
-		ICollection<AttributeValue> attributes,
+		IDictionary<AttributeKey, AttributeValue> attributes,
 		ISealedEntity? referencedEntity = null,
 		ISealedEntity? groupEntity = null,
 		bool dropped = false) 
@@ -139,6 +139,37 @@ public class Reference : IReference
 		GroupEntity = groupEntity;
 		Dropped = dropped;
 	}
+    
+    public Reference(
+        IEntitySchema entitySchema,
+        int version,
+        string referenceName,
+        int referencedEntityPrimaryKey,
+        string? referencedEntityType,
+        Cardinality? cardinality,
+        GroupEntityReference? group,
+        ICollection<AttributeValue> attributes,
+        ISealedEntity? referencedEntity = null,
+        ISealedEntity? groupEntity = null,
+        bool dropped = false) 
+    {
+        EntitySchema = entitySchema;
+        Version = version;
+        ReferenceKey = new ReferenceKey(referenceName, referencedEntityPrimaryKey);
+        _referenceCardinality = cardinality;
+        _referencedEntityType = referencedEntityType;
+        Group = group;
+        IReferenceSchema? referenceSchema = entitySchema.GetReference(referenceName);
+        Attributes = new ReferenceAttributes(
+            entitySchema, 
+            referenceSchema ?? CreateImplicitSchema(referenceName, referencedEntityType, cardinality, group),
+            attributes,
+            referenceSchema is not null ? referenceSchema.GetAttributes() : new Dictionary<string, IAttributeSchema>()
+        );
+        ReferencedEntity = referencedEntity;
+        GroupEntity = groupEntity;
+        Dropped = dropped;
+    }
 
 	public Reference(
 		IEntitySchema entitySchema,

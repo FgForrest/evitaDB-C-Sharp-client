@@ -1,5 +1,21 @@
-﻿namespace EvitaDB.Client.Queries.Requires;
+﻿using EvitaDB.Client.Queries.Filter;
 
+namespace EvitaDB.Client.Queries.Requires;
+
+/// <summary>
+/// The `attributeContent` requirement is used to retrieve one or more entity or reference attributes. Localized attributes
+/// are only fetched if there is a locale context in the query, either by using the <see cref="EntityLocaleEquals"/> filter
+/// constraint or the dataInLocales require constraint.
+/// All entity attributes are fetched from disk in bulk, so specifying only a few of them in the `attributeContent`
+/// requirement only reduces the amount of data transferred over the network. It's not bad to fetch all the attributes
+/// of an entity using `attributeContentAll`.
+/// Example:
+/// <code>
+/// entityFetch(
+///    attributeContent("code", "name")
+/// )
+/// </code>
+/// </summary>
 public class AttributeContent : AbstractRequireConstraintLeaf, IEntityContentRequire, IConstraintWithSuffix
 {
     public static readonly AttributeContent AllAttributes = new();

@@ -30,40 +30,43 @@ public class Entity : ISealedEntity
     public ISet<CultureInfo> Locales { get; }
     public bool Dropped { get; }
     public PriceInnerRecordHandling? InnerRecordHandling => Prices.InnerRecordHandling;
-    
+
     /// <summary>
     /// This predicate filters out non-fetched locales.
     /// </summary>
     public LocalePredicate LocalePredicate { get; }
-    
+
     /// <summary>
     /// This predicate filters out access to the hierarchy parent that were not fetched in query.
     /// </summary>
     public HierarchyPredicate HierarchyPredicate { get; }
-    
+
     /// <summary>
     /// This predicate filters out attributes that were not fetched in query.
     /// </summary>
     public AttributeValuePredicate AttributePredicate { get; }
-    
+
     /// <summary>
     /// This predicate filters out associated data that were not fetched in query.
     /// </summary>
     public AssociatedDataValuePredicate AssociatedDataPredicate { get; }
-    
+
     /// <summary>
     /// This predicate filters out references that were not fetched in query.
     /// </summary>
     public ReferencePredicate ReferencePredicate { get; }
-    
+
     /// <summary>
     /// This predicate filters out prices that were not fetched in query.
     /// </summary>
     public PricePredicate PricePredicate { get; }
     
+
     public bool ParentAvailable() => Schema.WithHierarchy;
     public bool PricesAvailable() => Prices.PricesAvailable();
-    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment, params string[] priceListPriority)
+
+    public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
+        params string[] priceListPriority)
     {
         return Prices.GetAllPricesForSale(currency, atTheMoment, priceListPriority);
     }
@@ -267,7 +270,7 @@ public class Entity : ISealedEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToImmutableSortedDictionary(x => x.ReferenceKey, x => x);
+        References = references.ToImmutableDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;
@@ -308,7 +311,7 @@ public class Entity : ISealedEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToImmutableSortedDictionary(x => x.ReferenceKey, x => x);
+        References = references.ToImmutableDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;
@@ -766,10 +769,11 @@ public class Entity : ISealedEntity
         }
         else
         {
-            List<AttributeValue> attributeValues = possibleEntity is null
-                ? new List<AttributeValue>()
-                : possibleEntity.GetAttributeValues().Where(x => !newAttributes.ContainsKey(x.Key)).ToList();
-            attributeValues.AddRange(newAttributes.Values);
+            IDictionary<AttributeKey, AttributeValue> attributeValues = possibleEntity is null
+                ? new Dictionary<AttributeKey, AttributeValue>()
+                : possibleEntity.GetAttributeValues().Where(x => !newAttributes.ContainsKey(x.Key))
+                    .Concat(newAttributes.Values)
+                    .ToDictionary(x => x.Key, x => x);
             List<IEntityAttributeSchema> attributeSchemas = entitySchema.Attributes.Values.ToList();
             attributeSchemas.AddRange(newAttributes.Values
                 .Where(x => !entitySchema.Attributes.ContainsKey(x.Key.AttributeName))
@@ -807,7 +811,7 @@ public class Entity : ISealedEntity
 
     public object? GetAttribute(string attributeName)
     {
-        return Attributes.GetAttribute(attributeName);
+        return GetAttributeValue(attributeName)?.Value;
     }
 
     public object[]? GetAttributeArray(string attributeName)
@@ -817,7 +821,19 @@ public class Entity : ISealedEntity
 
     public AttributeValue? GetAttributeValue(string attributeName)
     {
-        return Attributes.GetAttributeValue(attributeName);
+        AttributeKey attributeKey;
+        if (AttributePredicate.LocaleSet)
+        {
+            CultureInfo? locale = AttributePredicate.Locale;
+            attributeKey = locale == null ? new AttributeKey(attributeName) : new AttributeKey(attributeName, locale);
+        }
+        else
+        {
+            attributeKey = new AttributeKey(attributeName);
+        }
+
+        AttributePredicate.CheckFetched(attributeKey);
+        return Attributes.GetAttributeValue(attributeKey);
     }
 
     public object? GetAttribute(string attributeName, CultureInfo locale)
@@ -892,7 +908,21 @@ public class Entity : ISealedEntity
 
     public AssociatedDataValue? GetAssociatedDataValue(string associatedDataName)
     {
-        return AssociatedData.GetAssociatedDataValue(associatedDataName);
+        AssociatedDataKey associatedDataKey;
+        if (AssociatedDataPredicate.LocaleSet)
+        {
+            CultureInfo? locale = AssociatedDataPredicate.Locale;
+            associatedDataKey = locale == null
+                ? new AssociatedDataKey(associatedDataName)
+                : new AssociatedDataKey(associatedDataName, locale);
+        }
+        else
+        {
+            associatedDataKey = new AssociatedDataKey(associatedDataName);
+        }
+
+        AssociatedDataPredicate.CheckFetched(associatedDataKey);
+        return AssociatedData.GetAssociatedDataValue(associatedDataKey);
     }
 
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
@@ -966,7 +996,7 @@ public class Entity : ISealedEntity
         throw new ContextMissingException();
     }
 
-    public IEnumerable<IPrice> GetPrices()
+    public IList<IPrice> GetPrices()
     {
         return Prices.GetPrices();
     }
@@ -997,7 +1027,7 @@ public class Entity : ISealedEntity
     {
         if (this == o) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        Entity entity = (Entity) o;
+        Entity entity = (Entity)o;
         return Version == entity.Version && Type.Equals(entity.Type) && PrimaryKey == entity.PrimaryKey;
     }
 

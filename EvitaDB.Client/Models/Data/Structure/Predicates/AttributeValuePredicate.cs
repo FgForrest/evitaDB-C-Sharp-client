@@ -34,6 +34,8 @@ public class AttributeValuePredicate
     /// Contains true if any of the attributes of the entity has been fetched / requested.
     /// </summary>
     public bool RequiresEntityAttributes { get; }
+    
+    public bool LocaleSet => Locale != null || ImplicitLocale != null || Locales != null;
 
     public AttributeValuePredicate()
     {

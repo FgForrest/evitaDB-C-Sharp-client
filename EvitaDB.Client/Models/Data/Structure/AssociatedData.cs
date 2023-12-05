@@ -19,6 +19,7 @@ public class AssociatedData : IAssociatedData
     public bool AssociatedDataAvailable(CultureInfo locale) => true;
     public bool AssociatedDataAvailable(string associatedDataName) => true;
     public bool AssociatedDataAvailable(string associatedDataName, CultureInfo locale) => true;
+    private IList<AssociatedDataValue> OrderedAssociatedDataValues { get; } = new List<AssociatedDataValue>();
 
     public AssociatedData(
         IEntitySchema entitySchema,
@@ -28,7 +29,8 @@ public class AssociatedData : IAssociatedData
     {
         EntitySchema = entitySchema;
         AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue>();
-        foreach (AssociatedDataValue associatedDataValue in associatedDataValues)
+        OrderedAssociatedDataValues = associatedDataValues.ToList();
+        foreach (AssociatedDataValue associatedDataValue in OrderedAssociatedDataValues)
         {
             AssociatedDataValues.Add(associatedDataValue.Key, associatedDataValue);
         }
@@ -42,14 +44,22 @@ public class AssociatedData : IAssociatedData
      */
     public AssociatedData(
         IEntitySchema entitySchema,
-        ICollection<AssociatedDataValue>? associatedDataValues
+        IDictionary<AssociatedDataKey, AssociatedDataValue>? associatedDataValues
     )
     {
         EntitySchema = entitySchema;
-        AssociatedDataValues = associatedDataValues is null
-            ? new Dictionary<AssociatedDataKey, AssociatedDataValue>()
-            : associatedDataValues
-                .ToDictionary(x => x.Key, x => x);
+        if (associatedDataValues is null)
+        {
+            AssociatedDataValues = new Dictionary<AssociatedDataKey, AssociatedDataValue>();
+        }
+        else
+        {
+            foreach (var aData in associatedDataValues)
+            {
+                OrderedAssociatedDataValues.Add(aData.Value);
+            }
+            AssociatedDataValues = associatedDataValues;
+        }
         AssociatedDataTypes = entitySchema.AssociatedData;
     }
 

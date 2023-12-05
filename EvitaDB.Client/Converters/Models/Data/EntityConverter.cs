@@ -60,7 +60,16 @@ public static class EntityConverter
             parentEntity = parent;
         }
 
-        return (T) Entity.InternalBuild(
+        List<Reference> references = grpcEntity.References
+            .Select(it => ToReference(entitySchema, entitySchemaProvider, it, evitaRequest))
+            .ToList();
+
+        if (IDevelopmentConstants.IsTestRun)
+        {
+            references.Sort((x, y) => x.ReferenceKey.CompareTo(y.ReferenceKey));
+        }
+
+        return (T)Entity.InternalBuild(
             grpcEntity.PrimaryKey,
             grpcEntity.Version,
             entitySchema,
@@ -99,26 +108,37 @@ public static class EntityConverter
         );
     }
 
-    private static ICollection<AttributeValue> ToAttributeValues(
+    private static IDictionary<AttributeKey, AttributeValue> ToAttributeValues(
         IDictionary<string, GrpcEvitaValue> globalAttributesMap,
         IDictionary<string, GrpcLocalizedAttribute> localizedAttributesMap
     )
     {
-        List<AttributeValue> result = new(globalAttributesMap.Count + localizedAttributesMap.Count);
+        AttributeValue[] attributeValueTuples = new AttributeValue[globalAttributesMap.Count + localizedAttributesMap.Values.Select(x => x.Attributes.Count).Sum()];
+        int index = 0;
         foreach (var (key, localizedAttributeSet) in localizedAttributesMap)
         {
             CultureInfo locale = new CultureInfo(key);
             foreach (KeyValuePair<string, GrpcEvitaValue> attributeEntry in localizedAttributeSet.Attributes)
             {
-                result.Add(
-                    ToAttributeValue(new AttributeKey(attributeEntry.Key, locale), attributeEntry.Value)
-                );
+                attributeValueTuples[index++] =
+                    ToAttributeValue(new AttributeKey(attributeEntry.Key, locale), attributeEntry.Value);
             }
         }
 
         foreach (var (attributeName, value) in globalAttributesMap)
         {
-            result.Add(ToAttributeValue(new AttributeKey(attributeName), value));
+            attributeValueTuples[index++] = ToAttributeValue(new AttributeKey(attributeName), value);
+        }
+
+        if (IDevelopmentConstants.IsTestRun)
+        {
+            Array.Sort(attributeValueTuples, (x, y) => x.Key.CompareTo(y.Key));
+        }
+        
+        IDictionary<AttributeKey, AttributeValue> result = new Dictionary<AttributeKey, AttributeValue>(attributeValueTuples.Length);
+        foreach (var attributeValue in attributeValueTuples)
+        {
+            result.Add(attributeValue.Key, attributeValue);
         }
 
         return result;
@@ -133,37 +153,38 @@ public static class EntityConverter
             EvitaDataTypesConverter.ToEvitaValue(attributeValue)
         );
     }
-
-    private static ICollection<AssociatedDataValue> ToAssociatedDataValues(
+    
+    private static IDictionary<AssociatedDataKey, AssociatedDataValue> ToAssociatedDataValues(
         IDictionary<string, GrpcEvitaAssociatedDataValue> globalAssociatedDataMap,
         IDictionary<string, GrpcLocalizedAssociatedData> localizedAssociatedDataMap
     )
     {
-        List<AssociatedDataValue> result = new(globalAssociatedDataMap.Count + localizedAssociatedDataMap.Count);
-
+        AssociatedDataValue[] associatedDataValueTuples = new AssociatedDataValue[globalAssociatedDataMap.Count + localizedAssociatedDataMap.Values.Select(x => x.AssociatedData.Count).Sum()];
+        int index = 0;
         foreach (var (key, localizedAssociatedDataSet) in localizedAssociatedDataMap)
         {
             CultureInfo locale = new CultureInfo(key);
-            foreach (KeyValuePair<string, GrpcEvitaAssociatedDataValue> associatedDataEntry in
-                     localizedAssociatedDataSet.AssociatedData)
+            foreach (KeyValuePair<string, GrpcEvitaAssociatedDataValue> associatedDataEntry in localizedAssociatedDataSet.AssociatedData)
             {
-                result.Add(
-                    ToAssociatedDataValue(
-                        new AssociatedDataKey(associatedDataEntry.Key, locale),
-                        associatedDataEntry.Value
-                    )
-                );
+                associatedDataValueTuples[index++] =
+                    ToAssociatedDataValue(new AssociatedDataKey(associatedDataEntry.Key, locale), associatedDataEntry.Value);
             }
         }
 
-        foreach (var (associatedDataName, value) in globalAssociatedDataMap)
+        foreach (var (attributeName, value) in globalAssociatedDataMap)
         {
-            result.Add(
-                ToAssociatedDataValue(
-                    new AssociatedDataKey(associatedDataName),
-                    value
-                )
-            );
+            associatedDataValueTuples[index++] = ToAssociatedDataValue(new AssociatedDataKey(attributeName), value);
+        }
+
+        if (IDevelopmentConstants.IsTestRun)
+        {
+            Array.Sort(associatedDataValueTuples, (x, y) => x.Key.CompareTo(y.Key));
+        }
+        
+        IDictionary<AssociatedDataKey, AssociatedDataValue> result = new Dictionary<AssociatedDataKey, AssociatedDataValue>(associatedDataValueTuples.Length);
+        foreach (var associatedDataValue in associatedDataValueTuples)
+        {
+            result.Add(associatedDataValue.Key, associatedDataValue);
         }
 
         return result;
@@ -206,7 +227,7 @@ public static class EntityConverter
             grpcPrice.Version
         );
     }
-    
+
     private static Reference ToReference(
         ISealedEntitySchema entitySchema,
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaProvider,

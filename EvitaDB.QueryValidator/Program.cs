@@ -21,7 +21,7 @@ public static partial class Program
 {
     private const string TempFolderName = "evita-query-validator";
     private const string QueryReplacementFileName = "evita-csharp-query-template.txt";
-    private static readonly Regex TheQueryReplacement = ReplacementRegex();
+    private static readonly Regex TheQueryReplacement = QueryReplacementRegex();
 
     private static readonly JsonSerializerSettings JsonSettings = new()
     {
@@ -30,7 +30,8 @@ public static partial class Program
             new EntitySerializer(),
             new OrderedJsonSerializer(),
             new StripListSerializer(),
-            new PaginatedListSerializer()
+            new PaginatedListSerializer(),
+            new DecimalConverter()
         },
         TypeNameHandling = TypeNameHandling.None,
         ContractResolver = new OrderPropertiesResolver(),
@@ -55,8 +56,9 @@ public static partial class Program
     public static void Main(string[] args)
     {
         string queryCode = args.Length > 0 ? args[0] : throw new ArgumentException("Query code is required!");
-        string outputFormat = args.Length > 1 ? args[1] : throw new ArgumentException("Output format is required!");
-        string? sourceVariable = args.Length > 2 ? args[2] : null;
+        string host = args.Length > 1 ? args[1] : throw new ArgumentException("Host is required!");
+        string outputFormat = args.Length > 2 ? args[2] : throw new ArgumentException("Output format is required!");
+        string? sourceVariable = args.Length > 3 ? args[3] : null;
 
         if (!File.Exists(QueryReplacementPath))
         {
@@ -69,8 +71,14 @@ public static partial class Program
         string code = string.Join('\n', templateLines
             .Select(theLine =>
             {
-                Match replacementMatcher = TheQueryReplacement.Match(theLine);
-                return replacementMatcher.Success ? queryCode : theLine;
+                Match queryReplacementMatcher = TheQueryReplacement.Match(theLine);
+                string result = theLine;
+                if (queryReplacementMatcher.Success)
+                {
+                    result = queryCode;
+                }
+                result = result.Replace("#HOST#", host);
+                return result;
             }));
 
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
@@ -94,7 +102,7 @@ public static partial class Program
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
-            syntaxTrees: new[] {syntaxTree},
+            syntaxTrees: new[] { syntaxTree },
             references: references,
             options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
@@ -120,7 +128,7 @@ public static partial class Program
                 if (snippetClass is not null && method is not null)
                 {
                     var responseAndEntitySchema = ((EvitaResponse<ISealedEntity>? response, IEntitySchema entitySchema))
-                        method.Invoke(null, new object?[] {FindCatalogName(queryCode)})!;
+                        method.Invoke(null, new object?[] { FindCatalogName(queryCode) })!;
                     if (responseAndEntitySchema.response is not null)
                     {
                         string serializedOutput;
@@ -139,7 +147,33 @@ public static partial class Program
                                     ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
                                         sourceVariable.Split('.'));
                                 string stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
-                                serializedOutput = WrapSerializedOutputInCodeBlock(stringSerialized);
+                                serializedOutput = WrapSerializedOutputInCodeBlock("json", stringSerialized);
+                                break;
+                            }
+                            case "string":
+                            {
+                                object? theValue;
+                                if (string.IsNullOrEmpty(sourceVariable))
+                                {
+                                    theValue = responseAndEntitySchema.response;
+                                }
+                                else
+                                {
+                                    theValue = ResponseSerializerUtils.ExtractValueFrom(
+                                        responseAndEntitySchema.response,
+                                        sourceVariable.Split('.'));
+                                }
+
+                                string json;
+                                if (theValue is not null)
+                                {
+                                    json = theValue is IPrettyPrintable pp ? pp.PrettyPrint() : theValue.ToString()!;
+                                }
+                                else
+                                {
+                                    json = "";
+                                }
+                                serializedOutput = WrapSerializedOutputInCodeBlock("md", json);
                                 break;
                             }
                             default:
@@ -185,11 +219,11 @@ public static partial class Program
         contentStream.CopyTo(stream);
     }
 
-    private static string WrapSerializedOutputInCodeBlock(string serializedOutput)
+    private static string WrapSerializedOutputInCodeBlock(string codeBlockLang, string serializedOutput)
     {
-        return $"```json\n{serializedOutput}\n```";
+        return $"```{codeBlockLang}\n{serializedOutput}\n```";
     }
 
-    [GeneratedRegex("^(\\s*)#QUERY#.*$", RegexOptions.Singleline)]
-    private static partial Regex ReplacementRegex();
+    [GeneratedRegex(@"^(\s*)#QUERY#.*$", RegexOptions.Singleline)]
+    private static partial Regex QueryReplacementRegex();
 }

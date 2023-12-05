@@ -22,15 +22,21 @@ public class EntitySchema : IEntitySchema
     public ISet<EvolutionMode> EvolutionModes { get; }
     public IEnumerable<IEntityAttributeSchema> NonNullableAttributes { get; }
     public IEnumerable<IAssociatedDataSchema> NonNullableAssociatedData { get; }
-    public IDictionary<string, IEntityAttributeSchema> Attributes { get; }
+
+    public IDictionary<string, IEntityAttributeSchema> Attributes { get; } =
+        new Dictionary<string, IEntityAttributeSchema>();
     private IDictionary<string, IEntityAttributeSchema[]> AttributeNameIndex { get; }
     private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
     private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
-    public IDictionary<string, IAssociatedDataSchema> AssociatedData { get; }
+
+    public IDictionary<string, IAssociatedDataSchema> AssociatedData { get; } =
+        new Dictionary<string, IAssociatedDataSchema>();
     private IDictionary<string, IAssociatedDataSchema[]> AssociatedDataNameIndex { get; }
     public IDictionary<string, IReferenceSchema> References { get; }
     private IDictionary<string, IReferenceSchema[]> ReferenceNameIndex { get; }
+    public IList<IEntityAttributeSchema> OrderedAttributes { get; } = new List<IEntityAttributeSchema>();
+    public IList<IAssociatedDataSchema> OrderedAssociatedData { get; } = new List<IAssociatedDataSchema>();
 
     private EntitySchema(
         int version,
@@ -61,13 +67,26 @@ public class EntitySchema : IEntitySchema
         IndexedPricePlaces = indexedPricePlaces;
         Locales = locales.ToImmutableSortedSet(Comparer<CultureInfo>.Create((x, y) => string.Compare(x.TwoLetterISOLanguageName, y.TwoLetterISOLanguageName, StringComparison.Ordinal)));
         Currencies = currencies.ToImmutableSortedSet(Comparer<Currency>.Create((x, y) => string.Compare(x.CurrencyCode, y.CurrencyCode, StringComparison.Ordinal)));
-        Attributes = attributes.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
+        
+        foreach (var (key, value) in attributes)
+        {
+            Attributes.Add(key, value);
+            OrderedAttributes.Add(value);
+        }
         AttributeNameIndex =
             InternalGenerateNameVariantIndex(Attributes.Values, x => x.NameVariants);
-        AssociatedData = associatedData.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
+        Attributes = Attributes.ToImmutableDictionary();
+        
+        foreach (var (key, value) in associatedData)
+        {
+            AssociatedData.Add(key, value);
+            OrderedAssociatedData.Add(value);
+        }
         AssociatedDataNameIndex =
             InternalGenerateNameVariantIndex(AssociatedData.Values, x => x.NameVariants);
-        References = references.ToImmutableSortedDictionary(x => x.Key, x => x.Value);
+        AssociatedData = AssociatedData.ToImmutableDictionary();
+        
+        References = references.ToImmutableDictionary(x => x.Key, x => x.Value);
         ReferenceNameIndex =
             InternalGenerateNameVariantIndex(References.Values, x => x.NameVariants);
         EvolutionModes = evolutionMode;
@@ -238,8 +257,8 @@ public class EntitySchema : IEntitySchema
             indexedPricePlaces,
             locales.ToImmutableHashSet(),
             currencies.ToImmutableHashSet(),
-            attributes.ToImmutableDictionary(),
-            associatedData.ToImmutableDictionary(),
+            attributes,
+            associatedData,
             references.ToImmutableDictionary(),
             evolutionMode.ToImmutableHashSet(),
             sortableAttributeCompounds.ToImmutableDictionary()

@@ -4,6 +4,37 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Requires;
 
+/// <summary>
+/// The requirement triggers the calculation of the Hierarchy data structure for the hierarchies of the referenced entity
+/// type.
+/// The hierarchy of reference can still be combined with <see cref="HierarchyOfSelf"/> if the queried entity is a hierarchical
+/// entity that is also connected to another hierarchical entity. Such situations are rather sporadic in reality.
+/// The `hierarchyOfReference` can be repeated multiple times in a single query if you need different calculation
+/// settings for different reference types.
+/// The constraint accepts following arguments:
+/// - specification of one or more reference names that identify the reference to the target hierarchical entity for
+///   which the menu calculation should be performed; usually only one reference name makes sense, but to adapt
+///   the constraint to the behavior of other similar constraints, evitaQL accepts multiple reference names for the case
+///   that the same requirements apply to different references of the queried entity.
+/// - optional argument of type EmptyHierarchicalEntityBehaviour enum allowing you to specify whether or not to return
+///   empty hierarchical entities (e.g., those that do not have any queried entities that satisfy the current query
+///   filter constraint assigned to them - either directly or transitively):
+///      - <see cref="Requires.EmptyHierarchicalEntityBehaviour.LeaveEmpty"/>: empty hierarchical nodes will remain in computed data
+///        structures
+///      - <see cref="Requires.EmptyHierarchicalEntityBehaviour.RemoveEmpty"/>: empty hierarchical nodes are omitted from computed data
+///        structures (default behavior)
+/// - optional ordering constraint that allows you to specify an order of Hierarchy LevelInfo elements in the result
+///   hierarchy data structure
+/// - mandatory one or more constraints allowing you to instruct evitaDB to calculate menu components; one or all of
+///   the constraints may be present:
+///      <list type="bullet">
+///          <item><term><see cref="HierarchyFromRoot"/></term></item>
+///          <item><term><see cref="HierarchyFromNode"/></term></item>
+///          <item><term><see cref="HierarchySiblings"/></term></item>
+///          <item><term><see cref="HierarchyChildren"/></term></item>
+///          <item><term><see cref="HierarchyParents"/></term></item>
+///      </list>
+/// </summary>
 public class HierarchyOfReference : AbstractRequireConstraintContainer, IRootHierarchyConstraint,
     ISeparateEntityContentRequireContainer, IExtraResultRequireConstraint
 {

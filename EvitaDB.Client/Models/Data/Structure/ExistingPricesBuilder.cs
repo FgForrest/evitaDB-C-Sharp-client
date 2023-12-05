@@ -204,7 +204,7 @@ public class ExistingPricesBuilder : IPricesBuilder
         throw new ContextMissingException();
     }
 
-    public IEnumerable<IPrice> GetPrices()
+    public IList<IPrice> GetPrices()
     {
         return GetPricesWithoutPredicate()
             .ToList();

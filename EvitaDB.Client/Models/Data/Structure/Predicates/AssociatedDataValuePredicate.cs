@@ -35,6 +35,8 @@ public class AssociatedDataValuePredicate
     /// Contains true if any of the associated data of the entity has been fetched / requested.
     /// </summary>
     public bool RequiresEntityAssociatedData { get; }
+    
+    public bool LocaleSet => Locale != null || ImplicitLocale != null || Locales != null;
 
     public AssociatedDataValuePredicate()
     {

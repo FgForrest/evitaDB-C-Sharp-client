@@ -1,7 +1,13 @@
 ﻿namespace EvitaDB.Client.Queries.Head;
 
 /// <summary>
-/// Blabla
+/// Each query must specify collection. This mandatory <see cref="string"/> entity type controls what collection
+/// the query will be applied on.
+/// 
+/// Sample of the header is:
+/// <code>
+/// collection('category')
+/// </code>
 /// </summary>
 public class Collection : ConstraintLeaf, IHeadConstraint
 {

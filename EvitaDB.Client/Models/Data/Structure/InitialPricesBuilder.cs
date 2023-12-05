@@ -69,9 +69,9 @@ public class InitialPricesBuilder : IPricesBuilder
         throw new ContextMissingException();
     }
 
-    public IEnumerable<IPrice> GetPrices()
+    public IList<IPrice> GetPrices()
     {
-        return Prices.Values;
+        return Prices.Values.ToList();
     }
 
     public IPricesBuilder SetPrice(int priceId, string priceList, Currency currency, decimal priceWithoutTax,

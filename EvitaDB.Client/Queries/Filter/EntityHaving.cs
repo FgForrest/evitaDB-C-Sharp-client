@@ -1,5 +1,20 @@
 ﻿namespace EvitaDB.Client.Queries.Filter;
 
+/// <summary>
+/// The `entityHaving` constraint is used to examine the attributes or other filterable properties of the referenced
+/// entity. It can only be used within the referenceHaving constraint, which defines the name of the entity reference
+/// that identifies the target entity to be subjected to the filtering restrictions in the entityHaving constraint.
+/// The filtering constraints for the entity can use entire range of filtering operators.
+/// Example:
+/// <code>
+/// referenceHaving(
+///     "brand",
+///     entityHaving(
+///         attributeEquals("code", "apple")
+///     )
+/// )
+/// </code>
+/// </summary>
 public class EntityHaving : AbstractFilterConstraintContainer
 {
     private EntityHaving()

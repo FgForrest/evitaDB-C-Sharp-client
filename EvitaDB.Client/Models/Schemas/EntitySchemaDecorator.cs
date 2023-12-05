@@ -88,6 +88,10 @@ public class EntitySchemaDecorator : ISealedEntitySchema
         return Delegate.SupportsLocale(locale);
     }
 
+    public IList<IEntityAttributeSchema> OrderedAttributes => Delegate.OrderedAttributes;
+
+    public IList<IAssociatedDataSchema> OrderedAssociatedData => Delegate.OrderedAssociatedData;
+
     public IAttributeSchema GetAttributeOrThrow(string name)
     {
         return Delegate.GetAttributeOrThrow(name);

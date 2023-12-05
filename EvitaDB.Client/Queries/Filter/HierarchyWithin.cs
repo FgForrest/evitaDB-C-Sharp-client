@@ -3,6 +3,61 @@ using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Filter;
 
+/// <summary>
+/// The constraint `hierarchyWithin` allows you to restrict the search to only those entities that are part of
+/// the hierarchy tree starting with the root node identified by the first argument of this constraint. In e-commerce
+/// systems the typical representative of a hierarchical entity is a category, which will be used in all of our examples.
+/// The constraint accepts following arguments:
+/// - optional name of the queried entity reference schema that represents the relationship to the hierarchical entity
+///   type, your entity may target different hierarchical entities in different reference types, or it may target
+///   the same hierarchical entity through multiple semantically different references, and that is why the reference name
+///   is used instead of the target entity type.
+/// - a single mandatory filter constraint that identifies one or more hierarchy nodes that act as hierarchy roots;
+///   multiple constraints must be enclosed in AND / OR containers
+/// - optional constraints allow you to narrow the scope of the hierarchy; none or all of the constraints may be present:
+/// <list type="bullet">
+///     <item><term><see cref="HierarchyDirectRelation"/></term></item>
+///     <item><term><see cref="HierarchyHaving"/></term></item>
+///     <item><term><see cref="HierarchyExcluding"/></term></item>
+///     <item><term><see cref="HierarchyExcludingRoot"/></term></item>
+/// </list>
+/// The most straightforward usage is filtering the hierarchical entities themselves.
+/// <code>
+/// query(
+///     collection("Category"),
+///     filterBy(
+///         hierarchyWithinSelf(
+///             attributeEquals("code", "accessories")
+///         )
+///     ),
+///     require(
+///         entityFetch(
+///             attributeContent("code")
+///         )
+///     )
+/// )
+/// </code>
+/// The `hierarchyWithin` constraint can also be used for entities that directly reference a hierarchical entity type.
+/// The most common use case from the e-commerce world is a product that is assigned to one or more categories.
+/// <code>
+/// query(
+///     collection("Product"),
+///     filterBy(
+///         hierarchyWithin(
+///             "categories",
+///             attributeEquals("code", "accessories")
+///         )
+///     ),
+///     require(
+///         entityFetch(
+///             attributeContent("code")
+///         )
+///     )
+/// )
+/// </code>
+/// Products assigned to two or more subcategories of Accessories category will only appear once in the response
+/// (contrary to what you might expect if you have experience with SQL).
+/// </summary>
 public class HierarchyWithin : AbstractFilterConstraintContainer, IHierarchyFilterConstraint, IConstraintContainerWithSuffix
 {
     private const string Suffix = "self";

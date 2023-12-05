@@ -4,6 +4,7 @@ using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Head;
+using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Utils;
 
@@ -70,12 +71,76 @@ public class EvitaRequest
         DateTimeOffset alignedNow,
         Type? expectedType = null)
     {
-        Collection? header = query.Entities;
+        Collection? header = query.Collection;
         _entityType = header?.EntityType;
         Query = query;
         AlignedNow = alignedNow;
         _implicitLocale = null;
         _expectedType = expectedType;
+    }
+
+    public EvitaRequest(
+        EvitaRequest evitaRequest,
+        string entityType,
+        FilterBy filterBy,
+        OrderBy? orderBy,
+        CultureInfo? locale)
+    {
+        _requiresEntity = true;
+        _entityRequirement = evitaRequest._entityRequirement;
+        _entityType = entityType;
+        Query = IQueryConstraints.Query(
+            IQueryConstraints.Collection(entityType),
+            filterBy,
+            orderBy,
+            IQueryConstraints.Require(_entityRequirement)
+        );
+        AlignedNow = evitaRequest.AlignedNow;
+        _implicitLocale = evitaRequest._implicitLocale;
+        _primaryKeys = null;
+        _queryPriceMode = evitaRequest._queryPriceMode;
+        _priceValidInTimeSet = true;
+        _priceValidInTime = evitaRequest.GetRequiresPriceValidIn();
+        _currencySet = true;
+        _currency = evitaRequest.GetRequiresCurrency();
+        _requiresPriceLists = evitaRequest.RequiresPriceLists();
+        _priceLists = evitaRequest.GetRequiresPriceLists();
+        _additionalPriceLists = evitaRequest.GetFetchesAdditionalPriceLists();
+        _locale = locale ?? evitaRequest.GetLocale();
+        _localeExamined = true;
+        _expectedType = evitaRequest._expectedType;
+    }
+
+    public EvitaRequest(
+        EvitaRequest evitaRequest,
+        string entityType,
+        IEntityFetchRequire requirements)
+    {
+        _requiresEntity = true;
+        _entityRequirement = new EntityFetch(requirements.Requirements);
+        _entityType = entityType;
+        Query = IQueryConstraints.Query(
+            IQueryConstraints.Collection(entityType),
+            evitaRequest.Query.FilterBy,
+            evitaRequest.Query.OrderBy,
+            IQueryConstraints.Require(_entityRequirement)
+        );
+        AlignedNow = evitaRequest.AlignedNow;
+        _implicitLocale = evitaRequest._implicitLocale;
+        _primaryKeys = null;
+        _queryPriceMode = evitaRequest._queryPriceMode;
+        _priceValidInTimeSet = true;
+        _priceValidInTime = evitaRequest.GetRequiresPriceValidIn();
+        _currencySet = true;
+        _currency = evitaRequest.GetRequiresCurrency();
+        _requiresPriceLists = evitaRequest.RequiresPriceLists();
+        _priceLists = evitaRequest.GetRequiresPriceLists();
+        _additionalPriceLists = evitaRequest.GetFetchesAdditionalPriceLists();
+        _locale = evitaRequest.GetLocale();
+        _localeExamined = true;
+        _expectedType = evitaRequest._expectedType;
+        _limit = evitaRequest._limit;
+        _resultForm = evitaRequest._resultForm;
     }
 
     /**
@@ -99,7 +164,7 @@ public class EvitaRequest
      */
     public string GetEntityTypeOrThrowException(string purpose)
     {
-        Collection? header = Query.Entities;
+        Collection? header = Query.Collection;
         return header is not null ? header.EntityType : throw new EntityCollectionRequiredException(purpose);
     }
 
@@ -152,7 +217,7 @@ public class EvitaRequest
                 CultureInfo? theLocale = GetLocale();
                 if (theLocale != null)
                 {
-                    _requiredLocaleSet = new HashSet<CultureInfo>(new[] {theLocale});
+                    _requiredLocaleSet = new HashSet<CultureInfo>(new[] { theLocale });
                 }
             }
             else
@@ -168,7 +233,7 @@ public class EvitaRequest
                     CultureInfo? theLocale = GetLocale();
                     if (theLocale != null)
                     {
-                        _requiredLocaleSet = new HashSet<CultureInfo>(new[] {theLocale});
+                        _requiredLocaleSet = new HashSet<CultureInfo>(new[] { theLocale });
                     }
                 }
 
@@ -620,6 +685,27 @@ public class EvitaRequest
             null => new PaginatedList<T>(0, 0, 0),
             _ => new PaginatedList<T>(0, 0, 0)
         };
+    }
+
+    public EvitaRequest DeriveCopyWith(string entityType, IEntityFetchRequire requirements)
+    {
+        return new EvitaRequest(
+            this,
+            entityType, requirements
+        );
+    }
+
+    public EvitaRequest DeriveCopyWith(
+        string entityType,
+        FilterBy filterConstraint,
+        OrderBy orderConstraint,
+        CultureInfo locale
+    )
+    {
+        return new EvitaRequest(
+            this,
+            entityType, filterConstraint, orderConstraint, locale
+        );
     }
 
     private void InitPagination()

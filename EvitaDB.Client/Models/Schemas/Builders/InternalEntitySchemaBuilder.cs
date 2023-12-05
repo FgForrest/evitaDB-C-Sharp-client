@@ -692,6 +692,10 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return _instance.SupportsLocale(locale);
     }
 
+    public IList<IEntityAttributeSchema> OrderedAttributes => BaseSchema.OrderedAttributes;
+
+    public IList<IAssociatedDataSchema> OrderedAssociatedData => BaseSchema.OrderedAssociatedData;
+
     public IAttributeSchema GetAttributeOrThrow(string name)
     {
         return _instance.GetAttributeOrThrow(name);

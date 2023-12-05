@@ -4,6 +4,7 @@ using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Requires;
@@ -20,7 +21,15 @@ public static partial class MarkdownConverter
         { new CultureInfo("en"), "\uD83C\uDDEC\uD83C\uDDE7" },
         { new CultureInfo("de"), "\uD83C\uDDE9\uD83C\uDDEA" }
     };
-
+    
+    private static readonly IDictionary<string, string> CurrencySymbols = new Dictionary<string, string>
+    {
+        { "CZK", "Kč" },
+        { "USD", "$" },
+        { "GBP", "£" },
+        { "EUR", "€" }
+    };
+    
     private const string PredecessorHeadSymbol = "⎆";
     private const string PredecessorSymbol = "↻ ";
 
@@ -55,7 +64,7 @@ public static partial class MarkdownConverter
                                              QueryUtils.FindConstraint<PriceValidIn>(query.FilterBy) is not null;
 
         // collect headers for the MarkDown table
-        var headers = new List<string> { EntityPrimaryKey };
+        List<string> headers = new List<string> { EntityPrimaryKey };
         if (entityFetch is not null)
         {
             headers.AddRange(GetEntityHeaders(entityFetch, () => response.RecordData,
@@ -129,22 +138,24 @@ public static partial class MarkdownConverter
         );
 
         // define the table with header line
-        var tableBuilder = new Table<object>.Builder()
+        Table<object>.Builder tableBuilder = new Table<object>.Builder()
             .WithAlignment(Table<object>.AlignLeft)
             // ReSharper disable once CoVariantArrayConversion
             .AddRow(headers.ToArray());
 
         // prepare price formatter
-        var locale = query.FilterBy?
+        CultureInfo? locale = query.FilterBy?
             .Select(QueryUtils.FindConstraint<EntityLocaleEquals>)
             .Select(f => f?.Locale)
-            .FirstOrDefault() ?? new CultureInfo("en");
-
-        var currency = query.FilterBy?
+            .FirstOrDefault() ?? Locales.Keys.FirstOrDefault(x=>x.Name == "en-US");
+        
+        string currency = query.FilterBy?
             .Select(QueryUtils.FindConstraint<PriceInCurrency>)
-            .Select(f => f?.Currency.CurrencyCode)
-            .FirstOrDefault() ?? new CultureInfo("de-DE").NumberFormat.CurrencySymbol;
-        var priceFormatter = new CultureInfo(locale.Name) { NumberFormat = { CurrencySymbol = currency } };
+            .Select(f =>
+                f is not null
+                    ? CurrencySymbols[f.Currency.CurrencyCode]
+                    : CurrencySymbols["EUR"])
+            .FirstOrDefault()!;
 
         // add rows
         foreach (var sealedEntity in response.RecordData)
@@ -203,11 +214,10 @@ public static partial class MarkdownConverter
                     {
                         return sealedEntity.PriceForSale is not null
                             ? PriceLink +
-                              string.Format(priceFormatter, "{0:C}", sealedEntity.PriceForSale.PriceWithTax) +
+                              $"{currency}{sealedEntity.PriceForSale.PriceWithTax:N2}" +
                               " (with " +
                               decimal.Parse(sealedEntity.PriceForSale.TaxRate.ToString("0.#########")) + "%" +
-                              " tax) / " + string.Format(priceFormatter, "{0:C}",
-                                  sealedEntity.PriceForSale.PriceWithoutTax)
+                              " tax) / " + $"{currency}{sealedEntity.PriceForSale.PriceWithoutTax:N2}"
                             : "N/A";
                     }
 
@@ -221,7 +231,7 @@ public static partial class MarkdownConverter
 
                         return string.Join(", ",
                                    prices.Take(3).Select(price =>
-                                       PriceLink + string.Format(priceFormatter, "{0:C}", price.PriceWithTax))) +
+                                       PriceLink + $"{currency}{price.PriceWithTax:N2}")) +
                                (prices.Count > 3 ? $" ... and {prices.Count - 3} other prices" : "");
                     }
 
@@ -299,7 +309,9 @@ public static partial class MarkdownConverter
             {
                 if (attributeContent.AllRequested)
                 {
-                    IEnumerable<IAttributeSchema> attributes = entitySchema.GetAttributes().Values;
+                    IEnumerable<IAttributeSchema> attributes = entitySchema is EntitySchemaDecorator schema
+                        ? schema.OrderedAttributes
+                        : entitySchema.GetAttributes().Values;
                     return (localizedQuery ? attributes.Where(x => x.Localized) : attributes)
                         .Select(x => x.Name)
                         .Where(attrName =>

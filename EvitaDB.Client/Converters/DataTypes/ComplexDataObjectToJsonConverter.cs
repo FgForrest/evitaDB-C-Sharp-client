@@ -72,8 +72,9 @@ public class ComplexDataObjectToJsonConverter : IDataItemVisitor
             var stackNode = _stack.Peek();
             if (stackNode is JObject objectNode)
             {
-                objectNode.Add(_propertyNameStack.Peek());
-                _stack.Push(objectNode);
+                JObject newObject = new();
+                objectNode.Add(_propertyNameStack.Peek(), newObject);
+                _stack.Push(newObject);
             }
             else if (stackNode is JArray arrayNode)
             {

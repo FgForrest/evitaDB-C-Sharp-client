@@ -84,7 +84,7 @@ public class ExistingEntityBuilder : IEntityBuilder
         return PricesBuilder.HasPriceInInterval(from, to, queryPriceMode);
     }
 
-    public IEnumerable<IPrice> GetPrices()
+    public IList<IPrice> GetPrices()
     {
         return PricesBuilder.GetPrices();
     }

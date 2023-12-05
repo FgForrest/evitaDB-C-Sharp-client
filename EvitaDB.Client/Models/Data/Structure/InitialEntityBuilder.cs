@@ -31,7 +31,7 @@ public class InitialEntityBuilder : IEntityBuilder
     private IDictionary<ReferenceKey, IReference> References { get; }
     public PriceInnerRecordHandling? InnerRecordHandling => PricesBuilder.InnerRecordHandling;
 
-    public IEnumerable<IPrice> GetPrices()
+    public IList<IPrice> GetPrices()
     {
         return PricesBuilder.GetPrices();
     }

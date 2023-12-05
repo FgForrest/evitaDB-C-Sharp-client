@@ -24,6 +24,6 @@ public record AssociatedDataKey : IComparable<AssociatedDataKey>
     
     public override string ToString()
     {
-        return $"AssociatedDataKey[associatedDataName={AssociatedDataName}, locale={(Locale == null ? "null" : Locale.TwoLetterISOLanguageName)}]";
+        return AssociatedDataName + (Locale == null ? "" : ":" + Locale.TwoLetterISOLanguageName);
     }
 }

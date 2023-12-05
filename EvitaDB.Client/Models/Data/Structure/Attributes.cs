@@ -9,7 +9,7 @@ namespace EvitaDB.Client.Models.Data.Structure;
 public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSchema
 {
     [JsonIgnore] protected internal IEntitySchema EntitySchema { get; }
-    internal Dictionary<AttributeKey, AttributeValue> AttributeValues { get; }
+    internal IDictionary<AttributeKey, AttributeValue> AttributeValues { get; }
     [JsonIgnore] public IDictionary<string, TS> AttributeTypes { get; }
     private ISet<string>? AttributeNames { get; set; }
     private ISet<CultureInfo>? AttributeLocales { get; set; }
@@ -18,7 +18,28 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
     public bool AttributesAvailable(CultureInfo locale) => true;
     public bool AttributeAvailable(string attributeName) => true;
     public bool AttributeAvailable(string attributeName, CultureInfo locale) => true;
+    protected IList<AttributeValue> OrderedAttributeValues { get; } = new List<AttributeValue>();
 
+    protected Attributes(
+        IEntitySchema entitySchema,
+        IDictionary<AttributeKey, AttributeValue> attributeValues,
+        IDictionary<string, TS> attributeTypes
+    )
+    {
+        EntitySchema = entitySchema;
+        foreach (var attribute in attributeValues)
+        {
+            OrderedAttributeValues.Add(attribute.Value);
+        }
+        AttributeValues = attributeValues;
+        AttributeTypes = attributeTypes;
+        AttributeLocales = OrderedAttributeValues
+            .Where(x=>!x.Dropped)
+            .Select(x=>x.Key.Locale)
+            .Where(x=>x is not null)
+            .ToHashSet()!;
+    }
+    
     protected Attributes(
         IEntitySchema entitySchema,
         ICollection<AttributeValue> attributeValues,
@@ -26,9 +47,10 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
     )
     {
         EntitySchema = entitySchema;
-        AttributeValues = attributeValues.ToDictionary(x => x.Key, x => x);
+        OrderedAttributeValues = attributeValues.ToList();
+        AttributeValues = attributeValues.ToDictionary(x=>x.Key, x=>x);
         AttributeTypes = attributeTypes;
-        AttributeLocales = attributeValues
+        AttributeLocales = OrderedAttributeValues
             .Where(x=>!x.Dropped)
             .Select(x=>x.Key.Locale)
             .Where(x=>x is not null)

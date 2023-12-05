@@ -2,6 +2,18 @@
 
 namespace EvitaDB.Client.Queries.Requires;
 
+/// <summary>
+/// The stopAt container constraint is a service wrapping constraint container that only makes sense in combination with
+/// one of the allowed nested constraints. See the usage examples for specific nested constraints.
+/// It accepts one of the following inner constraints:
+/// <list type="bullet">
+///     <item><term><see cref="HierarchyDistance"/></term></item>
+///     <item><term><see cref="HierarchyLevel"/></term></item>
+///     <item><term><see cref="HierarchyNode"/></term></item>
+/// </list>
+/// which define the constraint that stops traversing the hierarchy tree when it's satisfied by a currently traversed
+/// node.
+/// </summary>
 public class HierarchyStopAt : AbstractRequireConstraintContainer, IHierarchyOutputRequireConstraint
 {
     private const string ConstraintName = "stopAt";

@@ -35,4 +35,6 @@ public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISorta
     {
         return Currencies.Contains(currency);
     }
+    IList<IEntityAttributeSchema> OrderedAttributes { get; }
+    IList<IAssociatedDataSchema> OrderedAssociatedData { get; }
 }

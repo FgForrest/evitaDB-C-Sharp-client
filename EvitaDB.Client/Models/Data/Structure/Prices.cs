@@ -12,9 +12,11 @@ public class Prices : IPrices
     [JsonIgnore] internal IEntitySchema EntitySchema { get; }
     private bool WithPrice { get; }
     public int Version { get; }
-    private ImmutableDictionary<PriceKey, IPrice> PriceIndex { get; }
+    private IImmutableDictionary<PriceKey, IPrice> PriceIndex { get; }
     public PriceInnerRecordHandling? InnerRecordHandling { get; }
-    public IPrice? PriceForSale => throw new ContextMissingException();
+    public IPrice PriceForSale => throw new ContextMissingException();
+    public IList<IPrice> GetPrices() => OrderedPriceValues;
+    private IList<IPrice> OrderedPriceValues { get; } = new List<IPrice>();
 
     public Prices(IEntitySchema entitySchema, PriceInnerRecordHandling priceInnerRecordHandling)
     {
@@ -31,7 +33,8 @@ public class Prices : IPrices
         EntitySchema = entitySchema;
         WithPrice = entitySchema.WithPrice;
         Version = 1;
-        PriceIndex = prices.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
+        OrderedPriceValues = prices.ToList();
+        PriceIndex = OrderedPriceValues.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
         InnerRecordHandling = priceInnerRecordHandling;
     }
 
@@ -47,7 +50,8 @@ public class Prices : IPrices
         EntitySchema = entitySchema;
         WithPrice = withPrice;
         Version = version;
-        PriceIndex = prices.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
+        OrderedPriceValues = prices.ToList();
+        PriceIndex = OrderedPriceValues.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
         InnerRecordHandling = priceInnerRecordHandling;
     }
 
@@ -88,9 +92,7 @@ public class Prices : IPrices
             .Where(it => !pLists.Any() || pLists.Contains(it.PriceList))
             .ToList();
     }
-
-    public IEnumerable<IPrice> GetPrices() => PriceIndex.Values;
-
+    
     public override string ToString()
     {
         if (PricesAvailable())

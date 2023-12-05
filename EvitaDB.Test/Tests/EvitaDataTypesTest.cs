@@ -24,16 +24,3 @@ public class EvitaDataTypesTest
         Assert.Equal(dateTimeOffset4, EvitaDataTypes.FormatValue(DateTimeOffset.Parse(dateTimeOffset5)));
     }
 }
-
-public class DateTimeOffsetData
-{
-    public static IEnumerable<object[]> Data =>
-        new List<object[]>
-        {
-            new object[] { DateTimeOffset.Parse("2023-09-08T14:08:26+02:00") },
-            new object[] { DateTimeOffset.Parse("2023-10-21T11:44:03.6+02:00") },
-            new object[] { DateTimeOffset.Parse("2023-10-21T11:44:03.68+02:00") },
-            new object[] { DateTimeOffset.Parse("2023-10-21T11:44:03.681+02:00") },
-            new object[] { DateTimeOffset.Parse("2023-10-21T11:44:03.6812+02:00") }
-        };
-}

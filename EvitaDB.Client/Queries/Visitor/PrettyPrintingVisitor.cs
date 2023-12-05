@@ -65,9 +65,9 @@ public class PrettyPrintingVisitor : IConstraintVisitor
     {
         _result.Append("query" + QueryUtils.ArgOpening).Append(NewLine());
         Level = 1;
-        if (query.Entities is not null)
+        if (query.Collection is not null)
         {
-            query.Entities.Accept(this);
+            query.Collection.Accept(this);
             _result.Append(',');
         }
 

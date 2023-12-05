@@ -51,7 +51,7 @@ public static class ResponseConverter
 
     public static IEvitaResponseExtraResult[] ToExtraResults(
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
-        EvitaRequest evitaRequest, 
+        EvitaRequest evitaRequest,
         GrpcExtraResults? extraResults)
     {
         Query query = evitaRequest.Query;
@@ -101,7 +101,7 @@ public static class ResponseConverter
                             evitaRequest,
                             hierarchyConstraints
                                 .OfType<HierarchyOfReference>()
-                                .First(it => it.ReferenceNames.Any(name => name == x.Key)), 
+                                .First(it => it.ReferenceNames.Any(name => name == x.Key)),
                             x.Value)
                     )
                 )
@@ -155,8 +155,11 @@ public static class ResponseConverter
         return new FacetGroupStatistics(
             grpcFacetGroupStatistics.ReferenceName,
             grpcFacetGroupStatistics.GroupEntity is not null
-                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity, evitaRequest)
-                : EntityConverter.ToEntityReference(grpcFacetGroupStatistics.GroupEntityReference),
+                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcFacetGroupStatistics.GroupEntity,
+                    evitaRequest.DeriveCopyWith(grpcFacetGroupStatistics.GroupEntity.EntityType, entityGroupFetch!))
+                : grpcFacetGroupStatistics.GroupEntityReference is not null
+                    ? EntityConverter.ToEntityReference(grpcFacetGroupStatistics.GroupEntityReference)
+                    : null,
             grpcFacetGroupStatistics.Count,
             grpcFacetGroupStatistics.FacetStatistics
                 .Select(x => ToFacetStatistics(entitySchemaFetcher, evitaRequest, entityFetch, x))
@@ -176,12 +179,12 @@ public static class ResponseConverter
                 ? EntityConverter.ToEntity<ISealedEntity>(
                     entitySchemaFetcher,
                     grpcFacetStatistics.FacetEntity,
-                    evitaRequest
+                    evitaRequest.DeriveCopyWith(grpcFacetStatistics.FacetEntity.EntityType, entityFetch!)
                 )
                 : EntityConverter.ToEntityReference(grpcFacetStatistics.FacetEntityReference),
             grpcFacetStatistics.Requested,
             grpcFacetStatistics.Count,
-            grpcFacetStatistics is {Impact: not null, MatchCount: not null}
+            grpcFacetStatistics is { Impact: not null, MatchCount: not null }
                 ? new RequestImpact(
                     grpcFacetStatistics.Impact.Value,
                     grpcFacetStatistics.MatchCount.Value
@@ -206,7 +209,8 @@ public static class ResponseConverter
                     cnt => cnt is IHierarchyRequireConstraint hrc && x.Key == hrc.OutputName
                 );
                 EntityFetch? entityFetch = QueryUtils.FindConstraint<EntityFetch>(hierarchyConstraint!);
-                return x.Value.LevelInfos.Select(y => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, y)).ToList();
+                return x.Value.LevelInfos.Select(y => ToLevelInfo(entitySchemaFetcher, evitaRequest, entityFetch, y))
+                    .ToList();
             });
     }
 
@@ -219,7 +223,14 @@ public static class ResponseConverter
     {
         return new LevelInfo(
             grpcLevelInfo.Entity is not null
-                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher, grpcLevelInfo.Entity, evitaRequest)
+                ? EntityConverter.ToEntity<ISealedEntity>(
+                    entitySchemaFetcher,
+                    grpcLevelInfo.Entity,
+                    evitaRequest.DeriveCopyWith(
+                        grpcLevelInfo.Entity.EntityType,
+                        entityFetch!
+                    )
+                )
                 : EntityConverter.ToEntityReference(grpcLevelInfo.EntityReference),
             grpcLevelInfo.Requested,
             grpcLevelInfo.QueriedEntityCount,

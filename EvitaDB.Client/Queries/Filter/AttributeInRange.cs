@@ -1,7 +1,29 @@
-﻿using EvitaDB.Client.Utils;
+﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Filter;
 
+/// <summary>
+/// This `inRange` is query that compares value of the attribute with name passed in first argument with the date
+/// and time passed in the second argument. First argument must be <see cref="string"/>, second argument must be
+/// <see cref="DateTimeOffset"/> type. If second argument is not passed - current date and time (now) is used.
+/// Type of the attribute value must implement <see cref="Range{T}"/> class.
+/// Function returns true if second argument is greater than or equal to range start (from), and is lesser than
+/// or equal to range end (to).
+/// Example:
+/// <code>
+/// inRange("valid", 2020-07-30T20:37:50+00:00)
+/// inRange("age", 18)
+/// </code>
+/// Function supports attribute arrays and when attribute is of array type `inRange` returns true if any of attribute
+/// values has range, that envelopes the passed value the value in the query. If we have the attribute `age` with value
+/// `[[18, 25],[60,65]]` all these constraints will match:
+/// <code>
+/// inRange("age", 18)
+/// inRange("age", 24)
+/// inRange("age", 63)
+/// </code>
+/// </summary>
 public class AttributeInRange<T> : AbstractAttributeFilterConstraintLeaf
     where T : IComparable
 {

@@ -1,11 +1,15 @@
 ﻿using System.Collections.Immutable;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Data.Structure.Predicates;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.ExtraResults;
 
-public class FacetSummary : IEvitaResponseExtraResult
+public class FacetSummary : IEvitaResponseExtraResult, IPrettyPrintable
 {
     private readonly IDictionary<string, ReferenceStatistics> _referenceStatistics;
 
@@ -17,9 +21,12 @@ public class FacetSummary : IEvitaResponseExtraResult
             FacetGroupStatistics? nonGroupedStatistics = stats.Value
                 .FirstOrDefault(x => x.GroupEntity is null);
             result.Add(stats.Key,
-                new ReferenceStatistics(nonGroupedStatistics,
+                new ReferenceStatistics(
+                    nonGroupedStatistics,
                     stats.Value.Where(x => x.GroupEntity is not null)
-                        .ToDictionary(key => key.GroupEntity!.PrimaryKey!.Value, value => value)));
+                        .ToDictionary(key => key.GroupEntity!.PrimaryKey!.Value, value => value)
+                )
+            );
         }
 
         _referenceStatistics = result.ToImmutableDictionary();
@@ -54,6 +61,7 @@ public class FacetSummary : IEvitaResponseExtraResult
                 {
                     rs.Add(x.NonGroupedStatistics);
                 }
+
                 return rs;
             })
             .ToList();
@@ -67,7 +75,7 @@ public class FacetSummary : IEvitaResponseExtraResult
     {
         if (this == o) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        FacetSummary that = (FacetSummary) o;
+        FacetSummary that = (FacetSummary)o;
 
         foreach (KeyValuePair<string, ReferenceStatistics> referenceEntry in _referenceStatistics)
         {
@@ -85,10 +93,50 @@ public class FacetSummary : IEvitaResponseExtraResult
 
     public override string ToString()
     {
-        return ToString(statistics => "", facetStatistics => "");
+        return "Facet summary with: " + _referenceStatistics.Count + " references";
     }
 
-    public string ToString(Func<FacetGroupStatistics, string> groupRenderer,
+    public string PrettyPrint()
+    {
+        PrettyPrintingContext context = new PrettyPrintingContext();
+        return PrettyPrint(
+            statistics =>
+                statistics.GroupEntity is ISealedEntity entity
+                    ? PrintRepresentative(entity, context)
+                    : "",
+            facetStatistics => facetStatistics.FacetEntity is ISealedEntity entity
+                ? PrintRepresentative(entity, context)
+                : ""
+        );
+    }
+
+    private static string PrintRepresentative(ISealedEntity entity, PrettyPrintingContext context)
+    {
+        AttributeValuePredicate attributePredicate = ((Entity)entity).AttributePredicate;
+        if (!attributePredicate.WasFetched())
+        {
+            return "";
+        }
+
+        ISet<string> set = attributePredicate.AttributeSet;
+        if (!set.Any())
+        {
+            return string.Join(", ", context.GetRepresentativeAttribute(entity.Schema)
+                .Select(attribute => EvitaDataTypes.FormatValue(entity.GetAttribute(attribute)?.ToString())));
+        }
+
+        if (set.Count == 1)
+        {
+            return EvitaDataTypes.FormatValue(entity.GetAttribute(set.First()));
+        }
+
+        ISet<string> representativeAttributes = context.GetRepresentativeAttribute(entity.Schema);
+        return string.Join(", ", set
+            .Where(x => representativeAttributes.Contains(x))
+            .Select(attribute => EvitaDataTypes.FormatValue(entity.GetAttribute(attribute)?.ToString())));
+    }
+
+    public string PrettyPrint(Func<FacetGroupStatistics, string> groupRenderer,
         Func<FacetStatistics, string> facetRenderer)
     {
         return "Facet summary:\n" + string.Join("\n", _referenceStatistics
@@ -96,7 +144,7 @@ public class FacetSummary : IEvitaResponseExtraResult
             .SelectMany(groupsByReferenceName =>
                 {
                     ReferenceStatistics stats = groupsByReferenceName.Value;
-                    ICollection<FacetGroupStatistics> groupStatistics = stats.GroupedStatistics.Values;
+                    IList<FacetGroupStatistics> groupStatistics = stats.GroupedStatistics.Values.ToList();
                     if (stats.NonGroupedStatistics is not null)
                     {
                         groupStatistics.Add(stats.NonGroupedStatistics);
@@ -106,7 +154,7 @@ public class FacetSummary : IEvitaResponseExtraResult
                                                                 (groupRenderer(statistics).Trim() != ""
                                                                     ? groupRenderer(statistics)
                                                                     : statistics.GroupEntity?.PrimaryKey.ToString() ??
-                                                                      "") +
+                                                                      "non-grouped") +
                                                                 " [" + statistics.Count + "]:\n" +
                                                                 string.Join("\n", statistics
                                                                     .GetFacetStatistics()
@@ -121,7 +169,41 @@ public class FacetSummary : IEvitaResponseExtraResult
                                                                 )
                     );
                 }
-            ));
+            )
+        );
+    }
+
+    private class PrettyPrintingContext
+    {
+        /// <summary>
+        /// Contains set of representative attribute names for each entity type.
+        /// </summary>
+        private Dictionary<string, ISet<string>> RepresentativeAttributes { get; } = new();
+
+        /// <summary>
+        /// Returns set of <see cref="EntityAttributeSchema.Representative"/> names for passed entity schema.
+        /// </summary>
+        /// <param name="entitySchema">Entity schema to get representative attributes for.</param>
+        /// <returns>Set of representative attribute names.</returns>
+        public ISet<string> GetRepresentativeAttribute(IEntitySchema entitySchema)
+        {
+            if (RepresentativeAttributes.TryGetValue(entitySchema.Name, out ISet<string>? attributes))
+            {
+                return attributes;
+            }
+
+            ISet<string> attributeNames = entitySchema
+                .Attributes
+                .Values
+                .Where(x => x.Representative)
+                .Select(a => a.Name)
+                .ToHashSet();
+            RepresentativeAttributes.Add(
+                entitySchema.Name,
+                attributeNames
+            );
+            return attributeNames;
+        }
     }
 }
 
@@ -136,7 +218,6 @@ public record RequestImpact(int Difference, int MatchCount)
 
     public virtual bool Equals(RequestImpact? other)
     {
-        if (this == other) return true;
         return Difference == other?.Difference && MatchCount == other.MatchCount;
     }
 
@@ -183,7 +264,7 @@ public class FacetStatistics : IComparable<FacetStatistics>
             return 0;
         }
 
-        return (int) FacetEntity.PrimaryKey?.CompareTo(other?.FacetEntity.PrimaryKey)!;
+        return (int)FacetEntity.PrimaryKey?.CompareTo(other?.FacetEntity.PrimaryKey)!;
     }
 
     public override int GetHashCode()
@@ -195,7 +276,7 @@ public class FacetStatistics : IComparable<FacetStatistics>
     {
         if (this == o) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        FacetStatistics that = (FacetStatistics) o;
+        FacetStatistics that = (FacetStatistics)o;
         return Requested == that.Requested && Count == that.Count && Equals(FacetEntity, that.FacetEntity) &&
                Equals(Impact, that.Impact);
     }
@@ -319,7 +400,7 @@ public class FacetGroupStatistics
     {
         if (this == o) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        FacetGroupStatistics that = (FacetGroupStatistics) o;
+        FacetGroupStatistics that = (FacetGroupStatistics)o;
         if (!ReferenceName.Equals(that.ReferenceName) ||
             Count != that.Count ||
             Equals(GroupEntity, that.GroupEntity) ||

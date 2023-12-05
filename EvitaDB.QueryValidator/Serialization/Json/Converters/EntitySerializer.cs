@@ -3,6 +3,7 @@ using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Schemas;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace EvitaDB.QueryValidator.Serialization.Json.Converters;
 
@@ -344,7 +345,14 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
                         ComplexDataObjectToJsonConverter converter = new ComplexDataObjectToJsonConverter();
                         complexDataObject.Accept(converter);
                         writer.WritePropertyName(fieldName);
-                        serializer.Serialize(writer, converter.RootNode);
+                        if (converter.RootNode is JObject jObject)
+                        {
+                            serializer.Serialize(writer, ConvertJObjectToDictionary(jObject));
+                        }
+                        else
+                        {
+                            serializer.Serialize(writer, converter.RootNode);
+                        }
                     }
                     else
                     {
@@ -354,6 +362,41 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
 
                 writer.WriteEndObject();
             });
+        }
+    }
+    
+    static Dictionary<string, object?> ConvertJObjectToDictionary(JObject jsonObject)
+    {
+        var dictionary = new Dictionary<string, object?>();
+
+        foreach (var property in jsonObject.Properties())
+        {
+            var propertyName = property.Name;
+            var propertyValue = ConvertJTokenToObject(property.Value);
+
+            dictionary[propertyName] = propertyValue;
+        }
+
+        return dictionary;
+    }
+
+    static object? ConvertJTokenToObject(JToken token)
+    {
+        switch (token.Type)
+        {
+            case JTokenType.Object:
+                return ConvertJObjectToDictionary((JObject)token);
+            case JTokenType.Array:
+                return ((JArray)token).Select(ConvertJTokenToObject).ToList();
+            case JTokenType.Integer:
+            case JTokenType.Float:
+            case JTokenType.String:
+            case JTokenType.Boolean:
+            case JTokenType.Null:
+                return ((JValue)token).Value;
+            default:
+                // Handle other token types as needed
+                throw new ArgumentException($"Unsupported token type: {token.Type}");
         }
     }
 

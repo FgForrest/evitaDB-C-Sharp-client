@@ -653,14 +653,21 @@ public static class EvitaDataTypesConverter
             TimeSpan.FromHours(int.Parse(offsetDateTimeValue.Offset.Substring(1, 2)));
         bool add = offsetDateTimeValue.Offset.ElementAt(0) == '+';
         TimeSpan offset = add ? hourOffset : hourOffset.Negate();
-        return ToDateTimeOffset(offsetDateTimeValue.Timestamp)
-            .ToOffset(offset);
+        try
+        {
+            // because when max value is present in UTC, we cannot add the offset to it
+            return ToDateTimeOffset(offsetDateTimeValue.Timestamp)
+                .ToOffset(offset);
+        }
+        catch (Exception)
+        {
+            return ToDateTimeOffset(offsetDateTimeValue.Timestamp);
+        }
     }
     
     private static DateTimeOffset ToDateTimeOffset(Timestamp timestamp)
     {
-        int milliseconds = timestamp.Nanos / 1000000;
-        return DateTimeOffset.UnixEpoch.AddSeconds(timestamp.Seconds).AddMilliseconds(milliseconds);
+        return timestamp.ToDateTimeOffset();
     }
 
     public static DateTimeOffset[] ToDateTimeOffsetArray(GrpcOffsetDateTimeArray arrayValue)

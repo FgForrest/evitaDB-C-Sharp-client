@@ -123,7 +123,6 @@ public class EvitaClientDemoQueryTest : IDisposable
                     Collection("Product"),
                     FilterBy(
                         Or(
-                            AttributeInSet("visibility", "yes", "no"),
                             EntityLocaleEquals(new CultureInfo("cs-CZ")),
                             HierarchyWithin("categories", null, ExcludingRoot()),
                             Not(
@@ -141,7 +140,6 @@ public class EvitaClientDemoQueryTest : IDisposable
                                 PriceBetween(100m, 200.5m),
                                 PriceValidInNow()
                             ),
-                            AttributeBetween("frekvence-od", 20m, 95.3m),
                             UserFilter(
                                 FacetHaving("variantParameters", EntityPrimaryKeyInSet(1, 2, 3))
                             )

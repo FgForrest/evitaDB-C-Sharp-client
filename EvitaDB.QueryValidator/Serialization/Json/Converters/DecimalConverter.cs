@@ -15,7 +15,7 @@ public class DecimalConverter : JsonConverter
     public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         // Implement if needed for deserialization
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public override bool CanConvert(Type objectType)

@@ -27,7 +27,7 @@ public static class EntitySchemaConverter
             EvolutionMode = {entitySchema.EvolutionModes.Select(EvitaEnumConverter.ToGrpcEvolutionMode)},
             SortableAttributeCompounds =
                 {ToGrpcSortableAttributeCompoundSchemas(entitySchema.GetSortableAttributeCompounds())},
-            Version = entitySchema.Version,
+            Version = entitySchema.Version
         };
     }
 

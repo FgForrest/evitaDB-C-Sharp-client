@@ -85,7 +85,7 @@ public class DelegatingLocalCatalogSchemaMutationConverter : ISchemaMutationConv
                 grpcLocalCatalogSchemaMutation.RemoveEntitySchemaMutation = new RemoveEntitySchemaMutationConverter().Convert(removeEntitySchemaMutation);
                 break;
             default:
-                throw new EvitaInternalError("This should never happen!");;
+                throw new EvitaInternalError("This should never happen!");
         }
         return grpcLocalCatalogSchemaMutation;
     }

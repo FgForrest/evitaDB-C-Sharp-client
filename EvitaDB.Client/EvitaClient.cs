@@ -583,6 +583,6 @@ public partial class EvitaClient : IClientContext, IDisposable
         }
     }
 
-    [GeneratedRegex("(\\w+:\\w+:\\w+): (.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    [GeneratedRegex(@"(\w+:\w+:\w+): (.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex MyRegex();
 }

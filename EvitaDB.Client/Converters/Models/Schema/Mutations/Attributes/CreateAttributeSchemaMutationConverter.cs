@@ -10,7 +10,7 @@ public class CreateAttributeSchemaMutationConverter : ISchemaMutationConverter<C
         return new GrpcCreateAttributeSchemaMutation
         {
             Name = mutation.Name,
-            Unique = mutation.Unique,
+            Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(mutation.Unique),
             Filterable = mutation.Filterable,
             Sortable = mutation.Sortable,
             Localized = mutation.Localized,
@@ -30,7 +30,7 @@ public class CreateAttributeSchemaMutationConverter : ISchemaMutationConverter<C
             mutation.Name,
             mutation.Description,
             mutation.DeprecationNotice,
-            mutation.Unique,
+            EvitaEnumConverter.ToAttributeUniquenessType(mutation.Unique),
             mutation.Filterable,
             mutation.Sortable,
             mutation.Localized,

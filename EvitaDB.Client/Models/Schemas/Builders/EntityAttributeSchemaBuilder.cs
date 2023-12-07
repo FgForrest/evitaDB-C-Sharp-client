@@ -22,7 +22,7 @@ public class EntityAttributeSchemaBuilder :
                 BaseSchema.Name,
                 BaseSchema.Description,
                 BaseSchema.DeprecationNotice,
-                BaseSchema.Unique,
+                BaseSchema.UniquenessType,
                 BaseSchema.Filterable,
                 BaseSchema.Sortable,
                 BaseSchema.Localized,
@@ -79,4 +79,7 @@ public class EntityAttributeSchemaBuilder :
     {
         return Mutations;
     }
+    
+    public override bool UniqueWithinLocale => base.ToInstance().UniqueWithinLocale;
+    public override AttributeUniquenessType UniquenessType => base.ToInstance().UniquenessType;
 }

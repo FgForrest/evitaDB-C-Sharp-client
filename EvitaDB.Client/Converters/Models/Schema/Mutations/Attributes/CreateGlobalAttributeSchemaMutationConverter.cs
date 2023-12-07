@@ -13,8 +13,8 @@ public class CreateGlobalAttributeSchemaMutationConverter : ISchemaMutationConve
             Name = mutation.Name,
             Description = mutation.Description,
             DeprecationNotice = mutation.DeprecationNotice,
-            Unique = mutation.Unique,
-            UniqueGlobally = mutation.UniqueGlobally,
+            Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(mutation.Unique),
+            UniqueGlobally = EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(mutation.UniqueGlobally),
             Filterable = mutation.Filterable,
             Sortable = mutation.Sortable,
             Localized = mutation.Localized,
@@ -31,7 +31,9 @@ public class CreateGlobalAttributeSchemaMutationConverter : ISchemaMutationConve
     public CreateGlobalAttributeSchemaMutation Convert(GrpcCreateGlobalAttributeSchemaMutation mutation)
     {
         return new CreateGlobalAttributeSchemaMutation(mutation.Name, mutation.Description, mutation.DeprecationNotice,
-            mutation.Unique, mutation.UniqueGlobally, mutation.Filterable, mutation.Sortable, mutation.Localized,
+            EvitaEnumConverter.ToAttributeUniquenessType(mutation.Unique),
+            EvitaEnumConverter.ToGlobalAttributeUniquenessType(mutation.UniqueGlobally), mutation.Filterable,
+            mutation.Sortable, mutation.Localized,
             mutation.Nullable, mutation.Representative, EvitaDataTypesConverter.ToEvitaDataType(mutation.Type),
             mutation.DefaultValue is not null ? EvitaDataTypesConverter.ToEvitaValue(mutation.DefaultValue) : null,
             mutation.IndexedDecimalPlaces);

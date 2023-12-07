@@ -34,8 +34,8 @@ public class GlobalAttributeSchemaBuilder :
                 BaseSchema.Name,
                 BaseSchema.Description,
                 BaseSchema.DeprecationNotice,
-                BaseSchema.Unique,
-                BaseSchema.UniqueGlobally,
+                BaseSchema.UniquenessType,
+                BaseSchema.GlobalUniquenessType,
                 BaseSchema.Filterable,
                 BaseSchema.Sortable,
                 BaseSchema.Localized,
@@ -67,7 +67,7 @@ public class GlobalAttributeSchemaBuilder :
         Mutations.Add(
             new SetAttributeSchemaGloballyUniqueMutation(
                 ToInstance().Name,
-                true
+                GlobalAttributeUniquenessType.UniqueWithinCatalog
             )
         );
         return this;
@@ -78,7 +78,28 @@ public class GlobalAttributeSchemaBuilder :
         UpdatedSchemaDirty = AddMutations(
             new SetAttributeSchemaGloballyUniqueMutation(
                 ToInstance().Name,
-                decider.Invoke()
+                decider.Invoke() ? GlobalAttributeUniquenessType.UniqueWithinCatalog : GlobalAttributeUniquenessType.NotUnique
+            )
+        );
+        return this;
+    }
+    
+    public IGlobalAttributeSchemaBuilder UniqueGloballyWithinLocale() {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaGloballyUniqueMutation(
+                ToInstance().Name,
+                GlobalAttributeUniquenessType.UniqueWithinCatalogLocale
+            )
+        );
+        return this;
+    }
+    
+    public IGlobalAttributeSchemaBuilder UniqueGloballyWithinLocale(Func<bool> decider)
+    {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaGloballyUniqueMutation(
+                ToInstance().Name,
+                decider.Invoke() ? GlobalAttributeUniquenessType.UniqueWithinCatalogLocale : GlobalAttributeUniquenessType.NotUnique
             )
         );
         return this;
@@ -118,4 +139,7 @@ public class GlobalAttributeSchemaBuilder :
     {
         return typeof(IGlobalAttributeSchema);
     }
+    
+    public override bool UniqueWithinLocale => base.ToInstance().UniqueWithinLocale;
+    public override AttributeUniquenessType UniquenessType => base.ToInstance().UniquenessType;
 }

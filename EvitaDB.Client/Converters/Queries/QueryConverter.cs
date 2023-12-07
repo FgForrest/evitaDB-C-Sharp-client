@@ -11,7 +11,7 @@ namespace EvitaDB.Client.Utils;
 
 public class QueryConverter
 {
-    public static List<object> ConvertQueryParamsList(List<QueryParam> queryParams)
+    public static List<object> ConvertQueryParamsList(List<GrpcQueryParam> queryParams)
     {
         List<object> queryParamObject = new();
         foreach (var queryParam in queryParams)
@@ -22,218 +22,218 @@ public class QueryConverter
         return queryParamObject;
     }
 
-    public static object ConvertQueryParam(QueryParam queryParam)
+    public static object ConvertQueryParam(GrpcQueryParam queryParam)
     {
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StringValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StringValue)
         {
             return queryParam.StringValue;
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.IntegerValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.IntegerValue)
         {
             return queryParam.IntegerValue;
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LongValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LongValue)
         {
             return queryParam.LongValue;
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BooleanValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BooleanValue)
         {
             return queryParam.BooleanValue;
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BigDecimalValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BigDecimalValue)
         {
             return EvitaDataTypesConverter.ToDecimal(queryParam.BigDecimalValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.DateTimeRangeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.DateTimeRangeValue)
         {
             return EvitaDataTypesConverter.ToDateTimeRange(queryParam.DateTimeRangeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.IntegerNumberRangeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.IntegerNumberRangeValue)
         {
             return EvitaDataTypesConverter.ToIntegerNumberRange(queryParam.IntegerNumberRangeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LongNumberRangeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LongNumberRangeValue)
         {
             return EvitaDataTypesConverter.ToLongNumberRange(queryParam.LongNumberRangeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BigDecimalNumberRangeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BigDecimalNumberRangeValue)
         {
             return EvitaDataTypesConverter.ToDecimalNumberRange(queryParam.BigDecimalNumberRangeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.OffsetDateTimeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.OffsetDateTimeValue)
         {
             return EvitaDataTypesConverter.ToDateTimeOffset(queryParam.OffsetDateTimeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LocaleValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LocaleValue)
         {
             return EvitaDataTypesConverter.ToLocale(queryParam.LocaleValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.CurrencyValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.CurrencyValue)
         {
             return EvitaDataTypesConverter.ToCurrency(queryParam.CurrencyValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.FacetStatisticsDepthValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.FacetStatisticsDepthValue)
         {
             return EvitaEnumConverter.ToFacetStatisticsDepth(queryParam.FacetStatisticsDepthValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.QueryPriceModelValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.QueryPriceModelValue)
         {
             return EvitaEnumConverter.ToQueryPriceMode(queryParam.QueryPriceModelValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.PriceContentModeValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.PriceContentModeValue)
         {
             return EvitaEnumConverter.ToPriceContentMode(queryParam.PriceContentModeValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.AttributeSpecialValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.AttributeSpecialValue)
         {
             return EvitaEnumConverter.ToAttributeSpecialValue(queryParam.AttributeSpecialValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.OrderDirectionValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.OrderDirectionValue)
         {
             return EvitaEnumConverter.ToOrderDirection(queryParam.OrderDirectionValue);
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviour)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviour)
         {
             return EvitaEnumConverter.ToEmptyHierarchicalEntityBehaviour(queryParam.EmptyHierarchicalEntityBehaviour);
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsBase)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StatisticsBase)
         {
             return EvitaEnumConverter.ToStatisticsBase(queryParam.StatisticsBase);
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsType)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StatisticsType)
         {
             return EvitaEnumConverter.ToStatisticsType(queryParam.StatisticsType);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StringArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StringArrayValue)
         {
             return EvitaDataTypesConverter.ToStringArray(queryParam.StringArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.IntegerArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.IntegerArrayValue)
         {
             return EvitaDataTypesConverter.ToIntegerArray(queryParam.IntegerArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LongArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LongArrayValue)
         {
             return EvitaDataTypesConverter.ToLongArray(queryParam.LongArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BooleanArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BooleanArrayValue)
         {
             return EvitaDataTypesConverter.ToBooleanArray(queryParam.BooleanArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BigDecimalArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BigDecimalArrayValue)
         {
             return EvitaDataTypesConverter.ToDecimalArray(queryParam.BigDecimalArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.DateTimeRangeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.DateTimeRangeArrayValue)
         {
             return EvitaDataTypesConverter.ToDateTimeRangeArray(queryParam.DateTimeRangeArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.IntegerNumberRangeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.IntegerNumberRangeArrayValue)
         {
             return EvitaDataTypesConverter.ToIntegerNumberRangeArray(queryParam.IntegerNumberRangeArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LongNumberRangeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LongNumberRangeArrayValue)
         {
             return EvitaDataTypesConverter.ToLongNumberRangeArray(queryParam.LongNumberRangeArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.BigDecimalNumberRangeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.BigDecimalNumberRangeArrayValue)
         {
             return EvitaDataTypesConverter.ToDecimalNumberRangeArray(queryParam.BigDecimalNumberRangeArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.OffsetDateTimeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.OffsetDateTimeArrayValue)
         {
             return EvitaDataTypesConverter.ToDateTimeOffsetArray(queryParam.OffsetDateTimeArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.LocaleArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.LocaleArrayValue)
         {
             return EvitaDataTypesConverter.ToLocaleArray(queryParam.LocaleArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.CurrencyArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.CurrencyArrayValue)
         {
             return EvitaDataTypesConverter.ToCurrencyArray(queryParam.CurrencyArrayValue);
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.FacetStatisticsDepthArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.FacetStatisticsDepthArrayValue)
         {
             return queryParam.FacetStatisticsDepthArrayValue.Value
                 .Select(EvitaEnumConverter.ToFacetStatisticsDepth)
                 .ToArray();
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.QueryPriceModelArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.QueryPriceModelArrayValue)
         {
             return queryParam.QueryPriceModelArrayValue.Value
                 .Select(EvitaEnumConverter.ToQueryPriceMode)
                 .ToArray();
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.PriceContentModeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.PriceContentModeArrayValue)
         {
             return queryParam.PriceContentModeArrayValue.Value
                 .Select(EvitaEnumConverter.ToPriceContentMode)
                 .ToArray();
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.AttributeSpecialArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.AttributeSpecialArrayValue)
         {
             return queryParam.AttributeSpecialArrayValue.Value
                 .Select(EvitaEnumConverter.ToAttributeSpecialValue)
                 .ToArray();
         }
 
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.OrderDirectionArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.OrderDirectionArrayValue)
         {
             return queryParam.OrderDirectionArrayValue.Value
                 .Select(EvitaEnumConverter.ToOrderDirection)
                 .ToArray();
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviourArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.EmptyHierarchicalEntityBehaviourArrayValue)
         {
             return queryParam.EmptyHierarchicalEntityBehaviourArrayValue.Value
                 .Select(EvitaEnumConverter.ToEmptyHierarchicalEntityBehaviour)
                 .ToArray();
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsBaseArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StatisticsBaseArrayValue)
         {
             return queryParam.StatisticsBaseArrayValue.Value
                 .Select(EvitaEnumConverter.ToStatisticsBase)
                 .ToArray();
         }
         
-        if (queryParam.QueryParamCase == QueryParam.QueryParamOneofCase.StatisticsTypeArrayValue)
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StatisticsTypeArrayValue)
         {
             return queryParam.StatisticsTypeArrayValue.Value
                 .Select(EvitaEnumConverter.ToStatisticsType)
@@ -243,9 +243,9 @@ public class QueryConverter
         throw new EvitaInvalidUsageException("Unsupported Evita data type `" + queryParam + "` in gRPC API.");
     }
 
-    public static QueryParam ConvertQueryParam(object parameter)
+    public static GrpcQueryParam ConvertQueryParam(object parameter)
     {
-        QueryParam queryParam = new QueryParam();
+        GrpcQueryParam queryParam = new GrpcQueryParam();
         if (parameter is string stringValue)
         {
             queryParam.StringValue = stringValue;

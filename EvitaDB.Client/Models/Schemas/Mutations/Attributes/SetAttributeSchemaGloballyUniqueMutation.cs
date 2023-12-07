@@ -7,9 +7,9 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMutation, ILocalCatalogSchemaMutation
 {
     public string Name { get; }
-    public bool UniqueGlobally { get; }
+    public GlobalAttributeUniquenessType UniqueGlobally { get; }
 
-    public SetAttributeSchemaGloballyUniqueMutation(string name, bool uniqueGlobally)
+    public SetAttributeSchemaGloballyUniqueMutation(string name, GlobalAttributeUniquenessType uniqueGlobally)
     {
         Name = name;
         UniqueGlobally = uniqueGlobally;
@@ -24,7 +24,7 @@ public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMu
                 Name,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
-                globalAttributeSchema.Unique,
+                globalAttributeSchema.UniquenessType,
                 UniqueGlobally,
                 globalAttributeSchema.Filterable,
                 globalAttributeSchema.Sortable,

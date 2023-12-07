@@ -10,7 +10,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
     public string Name { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
-    public bool Unique { get; }
+    public AttributeUniquenessType Unique { get; }
     public bool Filterable { get; }
     public bool Sortable { get; }
     public bool Localized { get; }
@@ -20,7 +20,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
     public object? DefaultValue { get; }
     public int IndexedDecimalPlaces { get; }
 
-    public CreateAttributeSchemaMutation(string name, string? description, string? deprecationNotice, bool unique,
+    public CreateAttributeSchemaMutation(string name, string? description, string? deprecationNotice, AttributeUniquenessType? unique,
         bool filterable, bool sortable, bool localized, bool nullable, bool representative, Type type,
         object? defaultValue, int indexedDecimalPlaces)
     {
@@ -28,7 +28,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         Name = name;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        Unique = unique;
+        Unique = unique ?? AttributeUniquenessType.NotUnique;
         Filterable = filterable;
         Sortable = sortable;
         Localized = localized;
@@ -44,7 +44,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         if (schemaType == typeof(IGlobalAttributeSchema))
         {
             return (AttributeSchema.InternalBuild(
-                Name, Description, DeprecationNotice, Unique, false, Filterable, Sortable, Localized, 
+                Name, Description, DeprecationNotice, Unique, null, Filterable, Sortable, Localized, 
                 Nullable, Representative, Type, DefaultValue, IndexedDecimalPlaces
             ) as TS)!;
         }

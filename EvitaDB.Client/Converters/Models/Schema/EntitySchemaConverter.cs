@@ -19,14 +19,16 @@ public static class EntitySchemaConverter
             WithHierarchy = entitySchema.WithHierarchy,
             WithPrice = entitySchema.WithPrice,
             IndexedPricePlaces = entitySchema.IndexedPricePlaces,
-            Locales = {entitySchema.Locales.Select(EvitaDataTypesConverter.ToGrpcLocale)},
-            Currencies = {entitySchema.Currencies.Select(EvitaDataTypesConverter.ToGrpcCurrency)},
-            Attributes = {ToGrpcAttributeSchemas(entitySchema.Attributes)},
-            AssociatedData = {ToGrpcAssociatedDataSchemas(entitySchema.AssociatedData)},
-            References = {ToGrpcReferenceSchemas(entitySchema.References)},
-            EvolutionMode = {entitySchema.EvolutionModes.Select(EvitaEnumConverter.ToGrpcEvolutionMode)},
+            Locales = { entitySchema.Locales.Select(EvitaDataTypesConverter.ToGrpcLocale) },
+            Currencies = { entitySchema.Currencies.Select(EvitaDataTypesConverter.ToGrpcCurrency) },
+            Attributes = { ToGrpcAttributeSchemas(entitySchema.Attributes) },
+            AssociatedData = { ToGrpcAssociatedDataSchemas(entitySchema.AssociatedData) },
+            References = { ToGrpcReferenceSchemas(entitySchema.References) },
+            EvolutionMode = { entitySchema.EvolutionModes.Select(EvitaEnumConverter.ToGrpcEvolutionMode) },
             SortableAttributeCompounds =
-                {ToGrpcSortableAttributeCompoundSchemas(entitySchema.GetSortableAttributeCompounds())},
+            {
+                ToGrpcSortableAttributeCompoundSchemas(entitySchema.GetSortableAttributeCompounds())
+            },
             Version = entitySchema.Version,
         };
     }
@@ -74,8 +76,8 @@ public static class EntitySchemaConverter
                     NamingConventionHelper.Generate(attributeSchema.Name),
                     string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
                     string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-                    attributeSchema.Unique,
-                    attributeSchema.UniqueGlobally,
+                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
+                    EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGlobally),
                     attributeSchema.Filterable,
                     attributeSchema.Sortable,
                     attributeSchema.Localized,
@@ -88,7 +90,9 @@ public static class EntitySchemaConverter
                     attributeSchema.IndexedDecimalPlaces
                 ) as T)!;
             }
-            throw new EvitaInvalidUsageException("Expected global attribute, but `" + attributeSchema.SchemaType + "` was provided!");
+
+            throw new EvitaInvalidUsageException("Expected global attribute, but `" + attributeSchema.SchemaType +
+                                                 "` was provided!");
         }
 
         if (attributeSchema.SchemaType == GrpcAttributeSchemaType.Entity)
@@ -100,7 +104,7 @@ public static class EntitySchemaConverter
                     NamingConventionHelper.Generate(attributeSchema.Name),
                     string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
                     string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-                    attributeSchema.Unique,
+                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
                     attributeSchema.Filterable,
                     attributeSchema.Sortable,
                     attributeSchema.Localized,
@@ -113,15 +117,17 @@ public static class EntitySchemaConverter
                     attributeSchema.IndexedDecimalPlaces
                 ) as T)!;
             }
-            throw new EvitaInvalidUsageException("Expected entity attribute, but `" + attributeSchema.SchemaType + "` was provided!");
+
+            throw new EvitaInvalidUsageException("Expected entity attribute, but `" + attributeSchema.SchemaType +
+                                                 "` was provided!");
         }
-        
+
         return (AttributeSchema.InternalBuild(
             attributeSchema.Name,
             NamingConventionHelper.Generate(attributeSchema.Name),
             string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
             string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-            attributeSchema.Unique,
+            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
             attributeSchema.Filterable,
             attributeSchema.Sortable,
             attributeSchema.Localized,
@@ -200,7 +206,7 @@ public static class EntitySchemaConverter
         return new GrpcSortableAttributeCompoundSchema
         {
             Name = attributeSchema.Name,
-            AttributeElements = {ToGrpcAttributeElement(attributeSchema.AttributeElements)},
+            AttributeElements = { ToGrpcAttributeElement(attributeSchema.AttributeElements) },
             Description = attributeSchema.Description,
             DeprecationNotice = attributeSchema.DeprecationNotice
         };
@@ -259,8 +265,7 @@ public static class EntitySchemaConverter
         GrpcAttributeSchema grpcAttributeSchema = new GrpcAttributeSchema
         {
             Name = attributeSchema.Name,
-            Unique = attributeSchema.Unique,
-            UniqueGlobally = isGlobal && ((IGlobalAttributeSchema) attributeSchema).UniqueGlobally,
+            Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
             Filterable = attributeSchema.Filterable,
             Sortable = attributeSchema.Sortable,
             Localized = attributeSchema.Localized,
@@ -273,16 +278,19 @@ public static class EntitySchemaConverter
             Description = attributeSchema.Description,
             DeprecationNotice = attributeSchema.DeprecationNotice
         };
-        
-        if (isEntity) {
-            IEntityAttributeSchema globalAttributeSchema = (IEntityAttributeSchema) attributeSchema;
+
+        if (isEntity)
+        {
+            IEntityAttributeSchema globalAttributeSchema = (IEntityAttributeSchema)attributeSchema;
             grpcAttributeSchema.Representative = globalAttributeSchema.Representative;
         }
 
-        if (isGlobal) {
-            IGlobalAttributeSchema globalAttributeSchema = (IGlobalAttributeSchema) attributeSchema;
-            grpcAttributeSchema.Representative= globalAttributeSchema.Representative;
-            grpcAttributeSchema.UniqueGlobally= globalAttributeSchema.UniqueGlobally;
+        if (isGlobal)
+        {
+            IGlobalAttributeSchema globalAttributeSchema = (IGlobalAttributeSchema)attributeSchema;
+            grpcAttributeSchema.Representative = globalAttributeSchema.Representative;
+            grpcAttributeSchema.UniqueGlobally =
+                EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(globalAttributeSchema.GlobalUniquenessType);
         }
 
         return grpcAttributeSchema;
@@ -338,9 +346,11 @@ public static class EntitySchemaConverter
             GroupTypeRelatesToEntity = referenceSchema.ReferencedGroupTypeManaged,
             Indexed = referenceSchema.IsIndexed,
             Faceted = referenceSchema.IsFaceted,
-            Attributes = {ToGrpcAttributeSchemas(referenceSchema.GetAttributes())},
+            Attributes = { ToGrpcAttributeSchemas(referenceSchema.GetAttributes()) },
             SortableAttributeCompounds =
-                {ToGrpcSortableAttributeCompoundSchemas(referenceSchema.GetSortableAttributeCompounds())},
+            {
+                ToGrpcSortableAttributeCompoundSchemas(referenceSchema.GetSortableAttributeCompounds())
+            },
             Description = referenceSchema.Description,
             DeprecationNotice = referenceSchema.DeprecationNotice
         };

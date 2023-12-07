@@ -1,6 +1,7 @@
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Models.Schemas.Mutations;
 using EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 using EvitaDB.Client.Utils;
@@ -49,6 +50,8 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
     public string? DeprecationNotice => _instance.DeprecationNotice;
 
     bool IAttributeSchema.Unique => _instance.Unique;
+    public abstract bool UniqueWithinLocale { get; }
+    public abstract AttributeUniquenessType UniquenessType { get; }
 
     bool IAttributeSchema.Nullable => _instance.Nullable;
 
@@ -150,7 +153,7 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
         UpdatedSchemaDirty = AddMutations(
             new SetAttributeSchemaUniqueMutation(
                 BaseSchema.Name,
-                true
+                AttributeUniquenessType.UniqueWithinCollection
             )
         );
         return (this as TE)!;
@@ -161,7 +164,31 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
         UpdatedSchemaDirty = AddMutations(
             new SetAttributeSchemaUniqueMutation(
                 BaseSchema.Name,
-                decider.Invoke()
+                decider.Invoke() ?
+                    AttributeUniquenessType.UniqueWithinCollection : AttributeUniquenessType.NotUnique
+            )
+        );
+        return (this as TE)!;
+    }
+    
+    TE IAttributeSchemaEditor<TE>.UniqueWithinLocale()
+    {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaUniqueMutation(
+                BaseSchema.Name,
+                AttributeUniquenessType.UniqueWithinCollectionLocale
+            )
+        );
+        return (this as TE)!;
+    }
+
+    TE IAttributeSchemaEditor<TE>.UniqueWithinLocale(Func<bool> decider)
+    {
+        UpdatedSchemaDirty = AddMutations(
+            new SetAttributeSchemaUniqueMutation(
+                BaseSchema.Name,
+                decider.Invoke() ?
+                    AttributeUniquenessType.UniqueWithinCollectionLocale : AttributeUniquenessType.NotUnique
             )
         );
         return (this as TE)!;

@@ -3,6 +3,7 @@ using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
@@ -471,6 +472,58 @@ public static class EvitaEnumConverter
             Operation.Update => GrpcOperation.Update,
             Operation.Remove => GrpcOperation.Remove,
             _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null)
+        };
+    }
+
+    public static AttributeUniquenessType ToAttributeUniquenessType(
+        GrpcAttributeUniquenessType grpcAttributeUniquenessType)
+    {
+        return grpcAttributeUniquenessType switch
+        {
+            GrpcAttributeUniquenessType.NotUnique => AttributeUniquenessType.NotUnique,
+            GrpcAttributeUniquenessType.UniqueWithinCollection => AttributeUniquenessType.UniqueWithinCollection,
+            GrpcAttributeUniquenessType.UniqueWithinCollectionLocale =>
+                AttributeUniquenessType.UniqueWithinCollectionLocale,
+            _ => throw new EvitaInternalError("Unrecognized remote attribute uniqueness type: " +
+                                              grpcAttributeUniquenessType)
+        };
+    }
+    
+    public static GrpcAttributeUniquenessType ToGrpcAttributeUniquenessType(
+        AttributeUniquenessType attributeUniquenessType)
+    {
+        return attributeUniquenessType switch
+        {
+            AttributeUniquenessType.NotUnique => GrpcAttributeUniquenessType.NotUnique,
+            AttributeUniquenessType.UniqueWithinCollection => GrpcAttributeUniquenessType.UniqueWithinCollection,
+            AttributeUniquenessType.UniqueWithinCollectionLocale =>
+                GrpcAttributeUniquenessType.UniqueWithinCollectionLocale,
+            _ => throw new EvitaInternalError("Unrecognized attribute uniqueness type: " + attributeUniquenessType)
+        };
+    }
+    
+    public static GlobalAttributeUniquenessType ToGlobalAttributeUniquenessType(
+        GrpcGlobalAttributeUniquenessType grpcGlobalAttributeUniquenessType)
+    {
+        return grpcGlobalAttributeUniquenessType switch
+        {
+            GrpcGlobalAttributeUniquenessType.NotGloballyUnique => GlobalAttributeUniquenessType.NotUnique,
+            GrpcGlobalAttributeUniquenessType.UniqueWithinCatalog => GlobalAttributeUniquenessType.UniqueWithinCatalog,
+            GrpcGlobalAttributeUniquenessType.UniqueWithinCatalogLocale => GlobalAttributeUniquenessType.UniqueWithinCatalogLocale,
+            _ => throw new EvitaInternalError("Unrecognized remote global attribute uniqueness type: " +
+                                              grpcGlobalAttributeUniquenessType)
+        };
+    }
+    
+    public static GrpcGlobalAttributeUniquenessType ToGrpcGlobalAttributeUniquenessType(
+        GlobalAttributeUniquenessType globalAttributeUniquenessType)
+    {
+        return globalAttributeUniquenessType switch
+        {
+            GlobalAttributeUniquenessType.NotUnique => GrpcGlobalAttributeUniquenessType.NotGloballyUnique,
+            GlobalAttributeUniquenessType.UniqueWithinCatalog => GrpcGlobalAttributeUniquenessType.UniqueWithinCatalog,
+            GlobalAttributeUniquenessType.UniqueWithinCatalogLocale => GrpcGlobalAttributeUniquenessType.UniqueWithinCatalogLocale,
+            _ => throw new EvitaInternalError("Unrecognized global attribute uniqueness type: " + globalAttributeUniquenessType)
         };
     }
 }

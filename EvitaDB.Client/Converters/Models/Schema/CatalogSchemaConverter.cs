@@ -56,8 +56,8 @@ public static class CatalogSchemaConverter
         return new GrpcGlobalAttributeSchema
         {
             Name = attributeSchema.Name,
-            Unique = attributeSchema.Unique,
-            UniqueGlobally = attributeSchema.UniqueGlobally,
+            Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
+            UniqueGlobally = EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(attributeSchema.GlobalUniquenessType),
             Filterable = attributeSchema.Filterable,
             Sortable = attributeSchema.Sortable,
             Localized = attributeSchema.Localized,
@@ -79,8 +79,8 @@ public static class CatalogSchemaConverter
             attributeSchema.Name,
             attributeSchema.Description,
             attributeSchema.DeprecationNotice,
-            attributeSchema.Unique,
-            attributeSchema.UniqueGlobally,
+            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
+            EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGlobally),
             attributeSchema.Filterable,
             attributeSchema.Sortable,
             attributeSchema.Localized,

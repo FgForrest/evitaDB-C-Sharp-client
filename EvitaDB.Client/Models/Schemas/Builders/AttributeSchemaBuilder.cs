@@ -31,7 +31,7 @@ public class AttributeSchemaBuilder : AbstractAttributeSchemaBuilder<IAttributeS
                 BaseSchema.Name,
                 BaseSchema.Description,
                 BaseSchema.DeprecationNotice,
-                BaseSchema.Unique,
+                BaseSchema.UniquenessType,
                 BaseSchema.Filterable,
                 BaseSchema.Sortable,
                 BaseSchema.Localized,
@@ -69,6 +69,9 @@ public class AttributeSchemaBuilder : AbstractAttributeSchemaBuilder<IAttributeS
             .Select(it =>
                 new ModifyReferenceAttributeSchemaMutation(referenceName, (it as IReferenceSchemaMutation)!)));
     }
+
+    public override bool UniqueWithinLocale => base.ToInstance().UniqueWithinLocale;
+    public override AttributeUniquenessType UniquenessType => base.ToInstance().UniquenessType;
 
     protected override Type GetAttributeSchemaType()
     {

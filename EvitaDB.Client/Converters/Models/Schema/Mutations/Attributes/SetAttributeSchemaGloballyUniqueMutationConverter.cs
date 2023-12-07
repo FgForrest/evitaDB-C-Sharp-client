@@ -9,12 +9,13 @@ public class SetAttributeSchemaGloballyUniqueMutationConverter : ISchemaMutation
         return new GrpcSetAttributeSchemaGloballyUniqueMutation
         {
             Name = mutation.Name,
-            UniqueGlobally = mutation.UniqueGlobally
+            UniqueGlobally = EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(mutation.UniqueGlobally)
         };
     }
 
     public SetAttributeSchemaGloballyUniqueMutation Convert(GrpcSetAttributeSchemaGloballyUniqueMutation mutation)
     {
-        return new SetAttributeSchemaGloballyUniqueMutation(mutation.Name, mutation.UniqueGlobally);
+        return new SetAttributeSchemaGloballyUniqueMutation(mutation.Name,
+            EvitaEnumConverter.ToGlobalAttributeUniquenessType(mutation.UniqueGlobally));
     }
 }

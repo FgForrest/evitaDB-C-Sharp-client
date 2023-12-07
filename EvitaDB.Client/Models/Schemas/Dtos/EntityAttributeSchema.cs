@@ -11,7 +11,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 		IDictionary<NamingConvention, string?> nameVariants,
 		string? description,
 		string? deprecationNotice,
-		bool unique,
+		AttributeUniquenessType? unique,
 		bool filterable,
 		bool sortable,
 		bool localized,
@@ -30,7 +30,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 	/// This method is for internal purposes only. It could be used for reconstruction of GlobalAttributeSchema from
 	/// different package than current, but still internal code of the Evita ecosystems.
 	/// </summary>
-	public new static EntityAttributeSchema InternalBuild(
+	public static new EntityAttributeSchema InternalBuild(
 		string name,
 		Type type,
 		bool localized
@@ -38,7 +38,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 		return new EntityAttributeSchema(
 			name, NamingConventionHelper.Generate(name),
 			null, null,
-			false, false, false, localized, false, false,
+			null, false, false, localized, false, false,
 			type, null,
 			0
 		);
@@ -50,7 +50,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 	/// </summary>
 	public static EntityAttributeSchema InternalBuild(
 		string name,
-		bool unique,
+		AttributeUniquenessType? unique,
 		bool filterable,
 		bool sortable,
 		bool localized,
@@ -76,7 +76,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 		string name,
 		string? description,
 		string? deprecationNotice,
-		bool unique,
+		AttributeUniquenessType? unique,
 		bool filterable,
 		bool sortable,
 		bool localized,
@@ -104,7 +104,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 		IDictionary<NamingConvention, string?> nameVariants,
 		string? description,
 		string? deprecationNotice,
-		bool unique,
+		AttributeUniquenessType? unique,
 		bool filterable,
 		bool sortable,
 		bool localized,
@@ -124,7 +124,7 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 	}
 
 	public override string ToString() {
-		return "GlobalAttributeSchema{" +
+		return "EntityAttributeSchema{" +
 			"name='" + Name + '\'' +
 			", unique=" + Unique +
 			", filterable=" + Filterable +

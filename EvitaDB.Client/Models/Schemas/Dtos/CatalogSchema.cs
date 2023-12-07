@@ -66,7 +66,7 @@ public class CatalogSchema : ICatalogSchema
             ? attributeSchema
             : AttributeSchema.InternalBuild(
                 attributeSchema.Name, attributeSchema.Description,
-                attributeSchema.DeprecationNotice, attributeSchema.Unique, attributeSchema.UniqueGlobally,
+                attributeSchema.DeprecationNotice, attributeSchema.UniquenessType, attributeSchema.GlobalUniquenessType,
                 attributeSchema.Filterable, attributeSchema.Sortable, attributeSchema.Localized,
                 attributeSchema.Nullable,
                 attributeSchema.Representative, attributeSchema.Type, attributeSchema.DefaultValue,

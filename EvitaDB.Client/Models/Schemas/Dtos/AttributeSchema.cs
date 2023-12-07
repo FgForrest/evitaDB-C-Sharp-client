@@ -10,7 +10,7 @@ public class AttributeSchema : IAttributeSchema
     public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
-    public bool Unique { get; }
+    public AttributeUniquenessType UniquenessType { get; }
     public bool Filterable { get; }
     public bool Sortable { get; }
     public bool Nullable { get; }
@@ -19,19 +19,21 @@ public class AttributeSchema : IAttributeSchema
     public object? DefaultValue { get; }
     public Type PlainType { get; }
     public int IndexedDecimalPlaces { get; }
+    public bool Unique => UniquenessType != AttributeUniquenessType.NotUnique;
+    public bool UniqueWithinLocale => UniquenessType == AttributeUniquenessType.UniqueWithinCollectionLocale;
 
     internal static AttributeSchema InternalBuild(string name, Type type, bool localized)
     {
         return new AttributeSchema(
             name, NamingConventionHelper.Generate(name),
             null, null,
-            false, false, false, localized, false,
+            null, false, false, localized, false,
             type, null,
             0
         );
     }
 
-    internal static AttributeSchema InternalBuild<T>(string name, bool unique, bool filterable, bool sortable,
+    internal static AttributeSchema InternalBuild<T>(string name, AttributeUniquenessType? unique, bool filterable, bool sortable,
         bool localized, bool nullable, Type type, T? defaultValue)
     {
         if ((filterable || sortable) && typeof(decimal) == type)
@@ -51,7 +53,7 @@ public class AttributeSchema : IAttributeSchema
     }
 
     internal static AttributeSchema InternalBuild<T>(string name, string? description, string? deprecationNotice,
-        bool unique, bool filterable, bool sortable, bool localized, bool nullable, Type type, T? defaultValue,
+        AttributeUniquenessType? unique, bool filterable, bool sortable, bool localized, bool nullable, Type type, T? defaultValue,
         int indexedDecimalPlaces)
     {
         return new AttributeSchema(
@@ -64,7 +66,7 @@ public class AttributeSchema : IAttributeSchema
     }
 
     internal static AttributeSchema InternalBuild<T>(string name, IDictionary<NamingConvention, string?> nameVariants,
-        string? description, string? deprecationNotice, bool unique, bool filterable, bool sortable,
+        string? description, string? deprecationNotice, AttributeUniquenessType unique, bool filterable, bool sortable,
         bool localized, bool nullable, Type type, T? defaultValue, int
             indexedDecimalPlaces)
     {
@@ -81,8 +83,8 @@ public class AttributeSchema : IAttributeSchema
         string name,
         string? description,
         string? deprecationNotice,
-        bool unique,
-        bool uniqueGlobally,
+        AttributeUniquenessType? uniquenessType,
+        GlobalAttributeUniquenessType? globallyUniqueType,
         bool filterable,
         bool sortable,
         bool localized,
@@ -96,7 +98,7 @@ public class AttributeSchema : IAttributeSchema
         return new GlobalAttributeSchema(
             name, NamingConventionHelper.Generate(name),
             description, deprecationNotice,
-            unique, uniqueGlobally, filterable, sortable, localized, nullable, representative,
+            uniquenessType, globallyUniqueType, filterable, sortable, localized, nullable, representative,
             type, defaultValue,
             indexedDecimalPlaces
         );
@@ -107,7 +109,7 @@ public class AttributeSchema : IAttributeSchema
         IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
-        bool unique,
+        AttributeUniquenessType? uniquenessType,
         bool filterable,
         bool sortable,
         bool localized,
@@ -121,7 +123,7 @@ public class AttributeSchema : IAttributeSchema
         NameVariants = nameVariants;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        Unique = unique;
+        UniquenessType = uniquenessType ?? AttributeUniquenessType.NotUnique;
         Filterable = filterable;
         Sortable = sortable;
         Localized = localized;

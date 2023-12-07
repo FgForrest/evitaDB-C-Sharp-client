@@ -9,9 +9,9 @@ public class SetAttributeSchemaUniqueMutation : IEntityAttributeSchemaMutation,
     IReferenceAttributeSchemaMutation, ILocalCatalogSchemaMutation
 {
     public string Name { get; }
-    public bool Unique { get; }
+    public AttributeUniquenessType Unique { get; }
 
-    public SetAttributeSchemaUniqueMutation(string name, bool unique)
+    public SetAttributeSchemaUniqueMutation(string name, AttributeUniquenessType unique)
     {
         Name = name;
         Unique = unique;
@@ -50,7 +50,7 @@ public class SetAttributeSchemaUniqueMutation : IEntityAttributeSchemaMutation,
                 globalAttributeSchema.Description,
                 globalAttributeSchema.DeprecationNotice,
                 Unique,
-                globalAttributeSchema.UniqueGlobally,
+                globalAttributeSchema.GlobalUniquenessType,
                 globalAttributeSchema.Filterable,
                 globalAttributeSchema.Sortable,
                 globalAttributeSchema.Localized,

@@ -10,8 +10,8 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
     public string Name { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
-    public bool Unique { get; }
-    public bool UniqueGlobally { get; }
+    public AttributeUniquenessType Unique { get; }
+    public GlobalAttributeUniquenessType UniqueGlobally { get; }
     public bool Filterable { get; }
     public bool Sortable { get; }
     public bool Localized { get; }
@@ -25,8 +25,8 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         string name,
         string? description,
         string? deprecationNotice,
-        bool unique,
-        bool uniqueGlobally,
+        AttributeUniquenessType? unique,
+        GlobalAttributeUniquenessType? uniqueGlobally,
         bool filterable,
         bool sortable,
         bool localized,
@@ -41,8 +41,8 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         Name = name;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        Unique = unique;
-        UniqueGlobally = uniqueGlobally;
+        Unique = unique ?? AttributeUniquenessType.NotUnique;
+        UniqueGlobally = uniqueGlobally ?? GlobalAttributeUniquenessType.NotUnique;
         Filterable = filterable;
         Sortable = sortable;
         Localized = localized;

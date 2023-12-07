@@ -93,6 +93,53 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     new T Unique(Func<bool> decider);
     
     /// <summary>
+    /// <remarks>
+    /// <para>
+    /// When attribute is unique it is automatically filterable, and it is ensured there is exactly one single entity
+    /// having certain value of this attribute.
+    /// </para>
+    /// <para>
+    /// The attribute will be filtered / looked up for by its <see cref="IAttributeSchema.Type"/> type and
+    /// <see cref="IComparable"/> contract. If the type is not <see cref="IComparable"/> the <see cref="string.CompareTo(string)"/>
+    /// </para>
+    /// <para>
+    /// As an example of unique attribute can be EAN - there is no sense in having two entities with same EAN, and it's
+    /// better to have this ensured by the database engine.
+    /// </para>
+    /// <para>
+    /// This method differs from <see cref="Unique()"/> in that it is possible to have multiple entities with same value
+    /// of this attribute as long as the attribute is <see cref="Localized()"/> and the values relate to different locales.
+    /// </para>
+    /// </remarks>
+    /// </summary>
+    /// <returns>builder to continue with configuration</returns>
+    new T UniqueWithinLocale();
+    
+    /// <summary>
+    /// <remarks>
+    /// <para>
+    /// When attribute is unique it is automatically filterable, and it is ensured there is exactly one single entity
+    /// having certain value of this attribute.
+    /// </para>
+    /// <para>
+    /// The attribute will be filtered / looked up for by its <see cref="IAttributeSchema.Type"/> type and
+    /// <see cref="IComparable"/> contract. If the type is not <see cref="IComparable"/> the <see cref="string.CompareTo(string)"/>
+    /// </para>
+    /// <para>
+    /// As an example of unique attribute can be EAN - there is no sense in having two entities with same EAN, and it's
+    /// better to have this ensured by the database engine.
+    /// </para>
+    /// <para>
+    /// This method differs from <see cref="Unique()"/> in that it is possible to have multiple entities with same value
+    /// of this attribute as long as the attribute is <see cref="Localized()"/> and the values relate to different locales.
+    /// </para>
+    /// </remarks>
+    /// </summary>
+    /// <param name="decider">returns true when attribute should be filtered</param>
+    /// <returns>builder to continue with configuration</returns>
+    new T UniqueWithinLocale(Func<bool> decider);
+    
+    /// <summary>
     /// When attribute is sortable, it is possible to sort entities by this attribute. Do not mark attribute
     /// as sortable unless you know that you'll sort entities along this attribute. Each sortable attribute occupies
     /// (memory/disk) space in the form of index. <see cref="IAttributeSchema.Type"/> Type of the filterable attribute must

@@ -9,12 +9,12 @@ public class SetAttributeSchemaUniqueMutationConverter : ISchemaMutationConverte
         return new GrpcSetAttributeSchemaUniqueMutation
         {
             Name = mutation.Name,
-            Unique = mutation.Unique
+            Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(mutation.Unique)
         };
     }
 
     public SetAttributeSchemaUniqueMutation Convert(GrpcSetAttributeSchemaUniqueMutation mutation)
     {
-        return new SetAttributeSchemaUniqueMutation(mutation.Name, mutation.Unique);
+        return new SetAttributeSchemaUniqueMutation(mutation.Name, EvitaEnumConverter.ToAttributeUniquenessType(mutation.Unique));
     }
 }

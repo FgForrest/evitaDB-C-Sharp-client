@@ -211,7 +211,7 @@ public static partial class Program
         using HttpClient client = new HttpClient();
         HttpResponseMessage response = client
             .GetAsync(
-                "https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/csharp_query_template.txt")
+                $"https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/{QueryReplacementFileName}")
             .GetAwaiter().GetResult();
         response.EnsureSuccessStatusCode();
         using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),

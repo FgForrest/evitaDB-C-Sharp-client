@@ -109,11 +109,11 @@ public class ClientCertificateManager
         }
         else
         {
-            string rootCaCert =
-                Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedRootCaCertificateFileName);
+            string serverCert =
+                Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedCertificateFileName);
             string cert = Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
             string key = Path.Combine(serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
-            if (Path.Exists(rootCaCert) && Path.Exists(cert) && Path.Exists(key))
+            if (Path.Exists(serverCert) && Path.Exists(cert) && Path.Exists(key))
             {
                 return serverSpecificDirectory;
             }

@@ -5,10 +5,10 @@ using Xunit.Abstractions;
 
 namespace EvitaDB.Test.Tests;
 
-public abstract class BaseTest : IClassFixture<SetupFixture>, IAsyncLifetime
+public abstract class BaseTest<T> : IClassFixture<T>, IAsyncLifetime where T : BaseSetupFixture
 {
     protected readonly ITestOutputHelper OutputHelper;
-    protected readonly SetupFixture SetupFixture;
+    protected readonly BaseSetupFixture SetupFixture;
     
     protected EvitaClient? Client;
     
@@ -16,7 +16,7 @@ public abstract class BaseTest : IClassFixture<SetupFixture>, IAsyncLifetime
     protected static readonly Random Random = new(RandomSeed);
     protected const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss zzz";
     
-    protected BaseTest(ITestOutputHelper outputHelper, SetupFixture setupFixture)
+    protected BaseTest(ITestOutputHelper outputHelper, BaseSetupFixture setupFixture)
     {
         OutputHelper = outputHelper;
         SetupFixture = setupFixture;

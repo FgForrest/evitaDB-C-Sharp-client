@@ -53,7 +53,7 @@ public static partial class Program
     private static readonly string QueryReplacementPath =
         Path.Combine(Path.GetTempPath(), TempFolderName, QueryReplacementFileName);
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         string queryCode = args.Length > 0 ? args[0] : throw new ArgumentException("Query code is required!");
         string host = args.Length > 1 ? args[1] : throw new ArgumentException("Host is required!");
@@ -66,7 +66,7 @@ public static partial class Program
             DownloadQueryTemplate();
         }
 
-        string[] templateLines = File.ReadAllLines(QueryReplacementPath);
+        string[] templateLines = await File.ReadAllLinesAsync(QueryReplacementPath);
 
         string code = string.Join('\n', templateLines
             .Select(theLine =>
@@ -77,6 +77,7 @@ public static partial class Program
                 {
                     result = queryCode;
                 }
+
                 result = result.Replace("#HOST#", host);
                 return result;
             }));
@@ -102,7 +103,7 @@ public static partial class Program
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
-            syntaxTrees: new[] { syntaxTree },
+            syntaxTrees: new[] {syntaxTree},
             references: references,
             options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
@@ -124,72 +125,66 @@ public static partial class Program
             {
                 Type? snippetClass = assembly.GetType("DynamicClass");
                 MethodInfo? method = snippetClass?.GetMethod("Run", BindingFlags.Static | BindingFlags.Public);
-
-                if (snippetClass is not null && method is not null)
+                
+                var responseAndEntitySchema = await (Task<(EvitaResponse<ISealedEntity>? response, IEntitySchema entitySchema)>)
+                    method?.Invoke(null, new object?[] {FindCatalogName(queryCode)})!;
+                if (responseAndEntitySchema.response is not null)
                 {
-                    var responseAndEntitySchema = ((EvitaResponse<ISealedEntity>? response, IEntitySchema entitySchema))
-                        method.Invoke(null, new object?[] { FindCatalogName(queryCode) })!;
-                    if (responseAndEntitySchema.response is not null)
+                    string serializedOutput;
+                    switch (outputFormat)
                     {
-                        string serializedOutput;
-                        switch (outputFormat)
+                        case "md":
+                            serializedOutput = MarkdownConverter.GenerateMarkDownTable(
+                                responseAndEntitySchema.entitySchema,
+                                responseAndEntitySchema.response.Query,
+                                responseAndEntitySchema.response
+                            );
+                            break;
+                        case "json" when sourceVariable is not null:
                         {
-                            case "md":
-                                serializedOutput = MarkdownConverter.GenerateMarkDownTable(
-                                    responseAndEntitySchema.entitySchema,
-                                    responseAndEntitySchema.response.Query,
-                                    responseAndEntitySchema.response
-                                );
-                                break;
-                            case "json" when sourceVariable is not null:
-                            {
-                                object? value =
-                                    ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
-                                        sourceVariable.Split('.'));
-                                string stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
-                                serializedOutput = WrapSerializedOutputInCodeBlock("json", stringSerialized);
-                                break;
-                            }
-                            case "string":
-                            {
-                                object? theValue;
-                                if (string.IsNullOrEmpty(sourceVariable))
-                                {
-                                    theValue = responseAndEntitySchema.response;
-                                }
-                                else
-                                {
-                                    theValue = ResponseSerializerUtils.ExtractValueFrom(
-                                        responseAndEntitySchema.response,
-                                        sourceVariable.Split('.'));
-                                }
-
-                                string json;
-                                if (theValue is not null)
-                                {
-                                    json = theValue is IPrettyPrintable pp ? pp.PrettyPrint() : theValue.ToString()!;
-                                }
-                                else
-                                {
-                                    json = "";
-                                }
-                                serializedOutput = WrapSerializedOutputInCodeBlock("md", json);
-                                break;
-                            }
-                            default:
-                                throw new ArgumentException("Bad combination of output format and source variable!");
+                            object? value =
+                                ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
+                                    sourceVariable.Split('.'));
+                            string stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
+                            serializedOutput = WrapSerializedOutputInCodeBlock("json", stringSerialized);
+                            break;
                         }
+                        case "string":
+                        {
+                            object? theValue;
+                            if (string.IsNullOrEmpty(sourceVariable))
+                            {
+                                theValue = responseAndEntitySchema.response;
+                            }
+                            else
+                            {
+                                theValue = ResponseSerializerUtils.ExtractValueFrom(
+                                    responseAndEntitySchema.response,
+                                    sourceVariable.Split('.'));
+                            }
 
-                        Console.WriteLine(serializedOutput);
+                            string json;
+                            if (theValue is not null)
+                            {
+                                json = theValue is IPrettyPrintable pp ? pp.PrettyPrint() : theValue.ToString()!;
+                            }
+                            else
+                            {
+                                json = "";
+                            }
+
+                            serializedOutput = WrapSerializedOutputInCodeBlock("md", json);
+                            break;
+                        }
+                        default:
+                            throw new ArgumentException("Bad combination of output format and source variable!");
                     }
-                    else
-                    {
-                        throw new ArgumentException("No data returned!");
-                    }
+
+                    Console.WriteLine(serializedOutput);
                 }
                 else
                 {
-                    Console.WriteLine("No entry point found");
+                    throw new ArgumentException("No data returned!");
                 }
             }
             catch (TargetInvocationException ex)

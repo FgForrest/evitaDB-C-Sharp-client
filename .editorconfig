@@ -127,6 +127,13 @@ csharp_preserve_single_line_blocks = true
 
 resharper_co_variant_array_conversion_highlighting = none
 
+# Suppress docs warnings
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CS1574.severity = none
+dotnet_diagnostic.CS0419.severity = none
+dotnet_diagnostic.CS1580.severity = none
+dotnet_diagnostic.CS1711.severity = none
+
 [*.proto]
 indent_style = space
 indent_size = 2

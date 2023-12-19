@@ -1,6 +1,4 @@
 using System.Globalization;
-using EvitaDB.Client;
-using EvitaDB.Client.Config;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
@@ -8,32 +6,24 @@ using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Test.Utils;
+using Xunit.Abstractions;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test.Tests;
 
-public class EvitaClientDemoQueryTest : IDisposable
+public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
 {
-    private static readonly EvitaClientConfiguration? EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
-        .SetHost("demo.evitadb.io")
-        .SetPort(5556)
-        .SetUseGeneratedCertificate(false)
-        .SetUsingTrustedRootCaCertificate(true)
-        .Build();
-    
-    private static EvitaClient? _client;
+    public EvitaClientDemoQueryTest(ITestOutputHelper outputHelper, DemoSetupFixture setupFixture)
+        : base(outputHelper, setupFixture)
+    {
+    }
 
     private const string ExistingCatalogWithData = "evita";
-
-    public EvitaClientDemoQueryTest()
-    {
-        _client = new EvitaClient(EvitaClientConfiguration!);
-    }
     
     [Fact]
     public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfEntityReferences()
     {
-        EvitaEntityReferenceResponse referenceResponse = _client!.QueryCatalog(ExistingCatalogWithData,
+        EvitaEntityReferenceResponse referenceResponse = Client!.QueryCatalog(ExistingCatalogWithData,
             session => session.Query<EvitaEntityReferenceResponse, EntityReference>(
                 Query(
                     Collection("Product"),
@@ -73,7 +63,7 @@ public class EvitaClientDemoQueryTest : IDisposable
     [Fact]
     public void ShouldBeAbleToQueryCatalogWithDataAndGetDataChunkOfSealedEntities()
     {
-        EvitaEntityResponse entityResponse = _client!.QueryCatalog(ExistingCatalogWithData, session =>
+        EvitaEntityResponse entityResponse = Client!.QueryCatalog(ExistingCatalogWithData, session =>
             session.Query<EvitaEntityResponse, ISealedEntity>(
                 Query(
                     Collection("Product"),
@@ -117,7 +107,7 @@ public class EvitaClientDemoQueryTest : IDisposable
     [Fact]
     public void ShouldBeAbleToExecuteComplexQueryAndGetResults()
     {
-        EvitaEntityResponse evitaEntityResponse = _client!.QueryCatalog(ExistingCatalogWithData,
+        EvitaEntityResponse evitaEntityResponse = Client!.QueryCatalog(ExistingCatalogWithData,
             session => session.Query<EvitaEntityResponse, ISealedEntity>(
                 Query(
                     Collection("Product"),
@@ -199,10 +189,5 @@ public class EvitaClientDemoQueryTest : IDisposable
         );
         
         Assert.True(evitaEntityResponse.RecordData.Count > 0);
-    }
-
-    public void Dispose()
-    {
-        _client?.Dispose();
     }
 }

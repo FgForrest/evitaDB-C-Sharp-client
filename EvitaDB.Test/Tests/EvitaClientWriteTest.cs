@@ -16,7 +16,7 @@ using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test.Tests;
 
-public class EvitaClientWriteTest : BaseTest
+public class EvitaClientWriteTest : BaseTest<SetupFixture>
 {
     public EvitaClientWriteTest(ITestOutputHelper outputHelper, SetupFixture setupFixture)
     : base(outputHelper, setupFixture)
@@ -283,12 +283,10 @@ public class EvitaClientWriteTest : BaseTest
         }
     }
 
-    
-
     [Fact]
-    public void ShouldBeAbleToFetchNonCachedEntitySchemaFromCatalogSchema()
+    public async Task ShouldBeAbleToFetchNonCachedEntitySchemaFromCatalogSchema()
     {
-        EvitaClient clientWithEmptyCache = new EvitaClient(Client!.Configuration);
+        EvitaClient clientWithEmptyCache = await EvitaClient.Create(Client!.Configuration);
         clientWithEmptyCache.QueryCatalog(
             Data.TestCatalog,
             session =>

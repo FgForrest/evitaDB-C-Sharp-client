@@ -1,5 +1,7 @@
 using System;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 using EvitaDB.Client;
@@ -41,10 +43,10 @@ public class DynamicClass
     {
     }
     
-    public static (EvitaResponse<ISealedEntity>, IEntitySchema) Run(string catalogName) 
+    public static async Task<(EvitaResponse<ISealedEntity>, IEntitySchema)> Run(string catalogName) 
     {
         Environment.SetEnvironmentVariable(IDevelopmentConstants.TestRun, "true");
-        EvitaClient evita = new EvitaClient(EvitaClientConfiguration);
+        EvitaClient evita = await EvitaClient.Create(EvitaClientConfiguration);
         #QUERY#
         IEntitySchema entitySchema = evita.CreateReadOnlySession(catalogName).GetEntitySchemaOrThrow(entities.Query.Collection.EntityType);
         return (entities, entitySchema);

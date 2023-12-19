@@ -19,24 +19,23 @@ public class ClientCertificateManager
 
     private ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
         string? clientCertificateKeyPath, string? clientCertificateKeyPassword, bool useGeneratedCertificate,
-        bool trustedServerCertificate, string host, int port)
+        bool trustedServerCertificate)
     {
-        string certificateDirectory;
-        if (useGeneratedCertificate)
-        {
-            certificateDirectory = GetCertificatesFromServer(host, port, clientCertificateFolderPath).GetAwaiter().GetResult();
-        }
-        else
-        {
-            certificateDirectory = IdentifyServerDirectory(host, port, clientCertificateFolderPath).GetAwaiter().GetResult();
-        }
-
-        ClientCertificateFolderPath = certificateDirectory;
+        ClientCertificateFolderPath = clientCertificateFolderPath;
         ClientCertificatePath = clientCertificatePath;
         ClientCertificateKeyPath = clientCertificateKeyPath;
         ClientCertificateKeyPassword = clientCertificateKeyPassword;
         UseGeneratedCertificate = useGeneratedCertificate;
         TrustedServerCertificate = trustedServerCertificate;
+    }
+
+    private static async ValueTask<string> GetServerDirectoryPath(string host, int port, string clientCertificateFolderPath, bool useGeneratedCertificate)
+    {
+        if (useGeneratedCertificate)
+        {
+            return await GetCertificatesFromServer(host, port, clientCertificateFolderPath);
+        }
+        return await IdentifyServerDirectory(host, port, clientCertificateFolderPath);
     }
 
     public class Builder
@@ -50,11 +49,12 @@ public class ClientCertificateManager
         private string? Host { get; set; }
         private int Port { get; set; }
 
-        public ClientCertificateManager Build()
+        public async Task<ClientCertificateManager> Build()
         {
-            return new ClientCertificateManager(ClientCertificateFolderPath, ClientCertificatePath,
+            string certificatePath = await GetServerDirectoryPath(Host!, Port, ClientCertificateFolderPath, UseGeneratedCertificate);
+            return new ClientCertificateManager(certificatePath, ClientCertificatePath,
                 ClientCertificateKeyPath, ClientCertificateKeyPassword, UseGeneratedCertificate,
-                TrustedServerCertificate, Host!, Port);
+                TrustedServerCertificate);
         }
 
         public Builder SetClientCertificateFolderPath(string? clientCertificateFolderPath)
@@ -96,7 +96,7 @@ public class ClientCertificateManager
         }
     }
 
-    private async Task<string> GetCertificatesFromServer(string host, int systemApiPort,
+    private static async Task<string> GetCertificatesFromServer(string host, int systemApiPort,
         string certificateClientFolderPath)
     {
         string apiEndpoint = $"http://{host}:{systemApiPort}/system/";
@@ -121,9 +121,9 @@ public class ClientCertificateManager
 
         try
         {
-            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedCertificateFileName);
-            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
-            DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
+            await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedCertificateFileName);
+            await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
+            await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
 
             return serverSpecificDirectory;
         }
@@ -134,14 +134,14 @@ public class ClientCertificateManager
         }
     }
 
-    private void DownloadFile(string apiEndpoint, string baseDir, string fileName)
+    private static async Task DownloadFile(string apiEndpoint, string baseDir, string fileName)
     {
         using var client = new HttpClient();
         var response = client.GetAsync(apiEndpoint + fileName).GetAwaiter().GetResult();
         response.EnsureSuccessStatusCode();
-        using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
+        await using Stream contentStream = await response.Content.ReadAsStreamAsync(),
             stream = new FileStream(Path.Combine(baseDir, fileName), FileMode.Create);
-        contentStream.CopyTo(stream);
+        await contentStream.CopyToAsync(stream);
     }
 
     private static async Task<string> IdentifyServerDirectory(string host, int port, string certificateClientFolderPath)

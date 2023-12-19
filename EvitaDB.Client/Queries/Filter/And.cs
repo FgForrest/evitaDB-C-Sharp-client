@@ -2,7 +2,6 @@
 
 /// <summary>
 /// The `and` container represents a <a href="https://en.wikipedia.org/wiki/Logical_conjunction">logical conjunction</a>.
-
 /// The following query:
 /// <code>
 /// query(

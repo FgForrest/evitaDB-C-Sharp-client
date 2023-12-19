@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -12,6 +12,7 @@
         <Authors>EvitaDB.Test</Authors>
         <Company>EvitaDB.Test</Company>
         <Product>EvitaDB.Test</Product>
+        <LangVersion>12</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

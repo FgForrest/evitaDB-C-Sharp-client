@@ -26,7 +26,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.0.X'   # setup dotnet 7
+          dotnet-version: '8.0.X'   # setup dotnet 8
       
       - name: Restore solution
         run: dotnet restore ./EvitaDB.sln

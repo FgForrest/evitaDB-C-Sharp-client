@@ -13,7 +13,7 @@ using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test.Tests;
 
-public class EvitaClientReadTest : BaseTest
+public class EvitaClientReadTest : BaseTest<SetupFixture>
 {
     public EvitaClientReadTest(ITestOutputHelper outputHelper, SetupFixture setupFixture)
         : base(outputHelper, setupFixture)
@@ -338,9 +338,9 @@ public class EvitaClientReadTest : BaseTest
     }
     
     [Fact]
-    public void ShouldBeAbleToRunParallelClients()
+    public async Task ShouldBeAbleToRunParallelClients()
     {
-        EvitaClient anotherParallelClient = new EvitaClient(Client!.Configuration);
+        EvitaClient anotherParallelClient = await EvitaClient.Create(Client!.Configuration);
         _ = ListCatalogNames(anotherParallelClient);
         _ = ListCatalogNames(Client);
     }

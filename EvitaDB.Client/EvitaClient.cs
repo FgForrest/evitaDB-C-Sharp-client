@@ -43,36 +43,25 @@ public partial class EvitaClient : IClientContext, IDisposable
     private static readonly ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcTopLevelCatalogSchemaMutation>
         CatalogSchemaMutationConverter = new DelegatingTopLevelCatalogSchemaMutationConverter();
 
-    private readonly ChannelPool _channelPool;
-    private readonly ChannelInvoker _cdcChannel;
+    private readonly ChannelPool? _channelPool;
+    private readonly ChannelInvoker? _cdcChannel;
 
     private static int _active = 1;
 
     private readonly ConcurrentDictionary<Guid, EvitaClientSession> _activeSessions = new();
     private readonly ConcurrentDictionary<string, EvitaEntitySchemaCache> _entitySchemaCache = new();
 
-    private readonly Action _terminationCallback;
+    private readonly Action? _terminationCallback;
 
     public EvitaClientConfiguration Configuration { get; }
 
     private static readonly Regex ErrorMessagePattern = MyRegex();
-
-    public EvitaClient(EvitaClientConfiguration configuration)
+    private EvitaClient(EvitaClientConfiguration configuration, ClientCertificateManager certificateManager)
     {
         Configuration = configuration;
-        ClientCertificateManager certificateManager = new ClientCertificateManager.Builder()
-            .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
-            .SetClientCertificatePath(configuration.CertificateFileName)
-            .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
-            .SetClientCertificateKeyPassword(configuration.CertificateKeyPassword)
-            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host,
-                configuration.SystemApiPort)
-            .SetTrustedServerCertificate(configuration.UsingTrustedRootCaCertificate)
-            .Build();
-
         ChannelBuilder channelBuilder = new ChannelBuilder(
-            configuration.Host,
-            configuration.Port,
+            Configuration.Host,
+            Configuration.Port,
             certificateManager.BuildHttpClientHandler(),
             new ClientInterceptor(this)
         );
@@ -93,6 +82,20 @@ public partial class EvitaClient : IClientContext, IDisposable
         }
 
         _terminationCallback = TerminationCallback;
+    }
+
+    public static async Task<EvitaClient> Create(EvitaClientConfiguration configuration)
+    {
+        ClientCertificateManager certificateManager = await new ClientCertificateManager.Builder()
+            .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
+            .SetClientCertificatePath(configuration.CertificateFileName)
+            .SetClientCertificateKeyPath(configuration.CertificateKeyFileName)
+            .SetClientCertificateKeyPassword(configuration.CertificateKeyPassword)
+            .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host,
+                configuration.SystemApiPort)
+            .SetTrustedServerCertificate(configuration.UsingTrustedRootCaCertificate)
+            .Build();
+        return new EvitaClient(configuration, certificateManager);
     }
 
     /// <summary>
@@ -422,8 +425,8 @@ public partial class EvitaClient : IClientContext, IDisposable
         {
             _activeSessions.Values.ToList().ForEach(session => session.Close());
             _activeSessions.Clear();
-            _channelPool.Shutdown();
-            _terminationCallback.Invoke();
+            _channelPool?.Shutdown();
+            _terminationCallback?.Invoke();
         }
     }
 
@@ -438,7 +441,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     private T ExecuteWithBlockingEvitaService<T>(Func<EvitaService.EvitaServiceClient, T> logic)
     {
         return ExecuteWithEvitaService(
-            new PooledChannelSupplier(_channelPool),
+            new PooledChannelSupplier(_channelPool!),
             channel => new EvitaService.EvitaServiceClient(channel.Channel),
             logic
         );
@@ -447,7 +450,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     private T ExecuteWithStreamingEvitaService<T>(Func<EvitaService.EvitaServiceClient, T> logic)
     {
         return ExecuteWithEvitaService(
-            new SharedChannelSupplier(_cdcChannel),
+            new SharedChannelSupplier(_cdcChannel!),
             channel => new EvitaService.EvitaServiceClient(channel.Channel),
             logic
         );
@@ -556,7 +559,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         EvitaClientSession session = new EvitaClientSession(
             this,
             _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
-            _channelPool,
+            _channelPool!,
             traits.CatalogName,
             Enum.Parse<CatalogState>(grpcResponse.CatalogState.ToString()),
             Guid.Parse(grpcResponse.SessionId),

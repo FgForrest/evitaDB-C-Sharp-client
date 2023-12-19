@@ -1,45 +1,39 @@
-using System.Collections.Concurrent;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
-using EvitaDB.Client.Models.Data;
 using EvitaDB.Test.Utils;
 
 namespace EvitaDB.Test;
 
-public class SetupFixture : IAsyncLifetime
+public class SetupFixture : BaseSetupFixture
 {
     private readonly IList<EvitaTestSuite> _testSuites = new List<EvitaTestSuite>();
-    private readonly ConcurrentQueue<EvitaClient> _clients = new();
-    
-    public IDictionary<string, IList<ISealedEntity>> CreatedEntities { get; private set; } =
-        new Dictionary<string, IList<ISealedEntity>>();
     
     private const int GrpcPort = 5556;
     private const int SystemApiPort = 5557;
     private const string Host = "localhost";
     private const string ImageName = "evitadb/evitadb:latest";
     
-    public async Task<EvitaClient> GetClient()
+    public override Task<EvitaClient> GetClient()
     {
-        if (_clients.TryDequeue(out EvitaClient? evitaClient))
+        if (Clients.TryDequeue(out EvitaClient? evitaClient))
         {
             DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
             evitaClient.Close();
-            return new EvitaClient(evitaClient.Configuration);
+            return EvitaClient.Create(evitaClient.Configuration);
         }
-        return await InitializeEvitaContainerAndClientClient();
+        return InitializeEvitaContainerAndClientClient();
     }
     
-    public void ReturnClient(EvitaClient client)
+    public override void ReturnClient(EvitaClient client)
     {
-        _clients.Enqueue(client);
+        Clients.Enqueue(client);
     }
 
-    public async Task InitializeAsync()
+    public override async Task InitializeAsync()
     {
         using DockerClient client = new DockerClientConfiguration().CreateClient();
         // Get information about the locally cached image (if it exists)
@@ -79,14 +73,14 @@ public class SetupFixture : IAsyncLifetime
         _ = await InitializeEvitaContainerAndClientClient(true);
     }
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         foreach (var suite in _testSuites)
         {
             await suite.Container.StopAsync();
         }
 
-        while (_clients.TryDequeue(out EvitaClient? evitaClient))
+        while (Clients.TryDequeue(out EvitaClient? evitaClient))
         {
             evitaClient.Close();
         }
@@ -131,7 +125,7 @@ public class SetupFixture : IAsyncLifetime
             .Build();
         
         // create a new evita client with the specified configuration
-        using (EvitaClient setupClient = new EvitaClient(configuration))
+        using (EvitaClient setupClient = await EvitaClient.Create(configuration))
         {
             if (cacheCreatedEntitiesAndDestroySetupClient)
             {
@@ -139,10 +133,10 @@ public class SetupFixture : IAsyncLifetime
             }
         }
 
-        EvitaClient client = new EvitaClient(configuration);
+        EvitaClient client = await EvitaClient.Create(configuration);
         
         _testSuites.Add(new EvitaTestSuite(client, container));
-        _clients.Enqueue(client);
+        Clients.Enqueue(client);
         
         return client;
     }

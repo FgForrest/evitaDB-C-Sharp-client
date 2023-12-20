@@ -5,7 +5,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <Version>0.0.1-alpha</Version>
         <Title>EvitaDB.Client</Title>
         <Authors>evitadb.io</Authors>
         <Description>evitaDB C# client allows connecting to a remote evitaDB server through gRPC API from .NET environment.</Description>
@@ -19,7 +18,13 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>12</LangVersion>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
+
+    <ItemGroup>
+      <None Include="$(OutputPath)$(AssemblyName).xml" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Google.Protobuf" Version="3.24.4" />

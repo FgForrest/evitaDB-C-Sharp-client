@@ -33,6 +33,7 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
+      # in future updates of dotnet-version property, don't forget propagate this change into query validator publishing folder path
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
@@ -62,17 +63,17 @@ jobs:
           dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false
 
       - name: Zip 
-        uses: vimtor/action-zip@v1
+        uses: vimtor/action-zip@v1.1
         with:
           dest: 'Validator.zip'
-          files: 'EvitaDB.QueryValidator/bin/Release/net7.0/linux-x64/publish/Validator'
+          files: 'EvitaDB.QueryValidator/bin/Release/net8.0/linux-x64/publish/Validator'
           recursive: true
 
       - name: Zip 
-        uses: vimtor/action-zip@v1
+        uses: vimtor/action-zip@v1.1
         with:
           dest: 'Validator-win.zip'
-          files: 'EvitaDB.QueryValidator/bin/Release/net7.0/win-x64/publish/Validator.exe'
+          files: 'EvitaDB.QueryValidator/bin/Release/net8.0/win-x64/publish/Validator.exe'
           recursive: true
           
       - name: Pack nuget

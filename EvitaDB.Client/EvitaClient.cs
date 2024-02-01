@@ -22,6 +22,7 @@ using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Enum = System.Enum;
+using StatusCode = Grpc.Core.StatusCode;
 
 [assembly: InternalsVisibleTo("EvitaDB.Test")]
 
@@ -38,7 +39,7 @@ public delegate void EvitaSessionTerminationCallback(EvitaClientSession session)
 /// properties nor data corruption guarantees. Evita "index" must be treated as something that could be dropped any time and
 /// built up from scratch easily again.
 /// </summary>
-public partial class EvitaClient : IClientContext, IDisposable
+public partial class EvitaClient : IDisposable
 {
     private static readonly ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcTopLevelCatalogSchemaMutation>
         CatalogSchemaMutationConverter = new DelegatingTopLevelCatalogSchemaMutationConverter();
@@ -52,10 +53,13 @@ public partial class EvitaClient : IClientContext, IDisposable
     private readonly ConcurrentDictionary<string, EvitaEntitySchemaCache> _entitySchemaCache = new();
 
     private readonly Action? _terminationCallback;
+    
+    private OpenTelemetrySetup? _openTelemetrySetup;
 
     public EvitaClientConfiguration Configuration { get; }
 
     private static readonly Regex ErrorMessagePattern = MyRegex();
+
     private EvitaClient(EvitaClientConfiguration configuration, ClientCertificateManager certificateManager)
     {
         Configuration = configuration;
@@ -63,10 +67,16 @@ public partial class EvitaClient : IClientContext, IDisposable
             Configuration.Host,
             Configuration.Port,
             certificateManager.BuildHttpClientHandler(),
-            new ClientInterceptor(this)
+            new ClientInterceptor(configuration)
         );
         _channelPool = new ChannelPool(channelBuilder, 10);
         _cdcChannel = channelBuilder.Build();
+
+        string? traceEndpointUrl = configuration.TraceEndpointUrl;
+        if (traceEndpointUrl is not null)
+        {
+            _openTelemetrySetup = new OpenTelemetrySetup(configuration.TraceEndpointUrl!, configuration.TraceEndpointProtocol);
+        }
 
         void TerminationCallback()
         {
@@ -84,6 +94,11 @@ public partial class EvitaClient : IClientContext, IDisposable
         _terminationCallback = TerminationCallback;
     }
 
+    /// <summary>
+    /// Initialize a new instance of <see cref="EvitaClient"/> with the specified configuration.
+    /// </summary>
+    /// <param name="configuration">configuration to be applied</param>
+    /// <returns>newly created EvitaClient</returns>
     public static async Task<EvitaClient> Create(EvitaClientConfiguration configuration)
     {
         ClientCertificateManager certificateManager = await new ClientCertificateManager.Builder()
@@ -168,7 +183,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     public void TerminateSession(EvitaClientSession session)
     {
         AssertActive();
-        (this as IClientContext).ExecuteWithClientId(Configuration.ClientId, Close);
+        session.Close();
     }
 
     /// <summary>
@@ -193,17 +208,13 @@ public partial class EvitaClient : IClientContext, IDisposable
     public ICatalogSchemaBuilder DefineCatalog(string catalogName)
     {
         AssertActive();
-        
-        IClientContext context = this;
-        return context.ExecuteWithClientId(Configuration.ClientId, () =>
-        {
-            if (!GetCatalogNames().Contains(catalogName))
-            {
-                Update(new CreateCatalogSchemaMutation(catalogName));
-            }
 
-            return QueryCatalog(catalogName, x => x.GetCatalogSchema(this)).OpenForWrite();
-        });
+        if (!GetCatalogNames().Contains(catalogName))
+        {
+            Update(new CreateCatalogSchemaMutation(catalogName));
+        }
+
+        return QueryCatalog(catalogName, x => x.GetCatalogSchema(this)).OpenForWrite();
     }
 
     /// <summary>
@@ -221,8 +232,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         AssertActive();
         GrpcRenameCatalogRequest request = new GrpcRenameCatalogRequest
         {
-            CatalogName = catalogName,
-            NewCatalogName = newCatalogName
+            CatalogName = catalogName, NewCatalogName = newCatalogName
         };
         GrpcRenameCatalogResponse response =
             ExecuteWithBlockingEvitaService(evitaService => evitaService.RenameCatalog(request));
@@ -269,10 +279,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     {
         AssertActive();
 
-        GrpcDeleteCatalogIfExistsRequest request = new GrpcDeleteCatalogIfExistsRequest
-        {
-            CatalogName = catalogName
-        };
+        GrpcDeleteCatalogIfExistsRequest request = new GrpcDeleteCatalogIfExistsRequest { CatalogName = catalogName };
         GrpcDeleteCatalogIfExistsResponse grpcResponse =
             ExecuteWithBlockingEvitaService(evitaService => evitaService.DeleteCatalogIfExists(request));
         bool success = grpcResponse.Success;
@@ -298,7 +305,7 @@ public partial class EvitaClient : IClientContext, IDisposable
             .Select(CatalogSchemaMutationConverter.Convert)
             .ToList();
 
-        GrpcUpdateEvitaRequest request = new GrpcUpdateEvitaRequest {SchemaMutations = {grpcSchemaMutations}};
+        GrpcUpdateEvitaRequest request = new GrpcUpdateEvitaRequest { SchemaMutations = { grpcSchemaMutations } };
         ExecuteWithBlockingEvitaService(evitaService => evitaService.Update(request));
     }
 
@@ -319,8 +326,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
         try
         {
-            IClientContext context = session;
-            return context.ExecuteWithClientId(Configuration.ClientId, () => queryLogic.Invoke(session));
+            return queryLogic.Invoke(session);
         }
         finally
         {
@@ -345,14 +351,12 @@ public partial class EvitaClient : IClientContext, IDisposable
         EvitaClientSession session = CreateSession(new SessionTraits(catalogName, sessionFlags));
         try
         {
-            IClientContext context = session;
-            context.ExecuteWithClientId(Configuration.ClientId, () => queryLogic.Invoke(session));
+            queryLogic.Invoke(session);
         }
         finally
         {
             session.Close();
         }
-        
     }
 
     /// <summary>
@@ -373,7 +377,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         SessionTraits traits = new SessionTraits(
             catalogName,
             flags == null
-                ? new[] {SessionFlags.ReadWrite}
+                ? new[] { SessionFlags.ReadWrite }
                 : flags.Contains(SessionFlags.ReadWrite)
                     ? flags
                     : flags.Append(SessionFlags.ReadWrite).ToArray()
@@ -381,8 +385,7 @@ public partial class EvitaClient : IClientContext, IDisposable
         EvitaClientSession session = CreateSession(traits);
         try
         {
-            IClientContext context = session;
-            return context.ExecuteWithClientId(Configuration.ClientId, () => session.Execute(updater));
+            return session.Execute(updater);
         }
         finally
         {
@@ -408,8 +411,7 @@ public partial class EvitaClient : IClientContext, IDisposable
             catalogName,
             evitaSession =>
             {
-                IClientContext context = evitaSession;
-                context.ExecuteWithClientId(Configuration.ClientId, () => updater.Invoke(evitaSession));
+                updater.Invoke(evitaSession);
                 return 0;
             },
             flags
@@ -471,67 +473,59 @@ public partial class EvitaClient : IClientContext, IDisposable
     private T ExecuteWithEvitaService<TS, T>(IChannelSupplier channelSupplier, Func<ChannelInvoker, TS> stubBuilder,
         Func<TS, T> logic)
     {
-        IClientContext context = this;
-        return context.ExecuteWithClientAndRequestId(
-            Configuration.ClientId,
-            Guid.NewGuid().ToString(),
-            () =>
+        ChannelInvoker channel = channelSupplier.GetChannel();
+        try
+        {
+            return logic.Invoke(stubBuilder.Invoke(channel));
+        }
+        catch (RpcException rpcException)
+        {
+            StatusCode statusCode = rpcException.StatusCode;
+            string description = rpcException.Status.Detail;
+            Match expectedFormat = ErrorMessagePattern.Match(description);
+            if (statusCode == StatusCode.InvalidArgument)
             {
-                ChannelInvoker channel = channelSupplier.GetChannel();
-                try
+                if (expectedFormat.Success)
                 {
-                    return logic.Invoke(stubBuilder.Invoke(channel));
-                }
-                catch (RpcException rpcException)
-                {
-                    StatusCode statusCode = rpcException.StatusCode;
-                    string description = rpcException.Status.Detail;
-                    Match expectedFormat = ErrorMessagePattern.Match(description);
-                    if (statusCode == StatusCode.InvalidArgument)
-                    {
-                        if (expectedFormat.Success)
-                        {
-                            throw EvitaInvalidUsageException.CreateExceptionWithErrorCode(
-                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
-                            );
-                        }
-
-                        throw new EvitaInvalidUsageException(description);
-                    }
-                    else
-                    {
-                        if (expectedFormat.Success)
-                        {
-                            throw EvitaInternalError.CreateExceptionWithErrorCode(
-                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
-                            );
-                        }
-
-                        throw new EvitaInternalError(description);
-                    }
-                }
-                catch (EvitaInvalidUsageException)
-                {
-                    throw;
-                }
-                catch (EvitaInternalError)
-                {
-                    throw;
-                }
-                catch (Exception e)
-                {
-                    Trace.TraceError($"Unexpected internal Evita error occurred: {e.Message}", e);
-                    throw new EvitaInternalError(
-                        "Unexpected internal Evita error occurred: " + e.Message,
-                        "Unexpected internal Evita error occurred.", e
+                    throw EvitaInvalidUsageException.CreateExceptionWithErrorCode(
+                        expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
                     );
                 }
-                finally
-                {
-                    channelSupplier.ReleaseChannel();
-                }
+
+                throw new EvitaInvalidUsageException(description);
             }
-        );
+            else
+            {
+                if (expectedFormat.Success)
+                {
+                    throw EvitaInternalError.CreateExceptionWithErrorCode(
+                        expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
+                    );
+                }
+
+                throw new EvitaInternalError(description);
+            }
+        }
+        catch (EvitaInvalidUsageException)
+        {
+            throw;
+        }
+        catch (EvitaInternalError)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            Trace.TraceError($"Unexpected internal Evita error occurred: {e.Message}", e);
+            throw new EvitaInternalError(
+                "Unexpected internal Evita error occurred: " + e.Message,
+                "Unexpected internal Evita error occurred.", e
+            );
+        }
+        finally
+        {
+            channelSupplier.ReleaseChannel();
+        }
     }
 
     /// <summary>
@@ -546,11 +540,7 @@ public partial class EvitaClient : IClientContext, IDisposable
     public EvitaClientSession CreateSession(SessionTraits traits)
     {
         AssertActive();
-        GrpcEvitaSessionRequest grpcRequest = new()
-        {
-            CatalogName = traits.CatalogName,
-            DryRun = traits.IsDryRun(),
-        };
+        GrpcEvitaSessionRequest grpcRequest = new() { CatalogName = traits.CatalogName, DryRun = traits.IsDryRun(), };
         GrpcEvitaSessionResponse? grpcResponse = traits.IsReadWrite()
             ? ExecuteWithBlockingEvitaService(evitaServiceClient =>
                 evitaServiceClient.CreateReadWriteSession(grpcRequest))

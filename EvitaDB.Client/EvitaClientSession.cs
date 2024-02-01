@@ -5,7 +5,7 @@ using EvitaDB.Client.Converters.Models.Data.Mutations;
 using EvitaDB.Client.Converters.Models.Schema;
 using EvitaDB.Client.Converters.Models.Schema.Mutations;
 using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
-using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Converters.Queries;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Interceptors;
 using EvitaDB.Client.Models;
@@ -26,6 +26,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using static EvitaDB.Client.Queries.Visitor.PrettyPrintingVisitor;
 using static EvitaDB.Client.Queries.IQueryConstraints;
+using StatusCode = Grpc.Core.StatusCode;
 
 namespace EvitaDB.Client;
 
@@ -42,7 +43,7 @@ namespace EvitaDB.Client;
 /// Don't forget to <see cref="Close()"/> when your work with Evita is finished.
 /// EvitaSession contract is NOT thread safe.
 /// </summary>
-public partial class EvitaClientSession : IClientContext, IDisposable
+public partial class EvitaClientSession : IDisposable
 {
     private static readonly ISchemaMutationConverter<ILocalCatalogSchemaMutation, GrpcLocalCatalogSchemaMutation>
         CatalogSchemaMutationConverter = new DelegatingLocalCatalogSchemaMutationConverter();
@@ -127,79 +128,73 @@ public partial class EvitaClientSession : IClientContext, IDisposable
     private T ExecuteWithEvitaSessionService<T>(
         Func<EvitaSessionService.EvitaSessionServiceClient, T> evitaSessionServiceClient)
     {
-        IClientContext clientContext = this;
-        return clientContext.ExecuteWithClientId(
-            _clientId,
-            () =>
+        var channel = _channelPool.GetChannel();
+        try
+        {
+            SessionIdHolder.SetSessionId(CatalogName, SessionId.ToString());
+            return evitaSessionServiceClient.Invoke(
+                new EvitaSessionService.EvitaSessionServiceClient(channel.Invoker));
+        }
+        catch (RpcException rpcException)
+        {
+            var statusCode = rpcException.StatusCode;
+            var description = rpcException.Status.Detail;
+            if (statusCode == StatusCode.Unauthenticated)
             {
-                var channel = _channelPool.GetChannel();
-                try
+                // close session and rethrow
+                CloseInternally();
+                throw new InstanceTerminatedException("session");
+            }
+            else if (statusCode == StatusCode.InvalidArgument)
+            {
+                var expectedFormat = ErrorMessagePattern.Match(description);
+                if (expectedFormat.Success)
                 {
-                    SessionIdHolder.SetSessionId(CatalogName, SessionId.ToString());
-                    return evitaSessionServiceClient.Invoke(
-                        new EvitaSessionService.EvitaSessionServiceClient(channel.Invoker));
-                }
-                catch (RpcException rpcException)
-                {
-                    var statusCode = rpcException.StatusCode;
-                    var description = rpcException.Status.Detail;
-                    if (statusCode == StatusCode.Unauthenticated)
-                    {
-                        // close session and rethrow
-                        CloseInternally();
-                        throw new InstanceTerminatedException("session");
-                    }
-                    else if (statusCode == StatusCode.InvalidArgument)
-                    {
-                        var expectedFormat = ErrorMessagePattern.Match(description);
-                        if (expectedFormat.Success)
-                        {
-                            throw EvitaInvalidUsageException.CreateExceptionWithErrorCode(
-                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
-                            );
-                        }
-                        else
-                        {
-                            throw new EvitaInvalidUsageException(description);
-                        }
-                    }
-                    else
-                    {
-                        var expectedFormat = ErrorMessagePattern.Match(description);
-                        if (expectedFormat.Success)
-                        {
-                            throw EvitaInternalError.CreateExceptionWithErrorCode(
-                                expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
-                            );
-                        }
-                        else
-                        {
-                            throw new EvitaInternalError(description);
-                        }
-                    }
-                }
-                catch (EvitaInvalidUsageException)
-                {
-                    throw;
-                }
-                catch (EvitaInternalError)
-                {
-                    throw;
-                }
-                catch (Exception e)
-                {
-                    throw new EvitaInternalError(
-                        "Unexpected internal Evita error occurred: " + e.Message,
-                        "Unexpected internal Evita error occurred.",
-                        e
+                    throw EvitaInvalidUsageException.CreateExceptionWithErrorCode(
+                        expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
                     );
                 }
-                finally
+                else
                 {
-                    _channelPool.ReleaseChannel(channel);
-                    SessionIdHolder.Reset();
+                    throw new EvitaInvalidUsageException(description);
                 }
-            });
+            }
+            else
+            {
+                var expectedFormat = ErrorMessagePattern.Match(description);
+                if (expectedFormat.Success)
+                {
+                    throw EvitaInternalError.CreateExceptionWithErrorCode(
+                        expectedFormat.Groups[2].ToString(), expectedFormat.Groups[1].ToString()
+                    );
+                }
+                else
+                {
+                    throw new EvitaInternalError(description);
+                }
+            }
+        }
+        catch (EvitaInvalidUsageException)
+        {
+            throw;
+        }
+        catch (EvitaInternalError)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            throw new EvitaInternalError(
+                "Unexpected internal Evita error occurred: " + e.Message,
+                "Unexpected internal Evita error occurred.",
+                e
+            );
+        }
+        finally
+        {
+            _channelPool.ReleaseChannel(channel);
+            SessionIdHolder.Reset();
+        }
     }
 
     /// <summary>
@@ -339,6 +334,7 @@ public partial class EvitaClientSession : IClientContext, IDisposable
             Query = stringWithParameters.Query,
             PositionalQueryParams = { stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam) }
         };
+
         var grpcResponse = ExecuteWithEvitaSessionService(session => session.QueryList(request));
 
         if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))

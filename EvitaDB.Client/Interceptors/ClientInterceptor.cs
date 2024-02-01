@@ -1,4 +1,4 @@
-﻿using EvitaDB.Client.Session;
+﻿using EvitaDB.Client.Config;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 
@@ -13,18 +13,17 @@ public class ClientInterceptor : Interceptor
     private const string SessionIdHeader = "sessionId";
     private const string CatalogNameHeader = "catalogName";
     private const string ClientIdHeader = "clientId";
-    private const string RequestIdHeader = "requestId";
 
-    private readonly IClientContext? _clientContext;
+    private readonly EvitaClientConfiguration? _configuration;
 
-    public ClientInterceptor(IClientContext clientContext)
+    public ClientInterceptor(EvitaClientConfiguration configuration)
     {
-        _clientContext = clientContext;
+        _configuration = configuration;
     }
 
     public ClientInterceptor()
     {
-        _clientContext = null;
+        _configuration = null;
     }
 
     /// <summary>
@@ -37,17 +36,10 @@ public class ClientInterceptor : Interceptor
         BlockingUnaryCallContinuation<TRequest, TResponse> continuation)
     {
         Metadata metadata = new Metadata();
-        if (_clientContext != null) {
-            string? clientId = _clientContext.GetClientId();
-            if (clientId is not null)
-            {
-                metadata.Add(ClientIdHeader, clientId);
-            } 
-            string? requestId = _clientContext.GetRequestId();
-            if (requestId is not null)
-            {
-                metadata.Add(RequestIdHeader, requestId);
-            }
+        if (_configuration != null)
+        {
+            string clientId = _configuration.ClientId;
+            metadata.Add(ClientIdHeader, clientId);
         }
         var sessionId = SessionIdHolder.GetSessionId();
         if (sessionId != null)

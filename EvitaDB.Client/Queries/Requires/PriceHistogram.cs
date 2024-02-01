@@ -17,12 +17,18 @@ namespace EvitaDB.Client.Queries.Requires;
 public class PriceHistogram : AbstractRequireConstraintLeaf, IExtraResultRequireConstraint
 {
     public int RequestedBucketCount => (int) Arguments[0]!;
+    public HistogramBehavior Behavior => (HistogramBehavior) Arguments[1]!;
     
     private PriceHistogram(params object?[] arguments) : base(arguments)
     {
     }
     
     public PriceHistogram(int requestedBucketCount) : base(requestedBucketCount)
+    {
+    }
+    
+    public PriceHistogram(int requestedBucketCount, HistogramBehavior? behavior) 
+        : base(requestedBucketCount, behavior ?? HistogramBehavior.Standard)
     {
     }
 }

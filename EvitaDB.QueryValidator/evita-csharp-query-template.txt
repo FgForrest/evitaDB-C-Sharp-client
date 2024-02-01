@@ -21,6 +21,7 @@ using static EvitaDB.Client.Queries.Requires.PriceContentMode;
 using static EvitaDB.Client.Queries.Requires.FacetStatisticsDepth;
 using static EvitaDB.Client.Queries.Requires.QueryPriceMode;
 using static EvitaDB.Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
+using static EvitaDB.Client.Queries.Requires.HistogramBehavior;
 
 public class DynamicClass
 {

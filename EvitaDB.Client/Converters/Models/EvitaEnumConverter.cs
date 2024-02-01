@@ -300,6 +300,15 @@ public static class EvitaEnumConverter
             _ => throw new ArgumentOutOfRangeException(nameof(cardinality), cardinality, null)
         };
     }
+    
+    public static HistogramBehavior ToHistogramBehavior(GrpcHistogramBehavior grpcHistogramBehavior) {
+        return grpcHistogramBehavior switch
+        {
+            GrpcHistogramBehavior.Standard => HistogramBehavior.Standard,
+            GrpcHistogramBehavior.Optimized => HistogramBehavior.Optimized,
+            _ => throw new EvitaInternalError("Unrecognized remote histogram behavior: " + grpcHistogramBehavior)
+        };
+    }
 
     public static CatalogEvolutionMode ToCatalogEvolutionMode(GrpcCatalogEvolutionMode grpcEvolutionMode)
     {
@@ -524,6 +533,15 @@ public static class EvitaEnumConverter
             GlobalAttributeUniquenessType.UniqueWithinCatalog => GrpcGlobalAttributeUniquenessType.UniqueWithinCatalog,
             GlobalAttributeUniquenessType.UniqueWithinCatalogLocale => GrpcGlobalAttributeUniquenessType.UniqueWithinCatalogLocale,
             _ => throw new EvitaInternalError("Unrecognized global attribute uniqueness type: " + globalAttributeUniquenessType)
+        };
+    }
+    
+    public static GrpcHistogramBehavior ToGrpcHistogramBehavior(HistogramBehavior histogramBehavior) {
+        return histogramBehavior switch
+        {
+            HistogramBehavior.Standard => GrpcHistogramBehavior.Standard,
+            HistogramBehavior.Optimized => GrpcHistogramBehavior.Optimized,
+            _ => throw new EvitaInternalError("Unrecognized histogram behavior: " + histogramBehavior)
         };
     }
 }

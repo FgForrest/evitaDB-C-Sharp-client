@@ -5,13 +5,14 @@ namespace EvitaDB.Test;
 
 public class DemoSetupFixture : BaseSetupFixture
 {
-    private static readonly EvitaClientConfiguration EvitaClientConfiguration = new EvitaClientConfiguration.Builder()
-        .SetHost("demo.evitadb.io")
-        .SetPort(5556)
-        .SetUseGeneratedCertificate(false)
-        .SetUsingTrustedRootCaCertificate(true)
-        .Build();
-    
+    private static readonly EvitaClientConfiguration EvitaClientConfiguration =
+        new EvitaClientConfiguration.Builder()
+            .SetHost("demo.evitadb.io")
+            .SetPort(5556)
+            .SetUseGeneratedCertificate(false)
+            .SetUsingTrustedRootCaCertificate(true)
+            .Build();
+
     public override async Task InitializeAsync()
     {
         EvitaClient client = await EvitaClient.Create(EvitaClientConfiguration);
@@ -34,6 +35,7 @@ public class DemoSetupFixture : BaseSetupFixture
         {
             return evitaClient;
         }
+
         return await EvitaClient.Create(EvitaClientConfiguration);
     }
 

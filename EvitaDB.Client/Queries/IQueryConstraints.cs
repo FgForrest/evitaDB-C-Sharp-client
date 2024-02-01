@@ -187,25 +187,31 @@ public interface IQueryConstraints
     static AttributeInRange<DateTimeOffset> AttributeInRangeNow(string attributeName) => new(attributeName);
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeInSet{T}"/>
-    static AttributeInSet<T>? AttributeInSet<T>(string attributeName, params T[]? set)
+    static AttributeInSet<T>? AttributeInSet<T>(string? attributeName, params T?[]? set)
     {
+        if (attributeName is null)
+        {
+            return null;
+        }
         if (set is null)
         {
             return null;
         }
 
-        List<T> args = set.Where(x => x is not null).ToList();
-        if (args.Count == 0)
+        T?[] nonNullArray = set.Where(x => x is not null).ToArray();
+        if (ArrayUtils.IsEmpty(nonNullArray))
         {
             return null;
         }
+
+        List<T?> args = set.Where(x => x is not null).ToList();
 
         if (args.Count == set.Length)
         {
             return new AttributeInSet<T>(attributeName, set);
         }
 
-        T[] limitedSet = (T[]) Array.CreateInstance(set.GetType().GetElementType()!, args.Count);
+        T?[] limitedSet = (T[]) Array.CreateInstance(set.GetType().GetElementType()!, args.Count);
         for (int i = 0; i < args.Count; i++)
         {
             limitedSet[i] = args[i];
@@ -215,12 +221,10 @@ public interface IQueryConstraints
     }
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeEquals{Bool}"/>
-    static AttributeEquals<bool> AttributeEqualsFalse(string attributeName) =>
-        new AttributeEquals<bool>(attributeName, false);
+    static AttributeEquals<bool> AttributeEqualsFalse(string attributeName) => new(attributeName, false);
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeEquals{Bool}"/>
-    static AttributeEquals<bool> AttributeEqualsTrue(string attributeName) =>
-        new AttributeEquals<bool>(attributeName, true);
+    static AttributeEquals<bool> AttributeEqualsTrue(string attributeName) => new(attributeName, true);
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeIs"/>
     static AttributeIs? AttributeIs(string attributeName, AttributeSpecialValue? specialValue) =>
@@ -246,8 +250,7 @@ public interface IQueryConstraints
     /// <inheritdoc cref="Client.Queries.Filter.FacetHaving"/>
     static FacetHaving? FacetHaving(string referenceName, params IFilterConstraint?[]? constraints) =>
         ArrayUtils.IsEmpty(constraints) ? null : new FacetHaving(referenceName, constraints!);
-
-
+    
     /// <inheritdoc cref="Client.Queries.Filter.EntityPrimaryKeyInSet"/>
     static EntityPrimaryKeyInSet? EntityPrimaryKeyInSet(params int[]? primaryKeys) =>
         primaryKeys == null ? null : new EntityPrimaryKeyInSet(primaryKeys);
@@ -317,9 +320,17 @@ public interface IQueryConstraints
     /// <inheritdoc cref="Client.Queries.Requires.AttributeHistogram"/>
     static AttributeHistogram? AttributeHistogram(int requestedBucketCount, params string[]? attributeNames) =>
         ArrayUtils.IsEmpty(attributeNames) ? null : new AttributeHistogram(requestedBucketCount, attributeNames!);
+    
+    /// <inheritdoc cref="Client.Queries.Requires.AttributeHistogram"/>
+    static AttributeHistogram? AttributeHistogram(int requestedBucketCount, HistogramBehavior? behavior, params string[]? attributeNames) =>
+        ArrayUtils.IsEmpty(attributeNames) ? null : new AttributeHistogram(requestedBucketCount, behavior, attributeNames!);
 
     /// <inheritdoc cref="Client.Queries.Requires.PriceHistogram"/>
     static PriceHistogram PriceHistogram(int requestedBucketCount) => new(requestedBucketCount);
+    
+    /// <inheritdoc cref="Client.Queries.Requires.PriceHistogram"/>
+    static PriceHistogram PriceHistogram(int requestedBucketCount, HistogramBehavior? behavior)
+        => new(requestedBucketCount, behavior);
 
     /// <inheritdoc cref="Client.Queries.Requires.FacetGroupsConjunction"/>
     static FacetGroupsConjunction? FacetGroupsConjunction(string? referenceName, FilterBy? filterBy = null) =>

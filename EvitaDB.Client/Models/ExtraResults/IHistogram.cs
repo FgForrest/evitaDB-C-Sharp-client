@@ -13,15 +13,13 @@ public interface IHistogram
 
 public record Bucket
 {
-    public int Index { get; init; }
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
     public decimal Threshold { get; init; }
     public int Occurrences { get; init; }
     public bool Requested { get; init; }
     
-    public Bucket(int index, decimal threshold, int occurrences, bool requested)
+    public Bucket(decimal threshold, int occurrences, bool requested)
     {
-        Index = index;
         Threshold = threshold;
         Occurrences = occurrences;
         Requested = requested;

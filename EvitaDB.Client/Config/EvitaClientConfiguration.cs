@@ -6,7 +6,8 @@ namespace EvitaDB.Client.Config;
 public record EvitaClientConfiguration(
     string ClientId, string Host, int Port, int SystemApiPort, bool UseGeneratedCertificate,
     bool UsingTrustedRootCaCertificate, bool MtlsEnabled, string? ServerCertificatePath, string? CertificateFileName, 
-    string? CertificateKeyFileName, string? CertificateKeyPassword, string? CertificateFolderPath
+    string? CertificateKeyFileName, string? CertificateKeyPassword, string? CertificateFolderPath, string? TraceEndpointUrl,
+    string? TraceEndpointProtocol
 )
 {
     private const int DefaultGrpcApiPort = 5556;
@@ -26,6 +27,8 @@ public record EvitaClientConfiguration(
         private string? CertificateKeyFileName { get; set; }
         private string? CertificateKeyPassword { get; set; }
         private string? CertificateFolderPath { get; set; }
+        private string? TraceEndpointUrl { get; set; }
+        private string? TraceEndpointProtocol { get; set; }
 
         public Builder()
         {
@@ -110,6 +113,18 @@ public record EvitaClientConfiguration(
             CertificateFolderPath = certificateFolderPath;
             return this;
         }
+        
+        public Builder SetTraceEndpointUrl(string traceEndpointUrl)
+        {
+            TraceEndpointUrl = traceEndpointUrl;
+            return this;
+        }
+        
+        public Builder SetTraceEndpointProtocol(string traceEndpointProtocol)
+        {
+            TraceEndpointProtocol = traceEndpointProtocol;
+            return this;
+        }
 
         public EvitaClientConfiguration Build()
         {
@@ -117,7 +132,7 @@ public record EvitaClientConfiguration(
                 ClientId, Host, Port, SystemApiPort, UseGeneratedCertificate, UsingTrustedRootCaCertificate,
                 MtlsEnabled,
                 ServerCertificatePath, CertificateFileName, CertificateKeyFileName,
-                CertificateKeyPassword, CertificateFolderPath
+                CertificateKeyPassword, CertificateFolderPath, TraceEndpointUrl, TraceEndpointProtocol
             );
         }
     }

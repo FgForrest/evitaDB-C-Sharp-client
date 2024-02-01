@@ -264,7 +264,6 @@ public static class ResponseConverter
     private static Bucket ToBucket(GrpcHistogram.Types.GrpcBucket grpcBucket)
     {
         return new Bucket(
-            grpcBucket.Index,
             EvitaDataTypesConverter.ToDecimal(grpcBucket.Threshold),
             grpcBucket.Occurrences,
             grpcBucket.Requested

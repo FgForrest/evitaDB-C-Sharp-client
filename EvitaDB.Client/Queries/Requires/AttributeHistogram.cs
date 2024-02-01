@@ -19,13 +19,18 @@ public class AttributeHistogram : AbstractRequireConstraintLeaf, IExtraResultReq
     {
     }
     
-    public AttributeHistogram(int requestedBucketCount, params string[] attributeNames) : base(new object[]{requestedBucketCount}.Concat(attributeNames).ToArray())
+    public AttributeHistogram(int requestedBucketCount, HistogramBehavior? behavior, params string[] attributeNames) 
+        : base(new object[]{requestedBucketCount,behavior ?? HistogramBehavior.Standard}.Concat(attributeNames).ToArray())
+    {
+    }
+    
+    public AttributeHistogram(int requestedBucketCount, params string[] attributeNames) 
+        : base(new object[]{requestedBucketCount, HistogramBehavior.Standard}.Concat(attributeNames).ToArray())
     {
     }
     
     public int RequestedBucketCount => (int) Arguments[0]!;
-    
-    public string[] AttributeNames => Arguments.Skip(1).Select(obj => (string) obj!).ToArray();
-    
-    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 1;
+    public HistogramBehavior Behavior => (HistogramBehavior) Arguments[1]!;
+    public string[] AttributeNames => Arguments.Skip(2).Select(obj => (string) obj!).ToArray();
+    public new bool Applicable => IsArgumentsNonNull() && Arguments.Length > 2;
 }

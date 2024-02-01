@@ -7,9 +7,9 @@ using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 
-namespace EvitaDB.Client.Utils;
+namespace EvitaDB.Client.Converters.Queries;
 
-public class QueryConverter
+public static class QueryConverter
 {
     public static List<object> ConvertQueryParamsList(List<GrpcQueryParam> queryParams)
     {
@@ -122,6 +122,11 @@ public class QueryConverter
         if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StatisticsType)
         {
             return EvitaEnumConverter.ToStatisticsType(queryParam.StatisticsType);
+        }
+        
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.HistogramBehavior) 
+        {
+            return EvitaEnumConverter.ToHistogramBehavior(queryParam.HistogramBehavior);
         }
 
         if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.StringArrayValue)
@@ -237,6 +242,13 @@ public class QueryConverter
         {
             return queryParam.StatisticsTypeArrayValue.Value
                 .Select(EvitaEnumConverter.ToStatisticsType)
+                .ToArray();
+        }
+        
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.HistogramBehaviorTypeArrayValue) {
+            return queryParam.HistogramBehaviorTypeArrayValue
+                .Value
+                .Select(EvitaEnumConverter.ToHistogramBehavior)
                 .ToArray();
         }
 
@@ -356,6 +368,10 @@ public class QueryConverter
         else if (parameter is StatisticsType statisticsType)
         {
             queryParam.StatisticsType = EvitaEnumConverter.ToGrpcStatisticsType(statisticsType);
+        }
+        else if (parameter is HistogramBehavior histogramBehavior)
+        {
+            queryParam.HistogramBehavior = EvitaEnumConverter.ToGrpcHistogramBehavior(histogramBehavior);
         }
 
         else if (parameter is string[] stringArrayValue)
@@ -484,6 +500,12 @@ public class QueryConverter
             queryParam.StatisticsTypeArrayValue = new GrpcStatisticsTypeArray
                 {Value = {statisticsTypeArray.Select(EvitaEnumConverter.ToGrpcStatisticsType)}};
         }
+        else if (parameter is HistogramBehavior[] histogramBehaviorArray)
+        {
+            queryParam.HistogramBehaviorTypeArrayValue = new GrpcHistogramBehaviorTypeArray()
+                {Value = {histogramBehaviorArray.Select(EvitaEnumConverter.ToGrpcHistogramBehavior)}};
+        }
+        
         else
         {
             throw new EvitaInvalidUsageException("Unsupported Evita data type `" + parameter.GetType().Name + "` in gRPC API.");

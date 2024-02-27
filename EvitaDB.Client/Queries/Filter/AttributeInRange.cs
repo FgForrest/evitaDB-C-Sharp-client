@@ -24,9 +24,10 @@ namespace EvitaDB.Client.Queries.Filter;
 /// inRange("age", 63)
 /// </code>
 /// </summary>
-public class AttributeInRange<T> : AbstractAttributeFilterConstraintLeaf
+public class AttributeInRange<T> : AbstractAttributeFilterConstraintLeaf, IConstraintWithSuffix
     where T : IComparable
 {
+    private static readonly string SuffixNow = "now";
     private AttributeInRange(params object?[] arguments) : base(arguments)
     {
     }
@@ -73,4 +74,7 @@ public class AttributeInRange<T> : AbstractAttributeFilterConstraintLeaf
     public TNumber? TheValue<TNumber>() where TNumber : struct, IComparable => Arguments is [_, TNumber theValue and (byte or short or int or long or decimal)]
         ? theValue
         : null;
+
+    public string? SuffixIfApplied => Arguments.Length == 1 ? SuffixNow : null;
+    public bool ArgumentImplicitForSuffix(object argument) => false;
 }

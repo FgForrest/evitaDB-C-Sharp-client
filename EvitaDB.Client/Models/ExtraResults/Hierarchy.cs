@@ -186,7 +186,7 @@ public class Hierarchy : IEvitaResponseExtraResult
     }
 }
 
-public record LevelInfo(IEntityClassifier Entity, bool Requested, int? QueriedEntityCount, int? ChildrenCount, List<LevelInfo> Children)
+public record LevelInfo(IEntityClassifier Entity, bool Requested, int? QueriedEntityCount, int? ChildrenCount, List<LevelInfo> Children) : IComparable
 {
     public LevelInfo(LevelInfo levelInfo, List<LevelInfo> children) : 
         this(levelInfo.Entity, levelInfo.Requested, levelInfo.QueriedEntityCount, levelInfo.ChildrenCount, children)
@@ -201,5 +201,14 @@ public record LevelInfo(IEntityClassifier Entity, bool Requested, int? QueriedEn
         }
 
         return $"[{QueriedEntityCount}:{ChildrenCount} {Entity}]";
+    }
+
+    public int CompareTo(object? other)
+    {
+        if (other is not LevelInfo levelInfo)
+        {
+            return 1;
+        }
+        return Entity.PrimaryKey!.Value.CompareTo(levelInfo.Entity.PrimaryKey!.Value);
     }
 }

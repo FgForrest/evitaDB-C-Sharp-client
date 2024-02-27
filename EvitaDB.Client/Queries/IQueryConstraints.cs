@@ -184,7 +184,8 @@ public interface IQueryConstraints
         decimalValue is null ? null : new AttributeInRange<decimal>(attributeName, decimalValue.Value);
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeInRange{DateTimeOffset}"/>
-    static AttributeInRange<DateTimeOffset> AttributeInRangeNow(string attributeName) => new(attributeName);
+    static AttributeInRange<DateTimeOffset>? AttributeInRangeNow(string? attributeName) =>
+        attributeName is null ? null : new AttributeInRange<DateTimeOffset>(attributeName!);
 
     /// <inheritdoc cref="Client.Queries.Filter.AttributeInSet{T}"/>
     static AttributeInSet<T>? AttributeInSet<T>(string? attributeName, params T?[]? set)

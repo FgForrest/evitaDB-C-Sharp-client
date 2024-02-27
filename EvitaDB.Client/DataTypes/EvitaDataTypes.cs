@@ -266,7 +266,7 @@ public static class EvitaDataTypes
         }
         if (value is bool boolValue)
         {
-            return boolValue.ToString()!;
+            return boolValue.ToString().ToLower();
         }
         if (value is Range range)
         {

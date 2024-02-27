@@ -2,6 +2,7 @@
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Schemas;
+using EvitaDB.Client.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -43,7 +44,14 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
         if (value.InnerRecordHandling != PriceInnerRecordHandling.Unknown)
         {
             writer.WritePropertyName("priceInnerRecordHandling");
-            writer.WriteValue(value.InnerRecordHandling?.ToString().ToUpper());
+            if (value.InnerRecordHandling != null)
+            {
+                writer.WriteValue(StringUtils.ToUpperSnakeCase(value.InnerRecordHandling!.ToString()!));
+            }
+            else
+            {
+                writer.WriteNull();
+            }
         }
 
         WriteAttributes(writer, value);

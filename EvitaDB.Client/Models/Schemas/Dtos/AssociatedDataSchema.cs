@@ -9,9 +9,12 @@ public class AssociatedDataSchema : IAssociatedDataSchema
     public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
-    public bool Nullable { get; }
-    public bool Localized { get; }
+    public bool Nullable() => nullable;
+    public bool Localized() => localized;
     public Type Type { get; }
+
+    private bool nullable;
+    private bool localized;
 
     internal static AssociatedDataSchema InternalBuild(string name, Type type, bool localized = false)
     {
@@ -69,8 +72,8 @@ public class AssociatedDataSchema : IAssociatedDataSchema
         NameVariants = nameVariants;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        Localized = localized;
-        Nullable = nullable;
+        this.localized = localized;
+        this.nullable = nullable;
         Type = EvitaDataTypes.IsSupportedTypeOrItsArray(type) ? type : typeof(ComplexDataObject);
     }
 
@@ -79,8 +82,8 @@ public class AssociatedDataSchema : IAssociatedDataSchema
     {
         return "AssociatedDataSchema{" +
                "name='" + Name + '\'' +
-               ", localized=" + Localized +
-               ", nullable=" + Nullable +
+               ", localized=" + this.localized +
+               ", nullable=" + this.nullable +
                ", type=" + Type +
                '}';
     }

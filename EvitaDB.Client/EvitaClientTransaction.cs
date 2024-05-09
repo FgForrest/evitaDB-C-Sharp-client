@@ -2,15 +2,15 @@
 
 public class EvitaClientTransaction : IDisposable
 {
-    private readonly EvitaClientSession _session;
-    private readonly long _id;
+    private readonly Guid _transactionId;
+    private readonly long _catalogVersion;
     public bool RollbackOnly { get; private set; }
     public bool Closed { get; private set; }
 
-    public EvitaClientTransaction(EvitaClientSession session, long id)
+    public EvitaClientTransaction(Guid transactionId, long catalogVersion)
     {
-        _session = session;
-        _id = id;
+        _transactionId = transactionId;
+        _catalogVersion = catalogVersion;
     }
 
     public void SetRollbackOnly()
@@ -25,7 +25,6 @@ public class EvitaClientTransaction : IDisposable
             return;
         }
         Closed = true;
-        _session.CloseTransaction();
     }
 
     public void Dispose()

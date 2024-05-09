@@ -49,17 +49,17 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
 
     public string? DeprecationNotice => _instance.DeprecationNotice;
 
-    bool IAttributeSchema.Unique => _instance.Unique;
-    public abstract bool UniqueWithinLocale { get; }
+    bool IAttributeSchema.Unique() => _instance.Unique();
+    public abstract bool UniqueWithinLocale();
     public abstract AttributeUniquenessType UniquenessType { get; }
 
-    bool IAttributeSchema.Nullable => _instance.Nullable;
+    bool IAttributeSchema.Nullable() => _instance.Nullable();
 
-    bool IAttributeSchema.Filterable => _instance.Filterable;
+    bool IAttributeSchema.Filterable() => _instance.Filterable();
 
-    bool IAttributeSchema.Sortable => _instance.Sortable;
+    bool IAttributeSchema.Sortable() => _instance.Sortable();
 
-    bool IAttributeSchema.Localized => _instance.Localized;
+    bool IAttributeSchema.Localized() => _instance.Localized();
 
     public Type Type => _instance.Type;
     public Type PlainType => _instance.PlainType;
@@ -324,17 +324,17 @@ public abstract class AbstractAttributeSchemaBuilder<TE, TS> : IAttributeSchemaE
     {
         Type type = currentSchema.Type;
         Assert.IsTrue(
-            !currentSchema.Sortable || typeof(IComparable<>).IsAssignableFrom(type) || typeof(IComparable).IsAssignableFrom(type),
+            !currentSchema.Sortable() || typeof(IComparable<>).IsAssignableFrom(type) || typeof(IComparable).IsAssignableFrom(type),
             "Data type `" + currentSchema.Type + "` in attribute schema `" + currentSchema.Name +
             "` must implement Comparable in order to be usable for indexing!"
         );
         Assert.IsTrue(
-            currentSchema is not { Filterable: true, Unique: true },
+            !(currentSchema.Filterable() && currentSchema.Unique()),
             "Attribute `" + currentSchema.Name +
             "` cannot be both unique and filterable. Unique attributes are implicitly filterable!"
         );
         Assert.IsTrue(
-            currentSchema is not { Sortable: true, Type.IsArray: true },
+            !(currentSchema.Sortable() && currentSchema.Type.IsArray),
             "Attribute `" + currentSchema.Name +
             "` is sortable but also an array. Arrays cannot be handled by sorting algorithm!"
         );

@@ -40,31 +40,31 @@ public static class DataManipulationUtil
         IAttributeSchema? nameAttributeSchema = schema.GetAttribute(Data.AttributeName);
         Assert.NotNull(nameAttributeSchema);
         Assert.Equal(typeof(string), nameAttributeSchema.Type);
-        Assert.True(nameAttributeSchema.Filterable);
-        Assert.True(nameAttributeSchema.Sortable);
-        Assert.False(nameAttributeSchema.Nullable);
-        Assert.True(nameAttributeSchema.Localized);
-        Assert.False(nameAttributeSchema.Unique);
+        Assert.True(nameAttributeSchema.Filterable());
+        Assert.True(nameAttributeSchema.Sortable());
+        Assert.False(nameAttributeSchema.Nullable());
+        Assert.True(nameAttributeSchema.Localized());
+        Assert.False(nameAttributeSchema.Unique());
         Assert.NotNull(nameAttributeSchema.Description);
 
         IAttributeSchema? validityAttributeSchema = schema.GetAttribute(Data.AttributeValidity);
         Assert.NotNull(validityAttributeSchema);
         Assert.Equal(typeof(DateTimeOffset[]), validityAttributeSchema.Type);
-        Assert.False(validityAttributeSchema.Filterable);
-        Assert.False(validityAttributeSchema.Sortable);
-        Assert.True(validityAttributeSchema.Nullable);
-        Assert.False(validityAttributeSchema.Localized);
-        Assert.False(validityAttributeSchema.Unique);
+        Assert.False(validityAttributeSchema.Filterable());
+        Assert.False(validityAttributeSchema.Sortable());
+        Assert.True(validityAttributeSchema.Nullable());
+        Assert.False(validityAttributeSchema.Localized());
+        Assert.False(validityAttributeSchema.Unique());
         Assert.Null(validityAttributeSchema.Description);
         
         IAttributeSchema? quantityAttributeSchema = schema.GetAttribute(Data.AttributeQuantity);
         Assert.NotNull(quantityAttributeSchema);
         Assert.Equal(typeof(decimal), quantityAttributeSchema.Type);
-        Assert.True(quantityAttributeSchema.Filterable);
-        Assert.False(quantityAttributeSchema.Sortable);
-        Assert.True(quantityAttributeSchema.Nullable);
-        Assert.False(quantityAttributeSchema.Localized);
-        Assert.False(quantityAttributeSchema.Unique);
+        Assert.True(quantityAttributeSchema.Filterable());
+        Assert.False(quantityAttributeSchema.Sortable());
+        Assert.True(quantityAttributeSchema.Nullable());
+        Assert.False(quantityAttributeSchema.Localized());
+        Assert.False(quantityAttributeSchema.Unique());
         Assert.Null(quantityAttributeSchema.Description);
 
         IAttributeSchema? aliasAttributeSchema = schema.GetAttribute(Data.AttributeAlias);
@@ -73,8 +73,8 @@ public static class DataManipulationUtil
         IAssociatedDataSchema? associatedDataSchema = schema.GetAssociatedData(Data.AssociatedDataReferencedFiles);
         Assert.NotNull(associatedDataSchema);
         Assert.Equal(typeof(ComplexDataObject), associatedDataSchema.Type);
-        Assert.True(associatedDataSchema.Localized);
-        Assert.True(associatedDataSchema.Nullable);
+        Assert.True(associatedDataSchema.Localized());
+        Assert.True(associatedDataSchema.Nullable());
 
         IAssociatedDataSchema? nonExistingAssociatedDataSchema = schema.GetAssociatedData(Data.AssociatedDataLabels);
         Assert.Null(nonExistingAssociatedDataSchema);
@@ -95,14 +95,14 @@ public static class DataManipulationUtil
 
         IAttributeSchema? referenceAttributeSchema = relatedProductsReferenceSchema.GetAttribute(Data.AttributePriority);
         Assert.NotNull(referenceAttributeSchema);
-        Assert.False(referenceAttributeSchema.Filterable);
-        Assert.True(referenceAttributeSchema.Sortable);
+        Assert.False(referenceAttributeSchema.Filterable());
+        Assert.True(referenceAttributeSchema.Sortable());
         
         Assert.Null(categoriesReferenceSchema.GetAttribute(Data.AttributeQuantity));
         
-        Assert.True(schema.WithPrice);
-        Assert.False(schema.WithHierarchy);
-        Assert.True(schema.WithGeneratedPrimaryKey);
+        Assert.True(schema.WithPrice());
+        Assert.False(schema.WithHierarchy());
+        Assert.True(schema.WithGeneratedPrimaryKey());
 
         return schema;
     }
@@ -148,7 +148,7 @@ public static class DataManipulationUtil
             builder.SetPrice(price.PriceId, price.PriceList, price.Currency, price.PriceWithoutTax, price.TaxRate,
                 price.PriceWithTax, price.Validity, price.Sellable);
 
-            PriceInnerRecordHandling priceInnerRecordHandling = PriceInnerRecordHandling.FirstOccurrence;
+            PriceInnerRecordHandling priceInnerRecordHandling = PriceInnerRecordHandling.LowestPrice;
             builder.SetPriceInnerRecordHandling(priceInnerRecordHandling);
 
             GroupEntityReference groupEntityReference = new GroupEntityReference(Data.ReferenceGroupType, 1, 1);

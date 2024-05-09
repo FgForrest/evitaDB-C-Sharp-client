@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Converters.Models;
 using EvitaDB.Client.Converters.Models.Data;
 using EvitaDB.Client.Converters.Models.Data.Mutations;
@@ -894,37 +895,6 @@ public partial class EvitaClientSession : IDisposable
     }
 
     /// <summary>
-    /// Terminates opened transaction - either by rollback or commit depending on <see cref="EvitaClientTransaction.RollbackOnly"/>.
-    /// This method throws exception only when transaction hasn't been opened.
-    /// </summary>
-    public void CloseTransaction()
-    {
-        AssertActive();
-        var transaction = _transactionAccessor.Value;
-        if (transaction is null)
-            throw new UnexpectedTransactionStateException("No transaction has been opened!");
-        DestroyTransaction();
-        transaction.Close();
-    }
-
-    /// <summary>
-    /// Destroys transaction reference.
-    /// </summary>
-    private void DestroyTransaction()
-    {
-        _transactionAccessor.GetAndSet(transaction =>
-        {
-            Assert.IsTrue(transaction is not null, "Transaction unexpectedly not present!");
-            ExecuteWithEvitaSessionService(session =>
-            {
-                session.CloseTransaction(new GrpcCloseTransactionRequest { Rollback = transaction!.RollbackOnly });
-                return true;
-            });
-            return null;
-        });
-    }
-
-    /// <summary>
     /// Switches catalog to the <see cref="Session.CatalogState.Alive"/> state and terminates the Evita session so that next session is
     /// operating in the new catalog state.
     /// 
@@ -1307,10 +1277,10 @@ public partial class EvitaClientSession : IDisposable
         }
 
         var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
-            evitaSessionService.OpenTransaction(new Empty())
+            evitaSessionService.GetTransactionId(new Empty())
         );
 
-        var tx = new EvitaClientTransaction(this, grpcResponse.TransactionId);
+        var tx = new EvitaClientTransaction(EvitaDataTypesConverter.ToGuid(grpcResponse.TransactionId), grpcResponse.CatalogVersion);
         _transactionAccessor.GetAndSet(transaction =>
         {
             Assert.IsPremiseValid(transaction == null, "Transaction unexpectedly found!");

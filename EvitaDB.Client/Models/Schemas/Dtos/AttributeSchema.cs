@@ -11,16 +11,20 @@ public class AttributeSchema : IAttributeSchema
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public AttributeUniquenessType UniquenessType { get; }
-    public bool Filterable { get; }
-    public bool Sortable { get; }
-    public bool Nullable { get; }
-    public bool Localized { get; }
+    public bool Filterable() => filterable;
+    public bool Sortable() => sortable;
+    public bool Nullable() => nullable;
+    public bool Localized() => localized;
     public Type Type { get; }
     public object? DefaultValue { get; }
     public Type PlainType { get; }
     public int IndexedDecimalPlaces { get; }
-    public bool Unique => UniquenessType != AttributeUniquenessType.NotUnique;
-    public bool UniqueWithinLocale => UniquenessType == AttributeUniquenessType.UniqueWithinCollectionLocale;
+    public bool Unique() => UniquenessType != AttributeUniquenessType.NotUnique;
+    public bool UniqueWithinLocale() => UniquenessType == AttributeUniquenessType.UniqueWithinCollectionLocale;
+    private bool filterable;
+    private bool sortable;
+    private bool nullable;
+    private bool localized;
 
     internal static AttributeSchema InternalBuild(string name, Type type, bool localized)
     {
@@ -124,10 +128,10 @@ public class AttributeSchema : IAttributeSchema
         Description = description;
         DeprecationNotice = deprecationNotice;
         UniquenessType = uniquenessType ?? AttributeUniquenessType.NotUnique;
-        Filterable = filterable;
-        Sortable = sortable;
-        Localized = localized;
-        Nullable = nullable;
+        this.filterable = filterable;
+        this.sortable = sortable;
+        this.localized = localized;
+        this.nullable = nullable;
         Type = type;
         PlainType = Type.IsArray ? Type.GetElementType()! : Type;
         DefaultValue = EvitaDataTypes.ToTargetType(defaultValue, PlainType);
@@ -140,11 +144,11 @@ public class AttributeSchema : IAttributeSchema
     {
         return "AttributeSchema{" +
                "name='" + Name + '\'' +
-               ", unique=" + Unique +
-               ", filterable=" + Filterable +
-               ", sortable=" + Sortable +
-               ", localized=" + Localized +
-               ", nullable=" + Nullable +
+               ", unique=" + Unique() +
+               ", filterable=" + Filterable() +
+               ", sortable=" + Sortable() +
+               ", localized=" + Localized() +
+               ", nullable=" + Nullable() +
                ", type=" + Type +
                ", indexedDecimalPlaces=" + IndexedDecimalPlaces +
                '}';

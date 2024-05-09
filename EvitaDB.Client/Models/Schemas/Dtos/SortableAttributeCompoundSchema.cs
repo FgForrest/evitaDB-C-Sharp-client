@@ -69,7 +69,7 @@ public class SortableAttributeCompoundSchema : ISortableAttributeCompoundSchema
             {
                 IAttributeSchema attributeSchema = attributeSchemaProvider.Invoke(it.AttributeName);
                 Assert.NotNull(attributeSchema, "Attribute `" + it.AttributeName + "` schema not found!");
-                return attributeSchema.Localized;
+                return attributeSchema.Localized();
             });
 
         return MemoizedLocalized.Value;

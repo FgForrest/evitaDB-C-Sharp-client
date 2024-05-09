@@ -51,7 +51,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be filtered</param>
     /// <returns>builder to continue with configuration</returns>
-    new T Filterable(Func<bool> decider);
+    T Filterable(Func<bool> decider);
     
     /// <summary>
     /// <remarks>
@@ -90,7 +90,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be filtered</param>
     /// <returns>builder to continue with configuration</returns>
-    new T Unique(Func<bool> decider);
+    T Unique(Func<bool> decider);
     
     /// <summary>
     /// <remarks>
@@ -137,7 +137,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be filtered</param>
     /// <returns>builder to continue with configuration</returns>
-    new T UniqueWithinLocale(Func<bool> decider);
+    T UniqueWithinLocale(Func<bool> decider);
     
     /// <summary>
     /// When attribute is sortable, it is possible to sort entities by this attribute. Do not mark attribute
@@ -156,7 +156,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be sortable</param>
     /// <returns>builder to continue with configuration</returns>
-    new T Sortable(Func<bool> decider);
+    T Sortable(Func<bool> decider);
     
     /// <summary>
     /// Localized attribute has to be ALWAYS used in connection with specific <see cref="CultureInfo"/>. In other
@@ -171,7 +171,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be localized</param>
     /// <returns>builder to continue with configuration</returns>
-    new T Localized(Func<bool> decider);
+    T Localized(Func<bool> decider);
     
     /// <summary>
     /// When attribute is nullable, its values may be missing in the entities. Otherwise, the system will enforce
@@ -186,7 +186,7 @@ public interface IAttributeSchemaEditor<out T> : IAttributeSchema, INamedSchemaW
     /// </summary>
     /// <param name="decider">returns true when attribute should be nullable</param>
     /// <returns>builder to continue with configuration</returns>
-    new T Nullable(Func<bool> decider);
+    T Nullable(Func<bool> decider);
     
     /// <summary>
     /// Determines how many fractional places are important when entities are compared during filtering or sorting. It is

@@ -3,7 +3,7 @@
 public enum PriceInnerRecordHandling
 {
     None,
-    FirstOccurrence,
+    LowestPrice,
     Sum,
     Unknown
 }

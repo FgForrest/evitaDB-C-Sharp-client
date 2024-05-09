@@ -23,10 +23,10 @@ public class EntityAttributeSchemaBuilder :
                 BaseSchema.Description,
                 BaseSchema.DeprecationNotice,
                 BaseSchema.UniquenessType,
-                BaseSchema.Filterable,
-                BaseSchema.Sortable,
-                BaseSchema.Localized,
-                BaseSchema.Nullable,
+                BaseSchema.Filterable(),
+                BaseSchema.Sortable(),
+                BaseSchema.Localized(),
+                BaseSchema.Nullable(),
                 BaseSchema.Representative,
                 BaseSchema.Type,
                 BaseSchema.DefaultValue,
@@ -80,6 +80,6 @@ public class EntityAttributeSchemaBuilder :
         return Mutations;
     }
     
-    public override bool UniqueWithinLocale => base.ToInstance().UniqueWithinLocale;
+    public override bool UniqueWithinLocale() => base.ToInstance().UniqueWithinLocale();
     public override AttributeUniquenessType UniquenessType => base.ToInstance().UniquenessType;
 }

@@ -36,10 +36,10 @@ public class GlobalAttributeSchemaBuilder :
                 BaseSchema.DeprecationNotice,
                 BaseSchema.UniquenessType,
                 BaseSchema.GlobalUniquenessType,
-                BaseSchema.Filterable,
-                BaseSchema.Sortable,
-                BaseSchema.Localized,
-                BaseSchema.Nullable,
+                BaseSchema.Filterable(),
+                BaseSchema.Sortable(),
+                BaseSchema.Localized(),
+                BaseSchema.Nullable(),
                 BaseSchema.Representative,
                 BaseSchema.Type,
                 BaseSchema.DefaultValue,
@@ -140,6 +140,6 @@ public class GlobalAttributeSchemaBuilder :
         return typeof(IGlobalAttributeSchema);
     }
     
-    public override bool UniqueWithinLocale => base.ToInstance().UniqueWithinLocale;
+    public override bool UniqueWithinLocale() => base.ToInstance().UniqueWithinLocale();
     public override AttributeUniquenessType UniquenessType => base.ToInstance().UniquenessType;
 }

@@ -250,7 +250,7 @@ public static class EvitaEnumConverter
         return grpcPriceInnerRecordHandling switch
         {
             GrpcPriceInnerRecordHandling.None => PriceInnerRecordHandling.None,
-            GrpcPriceInnerRecordHandling.FirstOccurrence => PriceInnerRecordHandling.FirstOccurrence,
+            GrpcPriceInnerRecordHandling.LowestPrice => PriceInnerRecordHandling.LowestPrice,
             GrpcPriceInnerRecordHandling.Sum => PriceInnerRecordHandling.Sum,
             GrpcPriceInnerRecordHandling.Unknown => PriceInnerRecordHandling.Unknown,
             _ => throw new EvitaInternalError(
@@ -264,7 +264,7 @@ public static class EvitaEnumConverter
         return priceInnerRecordHandling switch
         {
             PriceInnerRecordHandling.None => GrpcPriceInnerRecordHandling.None,
-            PriceInnerRecordHandling.FirstOccurrence => GrpcPriceInnerRecordHandling.FirstOccurrence,
+            PriceInnerRecordHandling.LowestPrice => GrpcPriceInnerRecordHandling.LowestPrice,
             PriceInnerRecordHandling.Sum => GrpcPriceInnerRecordHandling.Sum,
             PriceInnerRecordHandling.Unknown => GrpcPriceInnerRecordHandling.Unknown,
             _ => throw new ArgumentOutOfRangeException(nameof(priceInnerRecordHandling), priceInnerRecordHandling, null)

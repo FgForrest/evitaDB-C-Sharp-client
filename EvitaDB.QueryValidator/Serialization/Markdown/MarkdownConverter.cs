@@ -4,7 +4,6 @@ using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Schemas;
-using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Filter;
 using EvitaDB.Client.Queries.Requires;
@@ -88,7 +87,7 @@ public static partial class MarkdownConverter
                             {
                                 var attributes = referenceSchema.GetAttributes().Values;
                                 attributeNames =
-                                    (localizedQuery ? attributes.Where(attr => attr.Localized) : attributes)
+                                    (localizedQuery ? attributes.Where(attr => attr.Localized()) : attributes)
                                     .Select(attr => attr.Name)
                                     .Where(
                                         attrName => response.RecordData
@@ -312,7 +311,7 @@ public static partial class MarkdownConverter
                     IEnumerable<IAttributeSchema> attributes = entitySchema is EntitySchemaDecorator schema
                         ? schema.OrderedAttributes
                         : entitySchema.GetAttributes().Values;
-                    return (localizedQuery ? attributes.Where(x => x.Localized) : attributes)
+                    return (localizedQuery ? attributes.Where(x => x.Localized()) : attributes)
                         .Select(x => x.Name)
                         .Where(attrName =>
                             entityCollectionAccessor.Invoke()
@@ -339,7 +338,7 @@ public static partial class MarkdownConverter
         string? prefix
     ) where T : IAttributeSchema
     {
-        bool localized = schema.GetAttribute(attributeName)?.Localized ??
+        bool localized = schema.GetAttribute(attributeName)?.Localized() ??
                          throw new ArgumentException("Attribute not found: " + attributeName);
         if (localized)
         {

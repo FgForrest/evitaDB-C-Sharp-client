@@ -2,7 +2,7 @@
 
 public interface IAssociatedDataSchema : INamedSchemaWithDeprecation
 {
-    bool Nullable { get; }
-    bool Localized { get; }
+    bool Nullable();
+    bool Localized();
     Type Type { get; }
 }

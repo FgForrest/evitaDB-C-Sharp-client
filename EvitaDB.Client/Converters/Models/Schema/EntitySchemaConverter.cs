@@ -15,9 +15,9 @@ public static class EntitySchemaConverter
             Name = entitySchema.Name,
             Description = entitySchema.Description,
             DeprecationNotice = entitySchema.DeprecationNotice,
-            WithGeneratedPrimaryKey = entitySchema.WithGeneratedPrimaryKey,
-            WithHierarchy = entitySchema.WithHierarchy,
-            WithPrice = entitySchema.WithPrice,
+            WithGeneratedPrimaryKey = entitySchema.WithGeneratedPrimaryKey(),
+            WithHierarchy = entitySchema.WithHierarchy(),
+            WithPrice = entitySchema.WithPrice(),
             IndexedPricePlaces = entitySchema.IndexedPricePlaces,
             Locales = { entitySchema.Locales.Select(EvitaDataTypesConverter.ToGrpcLocale) },
             Currencies = { entitySchema.Currencies.Select(EvitaDataTypesConverter.ToGrpcCurrency) },
@@ -266,10 +266,10 @@ public static class EntitySchemaConverter
         {
             Name = attributeSchema.Name,
             Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
-            Filterable = attributeSchema.Filterable,
-            Sortable = attributeSchema.Sortable,
-            Localized = attributeSchema.Localized,
-            Nullable = attributeSchema.Nullable,
+            Filterable = attributeSchema.Filterable(),
+            Sortable = attributeSchema.Sortable(),
+            Localized = attributeSchema.Localized(),
+            Nullable = attributeSchema.Nullable(),
             Type = EvitaDataTypesConverter.ToGrpcEvitaDataType(attributeSchema.Type),
             IndexedDecimalPlaces = attributeSchema.IndexedDecimalPlaces,
             DefaultValue = attributeSchema.DefaultValue is null
@@ -315,8 +315,8 @@ public static class EntitySchemaConverter
         {
             Name = associatedDataSchema.Name,
             Type = EvitaDataTypesConverter.ToGrpcEvitaAssociatedDataDataType(associatedDataSchema.Type),
-            Localized = associatedDataSchema.Localized,
-            Nullable = associatedDataSchema.Nullable,
+            Localized = associatedDataSchema.Localized(),
+            Nullable = associatedDataSchema.Nullable(),
             Description = associatedDataSchema.Description,
             DeprecationNotice = associatedDataSchema.DeprecationNotice
         };

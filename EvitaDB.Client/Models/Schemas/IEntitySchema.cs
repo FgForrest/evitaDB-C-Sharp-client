@@ -7,9 +7,9 @@ namespace EvitaDB.Client.Models.Schemas;
 
 public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISortableAttributeCompoundSchemaProvider<IEntityAttributeSchema>
 {
-    bool WithGeneratedPrimaryKey { get; }
-    bool WithHierarchy { get; }
-    bool WithPrice { get; }
+    bool WithGeneratedPrimaryKey();
+    bool WithHierarchy();
+    bool WithPrice();
     int IndexedPricePlaces { get; }
     ISet<CultureInfo> Locales { get; }
     ISet<Currency> Currencies { get; }

@@ -35,8 +35,8 @@ public class ModifyAssociatedDataSchemaTypeMutation : AbstractModifyAssociatedDa
             Name,
             associatedDataSchema!.Description,
             associatedDataSchema.DeprecationNotice,
-            associatedDataSchema.Localized,
-            associatedDataSchema.Nullable,
+            associatedDataSchema.Localized(),
+            associatedDataSchema.Nullable(),
             Type
         );
     }

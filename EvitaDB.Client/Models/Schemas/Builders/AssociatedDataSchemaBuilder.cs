@@ -24,8 +24,8 @@ public class AssociatedDataSchemaBuilder : IAssociatedDataSchemaEditor
     public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
     public string? DeprecationNotice => _instance.DeprecationNotice;
 
-    public bool Nullable => _instance.Nullable;
-    public bool Localized => _instance.Localized;
+    public bool Nullable() => _instance.Nullable();
+    public bool Localized() => _instance.Localized();
     public Type Type => _instance.Type;
     
     private readonly IAssociatedDataSchema _instance;
@@ -60,8 +60,8 @@ public class AssociatedDataSchemaBuilder : IAssociatedDataSchemaEditor
                 BaseSchema.Description,
                 BaseSchema.DeprecationNotice,
                 BaseSchema.Type,
-                BaseSchema.Localized,
-                BaseSchema.Nullable
+                BaseSchema.Localized(),
+                BaseSchema.Nullable()
             )
         );
         _instance ??= ToInstance();

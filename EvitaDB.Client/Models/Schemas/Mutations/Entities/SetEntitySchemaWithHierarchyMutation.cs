@@ -15,7 +15,7 @@ public class SetEntitySchemaWithHierarchyMutation : IEntitySchemaMutation
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (WithHierarchy == entitySchema!.WithHierarchy)
+        if (WithHierarchy == entitySchema!.WithHierarchy())
         {
             // entity schema is already removed - no need to do anything
             return entitySchema;
@@ -27,9 +27,9 @@ public class SetEntitySchemaWithHierarchyMutation : IEntitySchemaMutation
             entitySchema.NameVariants,
             entitySchema.Description,
             entitySchema.DeprecationNotice,
-            entitySchema.WithGeneratedPrimaryKey,
+            entitySchema.WithGeneratedPrimaryKey(),
             WithHierarchy,
-            entitySchema.WithPrice,
+            entitySchema.WithPrice(),
             entitySchema.IndexedPricePlaces,
             entitySchema.Locales,
             entitySchema.Currencies,

@@ -156,7 +156,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
 
                     IAttributeSchema? nameAttribute = brand.GetAttribute(Data.AttributeName);
                     Assert.NotNull(nameAttribute);
-                    Assert.True(nameAttribute.Localized);
+                    Assert.True(nameAttribute.Localized());
 
                     // now create an example category tree
                     session.CreateNewEntity(Entities.Category, 10)
@@ -201,7 +201,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
 
                     IAttributeSchema? productNameAttribute = product.GetAttribute(Data.AttributeName);
                     Assert.NotNull(productNameAttribute);
-                    Assert.True(productNameAttribute.Localized);
+                    Assert.True(productNameAttribute.Localized());
                 }
             );
         }

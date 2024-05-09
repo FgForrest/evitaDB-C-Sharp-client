@@ -14,10 +14,10 @@ public class SetEntitySchemaWithPriceMutation : IEntitySchemaMutation
         IndexedPricePlaces = indexedPricePlaces;
     }
 
-    public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
+    public IEntitySchema Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (WithPrice == entitySchema!.WithHierarchy)
+        if (WithPrice == entitySchema!.WithHierarchy())
         {
             // entity schema is already removed - no need to do anything
             return entitySchema;
@@ -29,8 +29,8 @@ public class SetEntitySchemaWithPriceMutation : IEntitySchemaMutation
             entitySchema.NameVariants,
             entitySchema.Description,
             entitySchema.DeprecationNotice,
-            entitySchema.WithGeneratedPrimaryKey,
-            entitySchema.WithHierarchy,
+            entitySchema.WithGeneratedPrimaryKey(),
+            entitySchema.WithHierarchy(),
             WithPrice,
             IndexedPricePlaces,
             entitySchema.Locales,

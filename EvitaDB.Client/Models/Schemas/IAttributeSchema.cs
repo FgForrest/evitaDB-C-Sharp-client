@@ -4,13 +4,13 @@ namespace EvitaDB.Client.Models.Schemas;
 
 public interface IAttributeSchema : INamedSchemaWithDeprecation
 {
-    bool Unique { get; }
-    bool UniqueWithinLocale { get; }
+    bool Unique();
+    bool UniqueWithinLocale();
     AttributeUniquenessType UniquenessType { get; }
-    bool Nullable { get; }
-    bool Filterable { get; }
-    bool Sortable { get; }
-    bool Localized { get; }
+    bool Nullable();
+    bool Filterable();
+    bool Sortable();
+    bool Localized();
     Type Type { get; }
     Type PlainType { get; }
     object? DefaultValue { get; }

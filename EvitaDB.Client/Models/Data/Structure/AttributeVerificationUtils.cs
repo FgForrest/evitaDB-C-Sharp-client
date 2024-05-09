@@ -58,7 +58,7 @@ public static class AttributeVerificationUtils
                         attributeSchema.Type, type
                     )
                 );
-                if (attributeSchema.Sortable)
+                if (attributeSchema.Sortable())
                 {
                     Assert.IsTrue(!type.IsArray,
                         () => new InvalidDataTypeMutationException(
@@ -73,7 +73,7 @@ public static class AttributeVerificationUtils
             if (locale == null)
             {
                 Assert.IsTrue(
-                    !attributeSchema.Localized,
+                    !attributeSchema.Localized(),
                     () => new InvalidMutationException(
                         "Attribute `" + attributeName + "` in entity " + locationResolver.Invoke() +
                         " schema is localized and doesn't accept non-localized attributes!"
@@ -83,7 +83,7 @@ public static class AttributeVerificationUtils
             else
             {
                 Assert.IsTrue(
-                    attributeSchema.Localized,
+                    attributeSchema.Localized(),
                     () => new InvalidMutationException(
                         "Attribute `" + attributeName + "` in entity " + locationResolver.Invoke() +
                         " schema is not localized and doesn't accept localized attributes!"

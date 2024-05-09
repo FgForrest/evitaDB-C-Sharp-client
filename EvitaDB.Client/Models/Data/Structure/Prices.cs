@@ -21,7 +21,7 @@ public class Prices : IPrices
     public Prices(IEntitySchema entitySchema, PriceInnerRecordHandling priceInnerRecordHandling)
     {
         EntitySchema = entitySchema;
-        WithPrice = entitySchema.WithPrice;
+        WithPrice = entitySchema.WithPrice();
         Version = 1;
         PriceIndex = new Dictionary<PriceKey, IPrice>().ToImmutableDictionary();
         InnerRecordHandling = priceInnerRecordHandling;
@@ -31,7 +31,7 @@ public class Prices : IPrices
         PriceInnerRecordHandling priceInnerRecordHandling)
     {
         EntitySchema = entitySchema;
-        WithPrice = entitySchema.WithPrice;
+        WithPrice = entitySchema.WithPrice();
         Version = 1;
         OrderedPriceValues = prices.ToList();
         PriceIndex = OrderedPriceValues.ToDictionary(x => x.Key, x => x).ToImmutableDictionary();
@@ -40,7 +40,7 @@ public class Prices : IPrices
 
     public Prices(IEntitySchema entitySchema, int version, ICollection<IPrice> prices,
         PriceInnerRecordHandling priceInnerRecordHandling) : this(entitySchema, version, prices,
-        priceInnerRecordHandling, entitySchema.WithPrice)
+        priceInnerRecordHandling, entitySchema.WithPrice())
     {
     }
 
@@ -71,7 +71,7 @@ public class Prices : IPrices
     public bool HasPriceInInterval(decimal from, decimal to, QueryPriceMode queryPriceMode) =>
         throw new ContextMissingException();
 
-    public bool PricesAvailable() => EntitySchema.WithPrice;
+    public bool PricesAvailable() => EntitySchema.WithPrice();
 
     public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
         params string[] priceListPriority)

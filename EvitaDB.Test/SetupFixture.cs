@@ -98,7 +98,6 @@ public class SetupFixture : BaseSetupFixture
                 // Bind ports of the container.
                 .WithPortBinding(GrpcPort, true)
                 .WithPortBinding(SystemApiPort, true)
-                .WithEnvironment("EVITA_JAVA_OPTS", "-Duser.timezone=UTC")
                 .WithWaitStrategy(
                     Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
                 .WithOutputConsumer(consumer)

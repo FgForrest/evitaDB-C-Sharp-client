@@ -126,11 +126,11 @@ public class EntityAttributeSchema : AttributeSchema, IEntityAttributeSchema
 	public override string ToString() {
 		return "EntityAttributeSchema{" +
 			"name='" + Name + '\'' +
-			", unique=" + Unique +
-			", filterable=" + Filterable +
-			", sortable=" + Sortable +
-			", localized=" + Localized +
-			", nullable=" + Nullable +
+			", unique=" + Unique() +
+			", filterable=" + Filterable() +
+			", sortable=" + Sortable() +
+			", localized=" + Localized() +
+			", nullable=" + Nullable() +
 			", representative=" + Representative +
 			", type=" + Type +
 			", indexedDecimalPlaces=" + IndexedDecimalPlaces +

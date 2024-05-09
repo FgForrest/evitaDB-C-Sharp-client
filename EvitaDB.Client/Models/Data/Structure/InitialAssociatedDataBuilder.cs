@@ -321,7 +321,7 @@ public class InitialAssociatedDataBuilder : IAssociatedDataBuilder
             if (locale == null)
             {
                 Assert.IsTrue(
-                    !associatedDataSchema.Localized,
+                    !associatedDataSchema.Localized(),
                     () => new InvalidMutationException(
                         "AssociatedData " + associatedDataName +
                         " is localized and doesn't accept non-localized associated data!"
@@ -331,7 +331,7 @@ public class InitialAssociatedDataBuilder : IAssociatedDataBuilder
             else
             {
                 Assert.IsTrue(
-                    associatedDataSchema.Localized,
+                    associatedDataSchema.Localized(),
                     () => new InvalidMutationException(
                         "AssociatedData " + associatedDataName +
                         " is not localized and doesn't accept localized associated data!"

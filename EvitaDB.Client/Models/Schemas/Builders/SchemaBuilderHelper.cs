@@ -115,7 +115,7 @@ public static class SchemaBuilderHelper
  */
     public static void CheckSortableTraits(string attributeName, IAttributeSchema attributeSchema)
     {
-        if (attributeSchema.Sortable)
+        if (attributeSchema.Sortable())
         {
             Assert.IsTrue(
                 !attributeSchema.Type.IsArray,

@@ -210,7 +210,7 @@ public class ReferenceSchema : IReferenceSchema
         );
         NonNullableAttributes = Attributes
             .Values
-            .Where(x => !x.Nullable)
+            .Where(x => !x.Nullable())
             .ToList();
         SortableAttributeCompounds = sortableAttributeCompounds.ToImmutableDictionary(
             x => x.Key,

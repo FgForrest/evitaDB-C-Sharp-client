@@ -15,7 +15,7 @@ public class SetEntitySchemaWithGeneratedPrimaryKeyMutation : IEntitySchemaMutat
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (WithGeneratedPrimaryKey == entitySchema!.WithGeneratedPrimaryKey)
+        if (WithGeneratedPrimaryKey == entitySchema!.WithGeneratedPrimaryKey())
         {
             // entity schema is already removed - no need to do anything
             return entitySchema;
@@ -28,8 +28,8 @@ public class SetEntitySchemaWithGeneratedPrimaryKeyMutation : IEntitySchemaMutat
             entitySchema.Description,
             entitySchema.DeprecationNotice,
             WithGeneratedPrimaryKey,
-            entitySchema.WithHierarchy,
-            entitySchema.WithPrice,
+            entitySchema.WithHierarchy(),
+            entitySchema.WithPrice(),
             entitySchema.IndexedPricePlaces,
             entitySchema.Locales,
             entitySchema.Currencies,

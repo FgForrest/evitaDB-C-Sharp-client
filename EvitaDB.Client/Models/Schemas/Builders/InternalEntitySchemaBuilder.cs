@@ -29,9 +29,9 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     public string? Description => _instance.Description;
     public string? DeprecationNotice => _instance.DeprecationNotice;
     public IDictionary<NamingConvention, string?> NameVariants => _instance.NameVariants;
-    bool IEntitySchema.WithGeneratedPrimaryKey => _instance.WithGeneratedPrimaryKey;
-    bool IEntitySchema.WithHierarchy => _instance.WithHierarchy;
-    bool IEntitySchema.WithPrice => _instance.WithPrice;
+    bool IEntitySchema.WithGeneratedPrimaryKey() => _instance.WithGeneratedPrimaryKey();
+    bool IEntitySchema.WithHierarchy() => _instance.WithHierarchy();
+    bool IEntitySchema.WithPrice() => _instance.WithPrice();
     public int IndexedPricePlaces => _instance.IndexedPricePlaces;
     public ISet<CultureInfo> Locales => _instance.Locales;
     public ISet<Currency> Currencies => _instance.Currencies;

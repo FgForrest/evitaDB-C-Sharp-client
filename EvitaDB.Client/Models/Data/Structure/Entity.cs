@@ -62,7 +62,7 @@ public class Entity : ISealedEntity
     public PricePredicate PricePredicate { get; }
     
 
-    public bool ParentAvailable() => Schema.WithHierarchy;
+    public bool ParentAvailable() => Schema.WithHierarchy();
     public bool PricesAvailable() => Prices.PricesAvailable();
 
     public IList<IPrice> GetAllPricesForSale(Currency? currency, DateTimeOffset? atTheMoment,
@@ -160,7 +160,7 @@ public class Entity : ISealedEntity
             locales,
             evitaRequest,
             entitySchema.References.Keys.ToHashSet(),
-            entitySchema.WithHierarchy,
+            entitySchema.WithHierarchy(),
             dropped,
             pricesForSale
         );
@@ -194,7 +194,7 @@ public class Entity : ISealedEntity
             locales ?? entity.Locales.ToImmutableHashSet(),
             null,
             new HashSet<string>(),
-            entitySchema.WithHierarchy,
+            entitySchema.WithHierarchy(),
             dropped,
             priceForSale
         );
@@ -276,7 +276,7 @@ public class Entity : ISealedEntity
         Prices = prices;
         Locales = new HashSet<CultureInfo>(locales).ToImmutableHashSet();
         Dropped = dropped;
-        WithHierarchy = Schema.WithHierarchy;
+        WithHierarchy = Schema.WithHierarchy();
         ReferencesDefined = Schema.References.Keys.ToHashSet();
         PriceForSale = priceForSale;
         LocalePredicate = localePredicate;
@@ -353,7 +353,7 @@ public class Entity : ISealedEntity
         AssociatedData = new AssociatedData(Schema);
         Prices = new Prices(Schema, 1, new HashSet<IPrice>(), PriceInnerRecordHandling.None);
         Locales = new HashSet<CultureInfo>().ToImmutableHashSet();
-        WithHierarchy = Schema.WithHierarchy;
+        WithHierarchy = Schema.WithHierarchy();
         ReferencesDefined = new HashSet<string>();
         LocalePredicate = LocalePredicate.DefaultInstance;
         HierarchyPredicate = HierarchyPredicate.DefaultInstance;
@@ -473,7 +473,7 @@ public class Entity : ISealedEntity
                 entityLocales,
                 null,
                 mergedReferences.ReferencesDefined,
-                entitySchema.WithHierarchy || newParent is not null
+                entitySchema.WithHierarchy() || newParent is not null
             );
         }
 

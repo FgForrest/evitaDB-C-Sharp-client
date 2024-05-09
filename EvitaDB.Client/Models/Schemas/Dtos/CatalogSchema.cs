@@ -67,8 +67,8 @@ public class CatalogSchema : ICatalogSchema
             : AttributeSchema.InternalBuild(
                 attributeSchema.Name, attributeSchema.Description,
                 attributeSchema.DeprecationNotice, attributeSchema.UniquenessType, attributeSchema.GlobalUniquenessType,
-                attributeSchema.Filterable, attributeSchema.Sortable, attributeSchema.Localized,
-                attributeSchema.Nullable,
+                attributeSchema.Filterable(), attributeSchema.Sortable(), attributeSchema.Localized(),
+                attributeSchema.Nullable(),
                 attributeSchema.Representative, attributeSchema.Type, attributeSchema.DefaultValue,
                 attributeSchema.IndexedDecimalPlaces
             );

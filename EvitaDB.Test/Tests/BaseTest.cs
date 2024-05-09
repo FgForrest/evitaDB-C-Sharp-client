@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using EvitaDB.Client;
+using EvitaDB.Test.Utils;
 using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]

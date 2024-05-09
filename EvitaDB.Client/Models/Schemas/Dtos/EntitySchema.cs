@@ -13,9 +13,9 @@ public class EntitySchema : IEntitySchema
     public IDictionary<NamingConvention, string?> NameVariants { get; }
     public string? Description { get; }
     public string? DeprecationNotice { get; }
-    public bool WithGeneratedPrimaryKey { get; }
-    public bool WithHierarchy { get; }
-    public bool WithPrice { get; }
+    public bool WithGeneratedPrimaryKey() => withGeneratedPrimaryKey;
+    public bool WithHierarchy() => withHierarchy;
+    public bool WithPrice() => withPrice;
     public int IndexedPricePlaces { get; }
     public ISet<CultureInfo> Locales { get; }
     public ISet<Currency> Currencies { get; }
@@ -38,6 +38,10 @@ public class EntitySchema : IEntitySchema
     public IList<IEntityAttributeSchema> OrderedAttributes { get; } = new List<IEntityAttributeSchema>();
     public IList<IAssociatedDataSchema> OrderedAssociatedData { get; } = new List<IAssociatedDataSchema>();
 
+    private bool withGeneratedPrimaryKey;
+    private bool withHierarchy;
+    private bool withPrice;
+    
     private EntitySchema(
         int version,
         string name,
@@ -61,9 +65,9 @@ public class EntitySchema : IEntitySchema
         NameVariants = nameVariants;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        WithGeneratedPrimaryKey = withGeneratedPrimaryKey;
-        WithHierarchy = withHierarchy;
-        WithPrice = withPrice;
+        this.withGeneratedPrimaryKey = withGeneratedPrimaryKey;
+        this.withHierarchy = withHierarchy;
+        this.withPrice = withPrice;
         IndexedPricePlaces = indexedPricePlaces;
         Locales = locales.ToImmutableSortedSet(Comparer<CultureInfo>.Create((x, y) => string.Compare(x.TwoLetterISOLanguageName, y.TwoLetterISOLanguageName, StringComparison.Ordinal)));
         Currencies = currencies.ToImmutableSortedSet(Comparer<Currency>.Create((x, y) => string.Compare(x.CurrencyCode, y.CurrencyCode, StringComparison.Ordinal)));
@@ -92,11 +96,11 @@ public class EntitySchema : IEntitySchema
         EvolutionModes = evolutionMode;
         NonNullableAttributes = Attributes
             .Values
-            .Where(it => !it.Nullable)
+            .Where(it => !it.Nullable())
             .ToList();
         NonNullableAssociatedData = AssociatedData
             .Values
-            .Where(it => !it.Nullable)
+            .Where(it => !it.Nullable())
             .ToList();
         SortableAttributeCompounds = sortableAttributeCompounds.ToImmutableDictionary(
             x => x.Key,
@@ -117,7 +121,7 @@ public class EntitySchema : IEntitySchema
 
     public bool IsBlank()
     {
-        return Version == 1 && !WithGeneratedPrimaryKey && !WithHierarchy && !WithPrice && IndexedPricePlaces == 2 &&
+        return Version == 1 && !WithGeneratedPrimaryKey() && !WithHierarchy() && !WithPrice() && IndexedPricePlaces == 2 &&
                !Locales.Any() && !Currencies.Any() && !Attributes.Any() && !AssociatedData.Any() && !References.Any()
                && EvolutionModes.Count == Enum.GetValues<EvolutionMode>().Length;
     }
@@ -362,10 +366,10 @@ public class EntitySchema : IEntitySchema
             attributeSchemaContract.Description,
             attributeSchemaContract.DeprecationNotice,
             attributeSchemaContract.UniquenessType,
-            attributeSchemaContract.Filterable,
-            attributeSchemaContract.Sortable,
-            attributeSchemaContract.Localized,
-            attributeSchemaContract.Nullable,
+            attributeSchemaContract.Filterable(),
+            attributeSchemaContract.Sortable(),
+            attributeSchemaContract.Localized(),
+            attributeSchemaContract.Nullable(),
             attributeSchemaContract.Type,
             attributeSchemaContract.DefaultValue,
             attributeSchemaContract.IndexedDecimalPlaces
@@ -390,8 +394,8 @@ public class EntitySchema : IEntitySchema
             associatedDataSchemaContract.NameVariants,
             associatedDataSchemaContract.Description,
             associatedDataSchemaContract.DeprecationNotice,
-            associatedDataSchemaContract.Localized,
-            associatedDataSchemaContract.Nullable,
+            associatedDataSchemaContract.Localized(),
+            associatedDataSchemaContract.Nullable(),
             associatedDataSchemaContract.Type
         );
     }
@@ -423,10 +427,10 @@ public class EntitySchema : IEntitySchema
             attributeSchemaContract.Description,
             attributeSchemaContract.DeprecationNotice,
             attributeSchemaContract.UniquenessType,
-            attributeSchemaContract.Filterable,
-            attributeSchemaContract.Sortable,
-            attributeSchemaContract.Localized,
-            attributeSchemaContract.Nullable,
+            attributeSchemaContract.Filterable(),
+            attributeSchemaContract.Sortable(),
+            attributeSchemaContract.Localized(),
+            attributeSchemaContract.Nullable(),
             attributeSchemaContract.Type,
             attributeSchemaContract.DefaultValue,
             attributeSchemaContract.IndexedDecimalPlaces

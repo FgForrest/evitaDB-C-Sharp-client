@@ -70,14 +70,14 @@ public class SetReferenceSchemaIndexedMutation : AbstractModifyReferenceDataSche
     {
         foreach (IAttributeSchema attributeSchema in referenceSchema.GetAttributes().Values)
         {
-            if (attributeSchema.Filterable || attributeSchema.Unique || attributeSchema.Sortable)
+            if (attributeSchema.Filterable() || attributeSchema.Unique() || attributeSchema.Sortable())
             {
                 string type;
-                if (attributeSchema.Filterable)
+                if (attributeSchema.Filterable())
                 {
                     type = "filterable";
                 }
-                else if (attributeSchema.Unique)
+                else if (attributeSchema.Unique())
                 {
                     type = "unique";
                 }

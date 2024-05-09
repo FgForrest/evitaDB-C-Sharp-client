@@ -67,7 +67,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        Assert.IsTrue(!attributeSchema!.Localized,
+        Assert.IsTrue(!attributeSchema!.Localized(),
             () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
         return AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue)
             ? attributeValue.Value
@@ -84,7 +84,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        Assert.IsTrue(!attributeSchema!.Localized,
+        Assert.IsTrue(!attributeSchema!.Localized(),
             () => ContextMissingException.LocaleForAttributeContextMissing(attributeName));
         if (AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue))
         {
@@ -119,7 +119,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        return attributeSchema!.Localized ? null :
+        return attributeSchema!.Localized() ? null :
             AttributeValues.TryGetValue(new AttributeKey(attributeName), out AttributeValue? attributeValue) ? attributeValue :
             null;
     }
@@ -134,7 +134,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        AttributeKey attributeKey = attributeSchema!.Localized
+        AttributeKey attributeKey = attributeSchema!.Localized()
             ? new AttributeKey(attributeName, locale)
             : new AttributeKey(attributeName);
         
@@ -153,7 +153,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        AttributeKey attributeKey = attributeSchema!.Localized
+        AttributeKey attributeKey = attributeSchema!.Localized()
             ? new AttributeKey(attributeName, locale)
             : new AttributeKey(attributeName);
         return AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue)
@@ -168,7 +168,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             CreateAttributeNotFoundException(attributeName);
         }
 
-        AttributeKey attributeKey = attributeSchema!.Localized
+        AttributeKey attributeKey = attributeSchema!.Localized()
             ? new AttributeKey(attributeName, locale)
             : new AttributeKey(attributeName);
         return AttributeValues.TryGetValue(attributeKey, out AttributeValue? attributeValue) ? attributeValue : null;
@@ -222,7 +222,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
             }
         }
 
-        AttributeKey attributeKeyToUse = attributeSchema!.Localized
+        AttributeKey attributeKeyToUse = attributeSchema!.Localized()
             ? attributeKey
             : attributeKey.Localized ? new AttributeKey(attributeName) : attributeKey;
         return AttributeValues.TryGetValue(attributeKeyToUse, out AttributeValue? attributeValue) ? attributeValue : null;

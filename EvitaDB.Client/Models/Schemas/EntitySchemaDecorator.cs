@@ -97,11 +97,11 @@ public class EntitySchemaDecorator : ISealedEntitySchema
         return Delegate.GetAttributeOrThrow(name);
     }
 
-    public bool WithGeneratedPrimaryKey => Delegate.WithGeneratedPrimaryKey;
+    public bool WithGeneratedPrimaryKey() => Delegate.WithGeneratedPrimaryKey();
 
-    public bool WithHierarchy => Delegate.WithHierarchy;
+    public bool WithHierarchy() => Delegate.WithHierarchy();
 
-    public bool WithPrice => Delegate.WithPrice;
+    public bool WithPrice() => Delegate.WithPrice();
 
     public int IndexedPricePlaces => Delegate.IndexedPricePlaces;
 

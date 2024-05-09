@@ -7,7 +7,7 @@ public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
     public GlobalAttributeUniquenessType GlobalUniquenessType { get; }
     public bool Representative { get; }
 
-    public new bool Unique => base.Unique || UniqueGlobally;
+    public new bool Unique => base.Unique() || UniqueGlobally;
     public bool UniqueGlobally => GlobalUniquenessType != GlobalAttributeUniquenessType.NotUnique;
 
     public bool UniqueGloballyWithinLocale =>
@@ -54,10 +54,10 @@ public class GlobalAttributeSchema : AttributeSchema, IGlobalAttributeSchema
                "name='" + Name + '\'' +
                ", unique=" + UniquenessType +
                ", uniqueGlobally=" + GlobalUniquenessType +
-               ", filterable=" + Filterable +
-               ", sortable=" + Sortable +
-               ", localized=" + Localized +
-               ", nullable=" + Nullable +
+               ", filterable=" + Filterable() +
+               ", sortable=" + Sortable() +
+               ", localized=" + Localized() +
+               ", nullable=" + Nullable() +
                ", representative=" + Representative +
                ", type=" + Type +
                ", indexedDecimalPlaces=" + IndexedDecimalPlaces +

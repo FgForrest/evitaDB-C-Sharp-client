@@ -77,7 +77,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        Assert.IsTrue(!associatedDataSchema.Localized,
+        Assert.IsTrue(!associatedDataSchema.Localized(),
             () => ContextMissingException.LocaleForAssociatedDataContextMissing(associatedDataName));
         return AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName),
             out AssociatedDataValue? associatedDataValue)
@@ -92,7 +92,7 @@ public class AssociatedData : IAssociatedData
                     ? schema
                     : throw new AssociatedDataNotFoundException(associatedDataName, EntitySchema);
         Assert.IsTrue(
-                !associatedDataSchema.Localized,
+                !associatedDataSchema.Localized(),
                 () => ContextMissingException.LocaleForAssociatedDataContextMissing(associatedDataName)
             );
         AssociatedDataValue? associatedDataValue =
@@ -120,7 +120,7 @@ public class AssociatedData : IAssociatedData
                 ? schema
                 : throw new AssociatedDataNotFoundException(associatedDataName, EntitySchema);
         
-        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized ?
+        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized() ?
             new AssociatedDataKey(associatedDataName, locale) :
             new AssociatedDataKey(associatedDataName);
         
@@ -149,7 +149,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        Assert.IsTrue(!associatedDataSchema.Localized,
+        Assert.IsTrue(!associatedDataSchema.Localized(),
             () => ContextMissingException.LocaleForAttributeContextMissing(associatedDataName));
         return AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName), out var attributeValue)
             ? (object[]?) attributeValue.Value
@@ -163,7 +163,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        return associatedDataSchema.Localized
+        return associatedDataSchema.Localized()
             ? null
             : AssociatedDataValues.TryGetValue(new AssociatedDataKey(associatedDataName), out var associatedDataValue)
                 ? associatedDataValue
@@ -177,7 +177,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized
+        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized()
             ? new AssociatedDataKey(associatedDataName, locale)
             : new AssociatedDataKey(associatedDataName);
         return AssociatedDataValues.TryGetValue(associatedDataKey, out var associatedDataValue)
@@ -192,7 +192,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized
+        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized()
             ? new AssociatedDataKey(associatedDataName, locale)
             : new AssociatedDataKey(associatedDataName);
         return AssociatedDataValues.TryGetValue(associatedDataKey, out var associatedDataValue)
@@ -207,7 +207,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(associatedDataName, EntitySchema);
         }
 
-        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized
+        AssociatedDataKey associatedDataKey = associatedDataSchema.Localized()
             ? new AssociatedDataKey(associatedDataName, locale)
             : new AssociatedDataKey(associatedDataName);
         return AssociatedDataValues.TryGetValue(associatedDataKey, out var associatedDataValue)
@@ -263,7 +263,7 @@ public class AssociatedData : IAssociatedData
             throw new AttributeNotFoundException(attributeName, EntitySchema);
         }
 
-        AssociatedDataKey associatedDataKeyToUse = associatedDataSchema.Localized
+        AssociatedDataKey associatedDataKeyToUse = associatedDataSchema.Localized()
             ? associatedDataKey
             : associatedDataKey.Localized
                 ? new AssociatedDataKey(attributeName)

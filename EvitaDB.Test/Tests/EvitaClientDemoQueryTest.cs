@@ -133,7 +133,8 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
                             UserFilter(
                                 FacetHaving("variantParameters", EntityPrimaryKeyInSet(1, 2, 3))
                             )
-                        )),
+                        )
+                    ),
                     OrderBy(
                         AttributeNatural("orderedQuantity", OrderDirection.Desc),
                         PriceNatural(OrderDirection.Asc),

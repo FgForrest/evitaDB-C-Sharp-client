@@ -279,6 +279,18 @@ public partial class EvitaClient : IDisposable
     {
         AssertActive();
 
+        // first close and remove all active sessions to particular catalog
+        List<EvitaClientSession> activeCatalogSessions = _activeSessions.Values
+            .Where(x => x.CatalogName == catalogName)
+            .ToList();
+
+        foreach (var session in activeCatalogSessions)
+        {
+            session.Close();
+            _activeSessions.Remove(session.SessionId, out _);
+        }
+        
+        // then delete it
         GrpcDeleteCatalogIfExistsRequest request = new GrpcDeleteCatalogIfExistsRequest { CatalogName = catalogName };
         GrpcDeleteCatalogIfExistsResponse grpcResponse =
             ExecuteWithBlockingEvitaService(evitaService => evitaService.DeleteCatalogIfExists(request));

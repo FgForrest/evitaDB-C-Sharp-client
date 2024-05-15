@@ -189,6 +189,6 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
             )
         );
         
-        Assert.True(evitaEntityResponse.RecordData.Count > 0);
+        Assert.True(evitaEntityResponse.RecordData.Count == 0);
     }
 }

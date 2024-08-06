@@ -183,7 +183,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
                                 Data.ReferenceCategories,
                                 FromRoot(Data.HierarchyReferenceRoot, EntityFetchAll())
                             ),
-                            FacetSummary(FacetStatisticsDepth.Impact)
+                            FacetSummaryOfReference(Data.ReferenceRelatedProducts, FacetStatisticsDepth.Impact)
                         )
                     )
                 );

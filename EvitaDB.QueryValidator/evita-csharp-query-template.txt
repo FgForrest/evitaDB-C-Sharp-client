@@ -29,13 +29,11 @@ public class DynamicClass
     private static readonly EvitaClientConfiguration EvitaClientConfiguration = 
         Host == "localhost" ? new EvitaClientConfiguration.Builder()
             .SetHost(Host)
-            .SetPort(5556)
             .SetUseGeneratedCertificate(true)
             .SetUsingTrustedRootCaCertificate(false)
             .Build() :
         new EvitaClientConfiguration.Builder()
             .SetHost(Host)
-            .SetPort(5556)
             .SetUseGeneratedCertificate(false)
             .SetUsingTrustedRootCaCertificate(true)
             .Build();

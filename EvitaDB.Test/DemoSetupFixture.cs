@@ -8,7 +8,6 @@ public class DemoSetupFixture : BaseSetupFixture
     private static readonly EvitaClientConfiguration EvitaClientConfiguration =
         new EvitaClientConfiguration.Builder()
             .SetHost("demo.evitadb.io")
-            .SetPort(5556)
             .SetUseGeneratedCertificate(false)
             .SetUsingTrustedRootCaCertificate(true)
             .Build();

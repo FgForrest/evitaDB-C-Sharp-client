@@ -109,6 +109,7 @@ public partial class EvitaClient : IDisposable
             .SetUseGeneratedCertificate(configuration.UseGeneratedCertificate, configuration.Host,
                 configuration.SystemApiPort)
             .SetTrustedServerCertificate(configuration.UsingTrustedRootCaCertificate)
+            .SetUsingMtls(configuration.MtlsEnabled)
             .Build();
         return new EvitaClient(configuration, certificateManager);
     }

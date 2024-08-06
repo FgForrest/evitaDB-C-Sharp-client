@@ -1,3 +1,4 @@
+using System.Net;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using DotNet.Testcontainers.Builders;
@@ -11,13 +12,13 @@ namespace EvitaDB.Test;
 public class SetupFixture : BaseSetupFixture
 {
     private readonly IList<EvitaTestSuite> _testSuites = new List<EvitaTestSuite>();
-    
-    private const int GrpcPort = 5556;
-    private const int SystemApiPort = 5557;
-    private const string Host = "localhost";
+
+    private const int GrpcPort = 5555;
+    private const int SystemApiPort = 5555;
+    private const string Host = "127.0.0.1";
     private const string ImageName = $"evitadb/evitadb:{ImageVersion}";
     private const string ImageVersion = "canary";
-    
+
     public override Task<EvitaClient> GetClient()
     {
         if (Clients.TryDequeue(out EvitaClient? evitaClient))
@@ -26,9 +27,10 @@ public class SetupFixture : BaseSetupFixture
             evitaClient.Close();
             return EvitaClient.Create(evitaClient.Configuration);
         }
+
         return InitializeEvitaContainerAndClientClient();
     }
-    
+
     public override void ReturnClient(EvitaClient client)
     {
         Clients.Enqueue(client);
@@ -43,10 +45,7 @@ public class SetupFixture : BaseSetupFixture
             {
                 Filters = new Dictionary<string, IDictionary<string, bool>>
                 {
-                    ["reference"] = new Dictionary<string, bool>
-                    {
-                        [ImageName] = true,
-                    },
+                    ["reference"] = new Dictionary<string, bool> { [ImageName] = true, },
                 }
             });
         if (images.Count > 0)
@@ -86,30 +85,32 @@ public class SetupFixture : BaseSetupFixture
             evitaClient.Close();
         }
     }
-    
-    private async Task<EvitaClient> InitializeEvitaContainerAndClientClient(bool cacheCreatedEntitiesAndDestroySetupClient = false)
+
+    private async Task<EvitaClient> InitializeEvitaContainerAndClientClient(
+        bool cacheCreatedEntitiesAndDestroySetupClient = false)
     {
         IContainer container;
         using (var consumer = Consume.RedirectStdoutAndStderrToConsole())
         {
             container = new ContainerBuilder()
                 .WithName($"evita-{Guid.NewGuid().ToString()}")
+                .WithEnvironment("EVITA_ARGS", "api.endpoints.rest.host=:5555 api.endpoints.rest.tlsMode=RELAXED api.endpoints.graphQL.host=:5555 api.endpoints.graphQL.tlsMode=RELAXED api.endpoints.gRPC.mTLS.enabled=false api.endpoints.gRPC.host=:5555 api.endpoints.gRPC.tlsMode=RELAXED api.endpoints.system.host=:5555 api.endpoints.observability.host=:5555 api.endpoints.lab.host=:5555")
                 // Set the image for the container to "evitadb/evitadb".
                 .WithImage(ImageName)
                 // Bind ports of the container.
                 .WithPortBinding(GrpcPort, true)
                 .WithPortBinding(SystemApiPort, true)
                 .WithWaitStrategy(
-                    Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort))
+                    Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort).AddCustomWaitStrategy(new CustomWaitStrategy())
+                )
                 .WithOutputConsumer(consumer)
                 // Build the container configuration.
                 .Build();
-        
+
             // Start the container.
             try
             {
-                await container.StartAsync()
-                    .ConfigureAwait(false);
+                await container.StartAsync().ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -123,7 +124,7 @@ public class SetupFixture : BaseSetupFixture
             .SetPort(container.GetMappedPublicPort(GrpcPort))
             .SetSystemApiPort(container.GetMappedPublicPort(SystemApiPort))
             .Build();
-        
+
         // create a new evita client with the specified configuration
         using (EvitaClient setupClient = await EvitaClient.Create(configuration))
         {
@@ -134,10 +135,10 @@ public class SetupFixture : BaseSetupFixture
         }
 
         EvitaClient client = await EvitaClient.Create(configuration);
-        
+
         _testSuites.Add(new EvitaTestSuite(client, container));
         Clients.Enqueue(client);
-        
+
         return client;
     }
 

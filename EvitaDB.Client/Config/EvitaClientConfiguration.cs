@@ -10,8 +10,8 @@ public record EvitaClientConfiguration(
     string? TraceEndpointProtocol
 )
 {
-    private const int DefaultGrpcApiPort = 5556;
-    private const int DefaultSystemApiPort = 5557;
+    private const int DefaultGrpcApiPort = 5555;
+    private const int DefaultSystemApiPort = 5555;
 
     public class Builder
     {

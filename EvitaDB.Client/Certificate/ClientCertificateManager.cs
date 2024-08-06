@@ -16,10 +16,11 @@ public class ClientCertificateManager
     private string? ClientCertificateKeyPassword { get; }
     private bool UseGeneratedCertificate { get; }
     private bool TrustedServerCertificate { get; }
+    private bool UsingMtls { get; }
 
     private ClientCertificateManager(string clientCertificateFolderPath, string? clientCertificatePath,
         string? clientCertificateKeyPath, string? clientCertificateKeyPassword, bool useGeneratedCertificate,
-        bool trustedServerCertificate)
+        bool trustedServerCertificate, bool usingMtls)
     {
         ClientCertificateFolderPath = clientCertificateFolderPath;
         ClientCertificatePath = clientCertificatePath;
@@ -27,13 +28,14 @@ public class ClientCertificateManager
         ClientCertificateKeyPassword = clientCertificateKeyPassword;
         UseGeneratedCertificate = useGeneratedCertificate;
         TrustedServerCertificate = trustedServerCertificate;
+        UsingMtls = usingMtls;
     }
 
-    private static async ValueTask<string> GetServerDirectoryPath(string host, int port, string clientCertificateFolderPath, bool useGeneratedCertificate)
+    private static async ValueTask<string> GetServerDirectoryPath(string host, int port, string clientCertificateFolderPath, bool useGeneratedCertificate, bool usingMtls)
     {
         if (useGeneratedCertificate)
         {
-            return await GetCertificatesFromServer(host, port, clientCertificateFolderPath);
+            return await GetCertificatesFromServer(host, port, clientCertificateFolderPath, usingMtls);
         }
         return await IdentifyServerDirectory(host, port, clientCertificateFolderPath);
     }
@@ -46,15 +48,16 @@ public class ClientCertificateManager
         private string? ClientCertificateKeyPassword { get; set; }
         private bool UseGeneratedCertificate { get; set; } = true;
         private bool TrustedServerCertificate { get; set; }
+        private bool UsingMtls { get; set; }
         private string? Host { get; set; }
         private int Port { get; set; }
 
         public async Task<ClientCertificateManager> Build()
         {
-            string certificatePath = await GetServerDirectoryPath(Host!, Port, ClientCertificateFolderPath, UseGeneratedCertificate);
+            string certificatePath = await GetServerDirectoryPath(Host!, Port, ClientCertificateFolderPath, UseGeneratedCertificate, UsingMtls);
             return new ClientCertificateManager(certificatePath, ClientCertificatePath,
                 ClientCertificateKeyPath, ClientCertificateKeyPassword, UseGeneratedCertificate,
-                TrustedServerCertificate);
+                TrustedServerCertificate, UsingMtls);
         }
 
         public Builder SetClientCertificateFolderPath(string? clientCertificateFolderPath)
@@ -94,10 +97,16 @@ public class ClientCertificateManager
             TrustedServerCertificate = trustedServerCertificate;
             return this;
         }
+
+        public Builder SetUsingMtls(bool usingMtls)
+        {
+            UsingMtls = usingMtls;
+            return this;
+        }
     }
 
     private static async Task<string> GetCertificatesFromServer(string host, int systemApiPort,
-        string certificateClientFolderPath)
+        string certificateClientFolderPath, bool usingMtls)
     {
         string apiEndpoint = $"http://{host}:{systemApiPort}/system/";
         string serverName = await GetServerName(apiEndpoint);
@@ -122,15 +131,17 @@ public class ClientCertificateManager
         try
         {
             await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedCertificateFileName);
-            await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
-            await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
-
+            if (usingMtls)
+            {
+                await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateFileName);
+                await DownloadFile(apiEndpoint, serverSpecificDirectory, CertificateUtils.GeneratedClientCertificateKeyFileName);
+            }
             return serverSpecificDirectory;
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            throw new EvitaInvalidUsageException(ex.Message, "Failed to download certificates from the server", ex);
+            throw new EvitaInvalidUsageException(ex.Message, $"Failed to download {(usingMtls ? "client" : "")} certificates from the server", ex);
         }
     }
 

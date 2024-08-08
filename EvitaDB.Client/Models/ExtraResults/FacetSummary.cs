@@ -159,7 +159,7 @@ public class FacetSummary : IEvitaResponseExtraResult, IPrettyPrintable
                                                                 string.Join("\n", statistics
                                                                     .GetFacetStatistics()
                                                                     .Select(facet => "\t\t[" +
-                                                                        (facet.Requested ? "X" : " ") + "] " +
+                                                                        (facet.Requested ? "X" : facet.Impact is null or { HasSense: true } ? " " : "-") + "] " +
                                                                         (facetRenderer(facet).Trim() != ""
                                                                             ? facetRenderer(facet)
                                                                             : facet.FacetEntity.PrimaryKey.ToString()) +

@@ -19,6 +19,6 @@ public record Predecessor(int PredecessorId)
 
     public override string ToString()
     {
-        return $"Predecessor[predecessorId={PredecessorId}]";
+        return $"Predecessor[predecessorPk={PredecessorId}]";
     }
 }

@@ -80,7 +80,7 @@ public class ExistingPricesBuilder : IPricesBuilder
                     upsertPriceMutation.TaxRate,
                     upsertPriceMutation.PriceWithTax,
                     upsertPriceMutation.Validity,
-                    upsertPriceMutation.Sellable
+                    upsertPriceMutation.Indexed
                 )
             );
             PriceMutations.Add(priceKey, upsertPriceMutation);

@@ -18,7 +18,7 @@ public class ModifyAssociatedDataSchemaDeprecationNoticeMutation : AbstractModif
         IAssociatedDataSchema? existingAssociatedDataSchema = entitySchema!.GetAssociatedData(Name);
         if (existingAssociatedDataSchema is null) {
             // ups, the associated data is missing
-            throw new InvalidSchemaMutationException(
+            throw new InvalidSchemaException(
                 "The associated data `" + Name + "` is not defined in entity `" + entitySchema.Name + "` schema!"
             );
         }

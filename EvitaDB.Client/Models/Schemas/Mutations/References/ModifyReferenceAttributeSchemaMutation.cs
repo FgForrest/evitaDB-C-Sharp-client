@@ -27,7 +27,7 @@ public class ModifyReferenceAttributeSchemaMutation : AbstractModifyReferenceDat
         if (existingReferenceSchema is null)
         {
             // ups, the reference schema is missing
-            throw new InvalidSchemaMutationException(
+            throw new InvalidSchemaException(
                 "The reference `" + Name + "` is not defined in entity `" + entitySchema.Name + "` schema!"
             );
         }

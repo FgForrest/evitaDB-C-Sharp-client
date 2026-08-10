@@ -368,7 +368,7 @@ public static partial class MarkdownConverter
     {
         if (value is Predecessor predecessor)
         {
-            return predecessor.IsHead ? PredecessorHeadSymbol : PredecessorSymbol + predecessor.PredecessorId;
+            return (predecessor as IChainableType).IsHead ? PredecessorHeadSymbol : PredecessorSymbol + predecessor.PredecessorPk;
         }
 
         return EvitaDataTypes.FormatValue(value);

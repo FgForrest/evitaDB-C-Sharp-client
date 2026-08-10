@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
 
@@ -47,4 +48,5 @@ public abstract class AbstractModifyAssociatedDataSchemaMutation : IEntitySchema
 
     public abstract IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema);
     public abstract IAssociatedDataSchema Mutate(IAssociatedDataSchema? associatedDataSchema);
+    public Operation Operation => Operation.Upsert;
 }

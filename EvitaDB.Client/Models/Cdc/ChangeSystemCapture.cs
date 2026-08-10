@@ -2,4 +2,4 @@
 
 namespace EvitaDB.Client.Models.Cdc;
 
-public record ChangeSystemCapture(long Index, string Catalog, Operation Operation, IMutation? Body) : IChangeCapture;
+public record ChangeSystemCapture(long Version, int Index, string Catalog, Operation Operation, IMutation? Body) : IChangeCapture;

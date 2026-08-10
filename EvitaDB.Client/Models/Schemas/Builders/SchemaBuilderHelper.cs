@@ -7,11 +7,11 @@ namespace EvitaDB.Client.Models.Schemas.Builders;
 
 public static class SchemaBuilderHelper
 {
-    public static bool AddMutations(
+    public static InternalCatalogSchemaBuilder.MutationImpact AddMutations<T>(
         ICatalogSchema currentCatalogSchema,
         IList<ILocalCatalogSchemaMutation> existingMutations,
         params ILocalCatalogSchemaMutation[] newMutations
-    )
+    ) where T : ISchemaMutation
     {
         int existingMutationsCount = existingMutations.Count;
         foreach (ILocalCatalogSchemaMutation localCatalogSchemaMutation in newMutations)
@@ -119,7 +119,7 @@ public static class SchemaBuilderHelper
         {
             Assert.IsTrue(
                 !attributeSchema.Type.IsArray,
-                () => new InvalidSchemaMutationException(
+                () => new InvalidSchemaException(
                     "Attribute " + attributeName + " is marked as sortable and thus cannot be the array of " +
                     attributeSchema.Type + "!"
                 )
@@ -150,7 +150,7 @@ public static class SchemaBuilderHelper
 
             Assert.IsTrue(
                 !attributeSchema.Type.IsArray,
-                () => new InvalidSchemaMutationException(
+                () => new InvalidSchemaException(
                     "Attribute `" + attributeElement.AttributeName + "` the sortable attribute compound" +
                     " `" + compoundSchemaName + "` consists of cannot be the array of " +
                     attributeSchema.Type + "!"

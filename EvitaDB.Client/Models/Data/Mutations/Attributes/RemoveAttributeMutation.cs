@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -7,6 +8,7 @@ namespace EvitaDB.Client.Models.Data.Mutations.Attributes;
 
 public class RemoveAttributeMutation : AttributeMutation
 {
+    public override Operation Operation => Operation.Remove;
     public RemoveAttributeMutation(AttributeKey attributeKey) : base(attributeKey)
     {
     }

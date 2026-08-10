@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -7,6 +8,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
 public class AllowCurrencyInEntitySchemaMutation : IEntitySchemaMutation
 {
     public Currency[] Currencies { get; }
+    public Operation Operation => Operation.Upsert;
     
     public AllowCurrencyInEntitySchemaMutation(params Currency[] currencies)
     {

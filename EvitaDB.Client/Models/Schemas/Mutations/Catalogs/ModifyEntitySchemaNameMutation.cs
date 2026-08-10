@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -9,6 +10,7 @@ public class ModifyEntitySchemaNameMutation : ILocalCatalogSchemaMutation, IEnti
     public string Name { get; }
     public string NewName { get; }
     public bool OverwriteTarget { get; }
+    public Operation Operation => Operation.Upsert;
 
     public ModifyEntitySchemaNameMutation(string name, string newName, bool overwriteTarget)
     {
@@ -17,16 +19,35 @@ public class ModifyEntitySchemaNameMutation : ILocalCatalogSchemaMutation, IEnti
         OverwriteTarget = overwriteTarget;
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas? Mutate(ICatalogSchema? catalogSchema, IEntitySchemaProvider entitySchemaProvider)
     {
-        return catalogSchema;
+        if (entitySchemaProvider is MutationEntitySchemaAccessor mutationEntitySchemaAccessor)
+        {
+            var entitySchema = mutationEntitySchemaAccessor.GetEntitySchema(Name);
+            // TODO tpz: solve nullability issue below
+            IEntitySchema? alteredSchema = Mutate(catalogSchema!, entitySchema);
+            if (alteredSchema is not null)
+            {
+                mutationEntitySchemaAccessor.ReplaceEntitySchema(Name, alteredSchema);
+            }
+            else
+            {
+                throw new EvitaInternalError("Entity schema not found: " + Name);
+            }
+            
+        }
+        // do nothing - we alter only the entity schema
+        // TODO tpz: solve nullability issue below
+        return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(
+            catalogSchema!
+        );
     }
 
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.NotNull(
             entitySchema,
-            () => new InvalidSchemaMutationException("Entity schema `" + Name + "` doesn't exist!")
+            () => new InvalidSchemaException("Entity schema `" + Name + "` doesn't exist!")
             );
         if (NewName.Equals(catalogSchema.Name)) {
             // nothing has changed - we can return existing schema

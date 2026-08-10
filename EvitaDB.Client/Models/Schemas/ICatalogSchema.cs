@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
 namespace EvitaDB.Client.Models.Schemas;
 
@@ -16,7 +17,7 @@ namespace EvitaDB.Client.Models.Schemas;
 /// </para>
 /// </remarks>
 /// </summary>
-public interface ICatalogSchema : INamedSchema, IVersioned, IContentComparator<ICatalogSchema>, IAttributeSchemaProvider<IGlobalAttributeSchema>
+public interface ICatalogSchema : INamedSchema, IVersioned, IContentComparator<ICatalogSchema>, IEntitySchemaProvider, IAttributeSchemaProvider<IGlobalAttributeSchema>
 {
     /// <summary>
     /// Returns set of allowed evolution modes. These allow to specify how strict is evitaDB when unknown information is
@@ -24,12 +25,14 @@ public interface ICatalogSchema : INamedSchema, IVersioned, IContentComparator<I
     /// reported by an exception. This behaviour can be changed by this evolution mode, however.
     /// </summary>
     ISet<CatalogEvolutionMode> CatalogEvolutionModes { get; }
+
+    new IEnumerable<IEntitySchema?> GetEntitySchemas();
     
     /// <summary>
     /// Returns entity schema that is connected with passed `entityType` or NULL if such entity collection doesn't
     /// exist.
     /// </summary>
-    IEntitySchema? GetEntitySchema(string entityType);
+    new IEntitySchema? GetEntitySchema(string entityType);
 
     /// <summary>
     /// Returns entity schema that is connected with passed `entityType` or throws an exception if such entity collection
@@ -40,4 +43,6 @@ public interface ICatalogSchema : INamedSchema, IVersioned, IContentComparator<I
         return GetEntitySchema(entityType) ??
                throw new EvitaInvalidUsageException("Schema for entity with name `" + entityType + "` was not found!");
     }
+
+    void Validate();
 }

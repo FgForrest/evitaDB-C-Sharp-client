@@ -1,4 +1,6 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Mutations;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -7,7 +9,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 public class ModifyCatalogSchemaNameMutation : ITopLevelCatalogSchemaMutation
 {
     public string CatalogName { get; }
-    public string NewCatalogName { get;  }
+    public string NewCatalogName { get; }
     public bool OverwriteTarget { get; }
 
     public ModifyCatalogSchemaNameMutation(string catalogName, string newCatalogName, bool overwriteTarget)
@@ -17,19 +19,45 @@ public class ModifyCatalogSchemaNameMutation : ITopLevelCatalogSchemaMutation
         OverwriteTarget = overwriteTarget;
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas? Mutate(ICatalogSchema? catalogSchema)
     {
-        Assert.NotNull(catalogSchema, () => new InvalidSchemaMutationException("Catalog doesn't exist!"));
-        if (NewCatalogName.Equals(catalogSchema!.Name)) {
-            return catalogSchema;
+        Assert.NotNull(catalogSchema, () => new InvalidSchemaException("Catalog doesn't exist!"));
+        if (NewCatalogName.Equals(catalogSchema!.Name))
+        {
+            return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(catalogSchema);
         }
-        return CatalogSchema.InternalBuild(
-            catalogSchema.Version + 1,
-            NewCatalogName,
-            NamingConventionHelper.Generate(NewCatalogName),
-            catalogSchema.Description,
-            catalogSchema.CatalogEvolutionModes,
-            catalogSchema.GetAttributes(),
-            entityType => throw new NotSupportedException("Mutated catalog schema can't provide access to entity schemas!"));
+
+        return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(
+            CatalogSchema.InternalBuild(
+                catalogSchema.Version + 1,
+                NewCatalogName,
+                NamingConventionHelper.Generate(NewCatalogName),
+                catalogSchema.Description,
+                catalogSchema.CatalogEvolutionModes,
+                catalogSchema.GetAttributes(),
+                MutationEntitySchemaAccessor.Instance
+            )
+        );
+    }
+
+    public Operation Operation => Operation.Upsert;
+
+    public IEnumerable<ChangeCatalogCapture> ToChangeCatalogCapture(MutationPredicate predicate, CaptureContent content)
+    {
+        MutationPredicateContext context = predicate.Context;
+        context.Advance();
+
+        if (predicate.Test(this))
+        {
+            return
+            [
+                ChangeCatalogCapture.SchemaCapture(
+                    context,
+                    Operation,
+                    content == CaptureContent.Body ? this : null)
+            ];
+        }
+
+        return [];
     }
 }

@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 
@@ -11,7 +12,8 @@ public class UpsertPriceMutation : PriceMutation
     public decimal TaxRate { get; }
     public decimal PriceWithTax { get; }
     public DateTimeRange? Validity { get; }
-    public bool Sellable { get; }
+    public bool Indexed { get; }
+    public override Operation Operation => Operation.Upsert;
 
     public UpsertPriceMutation(
         int priceId,
@@ -22,7 +24,7 @@ public class UpsertPriceMutation : PriceMutation
         decimal taxRate,
         decimal priceWithTax,
         DateTimeRange? validity,
-        bool sellable
+        bool indexed
     ) : base(new PriceKey(priceId, priceList, currency))
     {
         InnerRecordId = innerRecordId;
@@ -30,7 +32,7 @@ public class UpsertPriceMutation : PriceMutation
         TaxRate = taxRate;
         PriceWithTax = priceWithTax;
         Validity = validity;
-        Sellable = sellable;
+        Indexed = indexed;
     }
 
     public UpsertPriceMutation(
@@ -40,7 +42,7 @@ public class UpsertPriceMutation : PriceMutation
         decimal taxRate,
         decimal priceWithTax,
         DateTimeRange? validity,
-        bool sellable
+        bool indexed
     ) : base(priceKey)
     {
         InnerRecordId = innerRecordId;
@@ -48,7 +50,7 @@ public class UpsertPriceMutation : PriceMutation
         TaxRate = taxRate;
         PriceWithTax = priceWithTax;
         Validity = validity;
-        Sellable = sellable;
+        Indexed = indexed;
     }
 
     public UpsertPriceMutation(PriceKey priceKey, IPrice price) : base(priceKey)
@@ -58,7 +60,7 @@ public class UpsertPriceMutation : PriceMutation
         TaxRate = price.TaxRate;
         PriceWithTax = price.PriceWithTax;
         Validity = price.Validity;
-        Sellable = price.Sellable;
+        Indexed = price.Indexed;
     }
 
     public override IPrice MutateLocal(IEntitySchema entitySchema, IPrice? existingValue)
@@ -71,7 +73,7 @@ public class UpsertPriceMutation : PriceMutation
                 TaxRate,
                 PriceWithTax,
                 Validity,
-                Sellable
+                Indexed
             );
         }
 
@@ -81,7 +83,7 @@ public class UpsertPriceMutation : PriceMutation
             Equals(existingValue.TaxRate, TaxRate) ||
             Equals(existingValue.PriceWithTax, PriceWithTax) ||
             Equals(existingValue.Validity, Validity) ||
-            existingValue.Sellable != Sellable
+            existingValue.Indexed != Indexed
         ) {
             return new Price(
                 existingValue.Key,
@@ -90,7 +92,7 @@ public class UpsertPriceMutation : PriceMutation
                 TaxRate,
                 PriceWithTax,
                 Validity,
-                Sellable,
+                Indexed,
                 existingValue.Version + 1
             );
         }

@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
@@ -8,6 +9,7 @@ namespace EvitaDB.Client.Models.Data.Mutations.Prices;
 
 public class RemovePriceMutation : PriceMutation
 {
+    public override Operation Operation => Operation.Remove;
     public RemovePriceMutation(PriceKey priceKey) : base(priceKey)
     {
     }
@@ -31,7 +33,7 @@ public class RemovePriceMutation : PriceMutation
             existingValue.TaxRate,
             existingValue.PriceWithTax,
             existingValue.Validity,
-            existingValue.Sellable,
+            existingValue.Indexed,
             true
         );
     }

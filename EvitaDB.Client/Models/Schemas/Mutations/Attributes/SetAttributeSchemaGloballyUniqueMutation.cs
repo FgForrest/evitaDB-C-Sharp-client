@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -8,6 +9,7 @@ public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMu
 {
     public string Name { get; }
     public GlobalAttributeUniquenessType UniqueGlobally { get; }
+    public Operation Operation => Operation.Upsert;
 
     public SetAttributeSchemaGloballyUniqueMutation(string name, GlobalAttributeUniquenessType uniqueGlobally)
     {
@@ -40,16 +42,16 @@ public class SetAttributeSchemaGloballyUniqueMutation : IGlobalAttributeSchemaMu
         throw new EvitaInternalError("Unexpected input!");
     }
 
-    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas Mutate(ICatalogSchema? catalogSchema, IEntitySchemaProvider entitySchemaProvider)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??
-                                                         throw new InvalidSchemaMutationException("The attribute `" +
+                                                         throw new InvalidSchemaException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
         IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema, typeof(IGlobalAttributeSchema));
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema, entitySchemaProvider, new UseGlobalAttributeSchemaMutation(Name)
         );
     }
 }

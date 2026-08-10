@@ -1,3 +1,3 @@
 ﻿namespace EvitaDB.Client.Models.Cdc;
 
-public record ChangeSystemCaptureRequest(CaptureContent Content);
+public record ChangeSystemCaptureRequest(CaptureContent Content) : IChangeCaptureRequest;

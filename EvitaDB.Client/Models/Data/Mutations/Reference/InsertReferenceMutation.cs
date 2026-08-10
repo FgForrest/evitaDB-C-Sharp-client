@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations.Reference;
@@ -8,7 +9,7 @@ public class InsertReferenceMutation : ReferenceMutation
     private new ReferenceKey ReferenceKey { get; }
     public Cardinality? ReferenceCardinality { get; }
     public string? ReferencedEntityType { get; }
-
+    public override Operation Operation => Operation.Upsert;
 
     public InsertReferenceMutation(ReferenceKey referenceKey, Cardinality? referenceCardinality,
         string? referencedEntityType) : base(referenceKey)

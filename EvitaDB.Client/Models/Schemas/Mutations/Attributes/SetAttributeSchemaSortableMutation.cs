@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -10,6 +11,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
 {
     public string Name { get; }
     public bool Sortable { get; }
+    public Operation Operation => Operation.Upsert;
 
     public SetAttributeSchemaSortableMutation(string name, bool sortable)
     {
@@ -22,13 +24,13 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         Assert.IsTrue(
             referenceSchema!.IsIndexed,
-            () => new InvalidSchemaMutationException(
+            () => new InvalidSchemaException(
                 "The reference `" + referenceSchema.Name + "` is in entity `" + entitySchema.Name + "` is not indexed! " +
                 "Non-indexed references must not contain sortable attribute `" + Name + "`!"
             )
             );
         IAttributeSchema existingAttributeSchema = referenceSchema.GetAttribute(Name) ??
-                                                   throw new InvalidSchemaMutationException(
+                                                   throw new InvalidSchemaException(
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema.Name +
                                                        "` schema for reference with name `" + referenceSchema.Name +
@@ -100,7 +102,7 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IEntityAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
-                                                   throw new InvalidSchemaMutationException(
+                                                   throw new InvalidSchemaException(
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
@@ -110,16 +112,16 @@ public class SetAttributeSchemaSortableMutation : IEntityAttributeSchemaMutation
         );
     }
 
-    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas Mutate(ICatalogSchema? catalogSchema, IEntitySchemaProvider entitySchemaProvider)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??
-                                                         throw new InvalidSchemaMutationException("The attribute `" +
+                                                         throw new InvalidSchemaException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
         IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema, typeof(IGlobalAttributeSchema));
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema, entitySchemaProvider, this
         );
     }
 }

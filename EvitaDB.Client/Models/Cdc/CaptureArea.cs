@@ -3,5 +3,6 @@
 public enum CaptureArea
 {
     Schema,
-    Data
+    Data,
+    Infrastructure
 }

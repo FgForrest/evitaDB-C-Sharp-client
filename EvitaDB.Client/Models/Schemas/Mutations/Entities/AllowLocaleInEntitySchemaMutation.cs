@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -7,6 +8,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
 public class AllowLocaleInEntitySchemaMutation : IEntitySchemaMutation
 {
     public CultureInfo[] Locales { get; }
+    public Operation Operation => Operation.Upsert;
     
     public AllowLocaleInEntitySchemaMutation(params CultureInfo[] locales)
     {

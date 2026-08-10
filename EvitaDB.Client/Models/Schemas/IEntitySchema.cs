@@ -37,4 +37,6 @@ public interface IEntitySchema : IVersioned, INamedSchemaWithDeprecation, ISorta
     }
     IList<IEntityAttributeSchema> OrderedAttributes { get; }
     IList<IAssociatedDataSchema> OrderedAssociatedData { get; }
+
+    void Validate(ICatalogSchema catalogSchema);
 }

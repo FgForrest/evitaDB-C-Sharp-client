@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -10,6 +11,7 @@ public class SetAttributeSchemaLocalizedMutation : IEntityAttributeSchemaMutatio
 {
     public string Name { get; }
     public bool Localized { get; }
+    public Operation Operation => Operation.Upsert;
 
     public SetAttributeSchemaLocalizedMutation(string name, bool localized)
     {
@@ -21,7 +23,7 @@ public class SetAttributeSchemaLocalizedMutation : IEntityAttributeSchemaMutatio
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         IAttributeSchema existingAttributeSchema = referenceSchema!.GetAttribute(Name) ??
-                                                   throw new InvalidSchemaMutationException(
+                                                   throw new InvalidSchemaException(
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema.Name +
                                                        "` schema for reference with name `" + referenceSchema.Name +
@@ -93,7 +95,7 @@ public class SetAttributeSchemaLocalizedMutation : IEntityAttributeSchemaMutatio
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         IEntityAttributeSchema existingAttributeSchema = entitySchema?.GetAttribute(Name) ??
-                                                   throw new InvalidSchemaMutationException(
+                                                   throw new InvalidSchemaException(
                                                        "The attribute `" + Name + "` is not defined in entity `" +
                                                        entitySchema?.Name + "` schema!"
                                                    );
@@ -103,16 +105,16 @@ public class SetAttributeSchemaLocalizedMutation : IEntityAttributeSchemaMutatio
         );
     }
 
-    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas Mutate(ICatalogSchema? catalogSchema, IEntitySchemaProvider entitySchemaProvider)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema existingAttributeSchema = catalogSchema?.GetAttribute(Name) ??
-                                                         throw new InvalidSchemaMutationException("The attribute `" +
+                                                         throw new InvalidSchemaException("The attribute `" +
                                                              Name + "` is not defined in catalog `" +
                                                              catalogSchema?.Name + "` schema!");
         IGlobalAttributeSchema updatedAttributeSchema = Mutate(catalogSchema, existingAttributeSchema, typeof(IGlobalAttributeSchema));
         return (this as IGlobalAttributeSchemaMutation).ReplaceAttributeIfDifferent(
-            catalogSchema, existingAttributeSchema, updatedAttributeSchema
+            catalogSchema, existingAttributeSchema, updatedAttributeSchema, entitySchemaProvider, this
         );
     }
 }

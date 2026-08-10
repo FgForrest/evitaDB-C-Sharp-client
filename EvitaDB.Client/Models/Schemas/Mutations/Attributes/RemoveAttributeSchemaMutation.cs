@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
@@ -7,6 +8,7 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
     ILocalCatalogSchemaMutation, IEntitySchemaMutation
 {
     public string Name { get; }
+    public Operation Operation => Operation.Remove;
 
     public RemoveAttributeSchemaMutation(string name)
     {
@@ -45,7 +47,8 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         );
     }
 
-    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
+    public TS? Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType)
+        where TS : class, IAttributeSchema
     {
         Assert.IsPremiseValid(attributeSchema != null, "Attribute schema is mandatory!");
         return default;
@@ -84,7 +87,8 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         );
     }
 
-    public ICatalogSchema Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas Mutate(ICatalogSchema? catalogSchema,
+        IEntitySchemaProvider entitySchemaProvider)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema!.GetAttribute(Name);
@@ -92,22 +96,21 @@ public class RemoveAttributeSchemaMutation : IGlobalAttributeSchemaMutation, IRe
         {
             // the attribute schema was already removed - or just doesn't exist,
             // so we can simply return current schema
-            return catalogSchema;
+            return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(catalogSchema);
         }
 
-        return CatalogSchema.InternalBuild(
-            catalogSchema.Version + 1,
-            catalogSchema.Name,
-            catalogSchema.NameVariants,
-            catalogSchema.Description,
-            catalogSchema.CatalogEvolutionModes,
-            catalogSchema.GetAttributes().Values
-                .Where(it => it.Name != Name)
-                .ToDictionary(x => x.Name, x => x),
-            catalogSchema is CatalogSchema cs
-                ? cs.EntitySchemaAccessor
-                : _ => throw new NotSupportedException(
-                    "Mutated schema is not able to provide access to entity schemas!"
-                ));
+        return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(
+            CatalogSchema.InternalBuild(
+                catalogSchema.Version + 1,
+                catalogSchema.Name,
+                catalogSchema.NameVariants,
+                catalogSchema.Description,
+                catalogSchema.CatalogEvolutionModes,
+                catalogSchema.GetAttributes().Values
+                    .Where(it => it.Name != Name)
+                    .ToDictionary(x => x.Name, x => x),
+                entitySchemaProvider
+            )
+        );
     }
 }

@@ -18,7 +18,7 @@ public record Price : IPrice
     public decimal TaxRate { get; }
     public decimal PriceWithTax { get; }
     public DateTimeRange? Validity { get; }
-    public bool Sellable { get; }
+    public bool Indexed { get; }
     public Currency Currency => Key.Currency;
     public string PriceList => Key.PriceList;
     public int PriceId => Key.PriceId;
@@ -32,9 +32,9 @@ public record Price : IPrice
         decimal taxRate,
         decimal priceWithTax,
         DateTimeRange? validity,
-        bool sellable,
+        bool indexed,
         int version = 1
-    ) : this(version, priceKey, innerRecordId, priceWithoutTax, taxRate, priceWithTax, validity, sellable, false)
+    ) : this(version, priceKey, innerRecordId, priceWithoutTax, taxRate, priceWithTax, validity, indexed, false)
     {
     }
     
@@ -46,7 +46,7 @@ public record Price : IPrice
         decimal taxRate,
         decimal priceWithTax,
         DateTimeRange? validity,
-        bool sellable,
+        bool indexed,
         bool dropped
     )
     {
@@ -62,7 +62,7 @@ public record Price : IPrice
         TaxRate = taxRate;
         PriceWithTax = priceWithTax;
         Validity = validity;
-        Sellable = sellable;
+        Indexed = indexed;
         Dropped = dropped;
     }
 
@@ -83,7 +83,7 @@ public record Price : IPrice
     public override string ToString()
     {
         return (Dropped ? "❌ " : "") +
-               "\uD83D\uDCB0 " + (Sellable ? "\uD83D\uDCB5 " : "") + PriceWithTax + " " + Key.Currency + " (" + TaxRate + "%)" +
+               "\uD83D\uDCB0 " + (Indexed ? "\uD83D\uDCB5 " : "") + PriceWithTax + " " + Key.Currency + " (" + TaxRate + "%)" +
                ", price list " + Key.PriceList +
                (Validity == null ? "" : ", valid in " + Validity) +
                ", external id " + Key.PriceId +

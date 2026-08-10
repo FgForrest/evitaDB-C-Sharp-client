@@ -16,7 +16,7 @@ public class UpsertPriceMutationConverter : PriceMutationConverter<UpsertPriceMu
             PriceWithoutTax = EvitaDataTypesConverter.ToGrpcBigDecimal(mutation.PriceWithoutTax),
             TaxRate = EvitaDataTypesConverter.ToGrpcBigDecimal(mutation.TaxRate),
             PriceWithTax = EvitaDataTypesConverter.ToGrpcBigDecimal(mutation.PriceWithTax),
-            Sellable = mutation.Sellable,
+            Indexed = mutation.Indexed,
             InnerRecordId = mutation.InnerRecordId,
             Validity = mutation.Validity == null ? null : EvitaDataTypesConverter.ToGrpcDateTimeRange(mutation.Validity)
         };
@@ -38,7 +38,7 @@ public class UpsertPriceMutationConverter : PriceMutationConverter<UpsertPriceMu
             EvitaDataTypesConverter.ToDecimal(mutation.TaxRate),
             EvitaDataTypesConverter.ToDecimal(mutation.PriceWithTax),
             mutation.Validity == null ? null : EvitaDataTypesConverter.ToDateTimeRange(mutation.Validity),
-            mutation.Sellable
+            mutation.Indexed
         );
     }
 }

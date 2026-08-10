@@ -67,6 +67,16 @@ public class CatalogSchemaDecorator : ISealedCatalogSchema
 
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes => Delegate.CatalogEvolutionModes;
 
+    IEnumerable<IEntitySchema?> IEntitySchemaProvider.GetEntitySchemas()
+    {
+        return ((IEntitySchemaProvider)Delegate).GetEntitySchemas();
+    }
+
+    IEnumerable<IEntitySchema?> ICatalogSchema.GetEntitySchemas()
+    {
+        return ((ICatalogSchema)Delegate).GetEntitySchemas();
+    }
+
     public IEntitySchema? GetEntitySchema(string entityType)
     {
         return _entitySchemaAccessor.Invoke(entityType);
@@ -74,5 +84,10 @@ public class CatalogSchemaDecorator : ISealedCatalogSchema
     
     public IEntitySchema GetEntitySchemaOrThrowException(string entityType) {
         return GetEntitySchema(entityType) ?? throw new EvitaInvalidUsageException("Schema for entity with name `" + entityType + "` was not found!");
+    }
+
+    public void Validate()
+    {
+        Delegate.Validate();
     }
 }

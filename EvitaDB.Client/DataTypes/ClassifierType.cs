@@ -2,6 +2,7 @@
 
 public enum ClassifierType
 {
+    ServerName,
     Catalog,
     Entity,
     Attribute,
@@ -16,6 +17,7 @@ public class ClassifierTypeHelper
     {
         return type switch
         {
+            ClassifierType.ServerName => "Server Name",
             ClassifierType.Catalog => "Catalog",
             ClassifierType.Entity => "Entity",
             ClassifierType.Attribute => "Attribute",

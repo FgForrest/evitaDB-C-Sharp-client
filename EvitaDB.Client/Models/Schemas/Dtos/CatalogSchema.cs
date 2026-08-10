@@ -12,14 +12,14 @@ public class CatalogSchema : ICatalogSchema
     public string? Description { get; }
     public IDictionary<string, IGlobalAttributeSchema> Attributes { get; }
     private IDictionary<string, IGlobalAttributeSchema[]> AttributeNameIndex { get; }
-    public Func<string, IEntitySchema?> EntitySchemaAccessor { get; }
+    public IEntitySchemaProvider EntitySchemaAccessor { get; }
 
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes { get; }
 
     internal static CatalogSchema InternalBuild(
         string name, IDictionary<NamingConvention, string?> nameVariants,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
-        Func<string, IEntitySchema> entitySchemaAccessor
+        IEntitySchemaProvider entitySchemaAccessor
     )
     {
         return new CatalogSchema(
@@ -35,7 +35,7 @@ public class CatalogSchema : ICatalogSchema
         string? description,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         IDictionary<string, IGlobalAttributeSchema> attributes,
-        Func<string, IEntitySchema?> entitySchemaAccessor
+        IEntitySchemaProvider entitySchemaAccessor
     )
     {
         return new CatalogSchema(
@@ -46,7 +46,8 @@ public class CatalogSchema : ICatalogSchema
     }
 
     internal static CatalogSchema InternalBuildWithUpdatedVersion(
-        CatalogSchema baseSchema
+        CatalogSchema baseSchema,
+        IEntitySchemaProvider entitySchemaAccessor
     )
     {
         return new CatalogSchema(
@@ -56,7 +57,7 @@ public class CatalogSchema : ICatalogSchema
             baseSchema.Description,
             baseSchema.CatalogEvolutionModes,
             baseSchema.Attributes,
-            baseSchema.GetEntitySchema
+            entitySchemaAccessor
         );
     }
 
@@ -81,7 +82,7 @@ public class CatalogSchema : ICatalogSchema
         string? description,
         ISet<CatalogEvolutionMode> catalogEvolutionModes,
         IDictionary<string, IGlobalAttributeSchema> attributes,
-        Func<string, IEntitySchema?> entitySchemaAccessor
+        IEntitySchemaProvider entitySchemaAccessor
     )
     {
         Version = version;
@@ -99,7 +100,17 @@ public class CatalogSchema : ICatalogSchema
         EntitySchemaAccessor = entitySchemaAccessor;
     }
 
-    public IEntitySchema? GetEntitySchema(string entityType) => EntitySchemaAccessor.Invoke(entityType);
+    IEnumerable<IEntitySchema?> IEntitySchemaProvider.GetEntitySchemas()
+    {
+        return EntitySchemaAccessor.GetEntitySchemas();
+    }
+
+    IEnumerable<IEntitySchema?> ICatalogSchema.GetEntitySchemas()
+    {
+        return EntitySchemaAccessor.GetEntitySchemas();
+    }
+
+    public IEntitySchema? GetEntitySchema(string entityType) => EntitySchemaAccessor.GetEntitySchema(entityType);
 
     public string? GetNameVariant(NamingConvention namingConvention) =>
         NameVariants.TryGetValue(namingConvention, out var nameVariant) ? nameVariant : Name;
@@ -138,5 +149,14 @@ public class CatalogSchema : ICatalogSchema
             Name == otherCatalogSchema.Name &&
             Attributes.SequenceEqual(otherCatalogSchema.GetAttributes())
         );
+    }
+    
+    public void Validate()
+    {
+        IEnumerable<IEntitySchema?> entitySchemas = EntitySchemaAccessor.GetEntitySchemas();
+        foreach (IEntitySchema? entitySchema in entitySchemas) 
+        {
+            entitySchema?.Validate(this);
+        }
     }
 }

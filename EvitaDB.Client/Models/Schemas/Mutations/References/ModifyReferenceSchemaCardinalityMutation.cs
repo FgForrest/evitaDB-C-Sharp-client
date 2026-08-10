@@ -42,7 +42,7 @@ public class ModifyReferenceSchemaCardinalityMutation : AbstractModifyReferenceD
         if (existingReferenceSchema is null)
         {
             // ups, the associated data is missing
-            throw new InvalidSchemaMutationException(
+            throw new InvalidSchemaException(
                 "The reference `" + Name + "` is not defined in entity `" + entitySchema.Name + "` schema!"
             );
         }

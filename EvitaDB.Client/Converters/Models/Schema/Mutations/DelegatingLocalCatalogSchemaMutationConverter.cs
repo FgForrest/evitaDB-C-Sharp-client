@@ -118,7 +118,7 @@ public class DelegatingLocalCatalogSchemaMutationConverter : ISchemaMutationConv
             GrpcLocalCatalogSchemaMutation.MutationOneofCase.ModifyEntitySchemaNameMutation => new ModifyEntitySchemaNameMutationConverter().Convert(mutation.ModifyEntitySchemaNameMutation),
             GrpcLocalCatalogSchemaMutation.MutationOneofCase.RemoveEntitySchemaMutation => new RemoveEntitySchemaMutationConverter().Convert(mutation.RemoveEntitySchemaMutation),
             
-            GrpcLocalCatalogSchemaMutation.MutationOneofCase.None => throw new InvalidSchemaMutationException("Mutation is not defined!"),
+            GrpcLocalCatalogSchemaMutation.MutationOneofCase.None => throw new InvalidSchemaException("Mutation is not defined!"),
             _ => throw new EvitaInternalError("This should never happen!")
         };
     }

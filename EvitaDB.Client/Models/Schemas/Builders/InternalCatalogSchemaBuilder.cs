@@ -11,7 +11,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 {
     private ICatalogSchema BaseSchema { get; }
     private IList<ILocalCatalogSchemaMutation> Mutations { get; } = new List<ILocalCatalogSchemaMutation>();
-    private bool UpdatedSchemaDirty { get; set; }
+    private MutationImpact UpdatedSchemaDirty { get; set; }
     private ICatalogSchema? UpdatedSchema { get; set; }
 
     public string Name => _instance.Name;
@@ -21,6 +21,8 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
     public int Version => _instance.Version;
 
     private readonly ICatalogSchema _instance;
+    
+    private MutationEntitySchemaAccessor MutationEntitySchemaAccessor { get; set; }
 
     public InternalCatalogSchemaBuilder(ICatalogSchema baseSchema,
         IEnumerable<ILocalCatalogSchemaMutation> schemaMutations)
@@ -31,6 +33,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
             schemaMutations.ToArray()
         );
         _instance ??= ToInstance();
+        MutationEntitySchemaAccessor = new MutationEntitySchemaAccessor(BaseSchema);
     }
 
     public InternalCatalogSchemaBuilder(ICatalogSchema baseSchema) : this(baseSchema,
@@ -116,7 +119,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
         {
             Assert.IsTrue(
                 typeof(TT) == existingAttribute.Type,
-                () => new InvalidSchemaMutationException(
+                () => new InvalidSchemaException(
                     "Attribute " + attributeName + " has already assigned type " + existingAttribute.Type +
                     ", cannot change this type to: " + typeof(TT) + "!"
                 )
@@ -171,7 +174,7 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
             ICatalogSchema? currentSchema = BaseSchema;
             foreach (ILocalCatalogSchemaMutation mutation in Mutations)
             {
-                currentSchema = mutation.Mutate(currentSchema);
+                currentSchema = mutation.Mutate(currentSchema, MutationEntitySchemaAccessor);
                 if (currentSchema == null)
                 {
                     throw new EvitaInternalError("Catalog schema unexpectedly removed from inside!");
@@ -198,4 +201,11 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes => _instance.CatalogEvolutionModes;
     public IEntitySchema? GetEntitySchema(string entityType) => _instance.GetEntitySchema(entityType);
+
+    public enum MutationImpact
+    {
+        NoImpact,
+        Added,
+        ModifiedPrevious
+    }
 }

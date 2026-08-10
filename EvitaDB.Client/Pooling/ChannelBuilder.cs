@@ -9,18 +9,21 @@ public class ChannelBuilder
     public int Port { get; }
     public Interceptor[] Interceptors { get; }
     public GrpcChannelOptions Options { get; }
+    public bool UseTls { get; }
 
-    public ChannelBuilder(string host, int port, HttpMessageHandler httpClientHandler, params Interceptor[] interceptors)
+    public ChannelBuilder(string host, int port, bool useTls, HttpMessageHandler httpClientHandler, params Interceptor[] interceptors)
     {
         Host = host;
         Port = port;
         Options = new GrpcChannelOptions { HttpClient = new HttpClient(httpClientHandler)};
         Interceptors = interceptors;
+        UseTls = useTls;
     }
 
     public ChannelInvoker Build()
     {
-        var channel = GrpcChannel.ForAddress($"https://{Host}:{Port}", Options);
+        var protocol = UseTls ? "https" : "http";
+        var channel = GrpcChannel.ForAddress($"{protocol}://{Host}:{Port}", Options);
         return new ChannelInvoker(channel, channel.Intercept(Interceptors));
     }
 }

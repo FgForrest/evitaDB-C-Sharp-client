@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -19,6 +20,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
     public Type Type { get; }
     public object? DefaultValue { get; }
     public int IndexedDecimalPlaces { get; }
+    public Operation Operation => Operation.Upsert;
 
     public CreateAttributeSchemaMutation(string name, string? description, string? deprecationNotice, AttributeUniquenessType? unique,
         bool filterable, bool sortable, bool localized, bool nullable, bool representative, Type type,
@@ -65,7 +67,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
             ) as TS)!;
         }
         
-        throw new InvalidSchemaMutationException("Unsupported schema type: " + schemaType);
+        throw new InvalidSchemaException("Unsupported schema type: " + schemaType);
     }
 
     public IReferenceSchema Mutate(IEntitySchema entitySchema, IReferenceSchema? referenceSchema)
@@ -111,7 +113,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The attribute `" + Name + "` already exists in entity `" + entitySchema.Name + "`" +
             " reference `" + referenceSchema.Name + "` schema and" +
             " it has different definition. To alter existing attribute schema you need to use different mutations."
@@ -153,7 +155,7 @@ public class CreateAttributeSchemaMutation : IAttributeSchemaMutation, IReferenc
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The attribute `" + Name + "` already exists in entity `" + entitySchema.Name + "` schema and" +
             " it has different definition. To alter existing attribute schema you need to use different mutations."
         );

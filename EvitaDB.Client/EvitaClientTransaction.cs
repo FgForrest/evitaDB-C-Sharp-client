@@ -31,4 +31,11 @@ public class EvitaClientTransaction : IDisposable
     {
         Close();
     }
+
+    public enum CommitBehavior
+    {
+        WaitForConflictResolution,
+        WaitForWalPersistence,
+        WaitForIndexPropagation
+    }
 }

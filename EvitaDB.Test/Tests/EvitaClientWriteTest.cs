@@ -325,7 +325,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
         Assert.True(removed);
 
         ISet<string> catalogNames = Client.GetCatalogNames();
-        Assert.Equal(1, catalogNames.Count);
+        Assert.Single(catalogNames);
         Assert.Contains(Data.TestCatalog, catalogNames);
     }
 
@@ -345,7 +345,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
         Client.ReplaceCatalog(Data.TestCatalog, newCatalog);
 
         ISet<string> catalogNamesAgain = Client.GetCatalogNames();
-        Assert.Equal(1, catalogNamesAgain.Count);
+        Assert.Single(catalogNamesAgain);
         Assert.Contains(newCatalog, catalogNamesAgain);
         Assert.Equal(initialSchemaVersion + 1, Client.QueryCatalog(newCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version));
@@ -357,7 +357,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
         string newCatalog = "newCatalog";
 
         ISet<string> catalogNames = Client!.GetCatalogNames();
-        Assert.Equal(1, catalogNames.Count);
+        Assert.Single(catalogNames);
         Assert.Contains(Data.TestCatalog, catalogNames);
         int initialSchemaVersion = Client.QueryCatalog(Data.TestCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version);
@@ -365,7 +365,7 @@ public class EvitaClientWriteTest : BaseTest<SetupFixture>
         Client.RenameCatalog(Data.TestCatalog, newCatalog);
 
         ISet<string> catalogNamesAgain = Client.GetCatalogNames();
-        Assert.Equal(1, catalogNamesAgain.Count);
+        Assert.Single(catalogNamesAgain);
         Assert.Contains(newCatalog, catalogNamesAgain);
         Assert.Equal(initialSchemaVersion + 1, Client.QueryCatalog(newCatalog,
             evitaSessionContract => evitaSessionContract.GetCatalogSchema().Version));

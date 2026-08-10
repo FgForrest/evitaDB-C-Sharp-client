@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.References;
@@ -6,6 +7,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.References;
 public class RemoveReferenceSchemaMutation : IReferenceSchemaMutation, IEntitySchemaMutation
 {
     public string Name { get; }
+    public Operation Operation => Operation.Remove;
 
     public RemoveReferenceSchemaMutation(string name)
     {

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations.AssociatedData;
@@ -6,6 +7,7 @@ namespace EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 public class UpsertAssociatedDataMutation : AssociatedDataMutation
 {
     public object Value { get; }
+    public override Operation Operation => Operation.Upsert;
 
     public UpsertAssociatedDataMutation(AssociatedDataKey associatedDataKey, object value) : base(associatedDataKey)
     {

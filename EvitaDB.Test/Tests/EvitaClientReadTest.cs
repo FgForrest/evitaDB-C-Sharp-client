@@ -1,6 +1,8 @@
 using EvitaDB.Client;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.ExtraResults;
@@ -19,7 +21,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
         : base(outputHelper, setupFixture)
     {
     }
-    
+
     [Fact]
     public void ShouldQueryCatalog()
     {
@@ -93,7 +95,8 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.NotNull(sealedEntity);
         Assert.Equal(Entities.Product, sealedEntity.Type);
-        products.Single(x => x.PrimaryKey == primaryKey).Should().BeEquivalentTo(sealedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
+        products.Single(x => x.PrimaryKey == primaryKey).Should().BeEquivalentTo(sealedEntity,
+            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
     }
 
     [Fact]
@@ -195,7 +198,8 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.NotNull(result.GetExtraResult<Client.Models.ExtraResults.QueryTelemetry>());
 
-        Client.Models.ExtraResults.PriceHistogram? priceHistogram = result.GetExtraResult<Client.Models.ExtraResults.PriceHistogram>();
+        Client.Models.ExtraResults.PriceHistogram? priceHistogram =
+            result.GetExtraResult<Client.Models.ExtraResults.PriceHistogram>();
         Assert.NotNull(priceHistogram);
         Assert.True(priceHistogram.Max.CompareTo(priceHistogram.Min) >= 0);
         Assert.True(priceHistogram.Buckets.Length > 0);
@@ -235,7 +239,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
             ));
 
         Assert.NotNull(sealedEntity);
-        
+
         Assert.Equal(Entities.Product, sealedEntity.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
         Assert.Equal(SetupFixture.CreatedEntities[Entities.Product].Single(x => x.PrimaryKey == 7), sealedEntity);
@@ -251,11 +255,13 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
                 Entities.Product,
                 7,
                 AttributeContent()
-            ));
+            )
+        );
 
         Assert.Equal(Entities.Product, sealedEntity!.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(sealedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
+        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(sealedEntity,
+            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
 
         ISealedEntity? enrichedEntity = Client.QueryCatalog(
             Data.TestCatalog,
@@ -263,7 +269,8 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
                 Entities.Product,
                 7,
                 EntityFetchAll().Requirements!
-            ));
+            )
+        );
 
         Assert.Equal(Entities.Product, enrichedEntity!.Type);
         Assert.Equal(7, enrichedEntity.PrimaryKey);
@@ -287,7 +294,8 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.Equal(Entities.Product, sealedEntity!.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().BeEquivalentTo(sealedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
+        products.Single(x => x.PrimaryKey == 7).Should().BeEquivalentTo(sealedEntity,
+            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
 
         ISealedEntity? limitedEntity = Client.QueryCatalog(
             Data.TestCatalog,
@@ -299,7 +307,8 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.Equal(Entities.Product, limitedEntity!.Type);
         Assert.Equal(7, limitedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(limitedEntity, options => options.Excluding(x=>x.ParentEntity).Excluding(x=>x.Parent));
+        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(limitedEntity,
+            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
     }
 
     [Fact]
@@ -327,16 +336,16 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
             ));
         Assert.Equal(3, sealedEntities.Count);
     }
-    
+
     [Fact]
     public void ShouldListCatalogNames()
     {
         ISet<string> catalogNames = ListCatalogNames(Client!);
         OutputHelper.WriteLine(string.Join(", ", catalogNames));
-        Assert.Equal(1, catalogNames.Count);
+        Assert.Single(catalogNames);
         Assert.Contains(Data.TestCatalog, catalogNames);
     }
-    
+
     [Fact]
     public async Task ShouldBeAbleToRunParallelClients()
     {
@@ -344,18 +353,30 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
         _ = ListCatalogNames(anotherParallelClient);
         _ = ListCatalogNames(Client);
     }
-    
+
     private static ISet<string> ListCatalogNames(EvitaClient client)
     {
         return client.GetCatalogNames();
     }
-    
-    /*[Fact]
+
+    [Fact]
     public void ShouldTestCdc()
     {
-        IObservable<ChangeSystemCapture> captures =
-            _client!.RegisterSystemChangeCapture(new ChangeSystemCaptureRequest(CaptureContent.Header));
-        IDisposable subscription = captures.Subscribe(c => { _outputHelper.WriteLine(c.Operation.ToString()); });
+        EvitaClientSession evitaClientSession = Client!.CreateReadOnlySession(Data.TestCatalog);
+        IObservable<ChangeCatalogCapture> captures = evitaClientSession.GetMutationHistory(
+                new ChangeCatalogCaptureRequest(
+                    1,
+                    5,
+                    [
+                        new ChangeCatalogCaptureCriteria.CdcCriteriaBuilder()
+                            .WithArea(CaptureArea.Data)
+                            .WithSite(new DataSite.Builder().WithEntityType(Entities.Product).Build())
+                            .Build()
+                    ],
+                    CaptureContent.Body
+                )
+            );
+        IDisposable subscription = captures.Subscribe(c => { OutputHelper.WriteLine(c.Operation.ToString()); });
         subscription.Dispose();
-    }*/
+    }
 }

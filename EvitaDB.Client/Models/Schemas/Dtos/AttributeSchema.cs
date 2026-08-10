@@ -11,20 +11,20 @@ public class AttributeSchema : IAttributeSchema
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public AttributeUniquenessType UniquenessType { get; }
-    public bool Filterable() => filterable;
-    public bool Sortable() => sortable;
-    public bool Nullable() => nullable;
-    public bool Localized() => localized;
+    public bool Filterable() => _filterable;
+    public bool Sortable() => _sortable;
+    public bool Nullable() => _nullable;
+    public bool Localized() => _localized;
     public Type Type { get; }
     public object? DefaultValue { get; }
     public Type PlainType { get; }
     public int IndexedDecimalPlaces { get; }
     public bool Unique() => UniquenessType != AttributeUniquenessType.NotUnique;
     public bool UniqueWithinLocale() => UniquenessType == AttributeUniquenessType.UniqueWithinCollectionLocale;
-    private bool filterable;
-    private bool sortable;
-    private bool nullable;
-    private bool localized;
+    private readonly bool _filterable;
+    private readonly bool _sortable;
+    private readonly bool _nullable;
+    private readonly bool _localized;
 
     internal static AttributeSchema InternalBuild(string name, Type type, bool localized)
     {
@@ -128,16 +128,58 @@ public class AttributeSchema : IAttributeSchema
         Description = description;
         DeprecationNotice = deprecationNotice;
         UniquenessType = uniquenessType ?? AttributeUniquenessType.NotUnique;
-        this.filterable = filterable;
-        this.sortable = sortable;
-        this.localized = localized;
-        this.nullable = nullable;
+        this._filterable = filterable;
+        this._sortable = sortable;
+        this._localized = localized;
+        this._nullable = nullable;
         Type = type;
         PlainType = Type.IsArray ? Type.GetElementType()! : Type;
         DefaultValue = EvitaDataTypes.ToTargetType(defaultValue, PlainType);
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
 
+    public IAttributeSchema WithInvertedType()
+    {
+        if (PlainType == typeof(Predecessor))
+        {
+            return AttributeSchema.InternalBuild(
+                Name,
+                NameVariants,
+                Description,
+                DeprecationNotice,
+                UniquenessType,
+                Filterable(),
+                Sortable(),
+                Localized(),
+                Nullable(),
+                typeof(ReferencedEntityPredecessor),
+                DefaultValue,
+                IndexedDecimalPlaces
+            );
+        }
+        else if (PlainType == typeof(ReferencedEntityPredecessor))
+        {
+            return AttributeSchema.InternalBuild(
+                Name,
+                NameVariants,
+                Description,
+                DeprecationNotice,
+                UniquenessType,
+                Filterable(),
+                Sortable(),
+                Localized(),
+                Nullable(),
+                typeof(Predecessor),
+                DefaultValue,
+                IndexedDecimalPlaces
+            );
+        }
+        else
+        {
+            throw new EvitaInvalidUsageException("Cannot invert type of attribute " + Name + " with type " + PlainType);
+        }
+    }
+    
     public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public override string ToString()

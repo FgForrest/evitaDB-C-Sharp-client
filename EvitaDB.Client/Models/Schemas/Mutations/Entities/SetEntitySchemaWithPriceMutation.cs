@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
@@ -7,6 +8,7 @@ public class SetEntitySchemaWithPriceMutation : IEntitySchemaMutation
 {
     public bool WithPrice { get; }
     public int IndexedPricePlaces { get; }
+    public Operation Operation => Operation.Upsert;
 
     public SetEntitySchemaWithPriceMutation(bool withPrice, int indexedPricePlaces)
     {

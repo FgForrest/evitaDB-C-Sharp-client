@@ -1,10 +1,12 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Mutations.Entities;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
 using EvitaDB.Client.Models.Data.Structure;
+using EvitaDB.Client.Models.Mutations;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -14,7 +16,7 @@ public class EntityRemoveMutation : IEntityMutation
 {
     public string EntityType { get; }
 
-    private readonly int? _entityPrimaryKey;
+    private readonly int _entityPrimaryKey;
 
     public int? EntityPrimaryKey
     {
@@ -41,13 +43,14 @@ public class EntityRemoveMutation : IEntityMutation
         {
             return entity;
         }
+
         return Entity.MutateEntity(entitySchema, entity, ComputeLocalMutationsForEntityRemoval(entity));
     }
 
     public List<ILocalMutation> ComputeLocalMutationsForEntityRemoval(ISealedEntity entity)
     {
         return (entity.ParentAvailable() && entity.Parent is not null
-                ? new []{entity.Parent.Value}
+                ? new[] { entity.Parent.Value }
                 : Array.Empty<int>())
             .Select(_ => new RemoveParentMutation())
             .Concat(
@@ -59,7 +62,7 @@ public class EntityRemoveMutation : IEntityMutation
                             it.ReferenceKey,
                             new RemoveAttributeMutation(x.Key)
                         ))
-                        .Concat<ILocalMutation>(new[] {new RemoveReferenceMutation(it.ReferenceKey)})
+                        .Concat<ILocalMutation>(new[] { new RemoveReferenceMutation(it.ReferenceKey) })
                     )
             )
             .Concat(
@@ -75,7 +78,7 @@ public class EntityRemoveMutation : IEntityMutation
                     .Select(key => new RemoveAssociatedDataMutation(key))
             )
             .Concat(
-                new[] {new SetPriceInnerRecordHandlingMutation(PriceInnerRecordHandling.None)}
+                new[] { new SetPriceInnerRecordHandlingMutation(PriceInnerRecordHandling.None) }
             )
             .Concat(
                 (entity.PricesAvailable() ? entity.GetPrices() : Enumerable.Empty<IPrice>())
@@ -84,5 +87,27 @@ public class EntityRemoveMutation : IEntityMutation
             )
             .Where(it => it is not null)
             .ToList();
+    }
+
+    public Operation Operation => Operation.Remove;
+
+    public IEnumerable<ChangeCatalogCapture> ToChangeCatalogCapture(MutationPredicate predicate, CaptureContent content)
+    {
+        if (predicate.Test(this))
+        {
+            MutationPredicateContext context = predicate.Context;
+            context.SetEntityType(this.EntityType);
+            context.SetPrimaryKey(this._entityPrimaryKey);
+            context.Advance();
+            return
+            [
+                ChangeCatalogCapture.DataCapture(
+                    context,
+                    Operation,
+                    content == CaptureContent.Body ? this : null
+                )
+            ];
+        }
+        return [];
     }
 }

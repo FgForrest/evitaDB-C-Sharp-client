@@ -5,7 +5,7 @@ namespace EvitaDB.Client.Config;
 
 public record EvitaClientConfiguration(
     string ClientId, string Host, int Port, int SystemApiPort, bool UseGeneratedCertificate,
-    bool UsingTrustedRootCaCertificate, bool MtlsEnabled, string? ServerCertificatePath, string? CertificateFileName, 
+    bool UsingTrustedRootCaCertificate, bool TlsEnabled, bool MtlsEnabled, string? ServerCertificatePath, string? CertificateFileName, 
     string? CertificateKeyFileName, string? CertificateKeyPassword, string? CertificateFolderPath, string? TraceEndpointUrl,
     string? TraceEndpointProtocol
 )
@@ -21,6 +21,7 @@ public record EvitaClientConfiguration(
         private int SystemApiPort { get; set; } = DefaultSystemApiPort;
         private bool UseGeneratedCertificate { get; set; } = true;
         private bool UsingTrustedRootCaCertificate { get; set; }
+        private bool TlsEnabled { get; set; } = true;
         private bool MtlsEnabled { get; set; }
         private string? ServerCertificatePath { get; set; }
         private string? CertificateFileName { get; set; }
@@ -130,7 +131,7 @@ public record EvitaClientConfiguration(
         {
             return new EvitaClientConfiguration(
                 ClientId, Host, Port, SystemApiPort, UseGeneratedCertificate, UsingTrustedRootCaCertificate,
-                MtlsEnabled,
+                TlsEnabled, MtlsEnabled,
                 ServerCertificatePath, CertificateFileName, CertificateKeyFileName,
                 CertificateKeyPassword, CertificateFolderPath, TraceEndpointUrl, TraceEndpointProtocol
             );

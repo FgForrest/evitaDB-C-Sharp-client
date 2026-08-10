@@ -13,14 +13,14 @@ public static class CatalogSchemaConverter
         {
             Name = catalogSchema.Name,
             Version = catalogSchema.Version,
-            Attributes = {ToGrpcGlobalAttributeSchemas(catalogSchema.GetAttributes())},
+            Attributes = { ToGrpcGlobalAttributeSchemas(catalogSchema.GetAttributes()) },
             Description = catalogSchema.Description
         };
     }
 
     public static CatalogSchema Convert(
-        Func<string, IEntitySchema> entitySchemaSupplier,
-        GrpcCatalogSchema catalogSchema
+        GrpcCatalogSchema catalogSchema,
+        IEntitySchemaProvider entitySchemaProvider
     )
     {
         return CatalogSchema.InternalBuild(
@@ -33,7 +33,7 @@ public static class CatalogSchemaConverter
                 it => it.Key,
                 it => ToGlobalAttributeSchema(it.Value)
             ),
-            entitySchemaSupplier
+            entitySchemaProvider
         );
     }
 
@@ -57,7 +57,8 @@ public static class CatalogSchemaConverter
         {
             Name = attributeSchema.Name,
             Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
-            UniqueGlobally = EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(attributeSchema.GlobalUniquenessType),
+            UniqueGlobally =
+                EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(attributeSchema.GlobalUniquenessType),
             Filterable = attributeSchema.Filterable(),
             Sortable = attributeSchema.Sortable(),
             Localized = attributeSchema.Localized(),

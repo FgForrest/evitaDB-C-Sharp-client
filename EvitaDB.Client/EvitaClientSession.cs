@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reactive.Linq;
+using System.Text.RegularExpressions;
+using EvitaDB.Client.Cdc;
 using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Converters.Models;
 using EvitaDB.Client.Converters.Models.Data;
@@ -10,6 +12,7 @@ using EvitaDB.Client.Converters.Queries;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Interceptors;
 using EvitaDB.Client.Models;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Data.Structure;
@@ -21,6 +24,7 @@ using EvitaDB.Client.Pooling;
 using EvitaDB.Client.Queries;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Client.Queries.Visitor;
+using EvitaDB.Client.Services;
 using EvitaDB.Client.Session;
 using EvitaDB.Client.Utils;
 using Google.Protobuf.WellKnownTypes;
@@ -56,9 +60,14 @@ public partial class EvitaClientSession : IDisposable
         new DelegatingEntityMutationConverter();
 
     private readonly ChannelPool _channelPool;
+    private readonly ChannelInvoker? _cdcChannel;
+
+    public EvitaClient Client { get; }
+    private ClientEntitySchemaAccessor EntitySchemaAccessor { get; set; }
     public string CatalogName { get; }
     public CatalogState CatalogState { get; }
     public Guid SessionId { get; }
+    public Guid CatalogId { get; }
     private readonly EvitaEntitySchemaCache _schemaCache;
     private readonly SessionTraits _sessionTraits;
     private readonly Action<EvitaClientSession> _onTerminationCallback;
@@ -71,19 +80,24 @@ public partial class EvitaClientSession : IDisposable
 
     private readonly string _clientId;
 
-    public EvitaClientSession(EvitaClient evitaClient, EvitaEntitySchemaCache schemaCache, ChannelPool channelPool,
-        string catalogName,
-        CatalogState catalogState, Guid sessionId, SessionTraits sessionTraits,
+    public EvitaClientSession(
+        EvitaClient evitaClient, EvitaEntitySchemaCache schemaCache, ChannelPool channelPool,
+        ChannelInvoker? cdcChannel,
+        string catalogName, CatalogState catalogState, Guid sessionId, Guid catalogId, SessionTraits sessionTraits,
         Action<EvitaClientSession> onTerminationCallback)
     {
         _schemaCache = schemaCache;
         _channelPool = channelPool;
+        _cdcChannel = cdcChannel;
         CatalogName = catalogName;
         CatalogState = catalogState;
         SessionId = sessionId;
+        CatalogId = catalogId;
         _sessionTraits = sessionTraits;
         _onTerminationCallback = onTerminationCallback;
         _clientId = evitaClient.Configuration.ClientId;
+        Client = evitaClient;
+        EntitySchemaAccessor = new ClientEntitySchemaAccessor(this);
     }
 
     /// <summary>
@@ -105,7 +119,7 @@ public partial class EvitaClientSession : IDisposable
         {
             var request = new GrpcDefineEntitySchemaRequest { EntityType = entityType };
 
-            var response = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var response = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DefineEntitySchema(request)
             );
 
@@ -116,25 +130,47 @@ public partial class EvitaClientSession : IDisposable
         return newEntitySchema.OpenForWrite();
     }
 
+    private T ExecuteWithBlockingEvitaSessionService<T>(Func<EvitaSessionService.EvitaSessionServiceClient, T> logic)
+    {
+        return ExecuteWithEvitaSessionService(
+            new PooledChannelSupplier(_channelPool!),
+            channel => new EvitaSessionService.EvitaSessionServiceClient(channel.Channel),
+            logic
+        );
+    }
+
+    private T ExecuteWithStreamingEvitaSessionService<T>(Func<EvitaSessionService.EvitaSessionServiceClient, T> logic)
+    {
+        return ExecuteWithEvitaSessionService(
+            new SharedChannelSupplier(_cdcChannel!),
+            channel => new EvitaSessionService.EvitaSessionServiceClient(channel.Channel),
+            logic
+        );
+    }
+
     /// <summary>
     ///  Method that is called within the <see cref="EvitaClientSession"/> to apply the wanted logic on a channel retrieved
     ///  from a channel pool.
     /// </summary>
-    /// <param name="evitaSessionServiceClient">function that holds a logic passed by the caller</param>
-    /// <typeparam name="T">return type of the function</typeparam>
+    /// <param name="channelSupplier">interface for retrieving a channel</param>
+    /// <param name="stubBuilder">function that contains channel building logic</param>
+    /// <param name="logic">logic to be executed on the created channel</param>
+    /// <typeparam name="TS">channel type</typeparam>
+    /// <typeparam name="T">response type</typeparam>
     /// <returns>result of the applied function</returns>
     /// <exception cref="InstanceTerminatedException">thrown when no session has been passed to the server when one is required</exception>
     /// <exception cref="EvitaInvalidUsageException">error caused by invalid operations executed by the programmer</exception>
     /// <exception cref="EvitaInternalError">error caused by internal error in the database</exception>
-    private T ExecuteWithEvitaSessionService<T>(
-        Func<EvitaSessionService.EvitaSessionServiceClient, T> evitaSessionServiceClient)
+    private T ExecuteWithEvitaSessionService<TS, T>(
+        IChannelSupplier channelSupplier,
+        Func<ChannelInvoker, TS> stubBuilder,
+        Func<TS, T> logic)
     {
-        var channel = _channelPool.GetChannel();
+        ChannelInvoker channel = channelSupplier.GetChannel();
         try
         {
             SessionIdHolder.SetSessionId(CatalogName, SessionId.ToString());
-            return evitaSessionServiceClient.Invoke(
-                new EvitaSessionService.EvitaSessionServiceClient(channel.Invoker));
+            return logic.Invoke(stubBuilder.Invoke(channel));
         }
         catch (RpcException rpcException)
         {
@@ -249,7 +285,7 @@ public partial class EvitaClientSession : IDisposable
     public ISet<string> GetAllEntityTypes()
     {
         AssertActive();
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetAllEntityTypes(new Empty())
         );
         return new HashSet<string>(grpcResponse.EntityTypes);
@@ -280,7 +316,7 @@ public partial class EvitaClientSession : IDisposable
             Query = stringWithParameters.Query,
             PositionalQueryParams = { stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam) }
         };
-        var grpcResponse = ExecuteWithEvitaSessionService(session => session.QueryOne(request));
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(session => session.QueryOne(request));
 
         if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
         {
@@ -336,7 +372,7 @@ public partial class EvitaClientSession : IDisposable
             PositionalQueryParams = { stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam) }
         };
 
-        var grpcResponse = ExecuteWithEvitaSessionService(session => session.QueryList(request));
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(session => session.QueryList(request));
 
         if (typeof(IEntityReference).IsAssignableFrom(typeof(TS)))
         {
@@ -383,7 +419,7 @@ public partial class EvitaClientSession : IDisposable
             Query = stringWithParameters.Query,
             PositionalQueryParams = { stringWithParameters.Parameters.Select(QueryConverter.ConvertQueryParam) }
         };
-        var grpcResponse = ExecuteWithEvitaSessionService(session => session.Query(request));
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(session => session.Query(request));
         var extraResults = GetEvitaResponseExtraResults(
             grpcResponse,
             new EvitaRequest(query, DateTimeOffset.Now)
@@ -423,7 +459,7 @@ public partial class EvitaClientSession : IDisposable
     /// Method executes query on <see cref="ICatalog"/> data and returns result.
     /// </summary>
     /// <param name="query">input query,
-    /// for creation use <see cref="IQueryConstraints.Query(IQueryConstraints.Collection,IQueryConstraints.FilterBy,IQueryConstraints.OrderBy,IQueryConstraints.Require)"/> or similar methods
+    /// for creation use <see cref="Query"/> or similar methods
     /// for defining constraint use {@link QueryConstraints} static methods</param>
     /// <returns>full response data transfer object with all available data</returns>
     /// <seealso cref="IQueryConstraints"/>
@@ -465,7 +501,7 @@ public partial class EvitaClientSession : IDisposable
     /// Method executes query on <see cref="ICatalog"/> data and returns result.
     /// </summary>
     /// <param name="query">input query,
-    /// for creation use <see cref="IQueryConstraints.Query(IQueryConstraints.Collection,IQueryConstraints.FilterBy,IQueryConstraints.OrderBy,IQueryConstraints.Require)"/> or similar methods
+    /// for creation use <see cref="Query"/> or similar methods
     /// for defining constraint use {@link QueryConstraints} static methods</param>
     /// <returns>response data transfer object only primary keys and and entity types included</returns>
     /// <seealso cref="IQueryConstraints"/>
@@ -497,7 +533,7 @@ public partial class EvitaClientSession : IDisposable
     /// </summary>
     private EntitySchema? FetchEntitySchema(string entityType)
     {
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetEntitySchema(new GrpcEntitySchemaRequest { EntityType = entityType })
         );
         if (grpcResponse.EntitySchema is null)
@@ -518,7 +554,7 @@ public partial class EvitaClientSession : IDisposable
         AssertActive();
 
         var stringWithParameters = ToStringWithParameterExtraction(require);
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetEntity(
                 new GrpcEntityRequest
                 {
@@ -558,7 +594,7 @@ public partial class EvitaClientSession : IDisposable
     public int GetEntityCollectionSize(string entityType)
     {
         AssertActive();
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetEntityCollectionSize(
                 new GrpcEntityCollectionSizeRequest { EntityType = entityType }
             )
@@ -585,7 +621,7 @@ public partial class EvitaClientSession : IDisposable
 
             var request = new GrpcUpdateCatalogSchemaRequest { SchemaMutations = { grpcSchemaMutations } };
 
-            var response = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var response = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpdateCatalogSchema(request)
             );
 
@@ -606,7 +642,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(
             _ =>
             {
-                var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+                var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                     evitaSessionService.DeleteCollection(new GrpcDeleteCollectionRequest { EntityType = entityType }
                     )
                 );
@@ -630,7 +666,7 @@ public partial class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(_ =>
         {
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntityAndItsHierarchy(
                     new GrpcDeleteEntityRequest { EntityType = entityType, PrimaryKey = primaryKey }
                 )
@@ -667,7 +703,7 @@ public partial class EvitaClientSession : IDisposable
         AssertActive();
         return ExecuteInTransactionIfPossible(_ =>
         {
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntity(
                     new GrpcDeleteEntityRequest { EntityType = entityType, PrimaryKey = primaryKey }
                 )
@@ -697,7 +733,7 @@ public partial class EvitaClientSession : IDisposable
                 typeof(ISealedEntity)
             );
             var stringWithParameters = query.ToStringWithParametersExtraction();
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntities(
                     new GrpcDeleteEntitiesRequest
                     {
@@ -751,7 +787,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(_ =>
         {
             var stringWithParameters = ToStringWithParameterExtraction(query);
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntities(
                     new GrpcDeleteEntitiesRequest
                     {
@@ -785,7 +821,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(
             _ =>
             {
-                var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+                var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                     evitaSessionService.RenameCollection(
                         new GrpcRenameCollectionRequest { EntityType = entityType, NewName = newName }
                     )
@@ -813,7 +849,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(
             _ =>
             {
-                var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+                var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                     evitaSessionService.ReplaceCollection(
                         new GrpcReplaceCollectionRequest
                         {
@@ -844,7 +880,7 @@ public partial class EvitaClientSession : IDisposable
             var grpcSchemaMutation =
                 ModifyEntitySchemaMutationConverter.Convert(schemaMutation);
             var request = new GrpcUpdateEntitySchemaRequest { SchemaMutation = grpcSchemaMutation };
-            var response = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var response = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpdateEntitySchema(request)
             );
             _schemaCache.AnalyzeMutations(schemaMutation);
@@ -883,7 +919,7 @@ public partial class EvitaClientSession : IDisposable
                 ModifyEntitySchemaMutationConverter.Convert(schemaMutation);
             var request = new GrpcUpdateEntitySchemaRequest { SchemaMutation = grpcSchemaMutation };
 
-            var response = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var response = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpdateAndFetchEntitySchema(request)
             );
 
@@ -905,7 +941,7 @@ public partial class EvitaClientSession : IDisposable
     public bool GoLiveAndClose()
     {
         AssertActive();
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GoLiveAndClose(new Empty())
         );
         var success = grpcResponse.Success;
@@ -928,9 +964,9 @@ public partial class EvitaClientSession : IDisposable
     {
         if (Active)
         {
-            ExecuteWithEvitaSessionService(session =>
+            ExecuteWithBlockingEvitaSessionService(session =>
             {
-                session.Close(new Empty());
+                session.Close(new GrpcCloseRequest());
                 return true;
             });
             CloseInternally();
@@ -965,12 +1001,12 @@ public partial class EvitaClientSession : IDisposable
 
             var request = new GrpcUpdateCatalogSchemaRequest { SchemaMutations = { grpcSchemaMutations } };
 
-            var response = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var response = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpdateAndFetchCatalogSchema(request)
             );
 
             var updatedCatalogSchema =
-                CatalogSchemaConverter.Convert(GetEntitySchemaOrThrow, response.CatalogSchema);
+                CatalogSchemaConverter.Convert(response.CatalogSchema, EntitySchemaAccessor);
             ISealedCatalogSchema updatedSchema =
                 new CatalogSchemaDecorator(updatedCatalogSchema, GetEntitySchemaOrThrow);
             _schemaCache.AnalyzeMutations(schemaMutation);
@@ -1037,7 +1073,7 @@ public partial class EvitaClientSession : IDisposable
                 evitaRequest,
                 grpcResponse.ExtraResults
             )
-            : Array.Empty<IEvitaResponseExtraResult>();
+            : [];
     }
 
     /// <summary>
@@ -1074,11 +1110,11 @@ public partial class EvitaClientSession : IDisposable
     /// </summary>
     private CatalogSchema FetchCatalogSchema()
     {
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
-            evitaSessionService.GetCatalogSchema(new Empty())
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
+            evitaSessionService.GetCatalogSchema(new GrpcGetCatalogSchemaRequest())
         );
         return CatalogSchemaConverter.Convert(
-            GetEntitySchemaOrThrow, grpcResponse.CatalogSchema
+            grpcResponse.CatalogSchema, EntitySchemaAccessor
         );
     }
 
@@ -1122,7 +1158,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(_ =>
         {
             var grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
-            var grpcResult = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResult = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpsertEntity(
                     new GrpcUpsertEntityRequest { EntityMutation = grpcEntityMutation }
                 )
@@ -1162,7 +1198,7 @@ public partial class EvitaClientSession : IDisposable
         {
             var grpcEntityMutation = EntityMutationConverter.Convert(entityMutation);
             var stringWithParameters = ToStringWithParameterExtraction(require);
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.UpsertEntity(
                     new GrpcUpsertEntityRequest
                     {
@@ -1261,6 +1297,25 @@ public partial class EvitaClientSession : IDisposable
     }
 
     /// <summary>
+    /// If the stream is closed prematurely the server stream is cancelled and the server is notified about it.
+    /// </summary>
+    /// <param name="request">request that specifies the criteria for the changes to be returned</param>
+    /// <returns>streaming observable collection with changes to the specified scope of entities / schemas</returns>
+    public IObservable<ChangeCatalogCapture> GetMutationHistory(ChangeCatalogCaptureRequest request)
+    {
+        AssertActive();
+
+        return ExecuteWithStreamingEvitaSessionService(session =>
+        {
+            return session.GetMutationsHistory(ChangeCaptureConverter.ToGrpcChangeCaptureRequest(request))
+                .ResponseStream
+                .AsObservable()
+                .SelectMany(x => x.ChangeCapture)
+                .Select(ChangeCaptureConverter.ToChangeCatalogCapture);
+        });
+    }
+
+    /// <summary>
     /// Initializes transaction reference.
     /// </summary>
     private EvitaClientTransaction CreateAndInitTransaction()
@@ -1276,11 +1331,12 @@ public partial class EvitaClientSession : IDisposable
                                                        " doesn't support transactions yet. Call `goLiveAndClose()` method first!");
         }
 
-        var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+        var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
             evitaSessionService.GetTransactionId(new Empty())
         );
 
-        var tx = new EvitaClientTransaction(EvitaDataTypesConverter.ToGuid(grpcResponse.TransactionId), grpcResponse.CatalogVersion);
+        var tx = new EvitaClientTransaction(EvitaDataTypesConverter.ToGuid(grpcResponse.TransactionId),
+            grpcResponse.CatalogVersion);
         _transactionAccessor.GetAndSet(transaction =>
         {
             Assert.IsPremiseValid(transaction == null, "Transaction unexpectedly found!");
@@ -1459,7 +1515,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(_ =>
         {
             var stringWithParameters = ToStringWithParameterExtraction(require);
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntity(
                     new GrpcDeleteEntityRequest
                     {
@@ -1503,7 +1559,7 @@ public partial class EvitaClientSession : IDisposable
         return ExecuteInTransactionIfPossible(_ =>
         {
             var stringWithParameters = ToStringWithParameterExtraction(require);
-            var grpcResponse = ExecuteWithEvitaSessionService(evitaSessionService =>
+            var grpcResponse = ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
                 evitaSessionService.DeleteEntityAndItsHierarchy(
                     new GrpcDeleteEntityRequest
                     {
@@ -1567,7 +1623,8 @@ public partial class EvitaClientSession : IDisposable
     {
         if (Active)
         {
-            ExecuteWithEvitaSessionService(evitaSessionService => evitaSessionService.Close(new Empty()));
+            ExecuteWithBlockingEvitaSessionService(evitaSessionService =>
+                evitaSessionService.Close(new GrpcCloseRequest()));
         }
 
         CloseInternally();
@@ -1575,4 +1632,30 @@ public partial class EvitaClientSession : IDisposable
 
     [GeneratedRegex("(\\w+:\\w+:\\w+): (.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex MyRegex();
+
+    private class ClientEntitySchemaAccessor(EvitaClientSession session) : IEntitySchemaProvider
+    {
+        public IEnumerable<IEntitySchema?> GetEntitySchemas()
+        {
+            return (
+                    session.Active
+                        ? session.GetAllEntityTypes()
+                        : session.Client.QueryCatalog(
+                            session.CatalogName,
+                            x => x.GetAllEntityTypes()
+                        )
+                )
+                .Select(GetEntitySchema)
+                .Where(x => x is not null);
+        }
+
+        public IEntitySchema? GetEntitySchema(string entityType)
+        {
+            return session.Active
+                ? session.GetEntitySchema(entityType)
+                : session.Client.QueryCatalog(
+                    session.CatalogName,
+                    x => x.GetEntitySchema(entityType));
+        }
+    }
 }

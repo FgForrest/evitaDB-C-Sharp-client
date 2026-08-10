@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -17,6 +18,7 @@ public class CreateReferenceSchemaMutation : IReferenceSchemaMutation, IEntitySc
     public bool ReferencedGroupTypeManaged { get; }
     public bool Indexed { get; }
     public bool Faceted { get; }
+    public Operation Operation => Operation.Upsert;
 
     public CreateReferenceSchemaMutation(string name, string? description, string? deprecationNotice,
         Cardinality? cardinality, string referencedEntityType, bool referencedEntityTypeManaged,
@@ -82,7 +84,7 @@ public class CreateReferenceSchemaMutation : IReferenceSchemaMutation, IEntitySc
         }
 
         // ups, there is conflict in associated data settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The reference `" + Name + "` already exists in entity `" + entitySchema.Name + "` schema and" +
             " has different definition. To alter existing reference schema you need to use different mutations."
         );

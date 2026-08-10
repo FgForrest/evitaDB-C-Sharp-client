@@ -456,7 +456,7 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
                 : typeof(ComplexDataObject);
             Assert.IsTrue(
                 typeToCompare == existingAssociatedData.Type,
-                () => new InvalidSchemaMutationException(
+                () => new InvalidSchemaException(
                     "Associated data " + dataName + " has already assigned type " + existingAssociatedData.Type +
                     ", cannot change this type to: " + typeof(T) + "!"
                 )
@@ -695,6 +695,10 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
     public IList<IEntityAttributeSchema> OrderedAttributes => BaseSchema.OrderedAttributes;
 
     public IList<IAssociatedDataSchema> OrderedAssociatedData => BaseSchema.OrderedAssociatedData;
+    public void Validate(ICatalogSchema catalogSchema)
+    {
+        BaseSchema.Validate(catalogSchema);
+    }
 
     public IAttributeSchema GetAttributeOrThrow(string name)
     {

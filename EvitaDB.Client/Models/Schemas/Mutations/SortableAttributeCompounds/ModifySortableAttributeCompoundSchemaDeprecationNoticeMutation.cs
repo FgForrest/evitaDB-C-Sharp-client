@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -9,6 +10,7 @@ public class ModifySortableAttributeCompoundSchemaDeprecationNoticeMutation : IE
 {
     public string Name { get; }
     public string? DeprecationNotice { get; }
+    public Operation Operation => Operation.Upsert;
 
     public ModifySortableAttributeCompoundSchemaDeprecationNoticeMutation(string name, string? deprecationNotice)
     {
@@ -20,7 +22,7 @@ public class ModifySortableAttributeCompoundSchemaDeprecationNoticeMutation : IE
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
         SortableAttributeCompoundSchema existingCompoundSchema = entitySchema!.GetSortableAttributeCompound(Name) ??
-                                                                 throw new InvalidSchemaMutationException(
+                                                                 throw new InvalidSchemaException(
                                                                      "The sortable attribute compound `" + Name +
                                                                      "` is not defined in entity `" +
                                                                      entitySchema.Name + "` schema!"
@@ -36,7 +38,7 @@ public class ModifySortableAttributeCompoundSchemaDeprecationNoticeMutation : IE
     {
         Assert.IsPremiseValid(referenceSchema != null, "Reference schema is mandatory!");
         SortableAttributeCompoundSchema existingCompoundSchema = referenceSchema!.GetSortableAttributeCompound(Name) ??
-                                                                 throw new InvalidSchemaMutationException(
+                                                                 throw new InvalidSchemaException(
                                                                      "The sortable attribute compound `" + Name +
                                                                      "` is not defined in entity `" +
                                                                      entitySchema.Name +

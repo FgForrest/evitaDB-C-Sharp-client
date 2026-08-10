@@ -1,10 +1,12 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.References;
 
 public abstract class AbstractModifyReferenceDataSchemaMutation : IEntitySchemaMutation, IReferenceSchemaMutation
 {
     public string Name { get; }
+    public Operation Operation => Operation.Upsert;
 
     protected AbstractModifyReferenceDataSchemaMutation(string name)
     {

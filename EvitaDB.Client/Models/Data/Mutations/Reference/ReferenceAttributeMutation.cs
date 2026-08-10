@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Models.Schemas;
@@ -11,7 +12,7 @@ public class ReferenceAttributeMutation : ReferenceMutation
     public AttributeMutation AttributeMutation { get; }
     public AttributeKey AttributeKey { get; }
     private ReferenceKeyWithAttributeKey ComparableKey { get; }
-
+    public override Operation Operation => Operation.Upsert;
     public ReferenceAttributeMutation(ReferenceKey referenceKey, AttributeMutation attributeMutation) :
         base(referenceKey)
     {

@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -6,6 +7,7 @@ namespace EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 
 public class RemoveAssociatedDataMutation : AssociatedDataMutation
 {
+    public override Operation Operation => Operation.Remove;
     public RemoveAssociatedDataMutation(AssociatedDataKey associatedDataKey) : base(associatedDataKey)
     {
     }

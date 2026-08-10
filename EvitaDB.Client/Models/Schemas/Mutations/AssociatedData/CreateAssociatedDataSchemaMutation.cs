@@ -1,5 +1,6 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -79,9 +80,11 @@ public class CreateAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
         }
 
         // ups, there is conflict in associated data settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The associated data `" + Name + "` already exists in entity `" + entitySchema.Name + "` schema and" +
             " has different definition. To alter existing associated data schema you need to use different mutations."
         );
     }
+
+    public Operation Operation => Operation.Upsert;
 }

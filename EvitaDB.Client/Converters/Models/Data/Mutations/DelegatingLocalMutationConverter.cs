@@ -15,6 +15,7 @@ namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
 public class DelegatingLocalMutationConverter : ILocalMutationConverter<ILocalMutation, GrpcLocalMutation>
 {
+    public static DelegatingLocalMutationConverter Instance { get; } = new();
     public GrpcLocalMutation Convert(ILocalMutation mutation)
     {
         GrpcLocalMutation grpcLocalMutation = new();

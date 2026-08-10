@@ -175,7 +175,7 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
 		{
 			Assert.IsTrue(
 				typeof(T) == existingAttribute.Type,
-				() => new InvalidSchemaMutationException(
+				() => new InvalidSchemaException(
 					"Attribute " + attributeName + " has already assigned type " + existingAttribute.Type +
 					", cannot change this type to: " + typeof(T) + "!"
 				)
@@ -402,4 +402,9 @@ public class ReferenceSchemaBuilder : IReferenceSchemaBuilder
 	{
 		return _instance.GetReferencedGroupTypeNameVariants(namingConvention, entitySchemaFetcher);
 	}
+
+    public void Validate(ICatalogSchema catalogSchema, EntitySchema entitySchema)
+    {
+        BaseSchema.Validate(catalogSchema, entitySchema);
+    }
 }

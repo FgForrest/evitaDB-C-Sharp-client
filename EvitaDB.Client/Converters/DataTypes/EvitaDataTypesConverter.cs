@@ -1090,7 +1090,7 @@ public static class EvitaDataTypesConverter
     
     public static GrpcPredecessor ToGrpcPredecessor(Predecessor predecessor)
     {
-        if (predecessor.IsHead)
+        if ((predecessor as IChainableType).IsHead)
         {
             return new GrpcPredecessor
             {
@@ -1100,7 +1100,7 @@ public static class EvitaDataTypesConverter
 
         return new GrpcPredecessor
         {
-            PredecessorId = predecessor.PredecessorId
+            PredecessorId = predecessor.PredecessorPk
         };
     }
     

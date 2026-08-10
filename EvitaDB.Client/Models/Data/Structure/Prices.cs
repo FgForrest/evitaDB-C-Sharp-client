@@ -86,7 +86,7 @@ public class Prices : IPrices
         }
 
         return GetPrices()
-            .Where(x => x.Sellable)
+            .Where(x => x.Indexed)
             .Where(it => currency == null || currency.Equals(it.Currency))
             .Where(it => !atTheMoment.HasValue || (it.Validity == null || it.Validity.ValidFor(atTheMoment.Value)))
             .Where(it => !pLists.Any() || pLists.Contains(it.PriceList))

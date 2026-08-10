@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
@@ -6,6 +7,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Entities;
 public class ModifyEntitySchemaDescriptionMutation : IEntitySchemaMutation
 {
     public string? Description { get; }
+    public Operation Operation => Operation.Upsert;
 
     public ModifyEntitySchemaDescriptionMutation(string? description)
     {

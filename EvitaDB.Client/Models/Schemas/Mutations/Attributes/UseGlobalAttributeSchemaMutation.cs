@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -7,6 +8,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
 {
     public string Name { get; }
+    public Operation Operation => Operation.Upsert;
 
     public UseGlobalAttributeSchemaMutation(string name)
     {
@@ -26,7 +28,7 @@ public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
         IGlobalAttributeSchema newAttributeSchema = Mutate(catalogSchema, (IGlobalAttributeSchema?) null, typeof(IGlobalAttributeSchema));
         Assert.NotNull(
             newAttributeSchema,
-            () => new InvalidSchemaMutationException(
+            () => new InvalidSchemaException(
                 "The attribute `" + Name + "` is not defined in catalog `" + catalogSchema.Name + "` schema!"
             )
             );
@@ -58,7 +60,7 @@ public class UseGlobalAttributeSchemaMutation : IEntityAttributeSchemaMutation
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The attribute `" + Name + "` already exists in entity `" + entitySchema.Name + "` schema and" +
             " has different definition. To alter existing attribute schema you need to use different mutations."
         );

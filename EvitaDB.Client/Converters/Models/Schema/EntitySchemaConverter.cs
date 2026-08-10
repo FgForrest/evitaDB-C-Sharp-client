@@ -164,16 +164,16 @@ public static class EntitySchemaConverter
             string.IsNullOrEmpty(referenceSchema.Description) ? null : referenceSchema.Description,
             string.IsNullOrEmpty(referenceSchema.DeprecationNotice) ? null : referenceSchema.DeprecationNotice,
             referenceSchema.EntityType,
-            referenceSchema.EntityTypeRelatesToEntity
+            referenceSchema.ReferencedEntityTypeManaged
                 ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(referenceSchema.EntityType),
-            referenceSchema.EntityTypeRelatesToEntity,
+            referenceSchema.ReferencedEntityTypeManaged,
             EvitaEnumConverter.ToCardinality(referenceSchema.Cardinality) ?? new Cardinality(),
             referenceSchema.GroupType,
-            referenceSchema.GroupTypeRelatesToEntity
+            referenceSchema.ReferencedGroupTypeManaged
                 ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(referenceSchema.GroupType),
-            referenceSchema.GroupTypeRelatesToEntity,
+            referenceSchema.ReferencedGroupTypeManaged,
             referenceSchema.Indexed,
             referenceSchema.Faceted,
             referenceSchema.Attributes.ToDictionary(
@@ -341,9 +341,9 @@ public static class EntitySchemaConverter
             Name = referenceSchema.Name,
             Cardinality = EvitaEnumConverter.ToGrpcCardinality(referenceSchema.Cardinality),
             EntityType = referenceSchema.ReferencedEntityType,
-            EntityTypeRelatesToEntity = referenceSchema.ReferencedEntityTypeManaged,
+            ReferencedEntityTypeManaged = referenceSchema.ReferencedEntityTypeManaged,
             GroupType = referenceSchema.ReferencedGroupType,
-            GroupTypeRelatesToEntity = referenceSchema.ReferencedGroupTypeManaged,
+            ReferencedGroupTypeManaged = referenceSchema.ReferencedGroupTypeManaged,
             Indexed = referenceSchema.IsIndexed,
             Faceted = referenceSchema.IsFaceted,
             Attributes = { ToGrpcAttributeSchemas(referenceSchema.GetAttributes()) },

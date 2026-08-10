@@ -60,15 +60,17 @@ public partial class EvitaClient : IDisposable
 
     private static readonly Regex ErrorMessagePattern = MyRegex();
 
-    private EvitaClient(EvitaClientConfiguration configuration, ClientCertificateManager certificateManager)
+    private EvitaClient(EvitaClientConfiguration configuration, ClientCertificateManager? certificateManager = null)
     {
         Configuration = configuration;
         ChannelBuilder channelBuilder = new ChannelBuilder(
             Configuration.Host,
             Configuration.Port,
-            certificateManager.BuildHttpClientHandler(),
+            Configuration.TlsEnabled,
+            certificateManager is not null ? certificateManager.BuildHttpClientHandler() : new HttpClientHandler(),
             new ClientInterceptor(configuration)
         );
+        
         _channelPool = new ChannelPool(channelBuilder, 10);
         _cdcChannel = channelBuilder.Build();
 
@@ -101,6 +103,11 @@ public partial class EvitaClient : IDisposable
     /// <returns>newly created EvitaClient</returns>
     public static async Task<EvitaClient> Create(EvitaClientConfiguration configuration)
     {
+        if (!configuration.TlsEnabled)
+        {
+            return new EvitaClient(configuration);
+        }
+
         ClientCertificateManager certificateManager = await new ClientCertificateManager.Builder()
             .SetClientCertificateFolderPath(configuration.CertificateFolderPath)
             .SetClientCertificatePath(configuration.CertificateFileName)
@@ -112,26 +119,7 @@ public partial class EvitaClient : IDisposable
             .SetUsingMtls(configuration.MtlsEnabled)
             .Build();
         return new EvitaClient(configuration, certificateManager);
-    }
 
-    /// <summary>
-    /// This method is used for registering a callback that is invoked any system event, like catalog creation or its
-    /// top level mutation occurs.
-    /// </summary>
-    /// <param name="request">request for subscribing to system events</param>
-    /// <returns>an observable collection that receives updates about changes in database</returns>
-    public IObservable<ChangeSystemCapture> RegisterSystemChangeCapture(ChangeSystemCaptureRequest request)
-    {
-        return ExecuteWithStreamingEvitaService(stub =>
-            stub.RegisterSystemChangeCapture(
-                    new GrpcRegisterSystemChangeCaptureRequest
-                    {
-                        Content = EvitaEnumConverter.ToGrpcCaptureContent(request.Content)
-                    }
-                ).ResponseStream
-                .AsObservable()
-                .Select(x => ChangeDataCaptureConverter.ToChangeSystemCapture(x.Capture))
-        );
     }
 
     /// <summary>
@@ -483,7 +471,9 @@ public partial class EvitaClient : IDisposable
     /// <returns></returns>
     /// <exception cref="EvitaInvalidUsageException">thrown when error occurs by clients bad database manipulation</exception>
     /// <exception cref="EvitaInternalError">error cause by bad or unexpected behaviour on the database side</exception>
-    private T ExecuteWithEvitaService<TS, T>(IChannelSupplier channelSupplier, Func<ChannelInvoker, TS> stubBuilder,
+    private T ExecuteWithEvitaService<TS, T>(
+        IChannelSupplier channelSupplier, 
+        Func<ChannelInvoker, TS> stubBuilder,
         Func<TS, T> logic)
     {
         ChannelInvoker channel = channelSupplier.GetChannel();
@@ -563,8 +553,10 @@ public partial class EvitaClient : IDisposable
             this,
             _entitySchemaCache.GetOrAdd(traits.CatalogName, new EvitaEntitySchemaCache(traits.CatalogName)),
             _channelPool!,
+            _cdcChannel,
             traits.CatalogName,
             Enum.Parse<CatalogState>(grpcResponse.CatalogState.ToString()),
+            Guid.Parse(grpcResponse.CatalogId),
             Guid.Parse(grpcResponse.SessionId),
             traits,
             session =>

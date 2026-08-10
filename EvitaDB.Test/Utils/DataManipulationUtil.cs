@@ -146,7 +146,7 @@ public static class DataManipulationUtil
             IPrice price = new Price(new PriceKey(1, "basic", new Currency("CZK")), null, 100, 15, 115,
                 DateTimeRange.Between(DateTimeOffset.Now, DateTimeOffset.Now.AddDays(7)), true);
             builder.SetPrice(price.PriceId, price.PriceList, price.Currency, price.PriceWithoutTax, price.TaxRate,
-                price.PriceWithTax, price.Validity, price.Sellable);
+                price.PriceWithTax, price.Validity, price.Indexed);
 
             PriceInnerRecordHandling priceInnerRecordHandling = PriceInnerRecordHandling.LowestPrice;
             builder.SetPriceInnerRecordHandling(priceInnerRecordHandling);

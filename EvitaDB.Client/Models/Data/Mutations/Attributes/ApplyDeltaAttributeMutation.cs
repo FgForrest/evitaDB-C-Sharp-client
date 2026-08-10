@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Utils;
 
@@ -18,6 +19,7 @@ public class ApplyDeltaAttributeMutation<T> : ApplyDeltaAttributeMutation
 {
     public T Delta { get; }
     public NumberRange<T>? RequiredRangeAfterApplication { get; }
+    public override Operation Operation => Operation.Upsert;
 
     public ApplyDeltaAttributeMutation(AttributeKey attributeKey, T delta) : base(attributeKey)
     {

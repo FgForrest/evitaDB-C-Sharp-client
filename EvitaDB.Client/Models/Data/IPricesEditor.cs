@@ -23,7 +23,7 @@ public interface IPricesEditor<out TW> : IPrices where TW : IPricesEditor<TW>
     /// <param name="priceWithoutTax">price without tax</param>
     /// <param name="taxRate">tax percentage (i.e. for 19% it'll be 19.00)</param>
     /// <param name="priceWithTax">price with tax</param>
-    /// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Sellable"/></param>
+    /// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Indexed"/></param>
     /// <exception cref="AmbiguousPriceException">when there are two prices in same price list and currency which validates overlap</exception>
     /// <returns>builder instance to allow command chaining</returns>
 	TW SetPrice(
@@ -48,7 +48,7 @@ public interface IPricesEditor<out TW> : IPrices where TW : IPricesEditor<TW>
 	/// <param name="priceWithoutTax">price without tax</param>
 	/// <param name="taxRate">tax percentage (i.e. for 19% it'll be 19.00)</param>
 	/// <param name="priceWithTax">price with tax</param>
-	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Sellable"/></param>
+	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Indexed"/></param>
 	/// <exception cref="AmbiguousPriceException">when there are two prices in same price list and currency which validates overlap</exception>
 	/// <returns>builder instance to allow command chaining</returns>
 	TW SetPrice(
@@ -74,7 +74,7 @@ public interface IPricesEditor<out TW> : IPrices where TW : IPricesEditor<TW>
 	/// <param name="taxRate">tax percentage (i.e. for 19% it'll be 19.00)</param>
 	/// <param name="priceWithTax">price with tax</param>
 	/// <param name="validity">date and time interval for which the price is valid (inclusive)</param>
-	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Sellable"/></param>
+	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Indexed"/></param>
 	/// <exception cref="AmbiguousPriceException">when there are two prices in same price list and currency which validates overlap</exception>
 	/// <returns>builder instance to allow command chaining</returns>
 	TW SetPrice(
@@ -101,7 +101,7 @@ public interface IPricesEditor<out TW> : IPrices where TW : IPricesEditor<TW>
 	/// <param name="taxRate">tax percentage (i.e. for 19% it'll be 19.00)</param>
 	/// <param name="priceWithTax">price with tax</param>
 	/// <param name="validity">date and time interval for which the price is valid (inclusive)</param>
-	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Sellable"/></param>
+	/// <param name="sellable">controls whether price is subject to filtering / sorting logic <see cref="Price.Indexed"/></param>
 	/// <exception cref="AmbiguousPriceException">when there are two prices in same price list and currency which validates overlap</exception>
 	/// <returns>builder instance to allow command chaining</returns>
 	TW SetPrice(

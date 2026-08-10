@@ -56,7 +56,7 @@ public class SetReferenceSchemaIndexedMutation : AbstractModifyReferenceDataSche
         if (existingReferenceSchema is null)
         {
             // ups, the associated data is missing
-            throw new InvalidSchemaMutationException(
+            throw new InvalidSchemaException(
                 "The reference `" + Name + "` is not defined in entity `" + entitySchema.Name + "` schema!"
             );
         }
@@ -86,7 +86,7 @@ public class SetReferenceSchemaIndexedMutation : AbstractModifyReferenceDataSche
                     type = "sortable";
                 }
 
-                throw new InvalidSchemaMutationException(
+                throw new InvalidSchemaException(
                     "Cannot make reference schema `" + referenceSchema.Name + "` of entity `" + entitySchema.Name +
                     "` " +
                     "non-indexed if there is a single " + type + " attribute! Found " + type + " attribute " +

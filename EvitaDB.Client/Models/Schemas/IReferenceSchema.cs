@@ -26,4 +26,6 @@ public interface IReferenceSchema : INamedSchemaWithDeprecation, ISortableAttrib
     string? GetReferencedGroupTypeNameVariants(
         NamingConvention namingConvention,
         Func<string?, EntitySchema> entitySchemaFetcher);
+
+    void Validate(ICatalogSchema catalogSchema, EntitySchema entitySchema);
 }

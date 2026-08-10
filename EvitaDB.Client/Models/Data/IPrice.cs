@@ -10,7 +10,7 @@ public interface IPrice : IDroppable
     decimal TaxRate { get; }
     decimal PriceWithTax { get; }
     DateTimeRange? Validity { get; }
-    bool Sellable { get; }
+    bool Indexed { get; }
     Currency Currency { get; }
     string PriceList { get; }
     int PriceId { get; }
@@ -22,7 +22,7 @@ public interface IPrice : IDroppable
         if (!Equals(PriceWithTax, otherPrice.PriceWithTax)) return true;
         if (!Equals(TaxRate, otherPrice.TaxRate)) return true;
         if (!Equals(Validity, otherPrice.Validity)) return true;
-        if (Sellable != otherPrice.Sellable) return true;
+        if (Indexed != otherPrice.Indexed) return true;
         return Dropped != otherPrice.Dropped;
     }
 }

@@ -13,6 +13,7 @@ namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
 public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<IEntitySchemaMutation, GrpcEntitySchemaMutation>
 {
+    public static DelegatingEntitySchemaMutationConverter Instance { get; } = new();
     public GrpcEntitySchemaMutation Convert(IEntitySchemaMutation mutation)
     {
         GrpcEntitySchemaMutation grpcEntitySchemaMutation = new();

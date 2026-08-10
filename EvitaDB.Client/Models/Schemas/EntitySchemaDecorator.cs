@@ -91,6 +91,10 @@ public class EntitySchemaDecorator : ISealedEntitySchema
     public IList<IEntityAttributeSchema> OrderedAttributes => Delegate.OrderedAttributes;
 
     public IList<IAssociatedDataSchema> OrderedAssociatedData => Delegate.OrderedAssociatedData;
+    public void Validate(ICatalogSchema catalogSchema)
+    {
+        Delegate.Validate(catalogSchema);
+    }
 
     public IAttributeSchema GetAttributeOrThrow(string name)
     {

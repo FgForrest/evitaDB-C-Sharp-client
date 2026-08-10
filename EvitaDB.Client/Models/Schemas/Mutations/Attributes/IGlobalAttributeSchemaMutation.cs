@@ -1,32 +1,45 @@
 ﻿using EvitaDB.Client.Models.Schemas.Dtos;
+using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
 public interface IGlobalAttributeSchemaMutation : IAttributeSchemaMutation, ICatalogSchemaMutation
 {
-    ICatalogSchema ReplaceAttributeIfDifferent(
+    CatalogSchemaWithImpactOnEntitySchemas ReplaceAttributeIfDifferent(
         ICatalogSchema catalogSchema,
         IGlobalAttributeSchema existingAttributeSchema,
-        IGlobalAttributeSchema updatedAttributeSchema
+        IGlobalAttributeSchema updatedAttributeSchema,
+        IEntitySchemaProvider entitySchemaProvider,
+        IEntityAttributeSchemaMutation attributeSchemaMutation
     )
     {
         if (existingAttributeSchema.Equals(updatedAttributeSchema))
         {
-            return catalogSchema;
+            return new CatalogSchemaWithImpactOnEntitySchemas(catalogSchema);
         }
 
-        return CatalogSchema.InternalBuild(
-            catalogSchema.Version + 1,
-            catalogSchema.Name,
-            catalogSchema.NameVariants,
-            catalogSchema.Description,
-            catalogSchema.CatalogEvolutionModes,
-            catalogSchema.GetAttributes().Values.Where(x => updatedAttributeSchema.Name != x.Name)
-                .Concat(new []{updatedAttributeSchema})
-                .ToDictionary(x=>x.Name, x=>x),
-            catalogSchema is CatalogSchema cs ? 
-                cs.EntitySchemaAccessor : _ => 
-                    throw new NotSupportedException("Mutated schema is not able to provide access to entity schemas!")
+        return new CatalogSchemaWithImpactOnEntitySchemas(
+                CatalogSchema.InternalBuild(
+                    catalogSchema.Version + 1,
+                    catalogSchema.Name,
+                    catalogSchema.NameVariants,
+                    catalogSchema.Description,
+                    catalogSchema.CatalogEvolutionModes,
+                    catalogSchema.GetAttributes().Values.Where(x => updatedAttributeSchema.Name != x.Name)
+                        .Concat([updatedAttributeSchema])
+                        .ToDictionary(x=>x.Name, x=>x),
+                    entitySchemaProvider
+                ),
+                entitySchemaProvider
+                    .GetEntitySchemas()
+                    .Where(z => z is not null)
+                    .Cast<IEntitySchema>()
+                    .Where(x => x.GetAttributes().ContainsKey(existingAttributeSchema.Name))
+                    .Select(it => new ModifyEntitySchemaMutation(
+                        it.Name,
+                        attributeSchemaMutation
+                        )
+                    ).ToArray()
         );
     }
 }

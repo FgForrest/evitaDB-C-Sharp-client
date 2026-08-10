@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.SortableAttributeCompounds;
@@ -6,6 +7,7 @@ namespace EvitaDB.Client.Models.Schemas.Mutations.SortableAttributeCompounds;
 public class RemoveSortableAttributeCompoundSchemaMutation : IEntitySchemaMutation, IReferenceSortableAttributeCompoundSchemaMutation
 {
     public string Name { get; }
+    public Operation Operation => Operation.Remove;
 
     public RemoveSortableAttributeCompoundSchemaMutation(string name)
     {

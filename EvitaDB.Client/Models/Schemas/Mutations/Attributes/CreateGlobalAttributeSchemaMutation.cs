@@ -1,11 +1,13 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.Attributes;
 
-public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutation, ILocalCatalogSchemaMutation
+public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutation, ILocalCatalogSchemaMutation,
+    ICatalogSchemaMutation
 {
     public string Name { get; }
     public string? Description { get; }
@@ -20,6 +22,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
     public Type Type { get; }
     public object? DefaultValue { get; }
     public int IndexedDecimalPlaces { get; }
+    public Operation Operation => Operation.Upsert;
 
     public CreateGlobalAttributeSchemaMutation(
         string name,
@@ -35,7 +38,7 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         Type type,
         object? defaultValue,
         int indexedDecimalPlaces
-        )
+    )
     {
         ClassifierUtils.ValidateClassifierFormat(ClassifierType.Attribute, name);
         Name = name;
@@ -52,8 +55,9 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
         DefaultValue = defaultValue;
         IndexedDecimalPlaces = indexedDecimalPlaces;
     }
-    
-    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType) where TS : class, IAttributeSchema
+
+    public TS Mutate<TS>(ICatalogSchema? catalogSchema, TS? attributeSchema, Type schemaType)
+        where TS : class, IAttributeSchema
     {
         return (AttributeSchema.InternalBuild(
             Name,
@@ -71,33 +75,38 @@ public class CreateGlobalAttributeSchemaMutation : IGlobalAttributeSchemaMutatio
             IndexedDecimalPlaces) as TS)!;
     }
 
-    public ICatalogSchema? Mutate(ICatalogSchema? catalogSchema)
+    public ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas? Mutate(ICatalogSchema? catalogSchema,
+        IEntitySchemaProvider entitySchemaProvider)
     {
         Assert.IsPremiseValid(catalogSchema != null, "Catalog schema is mandatory!");
-        IGlobalAttributeSchema newAttributeSchema = Mutate<IGlobalAttributeSchema>(catalogSchema, null, typeof(IGlobalAttributeSchema));
+        IGlobalAttributeSchema newAttributeSchema =
+            Mutate<IGlobalAttributeSchema>(catalogSchema, null, typeof(IGlobalAttributeSchema));
         IGlobalAttributeSchema? existingAttributeSchema = catalogSchema?.GetAttribute(Name);
-        if (existingAttributeSchema == null) {
-            return CatalogSchema.InternalBuild(
-                catalogSchema!.Version + 1,
-                catalogSchema.Name,
-                catalogSchema.NameVariants,
-                catalogSchema.Description,
-                catalogSchema.CatalogEvolutionModes,
-                catalogSchema.GetAttributes().Values.Concat(new []{newAttributeSchema}).ToDictionary(x=>x.Name, x=>x),
-                catalogSchema is CatalogSchema cs ?
-                    cs.EntitySchemaAccessor :
-                    _ => throw new NotSupportedException(
-                        "Mutated schema is not able to provide access to entity schemas!"
-                    ));
+        if (existingAttributeSchema == null)
+        {
+            return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(
+                CatalogSchema.InternalBuild(
+                    catalogSchema!.Version + 1,
+                    catalogSchema.Name,
+                    catalogSchema.NameVariants,
+                    catalogSchema.Description,
+                    catalogSchema.CatalogEvolutionModes,
+                    catalogSchema.GetAttributes().Values.Concat(new[] { newAttributeSchema })
+                        .ToDictionary(x => x.Name, x => x),
+                    entitySchemaProvider
+                )
+            );
         }
 
-        if (existingAttributeSchema.Equals(newAttributeSchema)) {
+        if (existingAttributeSchema.Equals(newAttributeSchema))
+        {
             // the mutation must have been applied previously - return the schema we don't need to alter
-            return catalogSchema;
+            // TODO tpz: solve nullability issue below
+            return new ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas(catalogSchema!);
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The attribute `" + Name + "` already exists in entity `" + catalogSchema?.Name + "` schema and" +
             " has different definition. To alter existing attribute schema you need to use different mutations."
         );

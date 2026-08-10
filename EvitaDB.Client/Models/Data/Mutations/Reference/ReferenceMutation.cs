@@ -1,10 +1,12 @@
-﻿using EvitaDB.Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations.Reference;
 
 public abstract class ReferenceMutation : ILocalMutation<IReference>
 {
     public ReferenceKey ReferenceKey { get; }
+    public abstract Operation Operation { get; }
     
     protected ReferenceMutation(ReferenceKey referenceKey)
     {

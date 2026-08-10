@@ -141,7 +141,7 @@ public class InitialEntityBuilder : IEntityBuilder
                 price.TaxRate,
                 price.PriceWithTax,
                 price.Validity,
-                price.Sellable
+                price.Indexed
             );
         }
 

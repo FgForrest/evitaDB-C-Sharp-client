@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Cdc;
 using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
@@ -11,6 +12,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
     public string? Description { get; }
     public string? DeprecationNotice { get; }
     public AttributeElement[] AttributeElements { get; }
+    public Operation Operation => Operation.Upsert;
 
     public CreateSortableAttributeCompoundSchemaMutation(string name, string? description, string? deprecationNotice,
         AttributeElement[] attributeElements)
@@ -57,7 +59,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The sortable attribute compound `" + Name + "` already exists in entity `" + entitySchema.Name +
             "` schema and it has different definition. To alter existing sortable attribute compound schema you" +
             " need to use different mutations."
@@ -102,7 +104,7 @@ public class CreateSortableAttributeCompoundSchemaMutation : IEntitySchemaMutati
         }
 
         // ups, there is conflict in attribute settings
-        throw new InvalidSchemaMutationException(
+        throw new InvalidSchemaException(
             "The sortable attribute compound `" + Name + "` already exists in entity `" + entitySchema.Name + "`" +
             " reference `" + referenceSchema.Name + "` schema and" +
             " it has different definition. To alter existing sortable attribute compound schema you need to use" +

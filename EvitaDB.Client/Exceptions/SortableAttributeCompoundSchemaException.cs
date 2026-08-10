@@ -5,7 +5,7 @@ namespace EvitaDB.Client.Exceptions;
 /// <summary>
 /// Exception is thrown when invalid sortable attribute compound schema is about to be created or made invalid.
 /// </summary>
-public class SortableAttributeCompoundSchemaException : InvalidSchemaMutationException
+public class SortableAttributeCompoundSchemaException : InvalidSchemaException
 {
     public ISortableAttributeCompoundSchema SortableAttributeCompoundSchema { get; }
     

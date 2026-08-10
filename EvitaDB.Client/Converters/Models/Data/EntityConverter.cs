@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using EvitaDB.Client.Converters.DataTypes;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
@@ -223,11 +224,12 @@ public static class EntityConverter
             EvitaDataTypesConverter.ToDecimal(grpcPrice.TaxRate),
             EvitaDataTypesConverter.ToDecimal(grpcPrice.PriceWithTax),
             grpcPrice.Validity is not null ? EvitaDataTypesConverter.ToDateTimeRange(grpcPrice.Validity) : null,
-            grpcPrice.Sellable,
+            grpcPrice.Indexed,
             grpcPrice.Version
         );
     }
 
+    [SuppressMessage("Usage", "CS0612:Remove the member", Justification = "Backwards compatibility.")]
     private static Reference ToReference(
         ISealedEntitySchema entitySchema,
         Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaProvider,
@@ -240,7 +242,7 @@ public static class EntityConverter
             group = new GroupEntityReference(
                 grpcReference.GroupReferencedEntityReference.EntityType,
                 grpcReference.GroupReferencedEntityReference.PrimaryKey,
-                grpcReference.GroupReferencedEntityReference.Version
+                grpcReference.GroupReferencedEntityReference.ReferenceVersion ?? grpcReference.GroupReferencedEntityReference.Version
             );
         }
         else if (grpcReference.GroupReferencedEntity is not null)

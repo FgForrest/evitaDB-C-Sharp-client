@@ -56,7 +56,7 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
         
         Assert.Equal(20, referenceResponse.RecordPage.Data!.Count);
         Assert.True(referenceResponse.RecordPage.Data.All(x => x is {Type: "Product", PrimaryKey: > 0}));
-        Assert.Equal(1, referenceResponse.ExtraResults.Count);
+        Assert.Single(referenceResponse.ExtraResults);
         Assert.Equal(typeof(Client.Models.ExtraResults.QueryTelemetry), referenceResponse.ExtraResults.Values.ToList()[0].GetType());
     }
 
@@ -100,7 +100,7 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
         Assert.Contains(entityResponse.RecordPage.Data, x => x.GetReferences().Any());
         Assert.Contains(entityResponse.RecordPage.Data, x => x.GetPrices().Any());
 
-        Assert.Equal(1, entityResponse.ExtraResults.Count);
+        Assert.Single(entityResponse.ExtraResults);
         Assert.Equal(typeof(Client.Models.ExtraResults.QueryTelemetry), entityResponse.ExtraResults.Values.ToList()[0].GetType());
     }
 

@@ -25,7 +25,11 @@ public class ReferenceSchema : IReferenceSchema
     private IDictionary<string, AttributeSchema[]> AttributeNameIndex { get; }
     private IDictionary<string, SortableAttributeCompoundSchema> SortableAttributeCompounds { get; }
     private IDictionary<string, SortableAttributeCompoundSchema[]> SortableAttributeCompoundNameIndex { get; }
-    private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex { get; }
+
+    private IDictionary<string, List<SortableAttributeCompoundSchema>> AttributeToSortableAttributeCompoundIndex
+    {
+        get;
+    }
 
     internal static ReferenceSchema InternalBuild(
         string name,
@@ -71,11 +75,11 @@ public class ReferenceSchema : IReferenceSchema
     }
 
     /**
-	 * This method is for internal purposes only. It could be used for reconstruction of ReferenceSchema from
-	 * different package than current, but still internal code of the Evita ecosystems.
-	 *
-	 * Do not use this method from in the client code!
-	 */
+     * This method is for internal purposes only. It could be used for reconstruction of ReferenceSchema from
+     * different package than current, but still internal code of the Evita ecosystems.
+     *
+     * Do not use this method from in the client code!
+     */
     internal static ReferenceSchema InternalBuild(
         string name,
         string? description,
@@ -123,11 +127,11 @@ public class ReferenceSchema : IReferenceSchema
     }
 
     /**
-	 * This method is for internal purposes only. It could be used for reconstruction of ReferenceSchema from
-	 * different package than current, but still internal code of the Evita ecosystems.
-	 *
-	 * Do not use this method from in the client code!
-	 */
+     * This method is for internal purposes only. It could be used for reconstruction of ReferenceSchema from
+     * different package than current, but still internal code of the Evita ecosystems.
+     *
+     * Do not use this method from in the client code!
+     */
     internal static ReferenceSchema InternalBuild(
         string name,
         IDictionary<NamingConvention, string?> nameVariants,
@@ -173,12 +177,12 @@ public class ReferenceSchema : IReferenceSchema
         );
     }
 
-    private ReferenceSchema(
+    protected ReferenceSchema(
         string name,
         IDictionary<NamingConvention, string?> nameVariants,
         string? description,
         string? deprecationNotice,
-        Cardinality cardinality,
+        Cardinality? cardinality,
         string referencedEntityType,
         IDictionary<NamingConvention, string?> entityTypeNameVariants,
         bool referencedEntityTypeManaged,
@@ -195,7 +199,9 @@ public class ReferenceSchema : IReferenceSchema
         NameVariants = nameVariants;
         Description = description;
         DeprecationNotice = deprecationNotice;
-        Cardinality = cardinality;
+        Cardinality =
+            cardinality ??
+            Cardinality.ExactlyOne; // TODO tpz: after JNO fix this to correct value because of nullability problem
         ReferencedEntityType = referencedEntityType;
         EntityTypeNameVariants = entityTypeNameVariants;
         ReferencedEntityTypeManaged = referencedEntityTypeManaged;
@@ -225,7 +231,7 @@ public class ReferenceSchema : IReferenceSchema
             .Values
             .SelectMany(it => it.AttributeElements.Select(attribute => new AttributeToCompound(attribute, it)))
             .GroupBy(rec => rec.Attribute.AttributeName, compound => compound.CompoundSchema,
-                (key, values) => new {Key = key, Values = values.ToList()})
+                (key, values) => new { Key = key, Values = values.ToList() })
             .ToDictionary(x => x.Key, x => x.Values);
     }
 
@@ -264,9 +270,88 @@ public class ReferenceSchema : IReferenceSchema
             : GroupTypeNameVariants[namingConvention];
     }
 
+    public void Validate(ICatalogSchema catalogSchema, EntitySchema entitySchema)
+    {
+        IEntitySchema? referencedEntityTypeSchema = catalogSchema.GetEntitySchema(ReferencedEntityType);
+        IEnumerable<string> referenceErrors = [];
+        if (ReferencedEntityTypeManaged && referencedEntityTypeSchema is null)
+        {
+            referenceErrors = [..referenceErrors, "Referenced entity type `" + ReferencedEntityType + "` is not present in catalog `" + catalogSchema.Name + "` schema!"];
+        }
+        else if (!ReferencedEntityTypeManaged && referencedEntityTypeSchema is not null)
+        {
+            referenceErrors = [
+                ..referenceErrors,
+                "Referenced entity type `" + ReferencedEntityType + "` is present in catalog `" +
+                catalogSchema.Name + "` schema, but it's marked as not managed!"
+            ];
+        }
+
+        if (ReferencedGroupTypeManaged &&
+            catalogSchema.GetEntitySchema(ReferencedGroupType!) is null
+           )
+        {
+            referenceErrors = [
+                ..referenceErrors,
+                "Referenced group entity type `" + ReferencedGroupType! + "` is not present in catalog `" +
+                          catalogSchema.Name + "` schema!"
+            ];
+        }
+        else if (!ReferencedGroupTypeManaged &&
+                 catalogSchema.GetEntitySchema(ReferencedGroupType!) is not null
+                )
+        {
+            referenceErrors = [
+                ..referenceErrors,
+                "Referenced group entity type `" + ReferencedGroupType + "` is present in catalog `" +
+                          catalogSchema.Name + "` schema, but it's marked as not managed!"
+            ];
+        }
+
+        referenceErrors = [..referenceErrors, ..ValidateAttributes(GetAttributes())];
+
+        List<string> errors = referenceErrors.Select(it => "\t" + it).ToList();
+        if (errors.Count != 0)
+        {
+            throw new InvalidSchemaMutationException(
+                "Reference schema `" + Name + "` contains validation errors:\n" + String.Join("\n", errors)
+            );
+        }
+    }
+
+    protected List<string> ValidateAttributes( IDictionary<string, IAttributeSchema> attributes)
+    {
+        List<string> attributeErrors = new List<string>();
+        if (!this.IsIndexed)
+        {
+            foreach (IAttributeSchema attribute in attributes.Values)
+            {
+                if (attribute.Filterable())
+                {
+                    attributeErrors.Add(
+                        $"Attribute `{attribute.Name}` of reference schema `{Name}` is filterable but reference schema is not indexed!");
+                }
+
+                if (attribute.Sortable())
+                {
+                    attributeErrors.Add(
+                        $"Attribute `{attribute.Name}` of reference schema `{Name}` is sortable but reference schema is not indexed!");
+                }
+
+                if (attribute.Unique())
+                {
+                    attributeErrors.Add(
+                        $"Attribute `{attribute.Name}` of reference schema `{Name}` is unique but reference schema is not indexed!");
+                }
+            }
+        }
+
+        return attributeErrors;
+    }
+
     public IDictionary<string, IAttributeSchema> GetAttributes()
     {
-        return Attributes.ToDictionary(x=>x.Key, x => (IAttributeSchema) x.Value);
+        return Attributes.ToDictionary(x => x.Key, x => (IAttributeSchema)x.Value);
     }
 
     public IAttributeSchema? GetAttribute(string name)
@@ -284,10 +369,11 @@ public class ReferenceSchema : IReferenceSchema
 
     public IAttributeSchema? GetAttributeByName(string dataName, NamingConvention namingConvention)
     {
-        return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int) namingConvention] : null;
+        return AttributeNameIndex.TryGetValue(dataName, out var result) ? result[(int)namingConvention] : null;
     }
 
-    public string? GetNameVariant(NamingConvention namingConvention) => NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
+    public string? GetNameVariant(NamingConvention namingConvention) =>
+        NameVariants.TryGetValue(namingConvention, out string? name) ? name : null;
 
     public IDictionary<string, SortableAttributeCompoundSchema> GetSortableAttributeCompounds()
     {
@@ -303,7 +389,7 @@ public class ReferenceSchema : IReferenceSchema
         NamingConvention namingConvention)
     {
         return SortableAttributeCompoundNameIndex.TryGetValue(name, out var result)
-            ? result[(int) namingConvention]
+            ? result[(int)namingConvention]
             : null;
     }
 

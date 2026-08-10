@@ -12,6 +12,14 @@ internal static class Assert
         }
     }
     
+    public static void IsTrue(bool condition, Func<string> message)
+    {
+        if (!condition)
+        {
+            throw new EvitaInternalError(message.Invoke());
+        }
+    }
+    
     public static void IsTrue<T>(bool condition, Func<T> exceptionFactory) where T : Exception
     {
         if (!condition)

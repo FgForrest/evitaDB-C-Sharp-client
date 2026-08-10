@@ -5,6 +5,7 @@ namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
 public class DelegatingEntityMutationConverter : IEntityMutationConverter<IEntityMutation, GrpcEntityMutation>
 {
+    public static DelegatingEntityMutationConverter Instance { get; } = new();
     public GrpcEntityMutation Convert(IEntityMutation mutation)
     {
         GrpcEntityMutation grpcEntityMutation = new();

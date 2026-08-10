@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas.Dtos;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas.Dtos;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Models.Schemas.Mutations.AssociatedData;
@@ -49,4 +50,6 @@ public class RemoveAssociatedDataSchemaMutation : IAssociatedDataSchemaMutation,
             entitySchema.GetSortableAttributeCompounds()
         );
     }
+    
+    public Operation Operation => Operation.Remove;
 }

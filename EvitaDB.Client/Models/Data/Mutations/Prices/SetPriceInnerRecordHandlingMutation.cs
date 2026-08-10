@@ -1,10 +1,12 @@
-﻿using EvitaDB.Client.Models.Schemas;
+﻿using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Schemas;
 
 namespace EvitaDB.Client.Models.Data.Mutations.Prices;
 
 public class SetPriceInnerRecordHandlingMutation : ILocalMutation<IPrices>
 {
     public PriceInnerRecordHandling PriceInnerRecordHandling { get; }
+    public Operation Operation => Operation.Upsert;
     
     public SetPriceInnerRecordHandlingMutation(PriceInnerRecordHandling priceInnerRecordHandling)
     {

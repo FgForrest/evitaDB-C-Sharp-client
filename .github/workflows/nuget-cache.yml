@@ -1,0 +1,38 @@
+# Utility workflow: restores the solution and exports the NuGet package cache
+# as a build artifact. Used to hydrate offline development environments that
+# cannot reach nuget.org directly. Trigger manually via workflow_dispatch.
+
+name: Export NuGet cache
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-cache:
+    name: Restore and export package cache
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore solution
+        run: dotnet restore ./EvitaDB.sln --packages .nuget-packages
+
+      - name: Pack cache
+        run: tar -czf nuget-packages.tar.gz .nuget-packages
+
+      - name: Upload cache artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: nuget-packages.tar.gz
+          retention-days: 3

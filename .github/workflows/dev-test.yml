@@ -10,7 +10,7 @@ on:
     branches: ["dev", "master"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-release:
@@ -35,6 +35,21 @@ jobs:
 
       - name: Build solution
         run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
+
+      # Temporary: exports the NuGet package cache to a draft release so that
+      # offline development environments (no nuget.org access) can hydrate a
+      # local cache; remove once the catch-up work stabilizes.
+      - name: Export NuGet cache to draft release
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf nuget-packages.tar.gz -C $HOME .nuget/packages
+          gh release view nuget-cache --json id >/dev/null 2>&1 || \
+            gh release create nuget-cache --draft \
+              --title "NuGet cache (offline dev, temporary)" \
+              --notes "Draft release holding the restored NuGet package cache for offline development environments. Never published; safe to delete."
+          gh release upload nuget-cache nuget-packages.tar.gz --clobber
 
       - name: Run tests
         run: dotnet test ./EvitaDB.sln --configuration Release --no-build

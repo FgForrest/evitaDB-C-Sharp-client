@@ -202,6 +202,10 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
     public ISet<CatalogEvolutionMode> CatalogEvolutionModes => _instance.CatalogEvolutionModes;
     public IEntitySchema? GetEntitySchema(string entityType) => _instance.GetEntitySchema(entityType);
 
+    public IEnumerable<IEntitySchema?> GetEntitySchemas() => _instance.GetEntitySchemas();
+
+    public void Validate() => _instance.Validate();
+
     public enum MutationImpact
     {
         NoImpact,

@@ -21,8 +21,10 @@ map $uri $storefront_cache {
 }
 
 server {
-    # 8080 so the server can run unprivileged
-    listen 8080;
+    # Rendered by docker/entrypoint.sh from STOREFRONT_LISTEN_PORT. Only this one placeholder is substituted,
+    # so nginx's own $uri / $storefront_cache variables above survive untouched. The port must stay >= 1024:
+    # nginx runs here as an unprivileged uid and cannot bind a privileged port.
+    listen ${STOREFRONT_LISTEN_PORT};
     server_name _;
     root /usr/share/nginx/html;
     index index.html;

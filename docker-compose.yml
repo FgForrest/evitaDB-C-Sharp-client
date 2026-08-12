@@ -8,7 +8,8 @@
 # Every setting has a default, so a plain `up` needs no .env file. Override any of them in the environment
 # or in a .env file next to this one:
 #
-#   STOREFRONT_PORT=9000
+#   STOREFRONT_PORT=9000          # port published on your machine
+#   STOREFRONT_LISTEN_PORT=9000   # port nginx binds inside the container (>= 1024)
 #   EVITA_HOST=my-server.example.com
 #   EVITA_PORT=5555
 #   EVITA_TLS=true
@@ -21,9 +22,13 @@ services:
       context: .
       dockerfile: EvitaDB.Storefront/Dockerfile
     image: evita-storefront:local
+    # STOREFRONT_PORT is the port on your machine; STOREFRONT_LISTEN_PORT is the one nginx binds inside the
+    # container. They are separate because only the latter matters behind a reverse proxy with a fixed
+    # target port - see EvitaDB.Storefront/README.md. Leave both alone and everything is 8080 as before.
     ports:
-      - "${STOREFRONT_PORT:-8080}:8080"
+      - "${STOREFRONT_PORT:-8080}:${STOREFRONT_LISTEN_PORT:-8080}"
     environment:
+      STOREFRONT_LISTEN_PORT: "${STOREFRONT_LISTEN_PORT:-8080}"
       # Written into wwwroot/appsettings.json at container start by docker/entrypoint.sh, so the same
       # image can be pointed anywhere without a rebuild. A Blazor WebAssembly app has no server side -
       # this file is simply fetched by the browser.

@@ -38,6 +38,13 @@
 
         @if (_open)
         {
+            @* Full-viewport click target that dismisses the menu, so clicking anywhere outside closes it -
+               which is what a dropdown is expected to do. A backdrop rather than a document-level listener
+               keeps this inside Blazor's event model: no JS interop, and nothing to unregister when the
+               component goes away. It sits above the rest of the bar but below the menu, so clicks inside
+               the menu still land on the menu, while a click on the toggle is absorbed here and closes. *@
+            <div class="pricelist-backdrop" @onclick="() => _open = false"></div>
+
             <div class="pricelist-menu">
                 <p class="muted">
                     Applied in order — the first list holding a price for a product wins.

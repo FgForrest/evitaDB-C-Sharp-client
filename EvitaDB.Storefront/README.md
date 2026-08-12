@@ -23,6 +23,19 @@ docker run --rm -p 8080:8080 ghcr.io/fgforrest/evitadb-c-sharp-client/storefront
 ```
 
 Tags are `latest`, the release version (`1.2.3`), the minor line (`1.2`) and the commit (`sha-abc1234`).
+
+The port nginx binds inside the container is `STOREFRONT_LISTEN_PORT` (default `8080`). Change it when the
+image runs behind a reverse proxy whose target port is fixed and not yours to configure:
+
+```shell
+docker run --rm -e STOREFRONT_LISTEN_PORT=9000 -p 9000:9000 \
+  ghcr.io/fgforrest/evitadb-c-sharp-client/storefront:latest
+```
+
+It must be 1024 or above — nginx runs as an unprivileged user here and cannot bind a privileged port. The
+container refuses to start with a clear message rather than failing obscurely if it is out of range. The
+health check follows the same variable, so a reconfigured port stays healthy.
+
 Point it elsewhere with the same environment variables the compose file uses:
 
 ```shell

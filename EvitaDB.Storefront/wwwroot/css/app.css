@@ -379,6 +379,11 @@ select, input[type="number"] {
 .pricelist-toggle:hover { border-color: var(--accent); }
 .pricelist-toggle .caret { color: var(--muted); font-size: .7rem; }
 
+/* Invisible click-catcher behind the open menu - see ShopContextSelector.razor. z-index one below the menu
+   so the menu keeps receiving its own clicks. It is painted inside the sticky bar's stacking context
+   (z-index 10), which is above the page content, so a click anywhere on the page reaches it. */
+.pricelist-backdrop { position: fixed; inset: 0; z-index: 19; background: transparent; }
+
 .pricelist-menu {
     position: absolute; top: 100%; right: 0; z-index: 20; margin-top: .25rem;
     width: 17rem; max-height: 60vh; overflow-y: auto;

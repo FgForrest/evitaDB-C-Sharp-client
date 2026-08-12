@@ -29,12 +29,16 @@
     <div class="range-slider">
         <div class="range-track"></div>
         <div class="range-fill" style="left: @Percent(Low)%; right: @(100 - Percent(High))%"></div>
+        @* min/max/step/value MUST be culture-invariant: HTML parses them as floating-point numbers with a
+           dot separator only. Rendered with the ambient culture (which Blazor WASM adopts from the browser
+           language), a Czech/German browser would get `min="0,00"`, reject it, and fall back to the default
+           0–100 range with the thumb parked in the middle. *@
         <input type="range" class="range-input low"
-               min="@Min" max="@Max" step="@Step" value="@Low"
+               min="@Invariant(Min)" max="@Invariant(Max)" step="@Invariant(Step)" value="@Invariant(Low)"
                aria-label="@Title minimum"
                @oninput="OnLowInput" @onchange="CommitAsync"/>
         <input type="range" class="range-input high"
-               min="@Min" max="@Max" step="@Step" value="@High"
+               min="@Invariant(Min)" max="@Invariant(Max)" step="@Invariant(Step)" value="@Invariant(High)"
                aria-label="@Title maximum"
                @oninput="OnHighInput" @onchange="CommitAsync"/>
     </div>
@@ -144,6 +148,10 @@
 
     private string Format(decimal value) =>
         Unit is null ? value.ToString("0.##") : $"{value:0.##} {Unit}";
+
+    /// <summary>Attribute form the HTML floating-point parser accepts — dot separator, no grouping.</summary>
+    private static string Invariant(decimal value) =>
+        value.ToString("0.####", CultureInfo.InvariantCulture);
 
     private static decimal? Parse(object? value) =>
         decimal.TryParse(value?.ToString(), NumberStyles.Any,

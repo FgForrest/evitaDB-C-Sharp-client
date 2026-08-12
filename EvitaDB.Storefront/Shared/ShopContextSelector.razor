@@ -53,10 +53,17 @@
                     @foreach (string priceList in Catalog.PriceLists)
                     {
                         int position = State.SelectedPriceLists.IndexOf(priceList);
-                        <li>
+                        <li @key="priceList">
+                            @* @bind:get/set rather than checked= + @onchange: the toggle does not always land on
+                               the value the click produced (unticking the last list restores the defaults), and
+                               a plain checked attribute is then skipped as "unchanged" by Blazor's diff while the
+                               DOM property holds the user's click - the box would render unticked yet selected.
+                               The binding patches the render tree with the clicked value first, so the follow-up
+                               render reliably writes the real state back to the DOM. *@
                             <label class="@(position >= 0 ? "selected" : null)">
-                                <input type="checkbox" checked="@(position >= 0)"
-                                       @onchange="() => State.TogglePriceList(priceList)"/>
+                                <input type="checkbox"
+                                       @bind:get="position >= 0"
+                                       @bind:set="_ => State.TogglePriceList(priceList)"/>
                                 <span class="pricelist-name">@priceList</span>
                                 @if (position >= 0)
                                 {

@@ -18,10 +18,19 @@
             int? primaryKey = facet.FacetEntity.PrimaryKey;
             @if (primaryKey is not null)
             {
-                <li>
-                    <label class="facet @(facet.Requested ? "selected" : null)">
-                        <input type="checkbox" checked="@facet.Requested"
-                               @onchange="() => State.ToggleFacet(Group.ReferenceName, primaryKey.Value)"/>
+                @* @key is essential: ticked options are re-sorted to the top when the summary refreshes, and
+                   without it Blazor reuses the <input> elements positionally - the physical checkbox the user
+                   just clicked stays checked while a different facet's row lands on it. *@
+                <li @key="primaryKey.Value">
+                    @* Checked state is read from StorefrontState (updated synchronously by the toggle), not from
+                       facet.Requested (only refreshed by the next server response) - and bound via @bind:get/set
+                       so Blazor patches its render tree with the click before diffing. A plain checked="..."
+                       attribute is skipped as "unchanged" by the diff whenever the user's click already flipped
+                       the DOM property, which is how checkboxes drifted out of sync until a full reload. *@
+                    <label class="facet @(State.IsFacetSelected(Group.ReferenceName, primaryKey.Value) ? "selected" : null)">
+                        <input type="checkbox"
+                               @bind:get="State.IsFacetSelected(Group.ReferenceName, primaryKey.Value)"
+                               @bind:set="_ => State.ToggleFacet(Group.ReferenceName, primaryKey.Value)"/>
                         <span class="facet-name">@facet.FacetEntity.DisplayName(State.Locale)</span>
 
                         @* how many products carry the option at all - independent of what is ticked *@

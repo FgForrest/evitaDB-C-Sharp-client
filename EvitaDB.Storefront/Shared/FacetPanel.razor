@@ -62,11 +62,15 @@
             List<FacetGroupStatistics> groups = GroupsOf(referenceName);
             @if (groups.Count > 0)
             {
-                <section class="facet-reference">
+                <section class="facet-reference" @key="referenceName">
                     <h3>@Humanize(referenceName)</h3>
+                    @* groups with a ticked option re-sort to the front on every summary refresh; @key keeps
+                       each group's DOM (and the component's own "show all" state) attached to the group rather
+                       than to the position *@
                     @foreach (FacetGroupStatistics group in groups.Take(GroupLimit))
                     {
-                        <FacetGroupList Group="group" CurrentTotal="CurrentTotal" ValueLimit="ValueLimit"/>
+                        <FacetGroupList @key="GroupKey(referenceName, group)"
+                                        Group="group" CurrentTotal="CurrentTotal" ValueLimit="ValueLimit"/>
                     }
                     @if (groups.Count > GroupLimit)
                     {
@@ -109,13 +113,14 @@
                     List<FacetGroupStatistics> groups = GroupsOf(referenceName);
                     @if (groups.Count > 0)
                     {
-                        <section class="facet-reference">
+                        <section class="facet-reference" @key="referenceName">
                             <h3>@Humanize(referenceName)</h3>
                             <div class="modal-groups">
                                 @foreach (FacetGroupStatistics group in groups)
                                 {
                                     @* no per-group cap in the modal - this is the "see everything" view *@
-                                    <FacetGroupList Group="group" CurrentTotal="CurrentTotal" ValueLimit="0"/>
+                                    <FacetGroupList @key="GroupKey(referenceName, group)"
+                                                    Group="group" CurrentTotal="CurrentTotal" ValueLimit="0"/>
                                 }
                             </div>
                         </section>
@@ -181,6 +186,13 @@
                 .OrderByDescending(group => group.GetFacetStatistics().Any(facet => facet.Requested))
                 .ThenByDescending(group => group.Count)
                 .ToList();
+
+    /// <summary>
+    /// Stable identity of a group across summary refreshes: the group entity's primary key, or the reference
+    /// name for the implicit "no group" bucket (at most one per reference).
+    /// </summary>
+    private static object GroupKey(string referenceName, FacetGroupStatistics group) =>
+        group.GroupEntity?.PrimaryKey is int primaryKey ? primaryKey : referenceName;
 
     /// <summary>`parameterValues` -> `Parameter values`, `battery-capacity` -> `Battery capacity`.</summary>
     private static string Humanize(string name)

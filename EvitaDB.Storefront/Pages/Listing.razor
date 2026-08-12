@@ -219,18 +219,24 @@
 
         try
         {
-            // Sequential on purpose: EvitaClientSession is documented as not thread safe, and this app shares
-            // one long-lived session. Firing both queries concurrently would interleave calls on it.
-            IReadOnlyList<LevelInfo> categories = await Catalog.GetCategoryTreeAsync();
-            ProductListing listing = await Catalog.GetListingAsync(CategoryCode, _page, State.PageSize);
+            // Overlapped on purpose. Blazor WebAssembly is single-threaded, so two in-flight queries interleave
+            // at await points rather than run in parallel threads - and the session is safe for that: its
+            // session id flows in an AsyncLocal and the channel pool grows on demand (the driver's thread-safety
+            // caveat is about real multi-threading). Both queries travel to a remote server, so awaiting them
+            // together halves the perceived latency of every facet click and category navigation.
+            Task<IReadOnlyList<LevelInfo>> categoriesTask = Catalog.GetCategoryTreeAsync();
+            Task<ProductListing> listingTask = Catalog.GetListingAsync(CategoryCode, _page, State.PageSize);
+            await Task.WhenAll(categoriesTask, listingTask);
 
             if (requestId != _requestId)
             {
                 // a newer request has been issued meanwhile - drop this result
                 return;
             }
-            _categories = categories;
-            _listing = listing;
+            // awaiting an already-completed task is synchronous - used instead of .Result, which the project
+            // convention bans outright as a WASM deadlock trap
+            _categories = await categoriesTask;
+            _listing = await listingTask;
         }
         catch (Exception exception)
         {

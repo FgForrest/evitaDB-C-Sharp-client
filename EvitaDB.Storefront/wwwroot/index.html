@@ -43,9 +43,12 @@
         }
     };
 </script>
-<!-- the #[.{fingerprint}] placeholder is replaced at publish time so the entry script's URL changes with
-     its content; a plain `blazor.webassembly.js` would be cached as immutable by the nginx rules and keep
-     booting the previous deployment -->
+<!-- The fingerprint placeholder in the src below is rewritten at publish time so the entry script gets a
+     content-hashed URL; a stable blazor.webassembly.js name would be cached as immutable by the nginx rules
+     and keep booting the previous deployment. CAUTION: never write the placeholder token itself anywhere
+     else in this file, not even in a comment - the SDK rewrites it with a quote-delimited regex over the
+     whole document, and a stray occurrence makes that regex consume the wrong span and skip the real one
+     (which is exactly how a broken deployment shipped once). -->
 <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 </html>

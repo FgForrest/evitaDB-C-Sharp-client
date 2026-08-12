@@ -58,20 +58,38 @@ public sealed class EvitaCatalogContext : IAsyncDisposable
         }
     }
 
-    private async Task ReopenSessionAsync(EvitaClientSession expired, CancellationToken cancellationToken)
+    /// <summary>In-flight reopen, shared by every query that noticed the expiry at the same time.</summary>
+    private Task? _reopening;
+
+    private Task ReopenSessionAsync(EvitaClientSession expired, CancellationToken cancellationToken)
     {
         // another call may have reopened it already while this one was in flight
         if (!ReferenceEquals(_session, expired))
         {
-            return;
+            return Task.CompletedTask;
         }
         if (_client is null)
         {
             throw new InvalidOperationException("Catalog context has not been initialized yet.");
         }
-        _session = await _client.CreateSessionAsync(
-            new SessionTraits(_options.Catalog), cancellationToken
-        ).ConfigureAwait(false);
+        // Queries are routinely overlapped (listing + category tree, the schema prime wave), so several of
+        // them can trip over the same expired session at once - they must all await ONE replacement instead
+        // of racing to open several sessions and leaking all but the last. A finished task is ignored rather
+        // than cleared, which sidesteps the reset-ordering traps of a self-clearing field. Single-threaded
+        // WASM guarantees the check and the assignment are not interleaved.
+        if (_reopening is { IsCompleted: false })
+        {
+            return _reopening;
+        }
+        _reopening = ReopenCoreAsync(cancellationToken);
+        return _reopening;
+
+        async Task ReopenCoreAsync(CancellationToken ct)
+        {
+            _session = await _client!.CreateSessionAsync(
+                new SessionTraits(_options.Catalog), ct
+            ).ConfigureAwait(false);
+        }
     }
 
     public IEntitySchema ProductSchema { get; private set; } = null!;
@@ -136,7 +154,7 @@ public sealed class EvitaCatalogContext : IAsyncDisposable
             ).ConfigureAwait(false);
 
             await PrimeSchemaCachesAsync(cancellationToken).ConfigureAwait(false);
-            await LoadCatalogMetadataAsync(cancellationToken).ConfigureAwait(false);
+            LoadCatalogMetadata();
             _step = null;
         }
         catch (Exception exception)
@@ -153,26 +171,60 @@ public sealed class EvitaCatalogContext : IAsyncDisposable
     /// response looks schemas up in <c>EvitaEntitySchemaCache</c> and, on a miss, calls a <i>blocking</i> fetcher.
     /// Priming every type (including those only reachable as referenced entities) guarantees the miss never
     /// happens. See documentation/architecture.md.
+    ///
+    /// Independent calls are deliberately overlapped instead of awaited one by one. Blazor WebAssembly is
+    /// single-threaded, so this is interleaving, not multi-threading, and the session tolerates it: the session
+    /// id travels in an <c>AsyncLocal</c> that flows with each call, the channel pool hands out extra channels
+    /// on demand instead of blocking, and the schema-cache writes happen synchronously between awaits. Against
+    /// a remote server every round trip costs real latency; the sequential version paid it once per entity
+    /// type, this one pays it three times in total (schema+types wave, prime wave, price-list query chained
+    /// onto the PriceList prime).
     /// </summary>
     private async Task PrimeSchemaCachesAsync(CancellationToken cancellationToken)
     {
-        _step = "fetching the catalog schema";
-        await Session.GetCatalogSchemaAsync(cancellationToken).ConfigureAwait(false);
+        _step = "fetching the catalog schema and listing entity types";
+        Task<ISealedCatalogSchema> catalogSchemaTask = Session.GetCatalogSchemaAsync(cancellationToken);
+        Task<ISet<string>> entityTypesTask = Session.GetAllEntityTypesAsync(cancellationToken);
+        await Task.WhenAll(catalogSchemaTask, entityTypesTask).ConfigureAwait(false);
 
-        _step = "listing entity types";
-        ISet<string> entityTypes = await Session.GetAllEntityTypesAsync(cancellationToken).ConfigureAwait(false);
-        foreach (string entityType in entityTypes)
-        {
-            _step = $"priming the schema of `{entityType}`";
-            await Session.GetEntitySchemaAsync(entityType, cancellationToken).ConfigureAwait(false);
-        }
+        _step = "priming entity schemas and loading price lists";
+        // the tasks below are complete after the WhenAll - awaiting them is synchronous unwrapping, used
+        // instead of .Result, which the project convention bans outright as a WASM deadlock trap
+        ISet<string> entityTypes = await entityTypesTask.ConfigureAwait(false);
+        Dictionary<string, Task<ISealedEntitySchema?>> primes = entityTypes.ToDictionary(
+            entityType => entityType,
+            entityType => Session.GetEntitySchemaAsync(entityType, cancellationToken),
+            StringComparer.Ordinal);
 
+        // The price-list query only needs the PriceList schema (and the catalog schema, fetched above) to be
+        // in the cache when its RESPONSE is converted - so it is chained onto that single prime rather than
+        // onto the whole wave, and overlaps the remaining schema fetches. When the collection is absent the
+        // plain query preserves the original failure mode.
+        Task<IReadOnlyList<string>> priceListsTask =
+            primes.TryGetValue(StorefrontSchema.PriceListCollection, out Task<ISealedEntitySchema?>? priceListPrime)
+                ? ChainPriceListsAsync(priceListPrime, cancellationToken)
+                : LoadPriceListsAsync(cancellationToken);
+
+        await Task.WhenAll(primes.Values.Cast<Task>().Append(priceListsTask)).ConfigureAwait(false);
+        PriceLists = await priceListsTask.ConfigureAwait(false);
+
+        // the wave already fetched the Product schema - no second round trip for it
         _step = $"loading the `{StorefrontSchema.ProductCollection}` schema";
-        ProductSchema = await Session.GetEntitySchemaOrThrowAsync(StorefrontSchema.ProductCollection, cancellationToken)
-            .ConfigureAwait(false);
+        ProductSchema =
+            (primes.TryGetValue(StorefrontSchema.ProductCollection, out Task<ISealedEntitySchema?>? productPrime)
+                ? await productPrime.ConfigureAwait(false)
+                : null)
+            ?? throw new CollectionNotFoundException(StorefrontSchema.ProductCollection);
     }
 
-    private async Task LoadCatalogMetadataAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> ChainPriceListsAsync(
+        Task<ISealedEntitySchema?> priceListSchemaPrime, CancellationToken cancellationToken)
+    {
+        await priceListSchemaPrime.ConfigureAwait(false);
+        return await LoadPriceListsAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void LoadCatalogMetadata()
     {
         Locales = ProductSchema.Locales.OrderBy(x => x.Name, StringComparer.Ordinal).ToList();
         Currencies = ProductSchema.Currencies.OrderBy(x => x.CurrencyCode, StringComparer.Ordinal).ToList();
@@ -193,9 +245,6 @@ public sealed class EvitaCatalogContext : IAsyncDisposable
             .Select(attribute => attribute.Name)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToList();
-
-        _step = "loading price lists";
-        PriceLists = await LoadPriceListsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

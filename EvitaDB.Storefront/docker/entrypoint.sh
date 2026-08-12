@@ -55,6 +55,18 @@ if [ ! -r "${NGINX_TEMPLATE}" ]; then
     echo "entrypoint: nginx template '${NGINX_TEMPLATE}' is missing or unreadable" >&2
     exit 1
 fi
+
+# Checked up front so the failure names the cause instead of surfacing as a bare redirect error. The image
+# ships both files world-writable precisely so any uid can rewrite them, so hitting this means something
+# outside the image replaced them - typically a volume or bind mount over the path, or a read-only mount.
+for _target in "${NGINX_CONF}" "${CONFIG}"; do
+    if [ ! -w "${_target}" ]; then
+        echo "entrypoint: '${_target}' is not writable by uid $(id -u)." >&2
+        echo "entrypoint: this image is built to run under any uid, so the usual cause is a mount over" >&2
+        echo "entrypoint: that path, or a read-only filesystem. Remove the mount, or run with --user 101." >&2
+        exit 1
+    fi
+done
 sed "s|\${STOREFRONT_LISTEN_PORT}|${STOREFRONT_LISTEN_PORT}|g" "${NGINX_TEMPLATE}" > "${NGINX_CONF}"
 
 cat > "${CONFIG}" <<JSON

@@ -36,6 +36,11 @@ It must be 1024 or above — nginx runs as an unprivileged user here and cannot 
 container refuses to start with a clear message rather than failing obscurely if it is out of range. The
 health check follows the same variable, so a reconfigured port stays healthy.
 
+The image runs under an arbitrary uid, not only its default `101`, which matters where the platform assigns
+one. The two files the entrypoint rewrites at start-up — the nginx server block and `appsettings.json` —
+are pre-created world-writable for that reason, so no `--user` flag is needed. Mounting a volume over
+either path takes that away; the entrypoint says so explicitly if it happens.
+
 Point it elsewhere with the same environment variables the compose file uses:
 
 ```shell

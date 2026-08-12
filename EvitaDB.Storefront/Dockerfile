@@ -47,15 +47,23 @@ COPY EvitaDB.Storefront/docker/default.conf.template /etc/nginx/templates/defaul
 COPY EvitaDB.Storefront/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --from=build /publish/wwwroot /usr/share/nginx/html
 
-# The entrypoint rewrites appsettings.json and renders the server block at start-up, so both the web root
-# and conf.d must be writable by the runtime uid. Group-writable via gid 0, which is the group the
-# unprivileged image's uid belongs to - that keeps this working if the container is run with a different
-# uid (`docker run --user`), which is common behind orchestrators that assign one.
+# The entrypoint rewrites two files at start-up: appsettings.json and the nginx server block.
+#
+# Both are PRE-CREATED here and left world-writable, which is what makes the image run under an arbitrary
+# uid. A shell redirect (`>`) needs write permission on the *file* when it already exists, but on the
+# *directory* when it has to create one - and no ownership trick covers every uid an orchestrator might
+# assign. Owning the directory as 101:0 only helps a process that is uid 101 or in gid 0; anything else
+# gets EACCES, which is exactly how this failed behind a reverse proxy that pinned its own uid.
+#
+# The server block is additionally rendered with the default port at build time, so the image still serves
+# correctly if someone bypasses the entrypoint (`docker run --entrypoint nginx`).
 USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && rm -f /etc/nginx/conf.d/default.conf \
     && chown -R 101:0 /usr/share/nginx/html /etc/nginx/conf.d \
-    && chmod -R g+w /usr/share/nginx/html /etc/nginx/conf.d
+    && chmod -R g+w /usr/share/nginx/html /etc/nginx/conf.d \
+    && sed 's|${STOREFRONT_LISTEN_PORT}|8080|g' /etc/nginx/templates/default.conf.template \
+         > /etc/nginx/conf.d/default.conf \
+    && chmod 0666 /etc/nginx/conf.d/default.conf /usr/share/nginx/html/appsettings.json
 USER 101
 
 # Documentation only - EXPOSE cannot be dynamic. The port actually bound is STOREFRONT_LISTEN_PORT; when

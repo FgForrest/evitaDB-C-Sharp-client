@@ -22,6 +22,13 @@ COPY EvitaDB.Client/EvitaDB.Client.csproj EvitaDB.Client/
 COPY EvitaDB.Storefront/EvitaDB.Storefront.csproj EvitaDB.Storefront/
 RUN dotnet restore EvitaDB.Storefront/EvitaDB.Storefront.csproj
 
+# The root .editorconfig has to be inside the image, not just in the repository. EvitaDB.Client builds with
+# GenerateDocumentationFile + TreatWarningsAsErrors, and it is the .editorconfig that silences the XML-doc
+# diagnostics (CS1591, CS1574, CS0419, CS1580, CS1711). Without it those become ~8.5k errors and the publish
+# below fails - which is invisible outside a container, because every other build runs from the repository
+# root where .editorconfig applies. Copied after the restore so editing it does not invalidate that layer.
+COPY .editorconfig ./
+
 COPY EvitaDB.Client/ EvitaDB.Client/
 COPY EvitaDB.Storefront/ EvitaDB.Storefront/
 

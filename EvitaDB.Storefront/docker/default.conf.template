@@ -15,7 +15,18 @@ map $uri $storefront_cache {
     # SPA routes (no file extension) and index.html resolve here - the served document is always
     # index.html, which must never be cached or a redeploy hands back a stale app
     default                                        "no-cache, no-store, must-revalidate";
+    # Framework files that keep a STABLE name across builds must never be immutable: they are the app's
+    # entry points and reference the fingerprinted assets of one specific build. Marking them immutable is
+    # how a whole deployment goes stale for a year: browsers and caching proxies pin the old entry script,
+    # which keeps loading the old fingerprinted assets. blazor.boot.json is the pre-.NET 10 boot manifest
+    # (kept for safety); blazor.webassembly.js / dotnet.js / dotnet.boot.js are their .NET 9/10 successors.
+    # With OverrideHtmlAssetPlaceholders the app references only fingerprinted names, so these rules are a
+    # safety net for anything that still requests the stable aliases.
     ~^/_framework/blazor\.boot\.json$              "no-cache, no-store, must-revalidate";
+    ~^/_framework/blazor\.webassembly\.js$         "no-cache, no-store, must-revalidate";
+    ~^/_framework/dotnet\.js$                      "no-cache, no-store, must-revalidate";
+    ~^/_framework/dotnet\.boot\.js$                "no-cache, no-store, must-revalidate";
+    # everything else under /_framework carries a content fingerprint in its file name - safe to pin forever
     ~^/_framework/                                 "public, max-age=31536000, immutable";
     ~*\.(?:css|js|svg|png|jpe?g|gif|ico|woff2?)$   "public, max-age=604800";
 }

@@ -16,6 +16,16 @@
           in a .razor file never blocks running the sample.
         -->
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <!--
+          Fingerprints the framework entry points too: publish rewrites the
+          `blazor.webassembly#[.{fingerprint}].js` placeholder in index.html and fills the empty importmap
+          with the fingerprinted dotnet.js et al. Without this, those two files keep STABLE names while the
+          nginx config marks all of /_framework/ as immutable/1-year - so browsers and any caching proxy in
+          front pin the old entry scripts (which reference the old fingerprinted assets) and keep booting the
+          previous app version long after a redeploy. index.html itself is served no-store, so with every
+          asset fingerprinted a redeploy is picked up immediately.
+        -->
+        <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     </PropertyGroup>
 
     <ItemGroup>

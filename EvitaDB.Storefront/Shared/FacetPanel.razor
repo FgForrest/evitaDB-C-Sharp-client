@@ -64,10 +64,10 @@
             {
                 <section class="facet-reference" @key="referenceName">
                     <h3>@Humanize(referenceName)</h3>
-                    @* groups with a ticked option re-sort to the front on every summary refresh; @key keeps
-                       each group's DOM (and the component's own "show all" state) attached to the group rather
-                       than to the position *@
-                    @foreach (FacetGroupStatistics group in groups.Take(GroupLimit))
+                    @* @key keeps each group's DOM (and the component's own "show all" state) attached to the
+                       group rather than to the position - relevant when an appended hidden-but-active group
+                       drops out again after being cleared *@
+                    @foreach (FacetGroupStatistics group in SidebarGroups(groups))
                     {
                         <FacetGroupList @key="GroupKey(referenceName, group)"
                                         Group="group" CurrentTotal="CurrentTotal" ValueLimit="ValueLimit"/>
@@ -177,15 +177,32 @@
     private IEnumerable<string> OrderedReferences() =>
         StorefrontSchema.FacetPanelReferences.Where(Catalog.FacetedReferences.Contains);
 
-    /// <summary>Groups with a ticked option first, so an active filter is never hidden behind the cut.</summary>
+    /// <summary>
+    /// By group size only - deliberately NOT ticked-first: groups must stay where they are when the user ticks
+    /// an option, otherwise whole blocks of the sidebar jump around under the cursor. `Count` ignores the
+    /// userFilter, so this order is stable across facet clicks; hidden-but-active groups are handled by
+    /// <see cref="SidebarGroups"/> instead of re-sorting.
+    /// </summary>
     private List<FacetGroupStatistics> GroupsOf(string referenceName) =>
         FacetSummary is null
             ? []
             : FacetSummary.GetFacetGroupStatistics()
                 .Where(group => group.ReferenceName == referenceName)
-                .OrderByDescending(group => group.GetFacetStatistics().Any(facet => facet.Requested))
-                .ThenByDescending(group => group.Count)
+                .OrderByDescending(group => group.Count)
                 .ToList();
+
+    /// <summary>
+    /// First <see cref="GroupLimit"/> groups in stable order; a group holding a selection below the cut
+    /// (possible via a shared URL or the "all filters" modal) is appended so an active filter is never
+    /// invisible - appending keeps the visible groups in place, unlike re-sorting.
+    /// </summary>
+    private IEnumerable<FacetGroupStatistics> SidebarGroups(List<FacetGroupStatistics> groups) =>
+        groups.Take(GroupLimit).Concat(groups.Skip(GroupLimit).Where(HasSelection));
+
+    private bool HasSelection(FacetGroupStatistics group) =>
+        group.GetFacetStatistics().Any(facet =>
+            facet.FacetEntity.PrimaryKey is int primaryKey
+            && State.IsFacetSelected(group.ReferenceName, primaryKey));
 
     /// <summary>
     /// Stable identity of a group across summary refreshes: the group entity's primary key, or the reference

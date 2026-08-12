@@ -18,9 +18,9 @@
             int? primaryKey = facet.FacetEntity.PrimaryKey;
             @if (primaryKey is not null)
             {
-                @* @key is essential: ticked options are re-sorted to the top when the summary refreshes, and
-                   without it Blazor reuses the <input> elements positionally - the physical checkbox the user
-                   just clicked stays checked while a different facet's row lands on it. *@
+                @* @key is essential whenever rows can shift (an appended below-the-cut selection dropping out,
+                   "show all" collapsing): without it Blazor reuses the <input> elements positionally and a
+                   checkbox's user-clicked DOM state can end up on a different facet's row. *@
                 <li @key="primaryKey.Value">
                     @* Checked state is read from StorefrontState (updated synchronously by the toggle), not from
                        facet.Requested (only refreshed by the next server response) - and bound via @bind:get/set
@@ -78,15 +78,30 @@
 
     private bool _expanded;
 
-    /// <summary>Ticked options first so a selection never hides below the cut, then by option size.</summary>
+    /// <summary>
+    /// By option size only - deliberately NOT ticked-first: rows must stay where they are when the user ticks
+    /// one, otherwise the option jumps away from under the cursor and cannot be unticked without chasing it.
+    /// `Count` ignores the userFilter, so this order is stable across facet clicks.
+    /// </summary>
     private List<FacetStatistics> Ordered =>
         Group.GetFacetStatistics()
-            .OrderByDescending(facet => facet.Requested)
-            .ThenByDescending(facet => facet.Count)
+            .OrderByDescending(facet => facet.Count)
             .ToList();
 
+    /// <summary>
+    /// First <see cref="ValueLimit"/> options in stable order; a selection sitting below the cut (possible via
+    /// a shared URL, or ticked while expanded and then collapsed) is appended so an active filter is never
+    /// invisible - appending keeps the visible rows in place, unlike re-sorting.
+    /// </summary>
     private List<FacetStatistics> Visible =>
-        _expanded || ValueLimit <= 0 ? Ordered : Ordered.Take(ValueLimit).ToList();
+        _expanded || ValueLimit <= 0
+            ? Ordered
+            : Ordered.Take(ValueLimit)
+                .Concat(Ordered.Skip(ValueLimit).Where(IsSelected))
+                .ToList();
+
+    private bool IsSelected(FacetStatistics facet) =>
+        facet.FacetEntity.PrimaryKey is int primaryKey && State.IsFacetSelected(Group.ReferenceName, primaryKey);
 
     private int Hidden => Math.Max(0, Ordered.Count - Visible.Count);
 

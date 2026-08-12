@@ -7,6 +7,9 @@
     <base href="/"/>
     <link rel="stylesheet" href="css/app.css"/>
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+    <!-- filled at publish time (OverrideHtmlAssetPlaceholders) with the fingerprinted framework assets,
+         e.g. dotnet.js - so no framework file is ever requested under a stable, cacheable name -->
+    <script type="importmap"></script>
 </head>
 <body>
 <div id="app">
@@ -40,6 +43,9 @@
         }
     };
 </script>
-<script src="_framework/blazor.webassembly.js"></script>
+<!-- the #[.{fingerprint}] placeholder is replaced at publish time so the entry script's URL changes with
+     its content; a plain `blazor.webassembly.js` would be cached as immutable by the nginx rules and keep
+     booting the previous deployment -->
+<script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 </html>

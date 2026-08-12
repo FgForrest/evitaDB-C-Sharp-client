@@ -36,6 +36,6 @@ public class EvitaClientTransaction : IDisposable
     {
         WaitForConflictResolution,
         WaitForWalPersistence,
-        WaitForIndexPropagation
+        WaitForChangesVisible
     }
 }

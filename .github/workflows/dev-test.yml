@@ -5,7 +5,7 @@ name: Test dev
 on:
   workflow_dispatch:
   push:
-    branches: ["dev", "catching-up"]
+    branches: ["dev"]
   pull_request:
     branches: ["dev", "master"]
 
@@ -31,10 +31,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore solution
-        run: dotnet restore ./EvitaDB.sln
+        run: dotnet restore ./EvitaDB.slnx
 
       - name: Build solution
-        run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
+        run: dotnet build ./EvitaDB.slnx --configuration Release --no-restore
 
       # Temporary: exports the NuGet package cache to a draft release so that
       # offline development environments (no nuget.org access) can hydrate a
@@ -52,4 +52,4 @@ jobs:
           gh release upload nuget-cache nuget-packages.tar.gz --clobber
 
       - name: Run tests
-        run: dotnet test ./EvitaDB.sln --configuration Release --no-build
+        run: dotnet test ./EvitaDB.slnx --configuration Release --no-build

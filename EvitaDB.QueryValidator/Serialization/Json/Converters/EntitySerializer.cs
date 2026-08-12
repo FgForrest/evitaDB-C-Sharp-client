@@ -17,6 +17,7 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
             writer.WriteNull();
             return;
         }
+
         writer.WriteStartObject();
         writer.WritePropertyName("primaryKey");
         writer.WriteValue(value.PrimaryKey);
@@ -61,7 +62,8 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
         writer.WriteEndObject();
     }
 
-    public override ISealedEntity ReadJson(JsonReader reader, Type objectType, ISealedEntity? existingValue, bool hasExistingValue,
+    public override ISealedEntity ReadJson(JsonReader reader, Type objectType, ISealedEntity? existingValue,
+        bool hasExistingValue,
         JsonSerializer serializer)
     {
         throw new NotSupportedException();
@@ -210,62 +212,82 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
                     object? theValue = attributeValue.Value;
                     string fieldName = attributeValue.Key.ToString();
                     writer.WritePropertyName(fieldName);
-                    if (theValue is byte byteNumber)
-                    {
-                        WriteNumber<byte>(writer, byteNumber);
-                    }
-
-                    else if (theValue is short shortNumber)
-                    {
-                        WriteNumber<short>(writer, shortNumber);
-                    }
-
-                    else if (theValue is int intNumber)
-                    {
-                        WriteNumber<int>(writer, intNumber);
-                    }
-
-                    else if (theValue is long longNumber)
-                    {
-                        WriteNumber<long>(writer, longNumber);
-                    }
-
-                    else if (theValue is decimal decimalNumber)
-                    {
-                        WriteNumber<decimal>(writer, decimalNumber);
-                    }
-                    else if (theValue is string stringValue)
-                    {
-                        writer.WriteValue(stringValue);
-                    }
-                    else if (theValue is bool booleanValue)
-                    {
-                        writer.WriteValue(booleanValue);
-                    }
-                    else if (theValue is char character)
-                    {
-                        writer.WriteValue(character.ToString());
-                    }
-                    else if (theValue is DateTimeOffset dateTime)
-                    {
-                        WriteDateTime(writer, dateTime);
-                    }
-                    else if (theValue is DateTimeRange range)
-                    {
-                        WriteDateTimeRange(writer, range);
-                    }
-                    else if (theValue is ByteNumberRange byteRange)
-                    {
-                        WriteNumberRange(writer, byteRange);
-                    }
-                    else
-                    {
-                        writer.WriteValue(EvitaDataTypes.FormatValue(theValue));
-                    }
+                    WriteAttributeValue(writer, theValue);
                 }
 
                 writer.WriteEndObject();
             });
+        }
+    }
+
+    /**
+     * Writes a single attribute value. Extracted so it can recurse: an attribute may be an array (for
+     * instance `assignmentValidity` is a DateTimeRange[]), which renders as a JSON array of the very same
+     * per-value shapes - a DateTimeRange[] therefore becomes an array of two-element arrays.
+     */
+    private static void WriteAttributeValue(JsonWriter writer, object? theValue)
+    {
+        if (theValue is Array arrayValue)
+        {
+            writer.WriteStartArray();
+            foreach (object? element in arrayValue)
+            {
+                WriteAttributeValue(writer, element);
+            }
+
+            writer.WriteEndArray();
+        }
+        else if (theValue is byte byteNumber)
+        {
+            WriteNumber<byte>(writer, byteNumber);
+        }
+
+        else if (theValue is short shortNumber)
+        {
+            WriteNumber<short>(writer, shortNumber);
+        }
+
+        else if (theValue is int intNumber)
+        {
+            WriteNumber<int>(writer, intNumber);
+        }
+
+        else if (theValue is long longNumber)
+        {
+            WriteNumber<long>(writer, longNumber);
+        }
+
+        else if (theValue is decimal decimalNumber)
+        {
+            WriteNumber<decimal>(writer, decimalNumber);
+        }
+        else if (theValue is string stringValue)
+        {
+            writer.WriteValue(stringValue);
+        }
+        else if (theValue is bool booleanValue)
+        {
+            writer.WriteValue(booleanValue);
+        }
+        else if (theValue is char character)
+        {
+            writer.WriteValue(character.ToString());
+        }
+        else if (theValue is DateTimeOffset dateTime)
+        {
+            WriteDateTime(writer, dateTime);
+        }
+        else if (theValue is DateTimeRange range)
+        {
+            WriteDateTimeRange(writer, range);
+        }
+        else if (theValue is ByteNumberRange byteRange)
+        {
+            WriteNumberRange(writer, byteRange);
+        }
+        else
+        {
+            writer.WriteValue(EvitaDataTypes.FormatValue(theValue));
         }
     }
 
@@ -372,7 +394,7 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
             });
         }
     }
-    
+
     static Dictionary<string, object?> ConvertJObjectToDictionary(JObject jsonObject)
     {
         var dictionary = new Dictionary<string, object?>();
@@ -433,7 +455,8 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
     /**
      * Writes all references of particular name to a JSON.
      */
-    private static void WriteReference(JsonWriter writer, JsonSerializer jsonSerializer, string referenceName, List<IReference> references)
+    private static void WriteReference(JsonWriter writer, JsonSerializer jsonSerializer, string referenceName,
+        List<IReference> references)
     {
         Wrap(() =>
         {
@@ -500,7 +523,7 @@ public class EntitySerializer : JsonConverter<ISealedEntity>
                 {
                     writer.WritePropertyName("prices");
                     writer.WriteStartArray();
-                    foreach (IPrice price in value.GetPrices().OrderBy(x=>x.Key.PriceId))
+                    foreach (IPrice price in value.GetPrices().OrderBy(x => x.Key.PriceId))
                     {
                         WritePrice(writer, price);
                     }

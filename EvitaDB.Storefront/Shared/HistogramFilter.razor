@@ -1,0 +1,154 @@
+@*
+    Histogram with two draggable limiters.
+
+    The bars are CSS-only: each bucket's height is its share of the tallest one. Buckets inside the current
+    selection are highlighted, so the chosen band is obvious while dragging.
+
+    The slider is two overlapping <input type="range"> elements. Dragging updates the local values live (so
+    the highlight follows the thumb), but the query only re-runs on release - @onchange rather than @oninput -
+    otherwise every pixel of travel would be a round trip to the server.
+*@
+<section class="histogram">
+    <div class="histogram-head">
+        <h3>@Title</h3>
+        @if (IsFiltered)
+        {
+            <button class="link" @onclick="ClearAsync">reset</button>
+        }
+    </div>
+
+    <div class="histogram-bars" role="img" aria-label="@Title distribution">
+        @foreach (Bucket bucket in Histogram.Buckets)
+        {
+            <div class="bar @(InSelection(bucket) ? "in-range" : null)"
+                 style="height: @HeightPercent(bucket)%"
+                 title="@Format(bucket.Threshold): @bucket.Occurrences"></div>
+        }
+    </div>
+
+    <div class="range-slider">
+        <div class="range-track"></div>
+        <div class="range-fill" style="left: @Percent(Low)%; right: @(100 - Percent(High))%"></div>
+        <input type="range" class="range-input low"
+               min="@Min" max="@Max" step="@Step" value="@Low"
+               aria-label="@Title minimum"
+               @oninput="OnLowInput" @onchange="CommitAsync"/>
+        <input type="range" class="range-input high"
+               min="@Min" max="@Max" step="@Step" value="@High"
+               aria-label="@Title maximum"
+               @oninput="OnHighInput" @onchange="CommitAsync"/>
+    </div>
+
+    <div class="histogram-scale">
+        <span class="@(IsFiltered ? "active" : "muted")">@Format(Low)</span>
+        <span class="@(IsFiltered ? "active" : "muted")">@Format(High)</span>
+    </div>
+</section>
+
+@code {
+
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public IHistogram Histogram { get; set; } = null!;
+
+    /// <summary>Suffix shown next to thresholds, e.g. a currency code.</summary>
+    [Parameter] public string? Unit { get; set; }
+
+    [Parameter] public decimal? From { get; set; }
+
+    [Parameter] public decimal? To { get; set; }
+
+    [Parameter] public EventCallback<(decimal? From, decimal? To)> OnRangeChanged { get; set; }
+
+    private decimal Low { get; set; }
+    private decimal High { get; set; }
+
+    private decimal Min => Histogram.Min;
+
+    private decimal Max => Histogram.Max;
+
+    /// <summary>100 steps across the range, rounded to something tidy.</summary>
+    private decimal Step
+    {
+        get
+        {
+            decimal span = Max - Min;
+            if (span <= 0) return 1m;
+            return span >= 100m ? 1m : Math.Round(span / 100m, 2, MidpointRounding.AwayFromZero) is var s && s > 0 ? s : 0.01m;
+        }
+    }
+
+    private bool IsFiltered => From is not null || To is not null;
+
+    protected override void OnParametersSet()
+    {
+        // the histogram is recomputed by the server on every query; re-clamp the handles to it
+        Low = Math.Clamp(From ?? Min, Min, Max);
+        High = Math.Clamp(To ?? Max, Min, Max);
+        if (Low > High)
+        {
+            (Low, High) = (High, Low);
+        }
+    }
+
+    private void OnLowInput(ChangeEventArgs args)
+    {
+        Low = Math.Min(Parse(args.Value) ?? Min, High);
+    }
+
+    private void OnHighInput(ChangeEventArgs args)
+    {
+        High = Math.Max(Parse(args.Value) ?? Max, Low);
+    }
+
+    /// <summary>
+    /// Pushes the range up.
+    ///
+    /// Both bounds are always sent when either handle has moved. That is not cosmetic: evitaQL has no way to
+    /// express a one-sided `priceBetween` - `priceBetween(100,)`, `priceBetween(null,500)` and
+    /// `priceBetween(100)` are all rejected by the grammar - so an open end is expressed as the histogram's
+    /// own extreme, which selects exactly the same products.
+    ///
+    /// When neither handle has moved, the range is cleared entirely so no constraint is emitted at all.
+    /// </summary>
+    private Task CommitAsync() =>
+        Low <= Min && High >= Max
+            ? OnRangeChanged.InvokeAsync((null, null))
+            : OnRangeChanged.InvokeAsync((Low, High));
+
+    private Task ClearAsync()
+    {
+        Low = Min;
+        High = Max;
+        return OnRangeChanged.InvokeAsync((null, null));
+    }
+
+    private bool InSelection(Bucket bucket) => bucket.Threshold >= Low && bucket.Threshold <= High;
+
+    private int HeightPercent(Bucket bucket)
+    {
+        int tallest = Histogram.Buckets.Max(x => x.Occurrences);
+        if (tallest <= 0)
+        {
+            return 0;
+        }
+        // floor at 2% so an occupied-but-tiny bucket stays visible
+        return Math.Max(2, (int)Math.Round(bucket.Occurrences * 100.0 / tallest));
+    }
+
+    private int Percent(decimal value)
+    {
+        decimal span = Max - Min;
+        return span <= 0 ? 0 : (int)Math.Round((value - Min) * 100m / span);
+    }
+
+    private string Format(decimal value) =>
+        Unit is null ? value.ToString("0.##") : $"{value:0.##} {Unit}";
+
+    private static decimal? Parse(object? value) =>
+        decimal.TryParse(value?.ToString(), NumberStyles.Any,
+            CultureInfo.InvariantCulture, out decimal parsed)
+            ? parsed
+            : null;
+
+}

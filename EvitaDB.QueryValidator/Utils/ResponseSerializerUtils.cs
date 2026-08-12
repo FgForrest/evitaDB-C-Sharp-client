@@ -5,6 +5,22 @@ namespace EvitaDB.QueryValidator.Utils;
 
 public static class ResponseSerializerUtils
 {
+    /// <summary>
+    /// Extra results are addressed in the documentation by the name of their model type, e.g.
+    /// `extraResults.ReferenceSummary`. The 2026 rename of `facetSummary` to `referenceSummary` happened on
+    /// the query constraints only - both constraints still produce one and the same
+    /// <c>FacetSummary</c> extra result in this client - so the new name has to resolve onto the old type,
+    /// otherwise a `referenceSummary` example renders as an empty string.
+    /// </summary>
+    private static readonly IDictionary<string, string> ExtraResultAliases = new Dictionary<string, string>
+    {
+        { "ReferenceSummary", "FacetSummary" }
+    };
+
+    private static bool MatchesExtraResultName(string requested, string actual) =>
+        requested.Equals(actual)
+        || (ExtraResultAliases.TryGetValue(requested, out string? alias) && alias.Equals(actual));
+
     public static object? ExtractValueFrom(object theObject, string[] sourceVariableParts)
     {
         if (theObject.GetType().IsAssignableToGenericType(typeof(IDictionary<,>)))
@@ -23,7 +39,7 @@ public static class ResponseSerializerUtils
                     keyAsString = Convert.ToString(key)!;
                 }
 
-                if (sourceVariableParts[0].Equals(keyAsString))
+                if (MatchesExtraResultName(sourceVariableParts[0], keyAsString))
                 {
                     if (sourceVariableParts.Length > 1)
                     {

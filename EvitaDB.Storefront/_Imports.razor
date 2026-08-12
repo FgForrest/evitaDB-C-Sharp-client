@@ -1,0 +1,16 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@using EvitaDB.Client.DataTypes
+@using EvitaDB.Client.Models.Data
+@using EvitaDB.Client.Models.ExtraResults
+@using EvitaDB.Client.Queries.Order
+@using EvitaDB.Storefront
+@using EvitaDB.Storefront.Layout
+@using EvitaDB.Storefront.Services
+@using EvitaDB.Storefront.Shared
+@* EvitaDB.Client.Queries.Requires is deliberately NOT imported: it declares FacetSummary, PriceHistogram and
+   AttributeHistogram too, which would make those names ambiguous against the extra-result types above. *@
+@using QueryPriceMode = EvitaDB.Client.Queries.Requires.QueryPriceMode

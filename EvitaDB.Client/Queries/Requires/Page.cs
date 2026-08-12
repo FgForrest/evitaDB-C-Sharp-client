@@ -16,16 +16,35 @@ namespace EvitaDB.Client.Queries.Requires;
 /// page(1, 24)
 /// </code>
 /// </summary>
-public class Page : AbstractRequireConstraintLeaf
+public class Page : AbstractRequireConstraintContainer
 {
     public int Number => (int) Arguments[0]!;
     public int PageSize => (int) Arguments[1]!;
+
+    /// <summary>
+    /// Optional spacing specification that reserves space on the pages for non-entity content.
+    /// </summary>
+    public Spacing? Spacing => Children.OfType<Spacing>().FirstOrDefault();
+
     public new bool Applicable => IsArgumentsNonNull() && Arguments.Length == 2;
-    private Page(params object?[] arguments) : base(arguments)
+
+    private Page(object?[] arguments, params IRequireConstraint?[] children) : base(arguments, children)
     {
     }
-    
-    public Page(int? number, int? size) : base(number ?? 1, size ?? 20)
+
+    public Page(int? number, int? size) : base(new object?[] {number ?? 1, size ?? 20})
     {
+    }
+
+    public Page(int? number, int? size, Spacing? spacing) : base(
+        new object?[] {number ?? 1, size ?? 20},
+        spacing is null ? Array.Empty<IRequireConstraint>() : new IRequireConstraint[] {spacing})
+    {
+    }
+
+    public override IRequireConstraint GetCopyWithNewChildren(IRequireConstraint?[] children,
+        IConstraint?[] additionalChildren)
+    {
+        return new Page(Arguments, children);
     }
 }

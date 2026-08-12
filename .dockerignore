@@ -1,0 +1,23 @@
+# Keep the build context small and, more importantly, keep host build output from leaking into the image -
+# a stale obj/ from a different RID makes `dotnet restore` inside the container fail in confusing ways.
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.git/
+**/.github/
+**/node_modules/
+
+# not needed to build the storefront
+EvitaDB.Test/
+EvitaDB.QueryValidator/
+documentation/
+data/
+*.md
+!EvitaDB.Storefront/README.md
+
+.dockerignore
+docker-compose.yml
+**/*.user
+**/*.suo
+**/.DS_Store

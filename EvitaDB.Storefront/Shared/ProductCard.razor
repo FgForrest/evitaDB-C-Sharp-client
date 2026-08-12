@@ -1,0 +1,99 @@
+@inject StorefrontState State
+
+<article class="card">
+    <header class="card-head">
+        @if (_brand is not null)
+        {
+            <span class="card-brand">@_brand</span>
+        }
+        @if (_isMaster)
+        {
+            @* MASTER stands in for its size/colour variants in the listing *@
+            <span class="badge" title="Sold in several variants">variants</span>
+        }
+    </header>
+
+    <a class="card-link" href="product/@Product.Code()">
+        <h3>@Product.DisplayName(State.Locale)</h3>
+    </a>
+
+    @if (_teaser.Length > 0)
+    {
+        @* plain-text teaser: descriptionShort is prose in this dataset, but it is stripped and cut
+           defensively so a card can never render block markup or blow out the grid *@
+        <p class="card-teaser">@_teaser</p>
+    }
+
+    <footer class="card-foot">
+        <div class="price-row">
+            @if (_sellingPrice is not null)
+            {
+                @if (_fromPrice)
+                {
+                    @* evitaDB resolved this price across the master's inner records (LOWEST_PRICE
+                       handling), so it is the cheapest variant - label it as such *@
+                    <span class="price-prefix">from</span>
+                }
+                <span class="price">@EntityDisplay.Format(_sellingPrice, _withTax, State.Locale)</span>
+                @if (_referencePrice is not null)
+                {
+                    <span class="price-reference">
+                        @EntityDisplay.Format(_referencePrice, _withTax, State.Locale)
+                    </span>
+                }
+            }
+            else
+            {
+                <span class="muted">no price</span>
+            }
+        </div>
+
+        @* the demo dataset leaves rating at 0 for every product, so the badge only appears where a
+           dataset actually carries ratings *@
+        @if (_rating is > 0)
+        {
+            <span class="card-rating" title="@($"Rated {_rating:0.0} out of 5")">
+                <span class="stars" aria-hidden="true">@Stars(_rating.Value)</span>
+                <span class="muted">@_rating.Value.ToString("0.0", State.Locale)</span>
+            </span>
+        }
+    </footer>
+</article>
+
+@code {
+
+    [Parameter, EditorRequired] public ISealedEntity Product { get; set; } = null!;
+
+    private IPrice? _sellingPrice;
+    private IPrice? _referencePrice;
+    private bool _withTax;
+    private bool _fromPrice;
+    private bool _isMaster;
+    private string? _brand;
+    private decimal? _rating;
+    private string _teaser = string.Empty;
+
+    // resolved once per render pass: reading the selling price walks the entity's price list and is guarded
+    // against ContextMissingException, so it is not something to repeat per markup expression
+    protected override void OnParametersSet()
+    {
+        _withTax = State.PriceMode == QueryPriceMode.WithTax;
+        _sellingPrice = Product.SellingPrice();
+        _referencePrice = Product.ReferencePrice(_sellingPrice, _withTax);
+        _isMaster = string.Equals(Product.GlobalString(StorefrontSchema.ProductTypeAttribute), "MASTER",
+            StringComparison.Ordinal);
+        // "from" is driven by how the server actually resolved the price, not by the product type alone
+        _fromPrice = Product.InnerRecordHandling == PriceInnerRecordHandling.LowestPrice;
+        _brand = Product.ReferencedName(StorefrontSchema.BrandReference, State.Locale);
+        _rating = Product.GlobalDecimal(StorefrontSchema.RatingAttribute);
+        _teaser = HtmlContent.Teaser(
+            Product.LocalizedString(StorefrontSchema.DescriptionShortAttribute, State.Locale), 150);
+    }
+
+    private static string Stars(decimal rating)
+    {
+        int full = (int)Math.Round(Math.Clamp(rating, 0m, 5m), MidpointRounding.AwayFromZero);
+        return new string('★', full) + new string('☆', 5 - full);
+    }
+
+}

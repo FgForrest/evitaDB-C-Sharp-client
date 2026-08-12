@@ -39,14 +39,48 @@ message GrpcHistogram {
     int32 occurrences = 3;
     // Contains true if the `bucket` is overlapping the attribute between filtering constraint
     bool requested = 4;
+    // Relative frequency value used for visualization purposes.
+    // For standard histograms: percentage of total occurrences (0-100).
+    // For equalized histograms: normalized value density (0-100) accounting for both
+    // occurrences and bucket width, scaled so all buckets sum to 100. Higher values
+    // indicate denser data concentration in this bucket.
+    GrpcBigDecimal relativeFrequency = 5;
   }
   // Returns histogram buckets that represents a tuple of occurrence count and the minimal threshold of the bucket
   // values.
   repeated GrpcBucket buckets = 4;
+  // Referenced entity whose value anchors the minimum bucket of the histogram. Populated only for
+  // reference-scope histograms when an entity fetch is requested for the associated reference.
+  GrpcSealedEntity minReferencedEntity = 5;
+  // Referenced entity whose value anchors the maximum bucket of the histogram. Populated only for
+  // reference-scope histograms when an entity fetch is requested for the associated reference.
+  GrpcSealedEntity maxReferencedEntity = 6;
+}
+
+// This DTO contains information about single reference group and statistics of the references that relates to it.
+message GrpcReferenceGroupStatistics {
+  // Contains name of the facet group.
+  string referenceName = 1;
+  // Contains referenced entity reference representing this group.
+  GrpcEntityReference groupEntityReference = 2;
+  // Contains referenced entity representing this group.
+  GrpcSealedEntity groupEntity = 3;
+  // Contains number of distinct entities in the response that possess any reference in this group.
+  int32 count = 4;
+  // Contains statistics of individual facets.
+  repeated GrpcFacetStatistics facetStatistics = 5;
+  // Contains named histogram statistics for this reference group. Each histogram index defined on the
+  // reference schema produces a separate histogram entry keyed by the histogram index name.
+  map<string, GrpcHistogram> histogramStatistics = 6;
 }
 
 // This DTO contains information about single facet group and statistics of the facets that relates to it.
+// Deprecated since 2026.2 - deprecated in favor of `GrpcReferenceGroupStatistics`, produced by the
+// `referenceSummary` requirement
+// TOBEDONE: remove when FacetSummary constraint is removed (https://github.com/FgForrest/evitaDB/issues/538)
 message GrpcFacetGroupStatistics {
+  option deprecated = true;
+
   // Contains name of the facet group.
   string referenceName = 1;
   // Contains referenced entity reference representing this group.
@@ -118,7 +152,8 @@ message GrpcLevelInfo {
 message GrpcQueryTelemetry {
   // Phase of the query processing.
   GrpcQueryPhase operation = 1;
-  // Date and time of the start of this step in nanoseconds.
+  // Number of nanoseconds elapsed since the root step of this telemetry tree began - the root step itself
+  // therefore always reports 0. This is not a wall-clock timestamp and must not be rendered as a date.
   int64 start = 2;
   // Internal steps of this telemetry step (operation decomposition).
   repeated GrpcQueryTelemetry steps = 3;
@@ -126,6 +161,9 @@ message GrpcQueryTelemetry {
   repeated string arguments = 4;
   // Duration in nanoseconds.
   int64 spentTime = 5;
+  // Wall-clock instant at which the query began. Set only on the root step - it anchors the whole tree in time,
+  // so the wall-clock position of any other node is startedAt plus that node's start offset.
+  GrpcOffsetDateTime startedAt = 6;
 }
 
 // This DTO contains extra results that are computed based on the query results.
@@ -158,7 +196,8 @@ message GrpcExtraResults {
   GrpcHistogram priceHistogram = 2;
   // Contains a collection of FacetGroupStatistics DTOs where each of them contains information about single facet group
   // (if they belong in one) and statistics of the facets that relates to it.
-  repeated GrpcFacetGroupStatistics facetGroupStatistics = 3;
+  // Deprecated since 2026.2 - renamed to `referenceGroupStatistics`
+  repeated GrpcFacetGroupStatistics facetGroupStatistics = 3 [deprecated = true];
   // Contains list of statistics for the single level (probably root or whatever is filtered by the query) of
   // the queried hierarchy entity.
   GrpcHierarchy selfHierarchy = 4;
@@ -168,4 +207,7 @@ message GrpcExtraResults {
   map<string, GrpcHierarchy> hierarchy = 5;
   // This DTO contains detailed information about query processing time and its decomposition to single operations.
   GrpcQueryTelemetry queryTelemetry = 6;
+  // Contains a collection of ReferenceGroupStatistics DTOs where each of them contains information about single reference group
+  // (if they belong in one) and statistics of the references that relates to it.
+  repeated GrpcReferenceGroupStatistics referenceGroupStatistics = 7;
 }

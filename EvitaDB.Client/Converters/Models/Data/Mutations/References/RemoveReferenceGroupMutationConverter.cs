@@ -12,12 +12,16 @@ public class
         return new GrpcRemoveReferenceGroupMutation
         {
             ReferenceName = mutation.ReferenceKey.ReferenceName,
-            ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey
+            ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey,
+            InternalPrimaryKey = mutation.InternalPrimaryKey
         };
     }
 
     public RemoveReferenceGroupMutation Convert(GrpcRemoveReferenceGroupMutation mutation)
     {
-        return new RemoveReferenceGroupMutation(new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey));
+        return new RemoveReferenceGroupMutation(new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey))
+        {
+            InternalPrimaryKey = mutation.InternalPrimaryKey
+        };
     }
 }

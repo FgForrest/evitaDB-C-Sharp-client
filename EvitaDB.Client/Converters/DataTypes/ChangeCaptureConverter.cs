@@ -1,4 +1,5 @@
 ﻿using EvitaDB.Client.Converters.Models;
+using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Converters.Models.Data.Mutations;
 using EvitaDB.Client.Converters.Models.Schema.Mutations;
 using EvitaDB.Client.Models.Cdc;
@@ -8,6 +9,8 @@ namespace EvitaDB.Client.Converters.DataTypes;
 
 public static class ChangeCaptureConverter
 {
+    private static readonly DelegatingTopLevelCatalogSchemaMutationConverter EngineMutationConverter = new();
+
     public static ChangeCatalogCaptureRequest ToChangeCaptureRequest(GetMutationsHistoryPageRequest request)
     {
         return new ChangeCatalogCaptureRequest(
@@ -43,29 +46,81 @@ public static class ChangeCaptureConverter
         return grpcRequest;
     }
 
+    public static GrpcRegisterChangeCatalogCaptureRequest ToGrpcRegisterChangeCatalogCaptureRequest(
+        ChangeCatalogCaptureRequest request)
+    {
+        GrpcRegisterChangeCatalogCaptureRequest grpcRequest = new GrpcRegisterChangeCatalogCaptureRequest
+        {
+            Content = EvitaEnumConverter.ToGrpcCaptureContent(request.Content),
+            SinceVersion = request.SinceVersion,
+            SinceIndex = request.SinceIndex
+        };
+        if (request.Criteria is not null)
+        {
+            grpcRequest.Criteria.AddRange(request.Criteria.Select(ToGrpcCaptureCriteria));
+        }
+        return grpcRequest;
+    }
+
+    public static ChangeSystemCapture ToChangeSystemCapture(GrpcChangeSystemCapture changeSystemCapture)
+    {
+        IMutation? body = changeSystemCapture.BodyCase == GrpcChangeSystemCapture.BodyOneofCase.SystemMutation
+            ? ConvertEngineMutationSafely(changeSystemCapture.SystemMutation)
+            : null;
+        return new ChangeSystemCapture(
+            changeSystemCapture.Version,
+            changeSystemCapture.Index,
+            EvitaEnumConverter.ToOperation(changeSystemCapture.Operation),
+            body
+        );
+    }
+
+    private static IMutation? ConvertEngineMutationSafely(GrpcEngineMutation mutation)
+    {
+        try
+        {
+            return EngineMutationConverter.Convert(mutation);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // engine mutation types not modelled by this client (e.g. transaction or lifecycle mutations)
+            // are delivered without a body
+            return null;
+        }
+    }
+
     public static ChangeCatalogCapture ToChangeCatalogCapture(GrpcChangeCatalogCapture changeCatalogCapture)
     {
+        // body conversion is best-effort: mutation types this client does not model yet are delivered
+        // as header-only captures instead of failing the whole capture stream
         IMutation? mutation;
-        if (changeCatalogCapture.EntityMutation is not null)
+        try
         {
-            mutation = DelegatingEntityMutationConverter.Instance.Convert(changeCatalogCapture.EntityMutation);
+            if (changeCatalogCapture.EntityMutation is not null)
+            {
+                mutation = DelegatingEntityMutationConverter.Instance.Convert(changeCatalogCapture.EntityMutation);
+            }
+            else if (changeCatalogCapture.LocalMutation is not null)
+            {
+                mutation = DelegatingLocalMutationConverter.Instance.Convert(changeCatalogCapture.LocalMutation);
+            }
+            else if (changeCatalogCapture.SchemaMutation is not null)
+            {
+                mutation = DelegatingEntitySchemaMutationConverter.Instance.Convert(changeCatalogCapture.SchemaMutation);
+            }
+            else
+            {
+                mutation = null;
+            }
         }
-        else if (changeCatalogCapture.LocalMutation is not null)
-        {
-            mutation = DelegatingLocalMutationConverter.Instance.Convert(changeCatalogCapture.LocalMutation);
-        }
-        else if (changeCatalogCapture.SchemaMutation is not null)
-        {
-            mutation = DelegatingEntitySchemaMutationConverter.Instance.Convert(changeCatalogCapture.SchemaMutation);
-        }
-        else
+        catch (Exception e) when (e is EvitaInternalError or ArgumentOutOfRangeException or NotImplementedException)
         {
             mutation = null;
         }
 
         return new ChangeCatalogCapture(
-                changeCatalogCapture.Version,
-                changeCatalogCapture.Index,
+                changeCatalogCapture.Version ?? 0,
+                changeCatalogCapture.Index ?? 0,
                 EvitaEnumConverter.ToCaptureArea(changeCatalogCapture.Area),
                 changeCatalogCapture.EntityType,
                 EvitaEnumConverter.ToOperation(changeCatalogCapture.Operation),
@@ -84,9 +139,9 @@ public static class ChangeCaptureConverter
         };
     }
     
-    public static GrpcCaptureCriteria ToGrpcCaptureCriteria(ChangeCatalogCaptureCriteria criteria)
+    public static GrpcChangeCaptureCriteria ToGrpcCaptureCriteria(ChangeCatalogCaptureCriteria criteria)
     {
-        GrpcCaptureCriteria grpcCriteria = new GrpcCaptureCriteria
+        GrpcChangeCaptureCriteria grpcCriteria = new GrpcChangeCaptureCriteria
         {
             Area = EvitaEnumConverter.ToGrpcCaptureArea(criteria.Area)
         };
@@ -102,7 +157,7 @@ public static class ChangeCaptureConverter
         return grpcCriteria;
     }
 
-    private static ChangeCatalogCaptureCriteria ToChangeCaptureCriteria(GrpcCaptureCriteria grpcCaptureCriteria)
+    private static ChangeCatalogCaptureCriteria ToChangeCaptureCriteria(GrpcChangeCaptureCriteria grpcCaptureCriteria)
     {
         CaptureArea captureArea = EvitaEnumConverter.ToCaptureArea(grpcCaptureCriteria.Area);
         return new ChangeCatalogCaptureCriteria(
@@ -111,7 +166,7 @@ public static class ChangeCaptureConverter
             );
     }
     
-    private static DataSite ToDataSite(GrpcCaptureDataSite grpcCaptureDataSite)
+    private static DataSite ToDataSite(GrpcChangeCaptureDataSite grpcCaptureDataSite)
     {
         return new DataSite(
             grpcCaptureDataSite.EntityType,
@@ -122,9 +177,9 @@ public static class ChangeCaptureConverter
         );
     }
     
-    private static GrpcCaptureDataSite ToGrpcCaptureDataSite(DataSite dataSite)
+    private static GrpcChangeCaptureDataSite ToGrpcCaptureDataSite(DataSite dataSite)
     {
-        GrpcCaptureDataSite grpcDataSite = new GrpcCaptureDataSite
+        GrpcChangeCaptureDataSite grpcDataSite = new GrpcChangeCaptureDataSite
         {
             EntityType = dataSite.EntityType,
             EntityPrimaryKey = dataSite.EntityPrimaryKey
@@ -144,7 +199,7 @@ public static class ChangeCaptureConverter
         return grpcDataSite;
     }
     
-    private static SchemaSite ToSchemaSite(GrpcCaptureSchemaSite grpcCaptureSchemaSite)
+    private static SchemaSite ToSchemaSite(GrpcChangeCaptureSchemaSite grpcCaptureSchemaSite)
     {
         return new SchemaSite(
             grpcCaptureSchemaSite.EntityType,
@@ -153,9 +208,9 @@ public static class ChangeCaptureConverter
         );
     }
     
-    private static GrpcCaptureSchemaSite ToGrpcCaptureSchema(SchemaSite schemaSite)
+    private static GrpcChangeCaptureSchemaSite ToGrpcCaptureSchema(SchemaSite schemaSite)
     {
-        GrpcCaptureSchemaSite grpcSchemaSite = new GrpcCaptureSchemaSite
+        GrpcChangeCaptureSchemaSite grpcSchemaSite = new GrpcChangeCaptureSchemaSite
         {
             EntityType = schemaSite.EntityType
         };

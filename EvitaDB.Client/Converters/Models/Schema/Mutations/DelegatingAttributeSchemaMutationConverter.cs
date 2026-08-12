@@ -51,6 +51,11 @@ public class DelegatingAttributeSchemaMutationConverter : ISchemaMutationConvert
             case SetAttributeSchemaUniqueMutation setAttributeSchemaUniqueMutation:
                 grpcAttributeSchemaMutation.SetAttributeSchemaUniqueMutation = new SetAttributeSchemaUniqueMutationConverter().Convert(setAttributeSchemaUniqueMutation);
                 break;
+            case SetAttributeSchemaConflictResolutionOverrideMutation setAttributeSchemaConflictResolutionOverrideMutation:
+                grpcAttributeSchemaMutation.SetAttributeSchemaConflictResolutionOverrideMutation =
+                    new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                        setAttributeSchemaConflictResolutionOverrideMutation);
+                break;
             case UseGlobalAttributeSchemaMutation useGlobalAttributeSchemaMutation:
                 grpcAttributeSchemaMutation.UseGlobalAttributeSchemaMutation = new UseGlobalAttributeSchemaMutationConverter().Convert(useGlobalAttributeSchemaMutation);
                 break;
@@ -77,6 +82,9 @@ public class DelegatingAttributeSchemaMutationConverter : ISchemaMutationConvert
             GrpcAttributeSchemaMutation.MutationOneofCase.SetAttributeSchemaSortableMutation => new SetAttributeSchemaSortableMutationConverter().Convert(mutation.SetAttributeSchemaSortableMutation),
             GrpcAttributeSchemaMutation.MutationOneofCase.SetAttributeSchemaUniqueMutation => new SetAttributeSchemaUniqueMutationConverter().Convert(mutation.SetAttributeSchemaUniqueMutation),
             GrpcAttributeSchemaMutation.MutationOneofCase.UseGlobalAttributeSchemaMutation => new UseGlobalAttributeSchemaMutationConverter().Convert(mutation.UseGlobalAttributeSchemaMutation),
+            GrpcAttributeSchemaMutation.MutationOneofCase.SetAttributeSchemaConflictResolutionOverrideMutation =>
+                new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                    mutation.SetAttributeSchemaConflictResolutionOverrideMutation),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

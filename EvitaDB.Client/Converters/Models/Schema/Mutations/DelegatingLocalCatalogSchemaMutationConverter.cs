@@ -69,6 +69,16 @@ public class DelegatingLocalCatalogSchemaMutationConverter : ISchemaMutationConv
             case SetAttributeSchemaUniqueMutation setAttributeSchemaUniqueMutation:
                 grpcLocalCatalogSchemaMutation.SetAttributeSchemaUniqueMutation = new SetAttributeSchemaUniqueMutationConverter().Convert(setAttributeSchemaUniqueMutation);
                 break;
+            case SetAttributeSchemaConflictResolutionOverrideMutation setAttributeSchemaConflictResolutionOverrideMutation:
+                grpcLocalCatalogSchemaMutation.SetAttributeSchemaConflictResolutionOverrideMutation =
+                    new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                        setAttributeSchemaConflictResolutionOverrideMutation);
+                break;
+            case ModifyCatalogSchemaConflictResolutionMutation modifyCatalogSchemaConflictResolutionMutation:
+                grpcLocalCatalogSchemaMutation.ModifyCatalogSchemaConflictResolutionMutation =
+                    new ModifyCatalogSchemaConflictResolutionMutationConverter().Convert(
+                        modifyCatalogSchemaConflictResolutionMutation);
+                break;
                 
             
             // entities
@@ -119,6 +129,12 @@ public class DelegatingLocalCatalogSchemaMutationConverter : ISchemaMutationConv
             GrpcLocalCatalogSchemaMutation.MutationOneofCase.RemoveEntitySchemaMutation => new RemoveEntitySchemaMutationConverter().Convert(mutation.RemoveEntitySchemaMutation),
             
             GrpcLocalCatalogSchemaMutation.MutationOneofCase.None => throw new InvalidSchemaException("Mutation is not defined!"),
+            GrpcLocalCatalogSchemaMutation.MutationOneofCase.SetAttributeSchemaConflictResolutionOverrideMutation =>
+                new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                    mutation.SetAttributeSchemaConflictResolutionOverrideMutation),
+            GrpcLocalCatalogSchemaMutation.MutationOneofCase.ModifyCatalogSchemaConflictResolutionMutation =>
+                new ModifyCatalogSchemaConflictResolutionMutationConverter().Convert(
+                    mutation.ModifyCatalogSchemaConflictResolutionMutation),
             _ => throw new EvitaInternalError("This should never happen!")
         };
     }

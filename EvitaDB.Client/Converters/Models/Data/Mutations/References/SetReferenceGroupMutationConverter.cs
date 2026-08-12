@@ -11,7 +11,8 @@ public class SetReferenceGroupMutationConverter : ILocalMutationConverter<SetRef
         {
             ReferenceName = mutation.ReferenceKey.ReferenceName,
             ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey,
-            GroupPrimaryKey = mutation.GroupPrimaryKey
+            GroupPrimaryKey = mutation.GroupPrimaryKey,
+            InternalPrimaryKey = mutation.InternalPrimaryKey
         };
 
         if (mutation.GroupType != null)
@@ -28,6 +29,6 @@ public class SetReferenceGroupMutationConverter : ILocalMutationConverter<SetRef
             new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey),
             mutation.GroupType,
             mutation.GroupPrimaryKey
-        );
+        ) { InternalPrimaryKey = mutation.InternalPrimaryKey };
     }
 }

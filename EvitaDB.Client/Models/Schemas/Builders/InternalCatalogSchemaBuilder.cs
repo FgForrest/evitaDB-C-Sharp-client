@@ -43,27 +43,36 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 
     public ICatalogSchemaBuilder WithDescription(string? description)
     {
-        UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-            BaseSchema, Mutations,
-            new ModifyCatalogSchemaDescriptionMutation(description)
+        UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+            UpdatedSchemaDirty,
+            SchemaBuilderHelper.AddMutations(
+                BaseSchema, Mutations,
+                new ModifyCatalogSchemaDescriptionMutation(description)
+            )
         );
         return this;
     }
 
     public ICatalogSchemaBuilder VerifyCatalogSchemaStrictly()
     {
-        UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-            BaseSchema, Mutations,
-            new DisallowEvolutionModeInCatalogSchemaMutation(Enum.GetValues<CatalogEvolutionMode>())
+        UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+            UpdatedSchemaDirty,
+            SchemaBuilderHelper.AddMutations(
+                BaseSchema, Mutations,
+                new DisallowEvolutionModeInCatalogSchemaMutation(Enum.GetValues<CatalogEvolutionMode>())
+            )
         );
         return this;
     }
 
     public ICatalogSchemaBuilder VerifyCatalogSchemaButCreateOnTheFly()
     {
-        UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-            BaseSchema, Mutations,
-            new AllowEvolutionModeInCatalogSchemaMutation(Enum.GetValues<CatalogEvolutionMode>())
+        UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+            UpdatedSchemaDirty,
+            SchemaBuilderHelper.AddMutations(
+                BaseSchema, Mutations,
+                new AllowEvolutionModeInCatalogSchemaMutation(Enum.GetValues<CatalogEvolutionMode>())
+            )
         );
         return this;
     }
@@ -79,9 +88,12 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
             ModifyEntitySchemaMutation? mutation = existingBuilder.ToMutation();
             if (mutation is not null)
             {
-                UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-                    BaseSchema, Mutations,
-                    mutation
+                UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+                    UpdatedSchemaDirty,
+                    SchemaBuilderHelper.AddMutations(
+                        BaseSchema, Mutations,
+                        mutation
+                    )
                 );
             }
         }
@@ -94,11 +106,14 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
             ModifyEntitySchemaMutation? mutation = notExistingBuilder.ToMutation();
             CreateEntitySchemaMutation createEntitySchemaMutation = new CreateEntitySchemaMutation(entityType);
 
-            UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-                BaseSchema, Mutations,
-                mutation is null
-                    ? new ILocalCatalogSchemaMutation[] {createEntitySchemaMutation}
-                    : new ILocalCatalogSchemaMutation[] {createEntitySchemaMutation, mutation}
+            UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+                UpdatedSchemaDirty,
+                SchemaBuilderHelper.AddMutations(
+                    BaseSchema, Mutations,
+                    mutation is null
+                        ? new ILocalCatalogSchemaMutation[] {createEntitySchemaMutation}
+                        : new ILocalCatalogSchemaMutation[] {createEntitySchemaMutation, mutation}
+                )
             );
         }
 
@@ -142,11 +157,14 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
             attributeSchema
         );
 
-        if (existingAttribute is not null && existingAttribute.Equals(attributeSchema) || true)
+        if (existingAttribute is null || !existingAttribute.Equals(attributeSchema))
         {
-            UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-                BaseSchema, Mutations,
-                attributeSchemaBuilder.ToMutation().ToArray()
+            UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+                UpdatedSchemaDirty,
+                SchemaBuilderHelper.AddMutations(
+                    BaseSchema, Mutations,
+                    attributeSchemaBuilder.ToMutation().ToArray()
+                )
             );
         }
 
@@ -155,9 +173,12 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 
     public ICatalogSchemaBuilder WithoutAttribute(string attributeName)
     {
-        UpdatedSchemaDirty = SchemaBuilderHelper.AddMutations(
-            BaseSchema, Mutations,
-            new RemoveAttributeSchemaMutation(attributeName)
+        UpdatedSchemaDirty = SchemaBuilderHelper.UpdateMutationImpact(
+            UpdatedSchemaDirty,
+            SchemaBuilderHelper.AddMutations(
+                BaseSchema, Mutations,
+                new RemoveAttributeSchemaMutation(attributeName)
+            )
         );
         return this;
     }
@@ -169,20 +190,22 @@ public class InternalCatalogSchemaBuilder : ICatalogSchemaBuilder
 
     public ICatalogSchema ToInstance()
     {
-        if (UpdatedSchema == null || UpdatedSchemaDirty)
+        if (UpdatedSchema == null || UpdatedSchemaDirty != MutationImpact.NoImpact)
         {
-            ICatalogSchema? currentSchema = BaseSchema;
+            ICatalogSchema currentSchema = BaseSchema;
             foreach (ILocalCatalogSchemaMutation mutation in Mutations)
             {
-                currentSchema = mutation.Mutate(currentSchema, MutationEntitySchemaAccessor);
-                if (currentSchema == null)
+                ICatalogSchemaMutation.CatalogSchemaWithImpactOnEntitySchemas? mutationImpact =
+                    mutation.Mutate(currentSchema, MutationEntitySchemaAccessor);
+                if (mutationImpact?.UpdatedCatalogSchema is null)
                 {
                     throw new EvitaInternalError("Catalog schema unexpectedly removed from inside!");
                 }
+                currentSchema = mutationImpact.UpdatedCatalogSchema;
             }
 
             UpdatedSchema = currentSchema;
-            UpdatedSchemaDirty = false;
+            UpdatedSchemaDirty = MutationImpact.NoImpact;
         }
 
         return UpdatedSchema;

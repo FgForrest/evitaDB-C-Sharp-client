@@ -6,15 +6,27 @@ public class SetAttributeSchemaFilterableMutationConverter : ISchemaMutationConv
 {
     public GrpcSetAttributeSchemaFilterableMutation Convert(SetAttributeSchemaFilterableMutation mutation)
     {
-        return new GrpcSetAttributeSchemaFilterableMutation
+        GrpcSetAttributeSchemaFilterableMutation grpcMutation = new GrpcSetAttributeSchemaFilterableMutation
         {
             Name = mutation.Name,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Filterable = mutation.Filterable
+#pragma warning restore CS0612
         };
+
+        if (mutation.Filterable)
+        {
+            grpcMutation.FilterableInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcMutation;
     }
 
     public SetAttributeSchemaFilterableMutation Convert(GrpcSetAttributeSchemaFilterableMutation mutation)
     {
-        return new SetAttributeSchemaFilterableMutation(mutation.Name, mutation.Filterable);
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+        return new SetAttributeSchemaFilterableMutation(mutation.Name,
+            EvitaEnumConverter.ToScopedBooleanFlag(mutation.FilterableInScopes, mutation.Filterable));
+#pragma warning restore CS0612
     }
 }

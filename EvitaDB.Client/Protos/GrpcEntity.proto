@@ -11,7 +11,7 @@ import "GrpcEnums.proto";
 import "GrpcEvitaDataTypes.proto";
 import "google/protobuf/wrappers.proto";
 
-// This type represents a reference to any Evita entity and that ne returned by default for all
+// This type represents a reference to any Evita entity and that is returned by default for all
 // queries that don't require loading additional data.
 message GrpcEntityReference {
   // Type of entity.
@@ -21,8 +21,8 @@ message GrpcEntityReference {
   // Unique Integer positive number representing the entity. Can be used for fast lookup for
   // entity (entities). Primary key must be unique within the same entity type.
   int32 primaryKey = 2;
-  // value is deprecated, it was available only for entity references used in entity body, in other use-cases it was left
-  // as zero - which was a mistake in the design.
+  // Deprecated since 2024.10 - value is deprecated, it was available only for entity references
+  // used in entity body, in other use-cases it was left as zero - which was a mistake in the design.
   // in order to get the entity version you need to fetch the entity itself (with entity body).
   int32 version = 3 [deprecated = true];
   // Contains version of this reference and gets increased with any entity type update. Allows to execute
@@ -41,11 +41,55 @@ message GrpcEntityReferenceWithParent {
   int32 primaryKey = 2;
   // Contains version of this entity and gets increased with any entity type update. Allows to execute
   // optimistic locking i.e. avoiding parallel modifications.
-  // value is deprecated, it was never available in the first place - it was a mistake in the design.
+  // Deprecated since 2024.10 - value is deprecated, it was never available in the first place - it
+  // was a mistake in the design.
   // in order to get the entity version you need to fetch the entity itself (with entity body).
   int32 version = 3 [deprecated = true];
   // Recursive pointer to parent entity.
   GrpcEntityReferenceWithParent parent = 4;
+}
+
+// Extended entity reference that maintains a mapping of reassigned primary keys for entity references.
+// This type is used during entity mutations when references need to be tracked with their newly assigned
+// internal primary keys after persistence.
+//
+// When references are first created, they are assigned temporary negative internal primary keys.
+// Upon persistence to the database, these temporary keys are replaced with positive permanent internal
+// primary keys assigned by the server. This message maintains the mapping between the original reference
+// keys (with temporary internal PKs) and the reference keys with their newly assigned permanent internal PKs.
+//
+// This is particularly useful when:
+// - Multiple references share the same business key but differ in properties
+// - Client code needs to track which references were assigned which internal primary keys after persistence
+// - References need to be looked up by their original temporary keys to find their permanent counterparts
+message GrpcEntityReferenceWithAssignedPrimaryKeys {
+  // Type of entity.
+  // Entity type is main sharding key - all data of entities with same type are stored in separated collections. Within the
+  // entity type entity is uniquely represented by primary key.
+  string entityType = 1;
+  // Unique Integer positive number representing the entity. Can be used for fast lookup for
+  // entity (entities). Primary key must be unique within the same entity type.
+  int32 primaryKey = 2;
+  // Mapping from original reference keys (with temporary internal PK) to the new
+  // reference keys with permanent internal PK assigned by the server after persistence.
+  // The map key is the original reference key, and the value is the reassigned reference key.
+  repeated GrpcReferenceKeyPair reassignedReferenceKeys = 3;
+}
+
+// Represents a pair of reference keys used for tracking reassigned internal primary keys.
+// The 'original' key contains the temporary internal PK, while the 'reassigned' key contains
+// the permanent internal PK assigned after persistence.
+message GrpcReferenceKeyPair {
+  // Name of the reference (e.g., "category", "brand").
+  // References the reference schema name that defines the type of relationship.
+  string referenceName = 1;
+  // Primary key of the referenced entity.
+  // May be either an evitaDB entity primary key or an external resource identifier.
+  int32 primaryKey = 2;
+  // Original reference key with temporary internal primary key (negative number).
+  int32 originalInternalPrimaryKey = 3;
+  // Reassigned reference key with permanent internal primary key (positive number) assigned by the server.
+  int32 reassignedInternalPrimaryKey = 4;
 }
 
 // Based on our experience we've designed following data model for handling entities in evitaDB. Model is rather complex
@@ -93,6 +137,27 @@ message GrpcSealedEntity {
   // Contains set of all locales that were used for localized attributes or associated data of
   // this particular entity.
   repeated GrpcLocale locales = 16;
+  // Identifies scope where the entity resides (either live or archived scope).
+  GrpcEntityScope scope = 17;
+  // Contains total count of references per reference name. This may differ from count of provided references
+  // if pagination or strip was used in the input query.
+  map<string, GrpcOffsetAndLimit> referenceOffsetAndLimits = 18;
+  // Contains prices that has been requested to be calculated beside the main price for sale.
+  map<string, GrpcPrice> accompanyingPrices = 19;
+  // Lowest selling price (or component price for `SUM` strategy) computed with the same currency / valid-in /
+  // price-list filters as `priceForSale`. Populated when the price-range-for-sale is available on the entity.
+  // The exact semantics depend on the price inner record handling strategy:
+  // - `NONE`: equal to `priceForSale`.
+  // - `LOWEST_PRICE`: equal to `priceForSale` (the cheapest per-inner-record selling price).
+  // - `SUM`: cheapest per-inner-record component price (`priceForSale` is the cumulated sum).
+  GrpcPrice priceForSaleMin = 20;
+  // Highest selling price (or component price for `SUM` strategy) computed with the same currency / valid-in /
+  // price-list filters as `priceForSale`. Populated when the price-range-for-sale is available on the entity.
+  // The exact semantics depend on the price inner record handling strategy:
+  // - `NONE`: equal to `priceForSale`.
+  // - `LOWEST_PRICE`: most expensive per-inner-record selling price.
+  // - `SUM`: most expensive per-inner-record component price (`priceForSale` is the cumulated sum).
+  GrpcPrice priceForSaleMax = 21;
 }
 
 // Response carries entities in a binary format and is part of the PRIVATE API that is used by Java driver. The client
@@ -158,4 +223,34 @@ message GrpcReference {
   map<string, GrpcLocalizedAttribute> localizedAttributes = 8;
   // Contains reference cardinality.
   GrpcCardinality referenceCardinality = 9;
+  // internal PK is assigned by evitaDB engine and is used to uniquely identify the
+  // reference among other references. It is used when multiple references share same
+  // business key - entityType and primaryKey - but differ by other properties (fe. reference group or attributes).
+  //
+  // When a reference is created for the first time, internal id is set to a unique
+  // negative number that is not used by the server side, which assigns positive unique
+  // numbers to the references on first reference persistence. This allows distinguishing
+  // references that are not yet persisted from those that are already persistent.
+  //
+  // When standalone key is used:
+  //
+  // - negative number: means that the reference is new and hasn't been yet persisted
+  // - zero: means we don't know the internal PK
+  // - positive number: means that the reference is persistent and has been already stored
+  //   in the database
+  int32 internalPrimaryKey = 10;
+}
+
+// The OffsetAndLimit record represents pagination parameters including offset, limit, and the last page number.
+message GrpcOffsetAndLimit {
+  // The starting point for fetching records.
+  int32 offset = 1;
+  // The number of records to fetch from the starting point.
+  int32 limit = 2;
+  // The current page number based on the current pagination settings.
+  int32 pageNumber = 3;
+  // The last page number based on the current pagination settings.
+  int32 lastPageNumber = 4;
+  // The total number of records available.
+  int32 totalRecordCount = 5;
 }

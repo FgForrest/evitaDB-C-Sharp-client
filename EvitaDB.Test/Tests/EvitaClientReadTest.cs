@@ -1,5 +1,4 @@
 using EvitaDB.Client;
-using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Cdc;
@@ -9,8 +8,6 @@ using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Test.Utils;
-using FluentAssertions;
-using Xunit.Abstractions;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test.Tests;
@@ -86,7 +83,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
                             AttributeContentAll(),
                             AssociatedDataContentAll(),
                             PriceContentAll(),
-                            ReferenceContentAll(),
+                            ReferenceContentAllWithAttributes(),
                             DataInLocalesAll()
                         )
                     )
@@ -95,8 +92,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.NotNull(sealedEntity);
         Assert.Equal(Entities.Product, sealedEntity.Type);
-        products.Single(x => x.PrimaryKey == primaryKey).Should().BeEquivalentTo(sealedEntity,
-            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
+        Assert.False(products.Single(x => x.PrimaryKey == primaryKey).DiffersFrom(sealedEntity));
     }
 
     [Fact]
@@ -260,8 +256,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.Equal(Entities.Product, sealedEntity!.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(sealedEntity,
-            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
+        Assert.True(products.Single(x => x.PrimaryKey == 7).DiffersFrom(sealedEntity));
 
         ISealedEntity? enrichedEntity = Client.QueryCatalog(
             Data.TestCatalog,
@@ -277,7 +272,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         ISealedEntity entityToCompare = products.Single(x => x.PrimaryKey == 7);
 
-        entityToCompare.Should().BeEquivalentTo(entityToCompare);
+        Assert.False(entityToCompare.DiffersFrom(enrichedEntity));
     }
 
     [Fact]
@@ -294,8 +289,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.Equal(Entities.Product, sealedEntity!.Type);
         Assert.Equal(7, sealedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().BeEquivalentTo(sealedEntity,
-            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
+        Assert.False(products.Single(x => x.PrimaryKey == 7).DiffersFrom(sealedEntity));
 
         ISealedEntity? limitedEntity = Client.QueryCatalog(
             Data.TestCatalog,
@@ -307,8 +301,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
 
         Assert.Equal(Entities.Product, limitedEntity!.Type);
         Assert.Equal(7, limitedEntity.PrimaryKey);
-        products.Single(x => x.PrimaryKey == 7).Should().NotBeEquivalentTo(limitedEntity,
-            options => options.Excluding(x => x.ParentEntity).Excluding(x => x.Parent));
+        Assert.True(products.Single(x => x.PrimaryKey == 7).DiffersFrom(limitedEntity));
     }
 
     [Fact]
@@ -363,7 +356,7 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
     public void ShouldTestCdc()
     {
         EvitaClientSession evitaClientSession = Client!.CreateReadOnlySession(Data.TestCatalog);
-        IObservable<ChangeCatalogCapture> captures = evitaClientSession.GetMutationHistory(
+        IEnumerable<ChangeCatalogCapture> captures = evitaClientSession.GetMutationsHistory(
                 new ChangeCatalogCaptureRequest(
                     1,
                     5,
@@ -376,7 +369,9 @@ public class EvitaClientReadTest : BaseTest<SetupFixture>
                     CaptureContent.Body
                 )
             );
-        IDisposable subscription = captures.Subscribe(c => { OutputHelper.WriteLine(c.Operation.ToString()); });
-        subscription.Dispose();
+        foreach (ChangeCatalogCapture capture in captures.Take(5))
+        {
+            OutputHelper.WriteLine(capture.Operation.ToString());
+        }
     }
 }

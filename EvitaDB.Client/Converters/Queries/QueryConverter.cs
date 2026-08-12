@@ -29,6 +29,41 @@ public static class QueryConverter
             return queryParam.StringValue;
         }
 
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.Scope)
+        {
+            return EvitaEnumConverter.ToScope(queryParam.Scope);
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.ScopeArrayValue)
+        {
+            return queryParam.ScopeArrayValue.Value.Select(EvitaEnumConverter.ToScope).ToArray();
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.TraversalMode)
+        {
+            return EvitaEnumConverter.ToTraversalMode(queryParam.TraversalMode);
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.FacetRelationType)
+        {
+            return EvitaEnumConverter.ToFacetRelationType(queryParam.FacetRelationType);
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.FacetGroupRelationLevel)
+        {
+            return EvitaEnumConverter.ToFacetGroupRelationLevel(queryParam.FacetGroupRelationLevel);
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.ManagedReferencesBehaviour)
+        {
+            return EvitaEnumConverter.ToManagedReferencesBehaviour(queryParam.ManagedReferencesBehaviour);
+        }
+
+        if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.ExpressionValue)
+        {
+            return new Expression(queryParam.ExpressionValue);
+        }
+
         if (queryParam.QueryParamCase == GrpcQueryParam.QueryParamOneofCase.IntegerValue)
         {
             return queryParam.IntegerValue;
@@ -258,7 +293,39 @@ public static class QueryConverter
     public static GrpcQueryParam ConvertQueryParam(object parameter)
     {
         GrpcQueryParam queryParam = new GrpcQueryParam();
-        if (parameter is string stringValue)
+        if (parameter is Scope scopeValue)
+        {
+            queryParam.Scope = EvitaEnumConverter.ToGrpcScope(scopeValue);
+        }
+        else if (parameter is Scope[] scopeArrayValue)
+        {
+            GrpcEntityScopeArray grpcScopeArray = new();
+            grpcScopeArray.Value.AddRange(scopeArrayValue.Select(EvitaEnumConverter.ToGrpcScope));
+            queryParam.ScopeArrayValue = grpcScopeArray;
+        }
+        else if (parameter is TraversalMode traversalModeValue)
+        {
+            queryParam.TraversalMode = EvitaEnumConverter.ToGrpcTraversalMode(traversalModeValue);
+        }
+        else if (parameter is FacetRelationType facetRelationTypeValue)
+        {
+            queryParam.FacetRelationType = EvitaEnumConverter.ToGrpcFacetRelationType(facetRelationTypeValue);
+        }
+        else if (parameter is FacetGroupRelationLevel facetGroupRelationLevelValue)
+        {
+            queryParam.FacetGroupRelationLevel =
+                EvitaEnumConverter.ToGrpcFacetGroupRelationLevel(facetGroupRelationLevelValue);
+        }
+        else if (parameter is ManagedReferencesBehaviour managedReferencesBehaviourValue)
+        {
+            queryParam.ManagedReferencesBehaviour =
+                EvitaEnumConverter.ToGrpcManagedReferencesBehaviour(managedReferencesBehaviourValue);
+        }
+        else if (parameter is Expression expressionValue)
+        {
+            queryParam.ExpressionValue = expressionValue.MinimalForm;
+        }
+        else if (parameter is string stringValue)
         {
             queryParam.StringValue = stringValue;
         }

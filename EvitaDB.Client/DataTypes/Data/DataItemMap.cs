@@ -38,7 +38,14 @@ public sealed record DataItemMap(Dictionary<string, IDataItem?> ChildrenIndex) :
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(ChildrenIndex);
+        // order-independent aggregation so that structurally equal maps produce the same hash
+        int hash = 0;
+        foreach (KeyValuePair<string, IDataItem?> child in ChildrenIndex)
+        {
+            hash ^= HashCode.Combine(child.Key, child.Value);
+        }
+
+        return hash;
     }
 
     public override string ToString()
@@ -48,8 +55,18 @@ public sealed record DataItemMap(Dictionary<string, IDataItem?> ChildrenIndex) :
 
     public bool Equals(DataItemMap? other)
     {
-        if (this == other) return true;
+        if (ReferenceEquals(this, other)) return true;
         if (other is null || GetType() != other.GetType()) return false;
-        return Equals(ChildrenIndex, other.ChildrenIndex);
+        if (ChildrenIndex.Count != other.ChildrenIndex.Count) return false;
+        foreach (KeyValuePair<string, IDataItem?> child in ChildrenIndex)
+        {
+            if (!other.ChildrenIndex.TryGetValue(child.Key, out IDataItem? otherChild) ||
+                !Equals(child.Value, otherChild))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

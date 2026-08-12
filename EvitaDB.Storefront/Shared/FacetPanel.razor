@@ -1,0 +1,195 @@
+@inject StorefrontState State
+@inject EvitaCatalogContext Catalog
+
+@*
+    Facet groups with checkboxes. Checked state comes straight from FacetStatistics.Requested - the server
+    flags the facets it applied, so no parallel client-side model is needed for rendering.
+
+    The panel is deliberately capped: at most GroupLimit groups, each showing at most ValueLimit options.
+    The demo dataset has 77 parameter groups in one category, which would otherwise make the sidebar
+    unusable. Everything remains reachable through the "all filters" modal.
+*@
+<aside class="facets">
+    <div class="facets-head">
+        <h2>Filter</h2>
+        @if (State.HasActiveFilters)
+        {
+            <button class="link" @onclick="State.ClearFilters">clear all</button>
+        }
+    </div>
+
+    @if (PriceHistogram is not null && PriceHistogram.Buckets.Length > 0)
+    {
+        <HistogramFilter Title="Price"
+                         Histogram="PriceHistogram"
+                         Unit="@State.Currency.CurrencyCode"
+                         From="State.PriceFrom"
+                         To="State.PriceTo"
+                         OnRangeChanged="OnPriceRangeChanged"/>
+    }
+
+    @if (AttributeHistograms is not null)
+    {
+        @foreach ((string attributeName, IHistogram histogram) in AttributeHistograms.Histograms)
+        {
+            @if (histogram.Buckets.Length > 0)
+            {
+                (decimal? from, decimal? to) = State.GetAttributeRange(attributeName);
+                string name = attributeName;
+                <HistogramFilter Title="@Humanize(attributeName)"
+                                 Histogram="histogram"
+                                 From="from"
+                                 To="to"
+                                 OnRangeChanged="range => State.SetAttributeRange(name, range.From, range.To)"/>
+            }
+        }
+    }
+
+    @if (FacetSummary is null)
+    {
+        <p class="muted">No facets for this selection.</p>
+    }
+    else
+    {
+        @* the two numbers on each row mean different things, so say which is which - once *@
+        <p class="facet-legend">
+            <span><span class="swatch count"></span>has option</span>
+            <span><span class="swatch impact"></span>result if ticked</span>
+        </p>
+
+        @foreach (string referenceName in OrderedReferences())
+        {
+            List<FacetGroupStatistics> groups = GroupsOf(referenceName);
+            @if (groups.Count > 0)
+            {
+                <section class="facet-reference">
+                    <h3>@Humanize(referenceName)</h3>
+                    @foreach (FacetGroupStatistics group in groups.Take(GroupLimit))
+                    {
+                        <FacetGroupList Group="group" CurrentTotal="CurrentTotal" ValueLimit="ValueLimit"/>
+                    }
+                    @if (groups.Count > GroupLimit)
+                    {
+                        <button class="link facet-more" @onclick="() => OpenModal(referenceName)">
+                            + @(groups.Count - GroupLimit) more groups…
+                        </button>
+                    }
+                </section>
+            }
+        }
+
+        @if (TotalGroups > 0)
+        {
+            <button class="button facets-all" @onclick="() => OpenModal(null)">Show all filters</button>
+        }
+    }
+</aside>
+
+@if (_modalReference is not null || _modalOpen)
+{
+    @* All groups, unabridged. Rendered with the same FacetGroupList component as the sidebar, so ticking
+       something here behaves identically and the sidebar updates underneath. *@
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="All filters"
+             @onclick:stopPropagation="true">
+            <header class="modal-head">
+                <h2>@(_modalReference is null ? "All filters" : Humanize(_modalReference))</h2>
+                <div class="modal-actions">
+                    @if (State.HasActiveFilters)
+                    {
+                        <button class="link" @onclick="State.ClearFilters">clear all</button>
+                    }
+                    <button class="button" @onclick="CloseModal">Done</button>
+                </div>
+            </header>
+
+            <div class="modal-body">
+                @foreach (string referenceName in ModalReferences())
+                {
+                    List<FacetGroupStatistics> groups = GroupsOf(referenceName);
+                    @if (groups.Count > 0)
+                    {
+                        <section class="facet-reference">
+                            <h3>@Humanize(referenceName)</h3>
+                            <div class="modal-groups">
+                                @foreach (FacetGroupStatistics group in groups)
+                                {
+                                    @* no per-group cap in the modal - this is the "see everything" view *@
+                                    <FacetGroupList Group="group" CurrentTotal="CurrentTotal" ValueLimit="0"/>
+                                }
+                            </div>
+                        </section>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    /// <summary>Parameter groups shown in the sidebar before the rest move behind the modal.</summary>
+    private const int GroupLimit = 5;
+
+    /// <summary>Options shown per group in the sidebar before the per-group "show all" appears.</summary>
+    private const int ValueLimit = 5;
+
+    [Parameter] public FacetSummary? FacetSummary { get; set; }
+
+    [Parameter] public PriceHistogram? PriceHistogram { get; set; }
+
+    [Parameter] public AttributeHistogram? AttributeHistograms { get; set; }
+
+    /// <summary>Current result count, used to phrase the impact tooltip as "from X to Y".</summary>
+    [Parameter] public int CurrentTotal { get; set; }
+
+    private bool _modalOpen;
+    private string? _modalReference;
+
+    private void OpenModal(string? referenceName)
+    {
+        _modalReference = referenceName;
+        _modalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _modalOpen = false;
+        _modalReference = null;
+    }
+
+    private IEnumerable<string> ModalReferences() =>
+        _modalReference is not null ? [_modalReference] : OrderedReferences();
+
+    private int TotalGroups => OrderedReferences().Sum(x => GroupsOf(x).Count);
+
+    private void OnPriceRangeChanged((decimal? From, decimal? To) range) =>
+        State.SetPriceRange(range.From, range.To);
+
+    /// <summary>
+    /// References in the configured display order, restricted to the ones the schema really marks faceted.
+    /// </summary>
+    private IEnumerable<string> OrderedReferences() =>
+        StorefrontSchema.FacetPanelReferences.Where(Catalog.FacetedReferences.Contains);
+
+    /// <summary>Groups with a ticked option first, so an active filter is never hidden behind the cut.</summary>
+    private List<FacetGroupStatistics> GroupsOf(string referenceName) =>
+        FacetSummary is null
+            ? []
+            : FacetSummary.GetFacetGroupStatistics()
+                .Where(group => group.ReferenceName == referenceName)
+                .OrderByDescending(group => group.GetFacetStatistics().Any(facet => facet.Requested))
+                .ThenByDescending(group => group.Count)
+                .ToList();
+
+    /// <summary>`parameterValues` -> `Parameter values`, `battery-capacity` -> `Battery capacity`.</summary>
+    private static string Humanize(string name)
+    {
+        string spaced = string.Concat(
+            name.Replace('-', ' ').Replace('_', ' ')
+                .Select((c, i) => i > 0 && char.IsUpper(c) ? " " + char.ToLowerInvariant(c) : c.ToString())
+        );
+        return spaced.Length == 0 ? name : char.ToUpperInvariant(spaced[0]) + spaced[1..];
+    }
+
+}

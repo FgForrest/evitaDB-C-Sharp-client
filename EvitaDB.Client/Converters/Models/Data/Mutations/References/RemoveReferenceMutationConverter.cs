@@ -10,12 +10,16 @@ public class RemoveReferenceMutationConverter : ILocalMutationConverter<RemoveRe
         return new GrpcRemoveReferenceMutation
         {
             ReferenceName = mutation.ReferenceKey.ReferenceName,
-            ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey
+            ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey,
+            InternalPrimaryKey = mutation.InternalPrimaryKey
         };
     }
 
     public RemoveReferenceMutation Convert(GrpcRemoveReferenceMutation mutation)
     {
-        return new RemoveReferenceMutation(new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey));
+        return new RemoveReferenceMutation(new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey))
+        {
+            InternalPrimaryKey = mutation.InternalPrimaryKey
+        };
     }
 }

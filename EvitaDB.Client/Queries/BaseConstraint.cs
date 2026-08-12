@@ -47,13 +47,17 @@ public abstract class BaseConstraint : IConstraint
 
     public override string ToString()
     {
+        // NOTE: the closing bracket must be appended to the *joined* string. It used to sit inside the
+        // string.Join argument, which concatenated it onto the IEnumerable and printed the LINQ iterator's
+        // type name instead of the arguments.
         return Name + QueryUtils.ArgOpening +
                string.Join(
                    ",",
                    Arguments.Where(x =>
                        this is not IConstraintWithSuffix cws || !cws.ArgumentImplicitForSuffix(x!)
-                   ).Select(ConvertToString) +
-                   QueryUtils.ArgClosing);
+                   ).Select(ConvertToString)
+               ) +
+               QueryUtils.ArgClosing;
     }
 
     private string RemoveGenericsFromConstraintNameIfPresent(Type type)

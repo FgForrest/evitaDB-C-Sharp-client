@@ -22,12 +22,18 @@ public sealed record DataItemArray(IDataItem?[] Children) : IDataItem
     {
         if (ReferenceEquals(this, other)) return true;
         if (other is null || GetType() != other.GetType()) return false;
-        return Equals(Children, other.Children);
+        return Children.SequenceEqual(other.Children);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Children);
+        int hash = 17;
+        foreach (IDataItem? child in Children)
+        {
+            hash = HashCode.Combine(hash, child);
+        }
+
+        return hash;
     }
 
     public override string ToString()

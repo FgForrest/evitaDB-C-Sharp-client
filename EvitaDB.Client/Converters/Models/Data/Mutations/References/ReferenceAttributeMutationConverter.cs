@@ -13,7 +13,8 @@ public class ReferenceAttributeMutationConverter : ILocalMutationConverter<Refer
         {
             ReferenceName = mutation.ReferenceKey.ReferenceName,
             ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey,
-            AttributeMutation = AttributeMutationConverter.Convert(mutation.AttributeMutation)
+            AttributeMutation = AttributeMutationConverter.Convert(mutation.AttributeMutation),
+            InternalPrimaryKey = mutation.InternalPrimaryKey
         };
     }
 
@@ -23,6 +24,6 @@ public class ReferenceAttributeMutationConverter : ILocalMutationConverter<Refer
             new ReferenceKey(mutation.ReferenceName,
                 mutation.ReferencePrimaryKey),
             AttributeMutationConverter.Convert(mutation.AttributeMutation)
-        );
+        ) { InternalPrimaryKey = mutation.InternalPrimaryKey };
     }
 }

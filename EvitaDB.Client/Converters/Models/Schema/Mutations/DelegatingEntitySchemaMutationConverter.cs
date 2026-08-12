@@ -1,3 +1,5 @@
+using EvitaDB.Client.Converters.Models.Schema.Mutations.SortableAttributeCompounds;
+using EvitaDB.Client.Models.Schemas.Mutations.SortableAttributeCompounds;
 ﻿using EvitaDB.Client.Converters.Models.Schema.Mutations.AssociatedData;
 using EvitaDB.Client.Converters.Models.Schema.Mutations.Attributes;
 using EvitaDB.Client.Converters.Models.Schema.Mutations.Entities;
@@ -159,6 +161,31 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             case SetReferenceSchemaIndexedMutation setReferenceSchemaIndexedMutation:
                 grpcEntitySchemaMutation.SetReferenceSchemaIndexedMutation = new SetReferenceSchemaFilterableMutationConverter().Convert(setReferenceSchemaIndexedMutation);
                 break;
+            case SetAssociatedDataSchemaConflictResolutionOverrideMutation setAssociatedDataSchemaConflictResolutionOverrideMutation:
+                grpcEntitySchemaMutation.SetAssociatedDataSchemaConflictResolutionOverrideMutation =
+                    new SetAssociatedDataSchemaConflictResolutionOverrideMutationConverter().Convert(
+                        setAssociatedDataSchemaConflictResolutionOverrideMutation);
+                break;
+            case SetAttributeSchemaConflictResolutionOverrideMutation setAttributeSchemaConflictResolutionOverrideMutation:
+                grpcEntitySchemaMutation.SetAttributeSchemaConflictResolutionOverrideMutation =
+                    new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                        setAttributeSchemaConflictResolutionOverrideMutation);
+                break;
+            case ModifyEntitySchemaConflictResolutionMutation modifyEntitySchemaConflictResolutionMutation:
+                grpcEntitySchemaMutation.ModifyEntitySchemaConflictResolutionMutation =
+                    new ModifyEntitySchemaConflictResolutionMutationConverter().Convert(
+                        modifyEntitySchemaConflictResolutionMutation);
+                break;
+            case SetReferenceSchemaConflictResolutionOverrideMutation setReferenceSchemaConflictResolutionOverrideMutation:
+                grpcEntitySchemaMutation.SetReferenceSchemaConflictResolutionOverrideMutation =
+                    new SetReferenceSchemaConflictResolutionOverrideMutationConverter().Convert(
+                        setReferenceSchemaConflictResolutionOverrideMutation);
+                break;
+            case SetSortableAttributeCompoundIndexedMutation setSortableAttributeCompoundIndexedMutation:
+                grpcEntitySchemaMutation.SetSortableAttributeCompoundIndexedMutation =
+                    new SetSortableAttributeCompoundIndexedMutationConverter().Convert(
+                        setSortableAttributeCompoundIndexedMutation);
+                break;
         }
         
         return grpcEntitySchemaMutation;
@@ -215,6 +242,21 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             GrpcEntitySchemaMutation.MutationOneofCase.RemoveReferenceSchemaMutation => new RemoveReferenceSchemaMutationConverter().Convert(mutation.RemoveReferenceSchemaMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetReferenceSchemaFacetedMutation => new SetReferenceSchemaFacetedMutationConverter().Convert(mutation.SetReferenceSchemaFacetedMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.SetReferenceSchemaIndexedMutation => new SetReferenceSchemaFilterableMutationConverter().Convert(mutation.SetReferenceSchemaIndexedMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.SetAssociatedDataSchemaConflictResolutionOverrideMutation =>
+                new SetAssociatedDataSchemaConflictResolutionOverrideMutationConverter().Convert(
+                    mutation.SetAssociatedDataSchemaConflictResolutionOverrideMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.SetAttributeSchemaConflictResolutionOverrideMutation =>
+                new SetAttributeSchemaConflictResolutionOverrideMutationConverter().Convert(
+                    mutation.SetAttributeSchemaConflictResolutionOverrideMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.ModifyEntitySchemaConflictResolutionMutation =>
+                new ModifyEntitySchemaConflictResolutionMutationConverter().Convert(
+                    mutation.ModifyEntitySchemaConflictResolutionMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.SetReferenceSchemaConflictResolutionOverrideMutation =>
+                new SetReferenceSchemaConflictResolutionOverrideMutationConverter().Convert(
+                    mutation.SetReferenceSchemaConflictResolutionOverrideMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.SetSortableAttributeCompoundIndexedMutation =>
+                new SetSortableAttributeCompoundIndexedMutationConverter().Convert(
+                    mutation.SetSortableAttributeCompoundIndexedMutation),
             _ => throw new EvitaInternalError("This should never happen!")
         };
     }

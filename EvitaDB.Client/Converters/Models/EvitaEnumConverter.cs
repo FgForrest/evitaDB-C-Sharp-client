@@ -1,6 +1,8 @@
 ﻿using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Cdc;
+using EvitaDB.Client.Models.Mutations.Conflicts;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.Data.Mutations;
 using EvitaDB.Client.Models.Schemas;
@@ -22,6 +24,17 @@ public static class EvitaEnumConverter
         {
             GrpcCatalogState.WarmingUp => CatalogState.WarmingUp,
             GrpcCatalogState.Alive => CatalogState.Alive,
+            GrpcCatalogState.UnknownCatalogState => CatalogState.UnknownCatalogState,
+            GrpcCatalogState.Corrupted => CatalogState.Corrupted,
+            GrpcCatalogState.Inactive => CatalogState.Inactive,
+            GrpcCatalogState.GoingAlive => CatalogState.GoingAlive,
+            GrpcCatalogState.BeingActivated => CatalogState.BeingActivated,
+            GrpcCatalogState.BeingDeactivated => CatalogState.BeingDeactivated,
+            GrpcCatalogState.BeingCreated => CatalogState.BeingCreated,
+            GrpcCatalogState.BeingDeleted => CatalogState.BeingDeleted,
+            GrpcCatalogState.Missing => CatalogState.Missing,
+            GrpcCatalogState.OutOfDate => CatalogState.OutOfDate,
+            GrpcCatalogState.BeingUpgraded => CatalogState.BeingUpgraded,
             _ => throw new EvitaInternalError("Unrecognized remote catalog state: " + grpcCatalogState)
         };
     }
@@ -33,7 +46,44 @@ public static class EvitaEnumConverter
         {
             CatalogState.WarmingUp => GrpcCatalogState.WarmingUp,
             CatalogState.Alive => GrpcCatalogState.Alive,
+            CatalogState.UnknownCatalogState => GrpcCatalogState.UnknownCatalogState,
+            CatalogState.Corrupted => GrpcCatalogState.Corrupted,
+            CatalogState.Inactive => GrpcCatalogState.Inactive,
+            CatalogState.GoingAlive => GrpcCatalogState.GoingAlive,
+            CatalogState.BeingActivated => GrpcCatalogState.BeingActivated,
+            CatalogState.BeingDeactivated => GrpcCatalogState.BeingDeactivated,
+            CatalogState.BeingCreated => GrpcCatalogState.BeingCreated,
+            CatalogState.BeingDeleted => GrpcCatalogState.BeingDeleted,
+            CatalogState.Missing => GrpcCatalogState.Missing,
+            CatalogState.OutOfDate => GrpcCatalogState.OutOfDate,
+            CatalogState.BeingUpgraded => GrpcCatalogState.BeingUpgraded,
             _ => throw new EvitaInternalError("Unrecognized local catalog state: " + catalogState)
+        };
+    }
+
+    /// <summary>
+    /// Converts the gRPC entity scope to the client model scope.
+    /// </summary>
+    public static Scope ToScope(GrpcEntityScope grpcScope)
+    {
+        return grpcScope switch
+        {
+            GrpcEntityScope.ScopeLive => Scope.Live,
+            GrpcEntityScope.ScopeArchived => Scope.Archived,
+            _ => throw new EvitaInternalError("Unrecognized remote scope: " + grpcScope)
+        };
+    }
+
+    /// <summary>
+    /// Converts the client model scope to the gRPC entity scope.
+    /// </summary>
+    public static GrpcEntityScope ToGrpcScope(Scope scope)
+    {
+        return scope switch
+        {
+            Scope.Live => GrpcEntityScope.ScopeLive,
+            Scope.Archived => GrpcEntityScope.ScopeArchived,
+            _ => throw new EvitaInternalError("Unrecognized local scope: " + scope)
         };
     }
 
@@ -41,17 +91,17 @@ public static class EvitaEnumConverter
     {
         if (typeof(IGlobalAttributeSchema).IsAssignableFrom(typeof(T)))
         {
-            return GrpcAttributeSchemaType.Global;
+            return GrpcAttributeSchemaType.GlobalSchema;
         }
 
         if (typeof(IEntityAttributeSchema).IsAssignableFrom(typeof(T)))
         {
-            return GrpcAttributeSchemaType.Entity;
+            return GrpcAttributeSchemaType.EntitySchema;
         }
 
         if (typeof(IAttributeSchema).IsAssignableFrom(typeof(T)))
         {
-            return GrpcAttributeSchemaType.Reference;
+            return GrpcAttributeSchemaType.ReferenceSchema;
         }
         else
         {
@@ -171,6 +221,7 @@ public static class EvitaEnumConverter
         {
             GrpcStatisticsBase.CompleteFilter => StatisticsBase.CompleteFilter,
             GrpcStatisticsBase.WithoutUserFilter => StatisticsBase.WithoutUserFilter,
+            GrpcStatisticsBase.CompleteFilterExcludingSelfInUserFilter => StatisticsBase.CompleteFilterExcludingSelfInUserFilter,
             _ => throw new EvitaInternalError("Unrecognized remote statistics base: " + grpcStatisticsBase)
         };
     }
@@ -181,6 +232,7 @@ public static class EvitaEnumConverter
         {
             StatisticsBase.CompleteFilter => GrpcStatisticsBase.CompleteFilter,
             StatisticsBase.WithoutUserFilter => GrpcStatisticsBase.WithoutUserFilter,
+            StatisticsBase.CompleteFilterExcludingSelfInUserFilter => GrpcStatisticsBase.CompleteFilterExcludingSelfInUserFilter,
             _ => throw new EvitaInternalError("Unrecognized statistics base: " + statisticsBase)
         };
     }
@@ -232,6 +284,7 @@ public static class EvitaEnumConverter
         {
             GrpcFacetStatisticsDepth.Counts => FacetStatisticsDepth.Counts,
             GrpcFacetStatisticsDepth.Impact => FacetStatisticsDepth.Impact,
+            GrpcFacetStatisticsDepth.StatisticsNone => FacetStatisticsDepth.None,
             _ => throw new EvitaInternalError("Unrecognized remote facet statistics depth: " + grpcFacetStatisticsDepth)
         };
     }
@@ -242,6 +295,7 @@ public static class EvitaEnumConverter
         {
             FacetStatisticsDepth.Counts => GrpcFacetStatisticsDepth.Counts,
             FacetStatisticsDepth.Impact => GrpcFacetStatisticsDepth.Impact,
+            FacetStatisticsDepth.None => GrpcFacetStatisticsDepth.StatisticsNone,
             _ => throw new EvitaInternalError("Unrecognized facet statistics depth: " + facetStatisticsDepth)
         };
     }
@@ -282,6 +336,8 @@ public static class EvitaEnumConverter
             GrpcCardinality.ExactlyOne => Cardinality.ExactlyOne,
             GrpcCardinality.ZeroOrMore => Cardinality.ZeroOrMore,
             GrpcCardinality.OneOrMore => Cardinality.OneOrMore,
+            GrpcCardinality.ZeroOrMoreWithDuplicates => Cardinality.ZeroOrMoreWithDuplicates,
+            GrpcCardinality.OneOrMoreWithDuplicates => Cardinality.OneOrMoreWithDuplicates,
             _ => throw new EvitaInternalError("Unrecognized remote cardinality: " + grpcCardinality)
         };
     }
@@ -299,6 +355,8 @@ public static class EvitaEnumConverter
             Cardinality.ExactlyOne => GrpcCardinality.ExactlyOne,
             Cardinality.ZeroOrMore => GrpcCardinality.ZeroOrMore,
             Cardinality.OneOrMore => GrpcCardinality.OneOrMore,
+            Cardinality.ZeroOrMoreWithDuplicates => GrpcCardinality.ZeroOrMoreWithDuplicates,
+            Cardinality.OneOrMoreWithDuplicates => GrpcCardinality.OneOrMoreWithDuplicates,
             _ => throw new ArgumentOutOfRangeException(nameof(cardinality), cardinality, null)
         };
     }
@@ -309,7 +367,93 @@ public static class EvitaEnumConverter
         {
             GrpcHistogramBehavior.Standard => HistogramBehavior.Standard,
             GrpcHistogramBehavior.Optimized => HistogramBehavior.Optimized,
+            GrpcHistogramBehavior.Equalized => HistogramBehavior.Equalized,
+            GrpcHistogramBehavior.EqualizedOptimized => HistogramBehavior.EqualizedOptimized,
             _ => throw new EvitaInternalError("Unrecognized remote histogram behavior: " + grpcHistogramBehavior)
+        };
+    }
+
+    public static TraversalMode ToTraversalMode(GrpcTraversalMode grpcTraversalMode)
+    {
+        return grpcTraversalMode switch
+        {
+            GrpcTraversalMode.DepthFirst => TraversalMode.DepthFirst,
+            GrpcTraversalMode.BreadthFirst => TraversalMode.BreadthFirst,
+            _ => throw new EvitaInternalError("Unrecognized remote traversal mode: " + grpcTraversalMode)
+        };
+    }
+
+    public static GrpcTraversalMode ToGrpcTraversalMode(TraversalMode traversalMode)
+    {
+        return traversalMode switch
+        {
+            TraversalMode.DepthFirst => GrpcTraversalMode.DepthFirst,
+            TraversalMode.BreadthFirst => GrpcTraversalMode.BreadthFirst,
+            _ => throw new EvitaInternalError("Unrecognized local traversal mode: " + traversalMode)
+        };
+    }
+
+    public static FacetRelationType ToFacetRelationType(GrpcFacetRelationType grpcFacetRelationType)
+    {
+        return grpcFacetRelationType switch
+        {
+            GrpcFacetRelationType.Disjunction => FacetRelationType.Disjunction,
+            GrpcFacetRelationType.Conjunction => FacetRelationType.Conjunction,
+            GrpcFacetRelationType.Negation => FacetRelationType.Negation,
+            GrpcFacetRelationType.Exclusivity => FacetRelationType.Exclusivity,
+            _ => throw new EvitaInternalError("Unrecognized remote facet relation type: " + grpcFacetRelationType)
+        };
+    }
+
+    public static GrpcFacetRelationType ToGrpcFacetRelationType(FacetRelationType facetRelationType)
+    {
+        return facetRelationType switch
+        {
+            FacetRelationType.Disjunction => GrpcFacetRelationType.Disjunction,
+            FacetRelationType.Conjunction => GrpcFacetRelationType.Conjunction,
+            FacetRelationType.Negation => GrpcFacetRelationType.Negation,
+            FacetRelationType.Exclusivity => GrpcFacetRelationType.Exclusivity,
+            _ => throw new EvitaInternalError("Unrecognized local facet relation type: " + facetRelationType)
+        };
+    }
+
+    public static FacetGroupRelationLevel ToFacetGroupRelationLevel(GrpcFacetGroupRelationLevel grpcLevel)
+    {
+        return grpcLevel switch
+        {
+            GrpcFacetGroupRelationLevel.WithDifferentFacetsInGroup => FacetGroupRelationLevel.WithDifferentFacetsInGroup,
+            GrpcFacetGroupRelationLevel.WithDifferentGroups => FacetGroupRelationLevel.WithDifferentGroups,
+            _ => throw new EvitaInternalError("Unrecognized remote facet group relation level: " + grpcLevel)
+        };
+    }
+
+    public static GrpcFacetGroupRelationLevel ToGrpcFacetGroupRelationLevel(FacetGroupRelationLevel level)
+    {
+        return level switch
+        {
+            FacetGroupRelationLevel.WithDifferentFacetsInGroup => GrpcFacetGroupRelationLevel.WithDifferentFacetsInGroup,
+            FacetGroupRelationLevel.WithDifferentGroups => GrpcFacetGroupRelationLevel.WithDifferentGroups,
+            _ => throw new EvitaInternalError("Unrecognized local facet group relation level: " + level)
+        };
+    }
+
+    public static ManagedReferencesBehaviour ToManagedReferencesBehaviour(GrpcManagedReferencesBehaviour grpcBehaviour)
+    {
+        return grpcBehaviour switch
+        {
+            GrpcManagedReferencesBehaviour.Any => ManagedReferencesBehaviour.Any,
+            GrpcManagedReferencesBehaviour.Existing => ManagedReferencesBehaviour.Existing,
+            _ => throw new EvitaInternalError("Unrecognized remote managed references behaviour: " + grpcBehaviour)
+        };
+    }
+
+    public static GrpcManagedReferencesBehaviour ToGrpcManagedReferencesBehaviour(ManagedReferencesBehaviour behaviour)
+    {
+        return behaviour switch
+        {
+            ManagedReferencesBehaviour.Any => GrpcManagedReferencesBehaviour.Any,
+            ManagedReferencesBehaviour.Existing => GrpcManagedReferencesBehaviour.Existing,
+            _ => throw new EvitaInternalError("Unrecognized local managed references behaviour: " + behaviour)
         };
     }
 
@@ -343,6 +487,7 @@ public static class EvitaEnumConverter
             GrpcEvolutionMode.AddingLocales => EvolutionMode.AddingLocales,
             GrpcEvolutionMode.AddingCurrencies => EvolutionMode.AddingCurrencies,
             GrpcEvolutionMode.AddingHierarchy => EvolutionMode.AddingHierarchy,
+            GrpcEvolutionMode.UpdatingReferenceCardinality => EvolutionMode.UpdatingReferenceCardinality,
             _ => throw new EvitaInternalError("Unrecognized remote evolution mode: " + grpcEvolutionMode)
         };
     }
@@ -359,6 +504,7 @@ public static class EvitaEnumConverter
             EvolutionMode.AddingLocales => GrpcEvolutionMode.AddingLocales,
             EvolutionMode.AddingCurrencies => GrpcEvolutionMode.AddingCurrencies,
             EvolutionMode.AddingHierarchy => GrpcEvolutionMode.AddingHierarchy,
+            EvolutionMode.UpdatingReferenceCardinality => GrpcEvolutionMode.UpdatingReferenceCardinality,
             _ => throw new ArgumentOutOfRangeException(nameof(evolutionMode), evolutionMode, null)
         };
     }
@@ -389,6 +535,7 @@ public static class EvitaEnumConverter
             GrpcQueryPhase.Fetching => QueryPhase.Fetching,
             GrpcQueryPhase.FetchingReferences => QueryPhase.FetchingReferences,
             GrpcQueryPhase.FetchingParents => QueryPhase.FetchingParents,
+            GrpcQueryPhase.FetchingReferenceBodies => QueryPhase.FetchingReferenceBodies,
             _ => throw new EvitaInternalError("Unrecognized remote query phase: " + grpcQueryPhase)
         };
     }
@@ -419,6 +566,7 @@ public static class EvitaEnumConverter
             QueryPhase.Fetching => GrpcQueryPhase.Fetching,
             QueryPhase.FetchingReferences => GrpcQueryPhase.FetchingReferences,
             QueryPhase.FetchingParents => GrpcQueryPhase.FetchingParents,
+            QueryPhase.FetchingReferenceBodies => GrpcQueryPhase.FetchingReferenceBodies,
             _ => throw new EvitaInternalError("Unrecognized local query phase: " + queryPhase)
         };
     }
@@ -445,22 +593,22 @@ public static class EvitaEnumConverter
         };
     }
 
-    public static CaptureContent ToCaptureContent(GrpcCaptureContent grpcCaptureContent)
+    public static CaptureContent ToCaptureContent(GrpcChangeCaptureContent grpcCaptureContent)
     {
         return grpcCaptureContent switch
         {
-            GrpcCaptureContent.Header => CaptureContent.Header,
-            GrpcCaptureContent.Body => CaptureContent.Body,
+            GrpcChangeCaptureContent.ChangeHeader => CaptureContent.Header,
+            GrpcChangeCaptureContent.ChangeBody => CaptureContent.Body,
             _ => throw new EvitaInternalError("Unrecognized remote capture content: " + grpcCaptureContent)
         };
     }
 
-    public static GrpcCaptureContent ToGrpcCaptureContent(CaptureContent captureContent)
+    public static GrpcChangeCaptureContent ToGrpcCaptureContent(CaptureContent captureContent)
     {
         return captureContent switch
         {
-            CaptureContent.Header => GrpcCaptureContent.Header,
-            CaptureContent.Body => GrpcCaptureContent.Body,
+            CaptureContent.Header => GrpcChangeCaptureContent.ChangeHeader,
+            CaptureContent.Body => GrpcChangeCaptureContent.ChangeBody,
             _ => throw new ArgumentOutOfRangeException(nameof(captureContent), captureContent, null)
         };
     }
@@ -520,12 +668,90 @@ public static class EvitaEnumConverter
         };
     }
 
+    /// <summary>
+    /// Extracts the attribute uniqueness effective in the live scope from the scoped list. When the scoped list
+    /// is empty (messages produced by servers older than 2024.12), falls back to the passed legacy single-value
+    /// field. Mirrors the Java `EvitaEnumConverter.toScopedAttributeUniquenessTypes` fallback chain, projected
+    /// to the live scope which is the only scope the C# schema model currently tracks.
+    /// </summary>
+    public static AttributeUniquenessType ToAttributeUniquenessType(
+        IList<GrpcScopedAttributeUniquenessType> uniqueInScopes,
+        GrpcAttributeUniquenessType legacyUnique)
+    {
+        if (uniqueInScopes.Count == 0)
+        {
+            return ToAttributeUniquenessType(legacyUnique);
+        }
+
+        GrpcScopedAttributeUniquenessType? liveScope =
+            uniqueInScopes.FirstOrDefault(x => x.Scope == GrpcEntityScope.ScopeLive);
+        return liveScope is null
+            ? AttributeUniquenessType.NotUnique
+            : ToAttributeUniquenessType(liveScope.UniquenessType);
+    }
+
+    /// <summary>
+    /// Extracts the global attribute uniqueness effective in the live scope from the scoped list. When the scoped
+    /// list is empty (messages produced by servers older than 2024.12), falls back to the passed legacy
+    /// single-value field.
+    /// </summary>
+    public static GlobalAttributeUniquenessType ToGlobalAttributeUniquenessType(
+        IList<GrpcScopedGlobalAttributeUniquenessType> uniqueGloballyInScopes,
+        GrpcGlobalAttributeUniquenessType legacyUniqueGlobally)
+    {
+        if (uniqueGloballyInScopes.Count == 0)
+        {
+            return ToGlobalAttributeUniquenessType(legacyUniqueGlobally);
+        }
+
+        GrpcScopedGlobalAttributeUniquenessType? liveScope =
+            uniqueGloballyInScopes.FirstOrDefault(x => x.Scope == GrpcEntityScope.ScopeLive);
+        return liveScope is null
+            ? GlobalAttributeUniquenessType.NotUnique
+            : ToGlobalAttributeUniquenessType(liveScope.UniquenessType);
+    }
+
+    /// <summary>
+    /// Resolves a boolean schema flag (filterable / sortable / faceted) from its scoped representation. When the
+    /// scope list is empty (messages produced by servers older than 2024.12), falls back to the passed legacy
+    /// boolean field. Mirrors the Java `EvitaEnumConverter.toBooleanScopes` fallback chain, projected to the live
+    /// scope which is the only scope the C# schema model currently tracks.
+    /// </summary>
+    public static bool ToScopedBooleanFlag(IList<GrpcEntityScope> scopes, bool legacyFlag)
+    {
+        return scopes.Count == 0 ? legacyFlag : scopes.Contains(GrpcEntityScope.ScopeLive);
+    }
+
+    /// <summary>
+    /// Resolves the reference indexed flag from its three wire representations, newest first: `scopedIndexTypes`,
+    /// then the deprecated `indexedInScopes` and finally the oldest boolean `indexed` field. Mirrors the Java
+    /// `EntitySchemaConverter.getIndexedInScopes` fallback chain, projected to the live scope.
+    /// </summary>
+    public static bool ToReferenceIndexedFlag(
+        IList<GrpcScopedReferenceIndexType> scopedIndexTypes,
+        IList<GrpcEntityScope> indexedInScopes,
+        bool legacyIndexed)
+    {
+        if (scopedIndexTypes.Count > 0)
+        {
+            return scopedIndexTypes.Any(x =>
+                x.Scope == GrpcEntityScope.ScopeLive &&
+                x.IndexType != GrpcReferenceIndexType.ReferenceIndexTypeNone);
+        }
+
+        return indexedInScopes.Count > 0
+            ? indexedInScopes.Contains(GrpcEntityScope.ScopeLive)
+            : legacyIndexed;
+    }
+
     public static GrpcHistogramBehavior ToGrpcHistogramBehavior(HistogramBehavior histogramBehavior)
     {
         return histogramBehavior switch
         {
             HistogramBehavior.Standard => GrpcHistogramBehavior.Standard,
             HistogramBehavior.Optimized => GrpcHistogramBehavior.Optimized,
+            HistogramBehavior.Equalized => GrpcHistogramBehavior.Equalized,
+            HistogramBehavior.EqualizedOptimized => GrpcHistogramBehavior.EqualizedOptimized,
             _ => throw new EvitaInternalError("Unrecognized histogram behavior: " + histogramBehavior)
         };
     }
@@ -537,7 +763,7 @@ public static class EvitaEnumConverter
             EvitaClientTransaction.CommitBehavior.WaitForConflictResolution => GrpcCommitBehavior
                 .WaitForConflictResolution,
             EvitaClientTransaction.CommitBehavior.WaitForWalPersistence => GrpcCommitBehavior.WaitForLogPersistence,
-            EvitaClientTransaction.CommitBehavior.WaitForIndexPropagation => GrpcCommitBehavior.WaitForIndexPropagation,
+            EvitaClientTransaction.CommitBehavior.WaitForChangesVisible => GrpcCommitBehavior.WaitForChangesVisible,
             _ => throw new ArgumentOutOfRangeException(nameof(commitBehavior), commitBehavior, null)
         };
     }
@@ -549,7 +775,7 @@ public static class EvitaEnumConverter
             GrpcCommitBehavior.WaitForConflictResolution => EvitaClientTransaction.CommitBehavior
                 .WaitForConflictResolution,
             GrpcCommitBehavior.WaitForLogPersistence => EvitaClientTransaction.CommitBehavior.WaitForWalPersistence,
-            GrpcCommitBehavior.WaitForIndexPropagation => EvitaClientTransaction.CommitBehavior.WaitForIndexPropagation,
+            GrpcCommitBehavior.WaitForChangesVisible => EvitaClientTransaction.CommitBehavior.WaitForChangesVisible,
             _ => throw new ArgumentOutOfRangeException("Unrecognized remote commit behavior: " + commitBehaviour)
         };
     }
@@ -580,187 +806,240 @@ public static class EvitaEnumConverter
         };
     }
 
-    public static CaptureArea ToCaptureArea(GrpcCaptureArea area)
+    public static CaptureArea ToCaptureArea(GrpcChangeCaptureArea area)
     {
         return area switch
         {
-            GrpcCaptureArea.Data => CaptureArea.Data,
-            GrpcCaptureArea.Schema => CaptureArea.Schema,
-            GrpcCaptureArea.Infrastructure => CaptureArea.Infrastructure,
+            GrpcChangeCaptureArea.Data => CaptureArea.Data,
+            GrpcChangeCaptureArea.Schema => CaptureArea.Schema,
+            GrpcChangeCaptureArea.Infrastructure => CaptureArea.Infrastructure,
             _ => throw new ArgumentOutOfRangeException("Unrecognized capture area: " + area)
         };
     }
 
-    public static GrpcCaptureArea ToGrpcCaptureArea(CaptureArea? area)
+    public static GrpcChangeCaptureArea ToGrpcCaptureArea(CaptureArea? area)
     {
         return area switch
         {
-            CaptureArea.Data => GrpcCaptureArea.Data,
-            CaptureArea.Schema => GrpcCaptureArea.Schema,
-            CaptureArea.Infrastructure => GrpcCaptureArea.Infrastructure,
+            CaptureArea.Data => GrpcChangeCaptureArea.Data,
+            CaptureArea.Schema => GrpcChangeCaptureArea.Schema,
+            CaptureArea.Infrastructure => GrpcChangeCaptureArea.Infrastructure,
             _ => throw new ArgumentOutOfRangeException(nameof(area), area, null)
         };
     }
 
-    public static Operation ToOperation(GrpcCaptureOperation grpcOperation)
+    public static Operation ToOperation(GrpcChangeCaptureOperation grpcOperation)
     {
         return grpcOperation switch
         {
-            GrpcCaptureOperation.Upsert => Operation.Upsert,
-            GrpcCaptureOperation.Remove => Operation.Remove,
-            GrpcCaptureOperation.Transaction => Operation.Transaction,
+            GrpcChangeCaptureOperation.Upsert => Operation.Upsert,
+            GrpcChangeCaptureOperation.Remove => Operation.Remove,
+            GrpcChangeCaptureOperation.Transaction => Operation.Transaction,
             _ => throw new ArgumentOutOfRangeException("Unrecognized operation: " + grpcOperation)
         };
     }
 
-    public static GrpcCaptureOperation ToGrpcOperation(Operation operation)
+    public static GrpcChangeCaptureOperation ToGrpcOperation(Operation operation)
     {
         return operation switch
         {
-            Operation.Upsert => GrpcCaptureOperation.Upsert,
-            Operation.Remove => GrpcCaptureOperation.Remove,
-            Operation.Transaction => GrpcCaptureOperation.Transaction,
+            Operation.Upsert => GrpcChangeCaptureOperation.Upsert,
+            Operation.Remove => GrpcChangeCaptureOperation.Remove,
+            Operation.Transaction => GrpcChangeCaptureOperation.Transaction,
             _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null)
         };
     }
 
-    public static ContainerType ToContainerType(GrpcCaptureContainerType grpcCaptureContainerType)
+    public static ContainerType ToContainerType(GrpcChangeCaptureContainerType grpcCaptureContainerType)
     {
         return grpcCaptureContainerType switch
             {
-                GrpcCaptureContainerType.ContainerCatalog => ContainerType.Catalog,
-                GrpcCaptureContainerType.ContainerEntity => ContainerType.Entity,
-                GrpcCaptureContainerType.ContainerAttribute => ContainerType.Attribute,
-                GrpcCaptureContainerType.ContainerAssociatedData => ContainerType.AssociatedData,
-                GrpcCaptureContainerType.ContainerReference => ContainerType.Reference,
-                GrpcCaptureContainerType.ContainerPrice => ContainerType.Price,
+                GrpcChangeCaptureContainerType.ContainerCatalog => ContainerType.Catalog,
+                GrpcChangeCaptureContainerType.ContainerEntity => ContainerType.Entity,
+                GrpcChangeCaptureContainerType.ContainerAttribute => ContainerType.Attribute,
+                GrpcChangeCaptureContainerType.ContainerAssociatedData => ContainerType.AssociatedData,
+                GrpcChangeCaptureContainerType.ContainerReference => ContainerType.Reference,
+                GrpcChangeCaptureContainerType.ContainerPrice => ContainerType.Price,
                 _ => throw new ArgumentOutOfRangeException("Unrecognized container type: " +
                                                            grpcCaptureContainerType)
             };
     }
 
-    public static GrpcCaptureContainerType ToGrpcCaptureContainerType(ContainerType containerType)
+    public static GrpcChangeCaptureContainerType ToGrpcCaptureContainerType(ContainerType containerType)
     {
         return containerType switch
         {
-            ContainerType.Catalog => GrpcCaptureContainerType.ContainerCatalog,
-            ContainerType.Entity => GrpcCaptureContainerType.ContainerEntity,
-            ContainerType.Attribute => GrpcCaptureContainerType.ContainerAttribute,
-            ContainerType.AssociatedData => GrpcCaptureContainerType.ContainerAssociatedData,
-            ContainerType.Reference => GrpcCaptureContainerType.ContainerReference,
-            ContainerType.Price => GrpcCaptureContainerType.ContainerPrice,
+            ContainerType.Catalog => GrpcChangeCaptureContainerType.ContainerCatalog,
+            ContainerType.Entity => GrpcChangeCaptureContainerType.ContainerEntity,
+            ContainerType.Attribute => GrpcChangeCaptureContainerType.ContainerAttribute,
+            ContainerType.AssociatedData => GrpcChangeCaptureContainerType.ContainerAssociatedData,
+            ContainerType.Reference => GrpcChangeCaptureContainerType.ContainerReference,
+            ContainerType.Price => GrpcChangeCaptureContainerType.ContainerPrice,
             _ => throw new ArgumentOutOfRangeException(nameof(containerType), containerType, null)
         };
     }
     
-    /*
-    public static GrpcHealthProblem ToGrpcHealthProblem(HealthProblem problem)
+    public static HealthProblem ToHealthProblem(GrpcHealthProblem grpcHealthProblem)
     {
-        return switch (problem)
+        return grpcHealthProblem switch
         {
-            case MEMORY_SHORTAGE => GrpcHealthProblem.MEMORY_SHORTAGE ;
-            case EXTERNAL_API_UNAVAILABLE => GrpcHealthProblem.EXTERNAL_API_UNAVAILABLE ;
-            case INPUT_QUEUES_OVERLOADED => GrpcHealthProblem.INPUT_QUEUES_OVERLOADED ;
-            case JAVA_INTERNAL_ERRORS => GrpcHealthProblem.JAVA_INTERNAL_ERRORS ;
-        }
-
-        ;
+            GrpcHealthProblem.MemoryShortage => HealthProblem.MemoryShortage,
+            GrpcHealthProblem.ExternalApiUnavailable => HealthProblem.ExternalApiUnavailable,
+            GrpcHealthProblem.InputQueuesOverloaded => HealthProblem.InputQueuesOverloaded,
+            GrpcHealthProblem.JavaInternalErrors => HealthProblem.JavaInternalErrors,
+            _ => throw new EvitaInternalError("Unrecognized remote health problem: " + grpcHealthProblem)
+        };
     }
 
-    public static GrpcReadiness ToGrpcReadinessState(ReadinessState readinessState)
+    public static Readiness ToReadiness(GrpcReadiness grpcReadiness)
     {
-        return switch (readinessState)
+        return grpcReadiness switch
         {
-            case STARTING => GrpcReadiness.API_STARTING ;
-            case READY => GrpcReadiness.API_READY ;
-            case STALLING => GrpcReadiness.API_STALLING ;
-            case SHUTDOWN => GrpcReadiness.API_SHUTDOWN ;
-            case UNKNOWN => GrpcReadiness.API_UNKNOWN ;
-        }
-
-        ;
+            GrpcReadiness.ApiStarting => Readiness.ApiStarting,
+            GrpcReadiness.ApiReady => Readiness.ApiReady,
+            GrpcReadiness.ApiStalling => Readiness.ApiStalling,
+            GrpcReadiness.ApiShutdown => Readiness.ApiShutdown,
+            GrpcReadiness.ApiUnknown => Readiness.ApiUnknown,
+            _ => throw new EvitaInternalError("Unrecognized remote readiness: " + grpcReadiness)
+        };
     }
 
-    public static GrpcTaskSimplifiedState ToGrpcSimplifiedStatus(TaskSimplifiedState state)
+    public static TaskSimplifiedState ToTaskSimplifiedState(GrpcTaskSimplifiedState grpcState)
     {
-        return switch (state)
+        return grpcState switch
         {
-            case QUEUED => TASK_QUEUED ;
-            case RUNNING => TASK_RUNNING ;
-            case FAILED => TASK_FAILED ;
-            case FINISHED => TASK_FINISHED ;
-            case WAITING_FOR_PRECONDITION => TASK_WAITING_FOR_PRECONDITION ;
-        }
-
-        ;
+            GrpcTaskSimplifiedState.TaskQueued => TaskSimplifiedState.Queued,
+            GrpcTaskSimplifiedState.TaskRunning => TaskSimplifiedState.Running,
+            GrpcTaskSimplifiedState.TaskFinished => TaskSimplifiedState.Finished,
+            GrpcTaskSimplifiedState.TaskFailed => TaskSimplifiedState.Failed,
+            GrpcTaskSimplifiedState.TaskWaitingForPrecondition => TaskSimplifiedState.WaitingForPrecondition,
+            _ => throw new EvitaInternalError("Unrecognized remote task state: " + grpcState)
+        };
     }
 
-    public static TaskSimplifiedState ToSimplifiedStatus(GrpcTaskSimplifiedState grpcState)
+    public static GrpcTaskSimplifiedState ToGrpcTaskSimplifiedState(TaskSimplifiedState state)
     {
-        return switch (grpcState)
+        return state switch
         {
-            case TASK_QUEUED => TaskSimplifiedState.QUEUED ;
-            case TASK_RUNNING => TaskSimplifiedState.RUNNING ;
-            case TASK_FAILED => TaskSimplifiedState.FAILED ;
-            case TASK_FINISHED => TaskSimplifiedState.FINISHED ;
-            case TASK_WAITING_FOR_PRECONDITION => TaskSimplifiedState.WAITING_FOR_PRECONDITION ;
-            case UNRECOGNIZED =>
-                throw new GenericEvitaInternalError("Unrecognized task simplified state: " + grpcState) ;
-        }
-
-        ;
+            TaskSimplifiedState.Queued => GrpcTaskSimplifiedState.TaskQueued,
+            TaskSimplifiedState.Running => GrpcTaskSimplifiedState.TaskRunning,
+            TaskSimplifiedState.Finished => GrpcTaskSimplifiedState.TaskFinished,
+            TaskSimplifiedState.Failed => GrpcTaskSimplifiedState.TaskFailed,
+            TaskSimplifiedState.WaitingForPrecondition => GrpcTaskSimplifiedState.TaskWaitingForPrecondition,
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+        };
     }
 
-    public static GrpcAttributeInheritanceBehavior ToGrpcAttributeInheritanceBehavior(
-        AttributeInheritanceBehavior attributeInheritanceBehavior)
+    public static ConflictResolutionOverride ToConflictResolutionOverride(GrpcConflictResolutionOverride grpcOverride)
     {
-        return switch (attributeInheritanceBehavior)
+        return grpcOverride switch
         {
-            case INHERIT_ALL_EXCEPT => GrpcAttributeInheritanceBehavior.INHERIT_ALL_EXCEPT ;
-            case INHERIT_ONLY_SPECIFIED => GrpcAttributeInheritanceBehavior.INHERIT_ONLY_SPECIFIED ;
-        }
-
-        ;
+            GrpcConflictResolutionOverride.ConflictResolutionOverrideInherited => ConflictResolutionOverride.Inherited,
+            GrpcConflictResolutionOverride.ConflictResolutionOverrideGranular => ConflictResolutionOverride.Granular,
+            GrpcConflictResolutionOverride.ConflictResolutionOverrideEntity => ConflictResolutionOverride.Entity,
+            _ => throw new EvitaInternalError("Unrecognized remote conflict resolution override: " + grpcOverride)
+        };
     }
 
-    public static AttributeInheritanceBehavior ToAttributeInheritanceBehavior(
-        GrpcAttributeInheritanceBehavior attributeInheritanceBehavior)
+    public static GrpcConflictResolutionOverride ToGrpcConflictResolutionOverride(ConflictResolutionOverride @override)
     {
-        return switch (attributeInheritanceBehavior)
+        return @override switch
         {
-            case INHERIT_ALL_EXCEPT => AttributeInheritanceBehavior.INHERIT_ALL_EXCEPT ;
-            case INHERIT_ONLY_SPECIFIED => AttributeInheritanceBehavior.INHERIT_ONLY_SPECIFIED ;
-                default =>
-                throw new GenericEvitaInternalError("Unrecognized attribute inheritance behavior: " +
-                                                    attributeInheritanceBehavior);
-        }
-
-        ;
+            ConflictResolutionOverride.Inherited => GrpcConflictResolutionOverride.ConflictResolutionOverrideInherited,
+            ConflictResolutionOverride.Granular => GrpcConflictResolutionOverride.ConflictResolutionOverrideGranular,
+            ConflictResolutionOverride.Entity => GrpcConflictResolutionOverride.ConflictResolutionOverrideEntity,
+            _ => throw new ArgumentOutOfRangeException(nameof(@override), @override, null)
+        };
     }
 
-    public static GrpcTaskTrait ToGrpcTaskTrait(TaskTrait taskTrait)
+    public static ConflictPolicy ToConflictPolicy(GrpcConflictPolicy grpcPolicy)
     {
-        return switch (taskTrait)
+        return grpcPolicy switch
         {
-            case CAN_BE_STARTED => GrpcTaskTrait.TASK_CAN_BE_STARTED,
-            case CAN_BE_CANCELLED => GrpcTaskTrait.TASK_CAN_BE_CANCELLED,
-            case NEEDS_TO_BE_STOPPED => GrpcTaskTrait.TASK_NEEDS_TO_BE_STOPPED,
-                default => throw new GenericEvitaInternalError("Unrecognized task trait: " + taskTrait);
-        }
+            GrpcConflictPolicy.ConflictPolicyNone => ConflictPolicy.None,
+            GrpcConflictPolicy.ConflictPolicyCatalog => ConflictPolicy.Catalog,
+            GrpcConflictPolicy.ConflictPolicyCollection => ConflictPolicy.Collection,
+            GrpcConflictPolicy.ConflictPolicyEntity => ConflictPolicy.Entity,
+            _ => throw new EvitaInternalError("Unrecognized remote conflict policy: " + grpcPolicy)
+        };
+    }
 
-        ;
+    public static GrpcConflictPolicy ToGrpcConflictPolicy(ConflictPolicy policy)
+    {
+        return policy switch
+        {
+            ConflictPolicy.None => GrpcConflictPolicy.ConflictPolicyNone,
+            ConflictPolicy.Catalog => GrpcConflictPolicy.ConflictPolicyCatalog,
+            ConflictPolicy.Collection => GrpcConflictPolicy.ConflictPolicyCollection,
+            ConflictPolicy.Entity => GrpcConflictPolicy.ConflictPolicyEntity,
+            _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, null)
+        };
+    }
+
+    public static GranularConflictPolicy ToGranularConflictPolicy(GrpcGranularConflictPolicy grpcPolicy)
+    {
+        return grpcPolicy switch
+        {
+            GrpcGranularConflictPolicy.GranularConflictPolicyEntityAttribute => GranularConflictPolicy.EntityAttribute,
+            GrpcGranularConflictPolicy.GranularConflictPolicyReference => GranularConflictPolicy.Reference,
+            GrpcGranularConflictPolicy.GranularConflictPolicyReferenceAttribute => GranularConflictPolicy.ReferenceAttribute,
+            GrpcGranularConflictPolicy.GranularConflictPolicyAssociatedData => GranularConflictPolicy.AssociatedData,
+            GrpcGranularConflictPolicy.GranularConflictPolicyPrice => GranularConflictPolicy.Price,
+            GrpcGranularConflictPolicy.GranularConflictPolicyHierarchy => GranularConflictPolicy.Hierarchy,
+            _ => throw new EvitaInternalError("Unrecognized remote granular conflict policy: " + grpcPolicy)
+        };
+    }
+
+    public static GrpcGranularConflictPolicy ToGrpcGranularConflictPolicy(GranularConflictPolicy policy)
+    {
+        return policy switch
+        {
+            GranularConflictPolicy.EntityAttribute => GrpcGranularConflictPolicy.GranularConflictPolicyEntityAttribute,
+            GranularConflictPolicy.Reference => GrpcGranularConflictPolicy.GranularConflictPolicyReference,
+            GranularConflictPolicy.ReferenceAttribute => GrpcGranularConflictPolicy.GranularConflictPolicyReferenceAttribute,
+            GranularConflictPolicy.AssociatedData => GrpcGranularConflictPolicy.GranularConflictPolicyAssociatedData,
+            GranularConflictPolicy.Price => GrpcGranularConflictPolicy.GranularConflictPolicyPrice,
+            GranularConflictPolicy.Hierarchy => GrpcGranularConflictPolicy.GranularConflictPolicyHierarchy,
+            _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, null)
+        };
+    }
+
+    public static ConflictResolution? ToConflictResolution(GrpcConflictResolution? grpcConflictResolution)
+    {
+        return grpcConflictResolution is null
+            ? null
+            : new ConflictResolution(
+                ToConflictPolicy(grpcConflictResolution.Policy),
+                grpcConflictResolution.Granularity.Select(ToGranularConflictPolicy).ToArray()
+            );
+    }
+
+    public static GrpcConflictResolution? ToGrpcConflictResolution(ConflictResolution? conflictResolution)
+    {
+        if (conflictResolution is null)
+        {
+            return null;
+        }
+        GrpcConflictResolution grpcConflictResolution = new GrpcConflictResolution
+        {
+            Policy = ToGrpcConflictPolicy(conflictResolution.Policy)
+        };
+        grpcConflictResolution.Granularity.AddRange(
+            conflictResolution.Granularity.Select(ToGrpcGranularConflictPolicy)
+        );
+        return grpcConflictResolution;
     }
 
     public static TaskTrait ToTaskTrait(GrpcTaskTrait grpcTaskTrait)
     {
         return grpcTaskTrait switch
         {
-            TASK_CAN_BE_STARTED => TaskTrait.CAN_BE_STARTED,
-            TASK_CAN_BE_CANCELLED => TaskTrait.CAN_BE_CANCELLED,
-            TASK_NEEDS_TO_BE_STOPPED => TaskTrait.NEEDS_TO_BE_STOPPED,
-            UNRECOGNIZED => throw new GenericEvitaInternalError("Unrecognized grpc task trait: " + grpcTaskTrait);
+            GrpcTaskTrait.TaskCanBeStarted => TaskTrait.CanBeStarted,
+            GrpcTaskTrait.TaskCanBeCancelled => TaskTrait.CanBeCancelled,
+            GrpcTaskTrait.TaskNeedsToBeStopped => TaskTrait.NeedsToBeStopped,
+            _ => throw new EvitaInternalError("Unrecognized remote task trait: " + grpcTaskTrait)
         };
-    }*/
+    }
 
     public static GrpcClassifierType ToGrpcClassifierType(ClassifierType key)
     {
@@ -772,7 +1051,7 @@ public static class EvitaEnumConverter
             ClassifierType.Attribute => GrpcClassifierType.ClassifierTypeAttribute,
             ClassifierType.AssociatedData => GrpcClassifierType.ClassifierTypeAssociatedData,
             ClassifierType.Reference => GrpcClassifierType.ClassifierTypeReference,
-            ClassifierType.ReferenceAttribute => GrpcClassifierType.ClassifierTypeAssociatedData,
+            ClassifierType.ReferenceAttribute => GrpcClassifierType.ClassifierTypeReferenceAttribute,
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         };
     }

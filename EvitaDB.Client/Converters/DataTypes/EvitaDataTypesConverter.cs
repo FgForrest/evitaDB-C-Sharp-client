@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.DataTypes.Data;
 using EvitaDB.Client.Exceptions;
 using Google.Protobuf.WellKnownTypes;
 using Enum = System.Enum;
@@ -35,6 +36,9 @@ public static class EvitaDataTypesConverter
             GrpcEvitaDataType.Currency => ToCurrency(value.CurrencyValue),
             GrpcEvitaDataType.Uuid => ToGuid(value.UuidValue),
             GrpcEvitaDataType.Predecessor => ToPredecessor(value.PredecessorValue)!,
+            // both chainable types travel in the same `predecessorValue` field - the `type` discriminates
+            GrpcEvitaDataType.ReferencedEntityPredecessor =>
+                ToReferencedEntityPredecessor(value.PredecessorValue),
 
             GrpcEvitaDataType.StringArray => ToStringArray(value.StringArrayValue),
             GrpcEvitaDataType.ByteArray => ToIntegerArray(value.IntegerArrayValue),
@@ -88,6 +92,7 @@ public static class EvitaDataTypesConverter
             GrpcEvitaDataType.Currency => typeof(Currency),
             GrpcEvitaDataType.Uuid => typeof(Guid),
             GrpcEvitaDataType.Predecessor => typeof(Predecessor),
+            GrpcEvitaDataType.ReferencedEntityPredecessor => typeof(ReferencedEntityPredecessor),
 
             GrpcEvitaDataType.StringArray => typeof(string[]),
             GrpcEvitaDataType.ByteArray => typeof(byte[]),
@@ -144,7 +149,18 @@ public static class EvitaDataTypesConverter
 
         if (value.ValueCase == GrpcEvitaAssociatedDataValue.ValueOneofCase.JsonValue)
         {
+            // Servers older than 2025.4 (or responses to clients not advertising a compatible version) send
+            // complex associated data as a JSON string instead of the structured `root` data item tree.
+#pragma warning disable CS0612 // deprecated wire field is read as fallback for servers older than 2025.4
             return ComplexDataObjectConverter.ConvertJsonToComplexDataObject(value.JsonValue);
+#pragma warning restore CS0612
+        }
+
+        if (value.ValueCase == GrpcEvitaAssociatedDataValue.ValueOneofCase.Root)
+        {
+            return new ComplexDataObject(
+                ToDataItem(value.Root) ?? throw new EvitaInternalError("Associated data root must not be null.")
+            );
         }
 
         throw new EvitaInternalError("Unknown value type.");
@@ -249,6 +265,10 @@ public static class EvitaDataTypesConverter
                 result.PredecessorValue = ToGrpcPredecessor(predecessorValue);
                 result.Type = GrpcEvitaDataType.Predecessor;
                 break;
+            case ReferencedEntityPredecessor referencedEntityPredecessorValue:
+                result.PredecessorValue = ToGrpcPredecessor(referencedEntityPredecessorValue);
+                result.Type = GrpcEvitaDataType.ReferencedEntityPredecessor;
+                break;
 
             case string[] stringArrayValue:
                 result.StringArrayValue = ToGrpcStringArray(stringArrayValue);
@@ -343,10 +363,15 @@ public static class EvitaDataTypesConverter
     {
         GrpcEvitaAssociatedDataValue grpcEvitaAssociatedDataValue = new();
 
+        if (value is not null)
+        {
+            grpcEvitaAssociatedDataValue.Type = ToGrpcEvitaAssociatedDataDataType(value.GetType());
+        }
+
         if (value is ComplexDataObject complexDataObject)
         {
-            grpcEvitaAssociatedDataValue.JsonValue = ComplexDataObjectConverter
-                .ConvertComplexDataObjectToJson(complexDataObject).ToString();
+            // clients advertising version >= 2025.4 exchange complex associated data as a structured tree
+            grpcEvitaAssociatedDataValue.Root = ToGrpcDataItem(complexDataObject.Root);
         }
         else
         {
@@ -359,6 +384,62 @@ public static class EvitaDataTypesConverter
         }
 
         return grpcEvitaAssociatedDataValue;
+    }
+
+    /// <summary>
+    /// Converts a complex associated data tree node to its gRPC representation.
+    /// </summary>
+    public static GrpcDataItem ToGrpcDataItem(IDataItem dataItem)
+    {
+        GrpcDataItem result = new();
+        switch (dataItem)
+        {
+            case DataItemValue dataItemValue:
+                result.PrimitiveValue = ToGrpcEvitaValue(dataItemValue.Value);
+                break;
+            case DataItemArray dataItemArray:
+                GrpcDataItemArray arrayValue = new();
+                foreach (IDataItem? child in dataItemArray.Children)
+                {
+                    // an unset item keeps the position of a null child in the array
+                    arrayValue.Children.Add(child is null ? new GrpcDataItem() : ToGrpcDataItem(child));
+                }
+                result.ArrayValue = arrayValue;
+                break;
+            case DataItemMap dataItemMap:
+                GrpcDataItemMap mapValue = new();
+                foreach ((string propertyName, IDataItem? property) in dataItemMap.ChildrenIndex)
+                {
+                    if (property is not null)
+                    {
+                        mapValue.Data.Add(propertyName, ToGrpcDataItem(property));
+                    }
+                }
+                result.MapValue = mapValue;
+                break;
+            default:
+                throw new EvitaInvalidUsageException($"Unsupported data item type: {dataItem.GetType().Name}");
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Converts a gRPC complex associated data tree node to the client model representation.
+    /// </summary>
+    public static IDataItem? ToDataItem(GrpcDataItem dataItem)
+    {
+        return dataItem.ValueCase switch
+        {
+            GrpcDataItem.ValueOneofCase.PrimitiveValue => new DataItemValue(ToEvitaValue(dataItem.PrimitiveValue)),
+            GrpcDataItem.ValueOneofCase.ArrayValue => new DataItemArray(
+                dataItem.ArrayValue.Children.Select(ToDataItem).ToArray()
+            ),
+            GrpcDataItem.ValueOneofCase.MapValue => new DataItemMap(
+                dataItem.MapValue.Data.ToDictionary(x => x.Key, x => ToDataItem(x.Value))
+            ),
+            GrpcDataItem.ValueOneofCase.None => null,
+            _ => throw new EvitaInternalError("Unknown data item type: " + dataItem.ValueCase)
+        };
     }
 
     public static GrpcEvitaDataType ToGrpcEvitaDataType(Type type)
@@ -466,6 +547,16 @@ public static class EvitaDataTypesConverter
         if (type == typeof(Guid))
         {
             return GrpcEvitaDataType.Uuid;
+        }
+
+        if (type == typeof(Predecessor))
+        {
+            return GrpcEvitaDataType.Predecessor;
+        }
+
+        if (type == typeof(ReferencedEntityPredecessor))
+        {
+            return GrpcEvitaDataType.ReferencedEntityPredecessor;
         }
 
         if (type == typeof(string[]))
@@ -1107,5 +1198,44 @@ public static class EvitaDataTypesConverter
     public static Predecessor? ToPredecessor(GrpcPredecessor predecessor) {
         return predecessor.Head ? Predecessor.Head :
             predecessor.PredecessorId.HasValue ? new Predecessor(predecessor.PredecessorId.Value) : null;
+    }
+
+    /// <summary>
+    /// Converts a <see cref="ReferencedEntityPredecessor"/> to its wire form. Both chainable types share the
+    /// <c>GrpcPredecessor</c> message; the <c>type</c> of the enclosing value discriminates them.
+    /// </summary>
+    public static GrpcPredecessor ToGrpcPredecessor(ReferencedEntityPredecessor predecessor)
+    {
+        if ((predecessor as IChainableType).IsHead)
+        {
+            return new GrpcPredecessor
+            {
+                Head = true
+            };
+        }
+
+        return new GrpcPredecessor
+        {
+            PredecessorId = predecessor.PredecessorPk
+        };
+    }
+
+    /// <summary>
+    /// Reads a <see cref="ReferencedEntityPredecessor"/> from the wire. Mirrors the Java
+    /// <c>EvitaDataTypesConverter.toReferencedEntityPredecessor</c>, which rejects a value that is neither
+    /// head nor carries a predecessor id.
+    /// </summary>
+    public static ReferencedEntityPredecessor ToReferencedEntityPredecessor(GrpcPredecessor predecessor)
+    {
+        if (predecessor.Head)
+        {
+            return ReferencedEntityPredecessor.Head;
+        }
+        if (predecessor.PredecessorId.HasValue)
+        {
+            return new ReferencedEntityPredecessor(predecessor.PredecessorId.Value);
+        }
+        throw new EvitaInvalidUsageException(
+            "ReferencedEntityPredecessor must be either HEAD or have a predecessor ID.");
     }
 }

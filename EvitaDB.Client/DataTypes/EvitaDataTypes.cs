@@ -36,6 +36,8 @@ public static class EvitaDataTypes
         queryDataTypes.Add(typeof(Currency));
         queryDataTypes.Add(typeof(Guid));
         queryDataTypes.Add(typeof(Predecessor));
+        queryDataTypes.Add(typeof(ReferencedEntityPredecessor));
+        queryDataTypes.Add(typeof(Expression));
         SupportedTypes = queryDataTypes.ToImmutableHashSet();
     }
 
@@ -78,6 +80,40 @@ public static class EvitaDataTypes
         if (SupportedTypes.Contains(unknownObject.GetType()))
         {
             return unknownObject;
+        }
+
+        if (unknownObject is Array array)
+        {
+            // Arrays of supported types are themselves supported - only their elements need normalizing
+            // (floats to decimal, local date times to offsets, ...). Mirrors Java's
+            // EvitaDataTypes.toSupportedTypeOrItsArray, which converts element-wise and rebuilds the array.
+            Type? elementType = unknownObject.GetType().GetElementType();
+            if (elementType is not null)
+            {
+                bool changed = false;
+                object?[] converted = new object?[array.Length];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    object? element = array.GetValue(i);
+                    object? normalized = ToSupportedType(element);
+                    converted[i] = normalized;
+                    changed = changed || !ReferenceEquals(normalized, element);
+                }
+
+                if (!changed)
+                {
+                    return unknownObject;
+                }
+
+                // rebuild with the normalized element type - converting e.g. float[] yields decimal[]
+                Type normalizedElementType = converted.FirstOrDefault(x => x is not null)?.GetType() ?? elementType;
+                Array result = Array.CreateInstance(normalizedElementType, array.Length);
+                for (int i = 0; i < converted.Length; i++)
+                {
+                    result.SetValue(converted[i], i);
+                }
+                return result;
+            }
         }
 
         throw new UnsupportedDataTypeException(unknownObject.GetType());

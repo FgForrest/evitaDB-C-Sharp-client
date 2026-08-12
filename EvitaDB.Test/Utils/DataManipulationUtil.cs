@@ -26,7 +26,9 @@ public static class DataManipulationUtil
             .WithAssociatedData<TestAsDataObj[]>(Data.AssociatedDataReferencedFiles,
                 whichIs => whichIs.Nullable().Localized())
             .WithLocale(Data.CzechLocale, Data.EnglishLocale)
-            .WithReferenceTo(Data.ReferenceRelatedProducts, entityType, Cardinality.ZeroOrMore,
+            // the self-reference must be declared as managed (`WithReferenceToEntity`) - since evitaDB 2026.x
+            // a non-managed reference whose type name collides with a managed entity type poisons the transaction
+            .WithReferenceToEntity(Data.ReferenceRelatedProducts, entityType, Cardinality.ZeroOrMore,
                 whichIs => whichIs.Indexed().Faceted().WithGroupType(Data.ReferenceGroupType)
                     .WithAttribute<int>(Data.AttributePriority, attr => attr.Sortable()))
             .WithReferenceToEntity(Data.ReferenceCategories, Entities.Category, Cardinality.ZeroOrMore,
@@ -184,8 +186,8 @@ public static class DataManipulationUtil
             Assert.Equal(asData, entity.GetAssociatedData<TestAsDataObj[]>(Data.AssociatedDataReferencedFiles, Data.CzechLocale)!);
             Assert.Equal(price, entity.GetPrice(price.Key));
             Assert.Equal(priceInnerRecordHandling, entity.InnerRecordHandling);
-            Assert.Equal(reference, entity.GetReference(reference.ReferenceName, reference.ReferencedPrimaryKey));
-            Assert.Equal(categoriesReference, entity.GetReference(categoriesReference.ReferenceName, categoriesReference.ReferencedPrimaryKey));
+            AssertReferenceMatches(reference, entity.GetReference(reference.ReferenceName, reference.ReferencedPrimaryKey));
+            AssertReferenceMatches(categoriesReference, entity.GetReference(categoriesReference.ReferenceName, categoriesReference.ReferencedPrimaryKey));
             
             entities.Add(entity);
         }
@@ -220,6 +222,24 @@ public static class DataManipulationUtil
         builder.UpsertVia(session);
 
         return session.GetEntity(Entities.Category, primaryKey, EntityFetchAllContent());
+    }
+
+    /// <summary>
+    /// Compares a locally built reference with the fetched one ignoring version fields - since evitaDB 2026.x
+    /// the server folds the enclosing reference version into the group reference version, so locally predicted
+    /// versions intentionally differ from the fetched ones.
+    /// </summary>
+    private static void AssertReferenceMatches(IReference expected, IReference? actual)
+    {
+        Assert.NotNull(actual);
+        Assert.Equal(expected.ReferenceName, actual!.ReferenceName);
+        Assert.Equal(expected.ReferencedPrimaryKey, actual.ReferencedPrimaryKey);
+        Assert.Equal(expected.Group?.Type, actual.Group?.Type);
+        Assert.Equal(expected.Group?.PrimaryKey, actual.Group?.PrimaryKey);
+        Assert.Equal(
+            expected.GetAttributeValues().Select(x => (x.Key, x.Value)),
+            actual.GetAttributeValues().Select(x => (x.Key, x.Value))
+        );
     }
 
     public static IEntityMutation CreateSomeNewProduct(EvitaClientSession session)

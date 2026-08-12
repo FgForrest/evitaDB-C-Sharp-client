@@ -56,13 +56,13 @@ public class SetReferenceGroupMutation : ReferenceMutation
             existingValue.ReferenceCardinality,
             existingReferenceGroup is not null
                 ? new GroupEntityReference(
-                    GetGroupType(entitySchema),
+                    GetGroupType(entitySchema)!,
                     GroupPrimaryKey,
                     existingReferenceGroup.Version + 1,
                     false
                 )
                 : new GroupEntityReference(
-                    GetGroupType(entitySchema),
+                    GetGroupType(entitySchema)!,
                     GroupPrimaryKey,
                     1,
                     false

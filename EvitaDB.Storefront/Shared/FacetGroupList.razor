@@ -1,0 +1,106 @@
+@inject StorefrontState State
+
+@*
+    One facet group: its heading and the option rows. Extracted from FacetPanel so the sidebar and the
+    "all groups" modal render identical rows without duplicating the count/impact markup.
+
+    Options are capped at `ValueLimit` in the sidebar, with a per-group "show all" toggle — a group like
+    "CPU" can carry dozens of values, which would otherwise bury every other group.
+*@
+<div class="facet-group">
+    @if (Group.GroupEntity is not null)
+    {
+        <h4>@Group.GroupEntity.DisplayName(State.Locale)</h4>
+    }
+    <ul>
+        @foreach (FacetStatistics facet in Visible)
+        {
+            int? primaryKey = facet.FacetEntity.PrimaryKey;
+            @if (primaryKey is not null)
+            {
+                <li>
+                    <label class="facet @(facet.Requested ? "selected" : null)">
+                        <input type="checkbox" checked="@facet.Requested"
+                               @onchange="() => State.ToggleFacet(Group.ReferenceName, primaryKey.Value)"/>
+                        <span class="facet-name">@facet.FacetEntity.DisplayName(State.Locale)</span>
+
+                        @* how many products carry the option at all - independent of what is ticked *@
+                        <span class="facet-count" title="@CountTooltip(facet)">@Number(facet.Count)</span>
+
+                        @* what ticking it would do to the CURRENT result count. Hidden once applied:
+                           evitaDB reports impact for adding an option, so for an applied one the figure
+                           has no unambiguous reading. *@
+                        @if (!facet.Requested && facet.Impact is { HasSense: true })
+                        {
+                            <span class="facet-impact @(facet.Impact.Difference >= 0 ? "widens" : "narrows")"
+                                  title="@ImpactTooltip(facet)">
+                                <span class="arrow">@(facet.Impact.Difference >= 0 ? "↑" : "↓")</span>@Number(facet.Impact.MatchCount)
+                            </span>
+                        }
+                        else if (!facet.Requested)
+                        {
+                            <span class="facet-impact empty" title="Selecting this yields no products">
+                                <span class="arrow">↓</span>0
+                            </span>
+                        }
+                    </label>
+                </li>
+            }
+        }
+    </ul>
+
+    @if (Hidden > 0)
+    {
+        <button class="link facet-more" @onclick="() => _expanded = !_expanded">
+            @(_expanded ? "show fewer" : $"show all {Ordered.Count} options")
+        </button>
+    }
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] public FacetGroupStatistics Group { get; set; } = null!;
+
+    /// <summary>Current result count, used to phrase the impact tooltip as "from X to Y".</summary>
+    [Parameter] public int CurrentTotal { get; set; }
+
+    /// <summary>Options shown before the per-group "show all" toggle appears.</summary>
+    [Parameter] public int ValueLimit { get; set; } = 5;
+
+    private bool _expanded;
+
+    /// <summary>Ticked options first so a selection never hides below the cut, then by option size.</summary>
+    private List<FacetStatistics> Ordered =>
+        Group.GetFacetStatistics()
+            .OrderByDescending(facet => facet.Requested)
+            .ThenByDescending(facet => facet.Count)
+            .ToList();
+
+    private List<FacetStatistics> Visible =>
+        _expanded || ValueLimit <= 0 ? Ordered : Ordered.Take(ValueLimit).ToList();
+
+    private int Hidden => Math.Max(0, Ordered.Count - Visible.Count);
+
+    private string Number(int value) => value.ToString("N0", State.Locale);
+
+    /// <summary>
+    /// `Count` is how many entities carry the option, computed while ignoring the userFilter container - so it
+    /// does not move as the shopper ticks things, which is what makes it a stable "size of this option".
+    /// </summary>
+    private string CountTooltip(FacetStatistics facet) =>
+        $"{Number(facet.Count)} products have this option (regardless of what else is ticked)";
+
+    /// <summary>
+    /// `Impact.Difference` is the change to the *current* result count and `Impact.MatchCount` the resulting
+    /// total - both differ from `Count` as soon as any other filter is active.
+    /// </summary>
+    private string ImpactTooltip(FacetStatistics facet)
+    {
+        RequestImpact impact = facet.Impact!;
+        string direction = impact.Difference >= 0 ? "widens" : "narrows";
+        string delta = $"{(impact.Difference >= 0 ? "+" : "−")}{Number(Math.Abs(impact.Difference))}";
+        return $"Ticking this {direction} the results from {Number(CurrentTotal)} to "
+               + $"{Number(impact.MatchCount)} ({delta})";
+    }
+
+}

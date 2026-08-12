@@ -1,0 +1,62 @@
+# evitaShop - the Blazor WebAssembly storefront demo.
+#
+#   docker compose up --build          # against the public demo dataset (no configuration needed)
+#   docker compose --profile local up  # additionally runs evitaDB with the downloadable demo dataset
+#
+# Then open http://localhost:8080.
+#
+# Every setting has a default, so a plain `up` needs no .env file. Override any of them in the environment
+# or in a .env file next to this one:
+#
+#   STOREFRONT_PORT=9000
+#   EVITA_HOST=my-server.example.com
+#   EVITA_PORT=5555
+#   EVITA_TLS=true
+#   EVITA_CATALOG=evita
+
+services:
+  storefront:
+    build:
+      # the context is the repository root on purpose: the app has a ProjectReference to EvitaDB.Client
+      context: .
+      dockerfile: EvitaDB.Storefront/Dockerfile
+    image: evita-storefront:local
+    ports:
+      - "${STOREFRONT_PORT:-8080}:8080"
+    environment:
+      # Written into wwwroot/appsettings.json at container start by docker/entrypoint.sh, so the same
+      # image can be pointed anywhere without a rebuild. A Blazor WebAssembly app has no server side -
+      # this file is simply fetched by the browser.
+      #
+      # Port 443, not 5555: the public demo serves gRPC-Web through a front proxy on 443, and that is the
+      # port a browser can actually reach. A local evitaDB uses 5555 - see the `local` profile below.
+      EVITA_HOST: "${EVITA_HOST:-demo.evitadb.io}"
+      EVITA_PORT: "${EVITA_PORT:-443}"
+      EVITA_TLS: "${EVITA_TLS:-true}"
+      EVITA_CATALOG: "${EVITA_CATALOG:-evita}"
+    restart: unless-stopped
+
+  # Optional: run the dataset yourself instead of hitting the public demo.
+  #
+  #   1. wget https://evitadb.io/download/evita-demo-dataset.zip
+  #   2. unzip -d ./data evita-demo-dataset.zip
+  #   3. docker compose --profile local up
+  #   4. point the storefront at it:  EVITA_HOST=localhost EVITA_PORT=5555 docker compose --profile local up
+  #
+  # TWO THINGS TO KNOW:
+  #
+  # * The storefront container is NOT a proxy. All gRPC-Web traffic goes from the browser straight to
+  #   evitaDB, so this port has to be published on the host and reachable from the browser.
+  # * evitaDB generates a self-signed certificate on first start. The browser will refuse gRPC-Web calls
+  #   to it until that certificate is trusted - open https://localhost:5555 once and accept it, or
+  #   configure evitaDB with a certificate your machine already trusts. This does not apply to the public
+  #   demo, which has a normal publicly trusted certificate.
+  evitadb:
+    profiles: ["local"]
+    image: index.docker.io/evitadb/evitadb:latest
+    ports:
+      - "${EVITA_LOCAL_PORT:-5555}:5555"
+    volumes:
+      # the unpacked demo dataset
+      - ./data:/evita/data
+    restart: unless-stopped

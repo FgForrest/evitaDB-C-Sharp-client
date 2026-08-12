@@ -41,6 +41,11 @@ public class DelegatingSortableAttributeCompoundSchemaMutationConverter : ISchem
                     new RemoveSortableAttributeCompoundSchemaMutationConverter().Convert(
                         removeSortableAttributeCompoundSchemaMutation);
                 break;
+            case SetSortableAttributeCompoundIndexedMutation setSortableAttributeCompoundIndexedMutation:
+                grpcSortableAttributeCompoundSchemaMutation.SetSortableAttributeCompoundIndexedMutation =
+                    new SetSortableAttributeCompoundIndexedMutationConverter().Convert(
+                        setSortableAttributeCompoundIndexedMutation);
+                break;
         }
 
         return grpcSortableAttributeCompoundSchemaMutation;
@@ -68,7 +73,11 @@ public class DelegatingSortableAttributeCompoundSchemaMutationConverter : ISchem
             GrpcSortableAttributeCompoundSchemaMutation.MutationOneofCase.RemoveSortableAttributeCompoundSchemaMutation =>
                 new RemoveSortableAttributeCompoundSchemaMutationConverter().Convert(
                     mutation.RemoveSortableAttributeCompoundSchemaMutation),
-            _ => throw new NotImplementedException()
+            GrpcSortableAttributeCompoundSchemaMutation.MutationOneofCase.SetSortableAttributeCompoundIndexedMutation =>
+                new SetSortableAttributeCompoundIndexedMutationConverter().Convert(
+                    mutation.SetSortableAttributeCompoundIndexedMutation),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation.MutationCase,
+                "Unsupported sortable attribute compound schema mutation type.")
         };
     }
 }

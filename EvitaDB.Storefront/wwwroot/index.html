@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>evitaShop — evitaDB Blazor WebAssembly StoreFront</title>
+    <base href="/"/>
+    <link rel="stylesheet" href="css/app.css"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+</head>
+<body>
+<div id="app">
+    <!--
+      Shown until the WebAssembly runtime has booted and Blazor replaces it. It is deliberately plain HTML
+      and inline CSS: nothing here can depend on the app's own stylesheet having loaded yet.
+    -->
+    <div class="boot">
+        <img class="boot-logo" src="img/evitadb-logo.svg" alt="evitaDB" width="260"/>
+        <div class="boot-bar"><span></span></div>
+        <p class="boot-note">Starting the storefront…</p>
+    </div>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<script>
+    // the only JS in the app: the clipboard API has no .NET equivalent in WebAssembly
+    window.evitaShop = {
+        copyToClipboard: async text => {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+    };
+</script>
+<script src="_framework/blazor.webassembly.js"></script>
+</body>
+</html>

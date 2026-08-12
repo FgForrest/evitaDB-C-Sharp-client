@@ -1,7 +1,4 @@
-using System.Diagnostics;
 using EvitaDB.Client;
-using EvitaDB.Test.Utils;
-using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -24,14 +21,14 @@ public abstract class BaseTest<T> : IClassFixture<T>, IAsyncLifetime where T : B
         SetupFixture = setupFixture;
     }
     
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Client = await SetupFixture.GetClient();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         SetupFixture.ReturnClient(Client!);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 }

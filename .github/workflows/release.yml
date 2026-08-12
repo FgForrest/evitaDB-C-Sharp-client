@@ -1,4 +1,13 @@
-# Builds and releases a new public version of C# evitaDB driver a puts it into `Releases` section of GitHub
+# Builds and releases a new public version of C# evitaDB driver a puts it into `Releases` section of GitHub,
+# and publishes the storefront demo image to GHCR.
+#
+# Each publishable artifact is gated on its own project, so a change in one never republishes the others:
+#
+#   EvitaDB.Client         -> NuGet package, plus a release carrying the validator archives
+#   EvitaDB.QueryValidator -> a release carrying the validator archives (no NuGet push)
+#   EvitaDB.Storefront     -> GHCR image only
+#
+# Anything else - tests, workflows, documentation, solution files - publishes nothing.
 
 name: Release
 
@@ -14,23 +23,94 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    # all three are the strings 'true'/'false' - compare with == 'true' downstream, never as booleans
+    outputs:
+      client: ${{ steps.decide.outputs.client }}
+      validator: ${{ steps.decide.outputs.validator }}
+      storefront: ${{ steps.decide.outputs.storefront }}
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Classify changed paths
+        id: filter
+        # a manual run has no base revision to diff against - handled in the step below
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'EvitaDB.Client/**'
+            validator:
+              - 'EvitaDB.QueryValidator/**'
+            storefront:
+              - 'EvitaDB.Storefront/**'
+              - 'docker-compose.yml'
+              - '.dockerignore'
+
+      - name: Decide what to release
+        id: decide
+        run: |
+          # A hand-triggered run is treated as "everything changed": there is no base revision to compare
+          # against, and a manual release should never silently skip the thing it was triggered for.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            client=true
+            validator=true
+            storefront=true
+          else
+            client="${{ steps.filter.outputs.client }}"
+            validator="${{ steps.filter.outputs.validator }}"
+            storefront="${{ steps.filter.outputs.storefront }}"
+          fi
+          {
+            echo "client=${client}"
+            echo "validator=${validator}"
+            echo "storefront=${storefront}"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Changed areas"
+            echo
+            echo "| area | changed | effect |"
+            echo "| --- | --- | --- |"
+            echo "| EvitaDB.Client | ${client} | NuGet package + validator archives |"
+            echo "| EvitaDB.QueryValidator | ${validator} | validator archives |"
+            echo "| EvitaDB.Storefront | ${storefront} | GHCR image |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   build-and-release:
     name: Build and release
+    needs: changes
+    # A release is cut when either publishable .NET artifact changed. The validator is included because its
+    # archives are attached to the GitHub release and evitaDB's documentation tests download them from the
+    # latest release - a validator fix that never gets released can never reach them. Pushing to NuGet is
+    # narrower still and is gated per-step below.
+    if: needs.changes.outputs.client == 'true' || needs.changes.outputs.validator == 'true'
     permissions:
       # write permission is required to create a github release
       contents: write
+      id-token: write  # enable GitHub OIDC token issuance for this job
 
       # write permission is required for autolabeler
       # otherwise, read permission is required at least
       pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    # exposed so the image-publishing job can tag with the very version this release was cut as
+    outputs:
+      version: ${{ steps.release_version.outputs.version }}
 
     steps:
       - name: Checkout sources
-        timeout-minutes: 60 # Set the timeout to 60 minutes for this job
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          # full history is required by codacy/git-version to derive the next version
           fetch-depth: 0
 
       - name: Setup dotnet
@@ -39,13 +119,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore solution
-        run: dotnet restore ./EvitaDB.sln
+        run: dotnet restore ./EvitaDB.slnx
 
       - name: Build solution
-        run: dotnet build ./EvitaDB.sln --configuration Release --no-restore
+        run: dotnet build ./EvitaDB.slnx --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test ./EvitaDB.sln --configuration Release --no-build
+        run: dotnet test ./EvitaDB.slnx --configuration Release --no-build
 
       - name: Resolve new release version
         id: release_version
@@ -60,6 +140,7 @@ jobs:
           cd EvitaDB.QueryValidator
           dotnet publish -r linux-x64 -c Release -p:PublishSingleFile=true --self-contained false -p:PublishDir=publish/linux-x64
           dotnet publish -r win-x64 -c Release -p:PublishSingleFile=true --self-contained false -p:PublishDir=publish/win-x64
+          dotnet publish -r osx-arm64 -c Release -p:PublishSingleFile=true --self-contained false -p:PublishDir=publish/osx-arm64
 
       - name: Zip
         uses: vimtor/action-zip@v1.2
@@ -74,10 +155,26 @@ jobs:
           dest: 'Validator-win.zip'
           files: 'EvitaDB.QueryValidator/publish/win-x64/Validator.exe'
           recursive: true
+          
+      - name: Zip
+        uses: vimtor/action-zip@v1.2
+        with:
+          dest: 'Validator-mac.zip'
+          files: 'EvitaDB.QueryValidator/publish/osx-arm64/Validator'
+          recursive: true
+          
+      # The three NuGet steps below run only when the shipped library itself changed. A validator-only
+      # change still cuts a release and refreshes the archives, but must not push a new package version
+      # whose contents are identical to the previous one.
+      - name: NuGet login (OIDC → temp API key)
+        if: needs.changes.outputs.client == 'true'
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
 
       - name: Pack nuget
-        env:
-          NUGET_VERSION: $( echo ${{ steps.release_version.outputs.version }} | sed 's/^v//')
+        if: needs.changes.outputs.client == 'true'
         run: |
           export CURRENT_VERSION="${{ steps.release_version.outputs.version }}"
           export NEW_VERSION="$( echo ${CURRENT_VERSION} | sed 's/^v//')"
@@ -95,11 +192,115 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.release_version.outputs.version }}" Validator.zip Validator-win.zip --clobber
+          # Validator-mac.zip must be uploaded too - evitaDB's CShell asks for `Validator<suffix>.zip` where the
+          # suffix is `-mac` on macOS, so omitting it makes the C# documentation tests fail to download on macOS.
+          gh release upload "${{ steps.release_version.outputs.version }}" Validator.zip Validator-win.zip Validator-mac.zip --clobber
 
       - name: Publish nuget
+        if: needs.changes.outputs.client == 'true'
         run: |
           export CURRENT_VERSION="${{ steps.release_version.outputs.version }}"
           export NEW_VERSION="$( echo ${CURRENT_VERSION} | sed 's/^v//')"
           cd EvitaDB.Client/bin/Release
-          dotnet nuget push EvitaDB.Client."${NEW_VERSION}".nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push EvitaDB.Client."${NEW_VERSION}".nupkg --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
+
+  publish-storefront-image:
+    name: Publish storefront image to GHCR
+    needs: [changes, build-and-release]
+    # Published only for changes inside the storefront project itself. Note the consequence: a driver-only
+    # release does NOT refresh this image, even though the image links the driver by ProjectReference, so the
+    # published storefront keeps running the driver it was last built with until the storefront changes again.
+    #
+    # `always()` is required because `build-and-release` is legitimately skipped on storefront-only pushes -
+    # without it this job would inherit that skip. A failed or cancelled release must still block the image,
+    # so those two results are excluded explicitly rather than relying on the default needs behaviour.
+    if: >-
+      always()
+      && needs.changes.outputs.storefront == 'true'
+      && needs.build-and-release.result != 'failure'
+      && needs.build-and-release.result != 'cancelled'
+    permissions:
+      contents: read
+      # required to push to ghcr.io
+      packages: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      # emulation is only needed for the nginx runtime layer; the .NET build stage is pinned to the
+      # builder's native platform in the Dockerfile (see the --platform=$BUILDPLATFORM comment there)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # metadata-action lowercases the image name, which GHCR requires and the owner (FgForrest) is not
+          images: ghcr.io/${{ github.repository_owner }}/evitadb-storefront
+          # The git tag does not exist at checkout time - release-drafter creates it during the job above -
+          # so the semver tags are fed the resolved version explicitly rather than read from the ref.
+          #
+          # They are enabled only when a release was actually cut. On a storefront-only push there is no new
+          # version, and tagging the image with the previous driver's version would silently replace a
+          # published artifact with different content. Such builds are identified by their immutable
+          # `sha-<short>` tag, with `latest` moving to them as usual. The `|| '0.0.0'` fallback only ever
+          # applies while the tag is disabled - it keeps the value parseable as semver either way.
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.build-and-release.outputs.version || '0.0.0' }},enable=${{ needs.build-and-release.result == 'success' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.build-and-release.outputs.version || '0.0.0' }},enable=${{ needs.build-and-release.result == 'success' }}
+            type=raw,value=latest
+            type=sha,format=short
+          labels: |
+            org.opencontainers.image.title=evitaShop
+            org.opencontainers.image.description=Blazor WebAssembly storefront demo for the evitaDB C# driver
+            org.opencontainers.image.vendor=FG Forrest a.s.
+            org.opencontainers.image.licenses=Apache-2.0
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          # the repository root, because the app has a ProjectReference to EvitaDB.Client
+          context: .
+          file: EvitaDB.Storefront/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Storefront image published"
+            echo
+            if [ "${{ needs.build-and-release.result }}" = "success" ]; then
+              echo "Published alongside release **${{ needs.build-and-release.outputs.version }}**."
+            else
+              echo "Storefront-only change - no version was cut, nothing was pushed to NuGet."
+            fi
+            echo
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo
+            echo "Run it against the public demo dataset:"
+            echo
+            echo '```shell'
+            echo "docker run --rm -p 8080:8080 ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/evitadb-storefront:latest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

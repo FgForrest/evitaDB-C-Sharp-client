@@ -6,7 +6,6 @@ using EvitaDB.Client.Models.Data.Structure;
 using EvitaDB.Client.Queries.Order;
 using EvitaDB.Client.Queries.Requires;
 using EvitaDB.Test.Utils;
-using Xunit.Abstractions;
 using static EvitaDB.Client.Queries.IQueryConstraints;
 
 namespace EvitaDB.Test.Tests;
@@ -30,7 +29,9 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
                     FilterBy(
                         And(
                             Not(
-                                AttributeContains("url", "bla")
+                                And(
+                                    EntityLocaleEquals("cs-CZ"),
+                                    AttributeContains("url", "bla"))
                             ),
                             Or(
                                 EntityPrimaryKeyInSet(677, 678, 679, 680),
@@ -68,18 +69,13 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
                 Query(
                     Collection("Product"),
                     FilterBy(
-                        And(
-                            Not(
-                                AttributeContains("url", "bla")
-                            ),
-                            Or(
-                                EntityPrimaryKeyInSet(677, 678, 679, 680),
-                                And(
-                                    PriceBetween(102.2m, 10000),
-                                    PriceValidIn(DateTimeOffset.Now),
-                                    PriceInPriceLists("basic", "vip"),
-                                    PriceInCurrency(new Currency("CZK"))
-                                )
+                        Or(
+                            EntityPrimaryKeyInSet(677, 678, 679, 680),
+                            And(
+                                PriceBetween(102.2m, 10000),
+                                PriceValidIn(DateTimeOffset.Now),
+                                PriceInPriceLists("basic", "vip"),
+                                PriceInCurrency(new Currency("CZK"))
                             )
                         )
                     ),
@@ -94,7 +90,8 @@ public class EvitaClientDemoQueryTest : BaseTest<DemoSetupFixture>
                     )
                 )
             ));
-        
+
+        Console.WriteLine(entityResponse.RecordPage.Data!.Count);
         Assert.Equal(20, entityResponse.RecordPage.Data!.Count);
         Assert.Contains(entityResponse.RecordPage.Data, x => x.GetAttributeValues().Any());
         Assert.Contains(entityResponse.RecordPage.Data, x => x.GetReferences().Any());

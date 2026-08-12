@@ -1,8 +1,6 @@
-using System.Net;
-using Docker.DotNet;
-using Docker.DotNet.Models;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Images;
 using EvitaDB.Client;
 using EvitaDB.Client.Config;
 using EvitaDB.Test.Utils;
@@ -15,20 +13,31 @@ public class SetupFixture : BaseSetupFixture
 
     private const int GrpcPort = 5555;
     private const int SystemApiPort = 5555;
-    private const string Host = "127.0.0.1";
-    private const string ImageName = $"evitadb/evitadb:{ImageVersion}";
-    private const string ImageVersion = "canary";
+    /// <summary>
+    /// Docker image the tests run against; the tag matches the evitaDB version this client targets and can be
+    /// overridden with the EVITA_IMAGE_TAG environment variable (e.g. "canary" for bleeding edge).
+    /// </summary>
+    private static readonly string ImageName =
+        $"evitadb/evitadb:{Environment.GetEnvironmentVariable("EVITA_IMAGE_TAG") ?? DefaultImageVersion}";
+    private const string DefaultImageVersion = "2026.2.4";
 
-    public override Task<EvitaClient> GetClient()
+    public override async Task<EvitaClient> GetClient()
     {
         if (Clients.TryDequeue(out EvitaClient? evitaClient))
         {
-            DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
+            if (!evitaClient.IsActive)
+            {
+                // a test may have closed the client it borrowed - recreate one against the same container
+                evitaClient = await EvitaClient.Create(evitaClient.Configuration);
+            }
+            // re-seeding generates new random entities - refresh the shared cache so tests compare against
+            // the data that is actually on the server
+            CreatedEntities = DataManipulationUtil.DeleteCreateAndSetupCatalog(evitaClient, Data.TestCatalog);
             evitaClient.Close();
-            return EvitaClient.Create(evitaClient.Configuration);
+            return await EvitaClient.Create(evitaClient.Configuration);
         }
 
-        return InitializeEvitaContainerAndClientClient();
+        return await InitializeEvitaContainerAndClientClient();
     }
 
     public override void ReturnClient(EvitaClient client)
@@ -36,44 +45,13 @@ public class SetupFixture : BaseSetupFixture
         Clients.Enqueue(client);
     }
 
-    public override async Task InitializeAsync()
+    public override async ValueTask InitializeAsync()
     {
-        using DockerClient client = new DockerClientConfiguration().CreateClient();
-        // Get information about the locally cached image (if it exists)
-        var images = await client.Images.ListImagesAsync(
-            new ImagesListParameters
-            {
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    ["reference"] = new Dictionary<string, bool> { [ImageName] = true, },
-                }
-            });
-        if (images.Count > 0)
-        {
-            var localImage = images[0];
-
-            // Get information about the remote image from the Docker registry
-            ImageInspectResponse remoteImage = await client.Images.InspectImageAsync(ImageName);
-
-            // Compare image timestamps to determine if the remote image is newer
-            if (remoteImage.Created > localImage.Created)
-            {
-                // Pull the new image
-                await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName }, null,
-                    new Progress<JSONMessage>());
-            }
-        }
-        else
-        {
-            // If the image is not cached locally, simply pull it
-            await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = ImageName }, null,
-                new Progress<JSONMessage>());
-        }
-
+        // the container builder pulls a fresh image when the registry has a newer one (PullPolicy.Always)
         _ = await InitializeEvitaContainerAndClientClient(true);
     }
 
-    public override async Task DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         foreach (var suite in _testSuites)
         {
@@ -92,16 +70,18 @@ public class SetupFixture : BaseSetupFixture
         IContainer container;
         using (var consumer = Consume.RedirectStdoutAndStderrToConsole())
         {
-            container = new ContainerBuilder()
+            container = new ContainerBuilder(ImageName)
                 .WithName($"evita-{Guid.NewGuid().ToString()}")
-                .WithEnvironment("EVITA_ARGS", "api.endpoints.rest.host=:5555 api.endpoints.rest.tlsMode=RELAXED api.endpoints.graphQL.host=:5555 api.endpoints.graphQL.tlsMode=RELAXED api.endpoints.gRPC.mTLS.enabled=false api.endpoints.gRPC.host=:5555 api.endpoints.gRPC.tlsMode=RELAXED api.endpoints.system.host=:5555 api.endpoints.observability.host=:5555 api.endpoints.lab.host=:5555")
-                // Set the image for the container to "evitadb/evitadb".
-                .WithImage(ImageName)
+                // graphQL/rest/lab endpoints are disabled: their server-side schema refreshers crash on the rapid
+                // catalog delete+recreate cycle these tests use and poison the engine's event pipeline (server bug),
+                // wedging subsequent catalog lifecycle operations; the gRPC driver tests don't need those APIs
+                .WithEnvironment("EVITA_ARGS", "api.endpoints.rest.enabled=false api.endpoints.graphQL.enabled=false api.endpoints.lab.enabled=false api.endpoints.gRPC.mTLS.enabled=false api.endpoints.gRPC.host=:5555 api.endpoints.gRPC.tlsMode=RELAXED api.endpoints.system.host=:5555 api.endpoints.observability.host=:5555")
+                // Pull a fresh image when the registry has a newer one (important for the "canary"/"latest" tags).
+                .WithImagePullPolicy(PullPolicy.Always)
                 // Bind ports of the container.
                 .WithPortBinding(GrpcPort, true)
-                .WithPortBinding(SystemApiPort, true)
                 .WithWaitStrategy(
-                    Wait.ForUnixContainer().UntilPortIsAvailable(GrpcPort).UntilPortIsAvailable(SystemApiPort).AddCustomWaitStrategy(new CustomWaitStrategy())
+                    Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(GrpcPort).AddCustomWaitStrategy(new CustomWaitStrategy())
                 )
                 .WithOutputConsumer(consumer)
                 // Build the container configuration.
@@ -120,7 +100,7 @@ public class SetupFixture : BaseSetupFixture
         }
 
         EvitaClientConfiguration configuration = new EvitaClientConfiguration.Builder()
-            .SetHost(Host)
+            .SetHost(container.Hostname)
             .SetPort(container.GetMappedPublicPort(GrpcPort))
             .SetSystemApiPort(container.GetMappedPublicPort(SystemApiPort))
             .Build();

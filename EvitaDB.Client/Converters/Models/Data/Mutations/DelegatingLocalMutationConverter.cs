@@ -9,7 +9,9 @@ using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Data.Mutations.Attributes;
 using EvitaDB.Client.Models.Data.Mutations.Entities;
 using EvitaDB.Client.Models.Data.Mutations.Prices;
+using EvitaDB.Client.Converters.Models.Data.Mutations.Scopes;
 using EvitaDB.Client.Models.Data.Mutations.Reference;
+using EvitaDB.Client.Models.Data.Mutations.Scopes;
 
 namespace EvitaDB.Client.Converters.Models.Data.Mutations;
 
@@ -74,6 +76,10 @@ public class DelegatingLocalMutationConverter : ILocalMutationConverter<ILocalMu
                 grpcLocalMutation.RemoveReferenceGroupMutation =
                     new RemoveReferenceGroupMutationConverter().Convert(removeReferenceGroupMutation);
                 break;
+            case SetEntityScopeMutation setEntityScopeMutation:
+                grpcLocalMutation.SetEntityScopeMutation =
+                    new SetEntityScopeMutationConverter().Convert(setEntityScopeMutation);
+                break;
             case ReferenceAttributeMutation referenceAttributeMutation:
                 grpcLocalMutation.ReferenceAttributeMutation =
                     new ReferenceAttributeMutationConverter().Convert(referenceAttributeMutation);
@@ -118,6 +124,8 @@ public class DelegatingLocalMutationConverter : ILocalMutationConverter<ILocalMu
                 .Convert(mutation.SetReferenceGroupMutation),
             GrpcLocalMutation.MutationOneofCase.RemoveReferenceGroupMutation =>
                 new RemoveReferenceGroupMutationConverter().Convert(mutation.RemoveReferenceGroupMutation),
+            GrpcLocalMutation.MutationOneofCase.SetEntityScopeMutation => new SetEntityScopeMutationConverter()
+                .Convert(mutation.SetEntityScopeMutation),
             GrpcLocalMutation.MutationOneofCase.ReferenceAttributeMutation => new ReferenceAttributeMutationConverter()
                 .Convert(mutation.ReferenceAttributeMutation),
             _ => throw new EvitaInternalError("This should never happen!")

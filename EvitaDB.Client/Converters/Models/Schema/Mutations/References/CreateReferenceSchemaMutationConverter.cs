@@ -7,7 +7,7 @@ public class CreateReferenceSchemaMutationConverter : ISchemaMutationConverter<C
 {
     public GrpcCreateReferenceSchemaMutation Convert(CreateReferenceSchemaMutation mutation)
     {
-        return new GrpcCreateReferenceSchemaMutation
+        GrpcCreateReferenceSchemaMutation grpcMutation = new GrpcCreateReferenceSchemaMutation
         {
             Name = mutation.Name,
             Description = mutation.Description,
@@ -17,9 +17,30 @@ public class CreateReferenceSchemaMutationConverter : ISchemaMutationConverter<C
             ReferencedEntityTypeManaged = mutation.ReferencedEntityTypeManaged,
             ReferencedGroupType = mutation.ReferencedGroupType,
             ReferencedGroupTypeManaged = mutation.ReferencedGroupTypeManaged,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Filterable = mutation.Indexed,
             Faceted = mutation.Faceted
+#pragma warning restore CS0612
         };
+
+        if (mutation.Indexed)
+        {
+#pragma warning disable CS0612 // the deprecated scope list is dual-written for servers older than 2025.6
+            grpcMutation.IndexedInScopes.Add(GrpcEntityScope.ScopeLive);
+#pragma warning restore CS0612
+            grpcMutation.ScopedIndexTypes.Add(new GrpcScopedReferenceIndexType
+            {
+                Scope = GrpcEntityScope.ScopeLive,
+                IndexType = GrpcReferenceIndexType.ReferenceIndexTypeForFiltering
+            });
+        }
+
+        if (mutation.Faceted)
+        {
+            grpcMutation.FacetedInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcMutation;
     }
 
     public CreateReferenceSchemaMutation Convert(GrpcCreateReferenceSchemaMutation mutation)
@@ -33,8 +54,11 @@ public class CreateReferenceSchemaMutationConverter : ISchemaMutationConverter<C
             mutation.ReferencedEntityTypeManaged,
             mutation.ReferencedGroupType,
             mutation.ReferencedGroupTypeManaged,
-            mutation.Filterable,
-            mutation.Faceted
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2025.6 / 2024.12
+            EvitaEnumConverter.ToReferenceIndexedFlag(mutation.ScopedIndexTypes, mutation.IndexedInScopes,
+                mutation.Filterable),
+            EvitaEnumConverter.ToScopedBooleanFlag(mutation.FacetedInScopes, mutation.Faceted)
+#pragma warning restore CS0612
         );
     }
 }

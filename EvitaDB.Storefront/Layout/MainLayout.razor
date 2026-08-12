@@ -1,0 +1,47 @@
+@inherits LayoutComponentBase
+@inject EvitaCatalogContext Catalog
+@inject EvitaStorefrontOptions Options
+
+<header class="topbar">
+    <a class="brand" href="">
+        <img src="img/evitadb-logo.svg" alt="evitaDB"/>
+        <span class="brand-suffix">StoreFront</span>
+    </a>
+
+    @if (Catalog.IsReady)
+    {
+        <ShopContextSelector/>
+    }
+</header>
+
+<main class="shell">
+    @if (Catalog.InitializationError is not null)
+    {
+        <section class="panel error">
+            <h1>Cannot reach the catalog</h1>
+            <p>@Catalog.InitializationError</p>
+            <p class="muted">
+                Tried <code>@Options.Host:@Options.Port</code>, catalog <code>@Options.Catalog</code>, over
+                gRPC-Web. Check that the host is reachable from the browser and that it allows this origin
+                (CORS); the address lives in <code>wwwroot/appsettings.json</code>.
+            </p>
+        </section>
+    }
+    else if (!Catalog.IsReady)
+    {
+        <section class="panel">
+            <h1>Connecting…</h1>
+            <p class="muted">Opening a session and loading the catalog schema.</p>
+        </section>
+    }
+    else
+    {
+        @Body
+    }
+</main>
+
+<footer class="footer">
+    <span class="muted">
+        Blazor WebAssembly + the evitaDB C# driver over gRPC-Web. Read-only demo dataset.
+    </span>
+</footer>

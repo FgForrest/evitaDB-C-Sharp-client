@@ -36,7 +36,12 @@ public static class EntityConverter
         Func<string, int, ISealedEntitySchema> entitySchemaProvider, EvitaRequest evitaRequest)
     {
         return sealedEntities.Select(x => ToEntity<T>(
-                entity => entitySchemaProvider.Invoke(entity.EntityType, entity.Version),
+                // `SchemaVersion`, not `Version`: the provider is keyed by the *schema* version, while
+                // `Version` is the entity's own data version. Mixing them up makes every lookup miss the
+                // schema cache, so each query silently re-fetches the entity schema from the server - and on
+                // hosts that cannot block (Blazor WebAssembly) that re-fetch deadlocks. Mirrors Java's
+                // `EntityConverter.toEntities`, which passes `entity.getSchemaVersion()`.
+                entity => entitySchemaProvider.Invoke(entity.EntityType, entity.SchemaVersion),
                 x,
                 evitaRequest
             )
@@ -200,9 +205,7 @@ public static class EntityConverter
         return new AssociatedDataValue(
             associatedDataValue.Version!.Value,
             associatedDataKey,
-            associatedDataValue.PrimitiveValue is not null
-                ? EvitaDataTypesConverter.ToEvitaValue(associatedDataValue.PrimitiveValue)
-                : ComplexDataObjectConverter.ConvertJsonToComplexDataObject(associatedDataValue.JsonValue)
+            EvitaDataTypesConverter.ToEvitaValue(associatedDataValue)
         );
     }
 
@@ -242,7 +245,9 @@ public static class EntityConverter
             group = new GroupEntityReference(
                 grpcReference.GroupReferencedEntityReference.EntityType,
                 grpcReference.GroupReferencedEntityReference.PrimaryKey,
+#pragma warning disable CS0612 // deliberate fallback to the deprecated field for servers older than 2026.x
                 grpcReference.GroupReferencedEntityReference.ReferenceVersion ?? grpcReference.GroupReferencedEntityReference.Version
+#pragma warning restore CS0612
             );
         }
         else if (grpcReference.GroupReferencedEntity is not null)
@@ -276,6 +281,6 @@ public static class EntityConverter
             grpcReference.GroupReferencedEntity == null
                 ? null
                 : ToEntity<ISealedEntity>(entitySchemaProvider, grpcReference.GroupReferencedEntity, evitaRequest)
-        );
+        ) { InternalPrimaryKey = grpcReference.InternalPrimaryKey };
     }
 }

@@ -1,0 +1,471 @@
+@page "/product/{ProductCode}"
+@implements IDisposable
+@inject ProductCatalogService Catalog
+@inject EvitaCatalogContext CatalogContext
+@inject StorefrontState State
+
+<PageTitle>@(_product?.DisplayName(State.Locale) ?? ProductCode) — evitaShop</PageTitle>
+
+@if (_error is not null)
+{
+    <section class="panel error">
+        <h1>Could not load the product</h1>
+        <p>@_error</p>
+    </section>
+}
+else if (_loading)
+{
+    <section class="panel">
+        <h1>Loading…</h1>
+    </section>
+}
+else if (_product is null)
+{
+    <section class="panel">
+        <h1>Product not found</h1>
+        <p class="muted">No product with code <code>@ProductCode</code> in the current language.</p>
+        <a class="button" href="">Back to the shop</a>
+    </section>
+}
+else
+{
+    <nav class="breadcrumb">
+        <a href="">StoreFront</a>
+        @foreach (ISealedEntity ancestor in Breadcrumb())
+        {
+            <span>/</span>
+            @* NB: never name a local variable `code` here - it would render as the reserved code-block directive. *@
+            @if (ancestor.Code() is { } ancestorCode)
+            {
+                <a href="category/@ancestorCode">@ancestor.DisplayName(State.Locale)</a>
+            }
+            else
+            {
+                <span>@ancestor.DisplayName(State.Locale)</span>
+            }
+        }
+    </nav>
+
+    <article class="detail">
+        <header class="detail-head">
+            <h1>@_product.DisplayName(State.Locale)</h1>
+            @if (BrandName() is { } brand)
+            {
+                <p class="muted">by @brand</p>
+            }
+
+            <div class="price-row large">
+                @if (_sellingPrice is not null)
+                {
+                    @if (_product.InnerRecordHandling == PriceInnerRecordHandling.LowestPrice)
+                    {
+                        <span class="price-prefix">from</span>
+                    }
+                    <span class="price">@EntityDisplay.Format(_sellingPrice, WithTax, State.Locale)</span>
+                    @if (_referencePrice is not null)
+                    {
+                        <span class="price-reference">
+                            @EntityDisplay.Format(_referencePrice, WithTax, State.Locale)
+                        </span>
+                    }
+                    <span class="muted">
+                        @(WithTax ? "incl. tax" : "excl. tax") · price list @_sellingPrice.PriceList
+                    </span>
+                }
+                else
+                {
+                    <span class="muted">not available in @State.Currency.CurrencyCode</span>
+                }
+            </div>
+
+            @if (Tags().Any())
+            {
+                <ul class="tags">
+                    @foreach (ISealedEntity tag in Tags())
+                    {
+                        <li class="tag">@tag.DisplayName(State.Locale)</li>
+                    }
+                </ul>
+            }
+        </header>
+
+        @if (_teaser.Length > 0)
+        {
+            <p class="detail-teaser">@_teaser</p>
+        }
+
+        @if (_identifiers.Count > 0)
+        {
+            <section class="detail-block">
+                <h2>Identifiers</h2>
+                <dl class="identifiers">
+                    @foreach ((string label, string value) in _identifiers)
+                    {
+                        <div>
+                            <dt>@label</dt>
+                            <dd>@value</dd>
+                        </div>
+                    }
+                </dl>
+            </section>
+        }
+
+        @if (_description.Length > 0)
+        {
+            <section class="detail-block">
+                <h2>Description</h2>
+                @* The stored value is a whole vendor marketing page. HtmlContent.Sanitize strips its class
+                   names, analytics hooks and dead modal buttons and allowlists the remaining elements, so
+                   MarkupString only ever receives markup this app produced. *@
+                <div class="rich-text @(_descriptionExpanded ? "expanded" : "collapsed")">
+                    @((MarkupString)_description)
+                </div>
+                <button class="button rich-text-toggle" @onclick="() => _descriptionExpanded = !_descriptionExpanded">
+                    @(_descriptionExpanded ? "Show less" : "Read full description")
+                </button>
+            </section>
+        }
+
+        @if (ParameterGroups().Count > 0)
+        {
+            <section class="detail-block">
+                <h2>Parameters</h2>
+                <table class="parameters">
+                    <tbody>
+                    @foreach ((string groupName, List<string> values) in ParameterGroups())
+                    {
+                        <tr>
+                            <th scope="row">@groupName</th>
+                            <td>@string.Join(", ", values)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </section>
+        }
+
+        @if (Variants().Any())
+        {
+            <section class="detail-block">
+                <h2>Variants</h2>
+                <p class="muted">
+                    This is a MASTER product; the price above is the lowest across these variants, which
+                    evitaDB resolves itself through LOWEST_PRICE inner-record handling.
+                </p>
+                <ul class="variant-list">
+                    @foreach (ISealedEntity variant in Variants())
+                    {
+                        <li>
+                            <a class="variant" href="product/@variant.Code()">
+                                <span class="variant-name">
+                                    @variant.DisplayName(State.Locale)
+                                    @{
+                                        string distinguishing = DistinguishingLabel(variant);
+                                    }
+                                    @if (distinguishing.Length > 0)
+                                    {
+                                        <span class="variant-params">@distinguishing</span>
+                                    }
+                                </span>
+                                <span class="variant-price">
+                                    @if (variant.SellingPrice() is { } vp)
+                                    {
+                                        @EntityDisplay.Format(vp, WithTax, State.Locale)
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                </span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (RelatedProducts().Any())
+        {
+            <section class="detail-block">
+                <h2>Related products</h2>
+                <div class="grid">
+                    @foreach (ISealedEntity related in RelatedProducts())
+                    {
+                        <article class="card">
+                            <a class="card-link" href="product/@related.Code()">
+                                <h3>@related.DisplayName(State.Locale)</h3>
+                            </a>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+    </article>
+}
+
+@code {
+
+    [Parameter] public string ProductCode { get; set; } = string.Empty;
+
+    private ISealedEntity? _product;
+    private string? _error;
+    private bool _loading = true;
+
+    protected override void OnInitialized() => State.OnChanged += OnStateChanged;
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    private void OnStateChanged() => _ = InvokeAsync(async () =>
+    {
+        await ReloadAsync();
+        StateHasChanged();
+    });
+
+    private async Task ReloadAsync()
+    {
+        if (!CatalogContext.IsReady)
+        {
+            return;
+        }
+        _loading = true;
+        _error = null;
+        try
+        {
+            _product = await Catalog.GetProductAsync(ProductCode);
+            _variantAxes = null;
+        }
+        catch (Exception exception)
+        {
+            _error = exception.Message;
+        }
+        finally
+        {
+            _loading = false;
+            ResolvePrices();
+            ResolveContent();
+        }
+    }
+
+    private bool WithTax => State.PriceMode == QueryPriceMode.WithTax;
+
+    private IPrice? _sellingPrice;
+    private IPrice? _referencePrice;
+    /// <summary>Cached per load - comparing every variant's parameters is not per-render work.</summary>
+    private List<string>? _variantAxes;
+    private string _teaser = string.Empty;
+    private string _description = string.Empty;
+    private bool _descriptionExpanded;
+    private List<(string Label, string Value)> _identifiers = [];
+
+    /// <summary>Resolved once per load - both reads are guarded and walk the entity's price list.</summary>
+    private void ResolvePrices()
+    {
+        _sellingPrice = _product?.SellingPrice();
+        _referencePrice = _product?.ReferencePrice(_sellingPrice, WithTax);
+    }
+
+    /// <summary>
+    /// Categories the product is filed under. Product is not a hierarchical collection here, so this is the
+    /// referenced Category list rather than a true ancestor chain.
+    /// </summary>
+    private IEnumerable<ISealedEntity> Breadcrumb() =>
+        ReferencedEntities(StorefrontSchema.CategoriesReference).Take(3);
+
+    private string? BrandName() =>
+        ReferencedEntities(StorefrontSchema.BrandReference)
+            .Select(brand => brand.DisplayName(State.Locale))
+            .FirstOrDefault();
+
+    private IEnumerable<ISealedEntity> Tags() => ReferencedEntities(StorefrontSchema.TagsReference);
+
+    private IEnumerable<ISealedEntity> RelatedProducts() =>
+        ReferencedEntities(StorefrontSchema.RelatedProductsReference).Take(8);
+
+    /// <summary>A MASTER's individual size/colour combinations; empty for BASIC products.</summary>
+    private IEnumerable<ISealedEntity> Variants() =>
+        ReferencedEntities(StorefrontSchema.VariantsReference).Take(24);
+
+    /// <summary>
+    /// The parameter groups that actually act as variant *axes* - colour, storage, connectivity.
+    ///
+    /// A group qualifies only when every variant carries exactly one value in it and those values are not
+    /// all the same. That second condition is what separates an axis from a feature list: groups like
+    /// "Camera properties" hold many values per variant and differ only incidentally, so including them
+    /// produced labels that were identical for every variant.
+    ///
+    /// Axes are ordered by how many distinct values they carry, most discriminating first.
+    /// </summary>
+    private List<string> VariantAxes()
+    {
+        if (_variantAxes is not null)
+        {
+            return _variantAxes;
+        }
+
+        List<ISealedEntity> variants = Variants().ToList();
+        Dictionary<string, List<HashSet<string>>> perGroup = new(StringComparer.Ordinal);
+        foreach (ISealedEntity variant in variants)
+        {
+            foreach (IGrouping<string, string> group in ParametersOf(variant)
+                         .GroupBy(pair => pair.Group, pair => pair.Value, StringComparer.Ordinal))
+            {
+                if (!perGroup.TryGetValue(group.Key, out List<HashSet<string>>? perVariant))
+                {
+                    perGroup[group.Key] = perVariant = [];
+                }
+                perVariant.Add(group.ToHashSet(StringComparer.Ordinal));
+            }
+        }
+
+        return _variantAxes = perGroup
+            .Where(entry => entry.Value.Count == variants.Count)
+            .Where(entry => entry.Value.All(values => values.Count == 1))
+            .Select(entry => (Group: entry.Key,
+                Distinct: entry.Value.SelectMany(x => x).Distinct(StringComparer.Ordinal).Count()))
+            .Where(entry => entry.Distinct > 1)
+            .OrderByDescending(entry => entry.Distinct)
+            .Select(entry => entry.Group)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Label distinguishing one variant from its siblings, built from the axes above. Falls back to the
+    /// business code when a dataset gives no usable axis - variants normally share the master's name, so
+    /// something has to tell them apart.
+    /// </summary>
+    private string DistinguishingLabel(ISealedEntity variant)
+    {
+        List<string> axes = VariantAxes();
+        Dictionary<string, string> values = ParametersOf(variant)
+            .GroupBy(pair => pair.Group, pair => pair.Value, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+
+        List<string> parts = axes
+            .Where(values.ContainsKey)
+            .Take(3)
+            .Select(axis => $"{axis}: {values[axis]}")
+            .ToList();
+        return parts.Count > 0 ? string.Join(" · ", parts) : variant.Code() ?? string.Empty;
+    }
+
+    private IEnumerable<(string Group, string Value)> ParametersOf(ISealedEntity variant)
+    {
+        foreach (IReference reference in SafeReferencesOf(variant, StorefrontSchema.ParameterValuesReference))
+        {
+            string? group = reference.GroupEntity?.DisplayName(State.Locale);
+            string? value = reference.ReferencedEntity?.DisplayName(State.Locale);
+            if (group is not null && value is not null)
+            {
+                yield return (group, value);
+            }
+        }
+    }
+
+    private static IEnumerable<IReference> SafeReferencesOf(ISealedEntity entity, string referenceName)
+    {
+        if (!entity.ReferencesAvailable())
+        {
+            return [];
+        }
+        try
+        {
+            return entity.GetReferences(referenceName);
+        }
+        catch (Exception)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Parameter values grouped by their Parameter group entity - the classic e-commerce spec table.
+    /// </summary>
+    private List<KeyValuePair<string, List<string>>> ParameterGroups()
+    {
+        if (_product is null || !_product.ReferencesAvailable())
+        {
+            return [];
+        }
+
+        Dictionary<string, List<string>> grouped = new(StringComparer.Ordinal);
+        foreach (IReference reference in SafeReferences(StorefrontSchema.ParameterValuesReference))
+        {
+            string groupName = reference.GroupEntity?.DisplayName(State.Locale) ?? "Other";
+            string? valueName = reference.ReferencedEntity?.DisplayName(State.Locale);
+            if (valueName is null)
+            {
+                continue;
+            }
+            if (!grouped.TryGetValue(groupName, out List<string>? values))
+            {
+                grouped[groupName] = values = [];
+            }
+            values.Add(valueName);
+        }
+
+        return grouped
+            .OrderBy(pair => pair.Key, StringComparer.CurrentCulture)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Reads the localized copy and the global identifiers once per load.
+    ///
+    /// `description` / `descriptionShort` are localized <b>attributes</b> here (the associated data holds
+    /// feeds and content blocks instead). Only the `cs` locale carries them in the demo dataset, so both
+    /// blocks simply stay hidden in `en` and `de`.
+    /// </summary>
+    private void ResolveContent()
+    {
+        _teaser = _product is null
+            ? string.Empty
+            : HtmlContent.StripTags(
+                _product.LocalizedString(StorefrontSchema.DescriptionShortAttribute, State.Locale));
+        _description = _product is null
+            ? string.Empty
+            : HtmlContent.Sanitize(
+                _product.LocalizedString(StorefrontSchema.DescriptionAttribute, State.Locale));
+        _descriptionExpanded = false;
+
+        _identifiers = [];
+        if (_product is null)
+        {
+            return;
+        }
+        void AddIdentifier(string label, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                _identifiers.Add((label, value));
+            }
+        }
+        AddIdentifier("Code", _product.Code());
+        AddIdentifier("EAN", _product.GlobalString(StorefrontSchema.EanAttribute));
+        AddIdentifier("Catalog number", _product.GlobalString(StorefrontSchema.CatalogNumberAttribute));
+    }
+
+    private IEnumerable<ISealedEntity> ReferencedEntities(string referenceName) =>
+        SafeReferences(referenceName)
+            .Select(reference => reference.ReferencedEntity)
+            .Where(entity => entity is not null)
+            .Select(entity => entity!);
+
+    private IEnumerable<IReference> SafeReferences(string referenceName)
+    {
+        if (_product is null || !_product.ReferencesAvailable())
+        {
+            return [];
+        }
+        try
+        {
+            return _product.GetReferences(referenceName);
+        }
+        catch (Exception)
+        {
+            return [];
+        }
+    }
+
+    public void Dispose() => State.OnChanged -= OnStateChanged;
+
+}

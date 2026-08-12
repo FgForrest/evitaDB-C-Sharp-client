@@ -17,11 +17,32 @@ using static EvitaDB.Client.Queries.Requires.StatisticsType;
 using static EvitaDB.Client.Queries.Requires.StatisticsBase;
 using static EvitaDB.Client.Queries.Query;
 using static EvitaDB.Client.Queries.Order.OrderDirection;
-using static EvitaDB.Client.Queries.Requires.PriceContentMode;
+using static EvitaDB.Client.Queries.Order.TraversalMode;
+// `PriceContentMode` is deliberately NOT imported statically: it and `FacetStatisticsDepth` both declare `None`,
+// and generated snippets spell enum values unqualified, so importing both makes a bare `None` ambiguous
+// (CS0104). `FacetStatisticsDepth.None` is the one that occurs bare in the documentation, so that import wins;
+// `PriceContentMode` stays reachable through its type alias below as `PriceContentMode.None`. It is the only
+// collision across every enum imported here.
 using static EvitaDB.Client.Queries.Requires.FacetStatisticsDepth;
 using static EvitaDB.Client.Queries.Requires.QueryPriceMode;
 using static EvitaDB.Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
 using static EvitaDB.Client.Queries.Requires.HistogramBehavior;
+
+// The `using static` directives above import the enum *members* (`Counts`), but not the enum *type*, so a
+// documentation snippet written as `FacetStatisticsDepth.Counts` would not compile. These aliases bring the
+// type names into scope as well, so both the bare and the qualified spelling work. Aliases rather than plain
+// namespace imports, because importing e.g. `EvitaDB.Client.Queries.Order` would make `Random` ambiguous
+// with `System.Random`.
+using AttributeSpecialValue = EvitaDB.Client.Queries.Filter.AttributeSpecialValue;
+using EmptyHierarchicalEntityBehaviour = EvitaDB.Client.Queries.Requires.EmptyHierarchicalEntityBehaviour;
+using FacetStatisticsDepth = EvitaDB.Client.Queries.Requires.FacetStatisticsDepth;
+using HistogramBehavior = EvitaDB.Client.Queries.Requires.HistogramBehavior;
+using OrderDirection = EvitaDB.Client.Queries.Order.OrderDirection;
+using PriceContentMode = EvitaDB.Client.Queries.Requires.PriceContentMode;
+using QueryPriceMode = EvitaDB.Client.Queries.Requires.QueryPriceMode;
+using StatisticsBase = EvitaDB.Client.Queries.Requires.StatisticsBase;
+using StatisticsType = EvitaDB.Client.Queries.Requires.StatisticsType;
+using TraversalMode = EvitaDB.Client.Queries.Order.TraversalMode;
 
 public class DynamicClass
 {

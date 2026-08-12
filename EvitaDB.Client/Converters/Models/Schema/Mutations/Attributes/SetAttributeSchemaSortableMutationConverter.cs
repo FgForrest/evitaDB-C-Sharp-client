@@ -6,15 +6,27 @@ public class SetAttributeSchemaSortableMutationConverter : ISchemaMutationConver
 {
     public GrpcSetAttributeSchemaSortableMutation Convert(SetAttributeSchemaSortableMutation mutation)
     {
-        return new GrpcSetAttributeSchemaSortableMutation
+        GrpcSetAttributeSchemaSortableMutation grpcMutation = new GrpcSetAttributeSchemaSortableMutation
         {
             Name = mutation.Name,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Sortable = mutation.Sortable
+#pragma warning restore CS0612
         };
+
+        if (mutation.Sortable)
+        {
+            grpcMutation.SortableInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcMutation;
     }
 
     public SetAttributeSchemaSortableMutation Convert(GrpcSetAttributeSchemaSortableMutation mutation)
     {
-        return new SetAttributeSchemaSortableMutation(mutation.Name, mutation.Sortable);
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+        return new SetAttributeSchemaSortableMutation(mutation.Name,
+            EvitaEnumConverter.ToScopedBooleanFlag(mutation.SortableInScopes, mutation.Sortable));
+#pragma warning restore CS0612
     }
 }

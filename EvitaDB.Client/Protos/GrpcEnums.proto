@@ -21,11 +21,43 @@ enum GrpcCatalogState {
   // All operations are executed transactionally and leave the date in consistent state even if any error occurs.
   // Multiple readers and writers can work with the catalog simultaneously.
   ALIVE = 1;
+  // State signalizing that evitaDB engine was not able to consistently open and load this catalog from the file system.
+  CORRUPTED = 3;
+  // State signalizing that evitaDB engine didn't load this catalog from the file system, but is present in
+  // the persistence storage. Catalog might be loaded into memory later on demand and start to process requests.
+  INACTIVE = 4;
+  // State signalizing that evitaDB engine is transitioning catalog from `WARMING_UP` to `ALIVE` state.
+  // Until the transition is fully completed, the catalog is not able to serve any requests.
+  GOING_ALIVE = 5;
+  // State signalizing that evitaDB engine is loading catalog from the file system to the memory and performing
+  // initialization of the catalog. The catalog is not able to serve any requests until the initialization is fully
+  // completed.
+  BEING_ACTIVATED = 6;
+  // State signalizing that evitaDB engine is deactivating the catalog. When the operation is completed, the catalog
+  // is moved to `INACTIVE` state.
+  BEING_DEACTIVATED = 7;
+  // State signalizing that evitaDB engine is creating a new catalog. The catalog is not able to serve any requests
+  // until the creation is fully completed.
+  BEING_CREATED = 8;
+  // State signalizing that evitaDB engine is deleting the catalog. When the operation is completed, the catalog
+  // is removed from the file system and is no longer available.
+  BEING_DELETED = 9;
+  // State signalizing that a catalog previously registered with the engine no longer has an on-disk folder.
+  // The engine records this divergence via `MarkCatalogMissingMutation` so it can be diagnosed and later
+  // recovered via auto-discovery or operator action.
+  MISSING = 10;
+  // State signalizing that the catalog's on-disk storage protocol is older than the engine supports.
+  // Reads and writes are refused until the catalog has been upgraded via `UpgradeCatalogFormatMutation`.
+  OUT_OF_DATE = 11;
+  // State signalizing that the catalog is currently being upgraded from an older storage protocol
+  // to the one the engine supports. Transient state entered while an `UpgradeCatalogFormatMutation`
+  // is running; the completion phase returns the catalog to its prior operational state.
+  BEING_UPGRADED = 12;
   // Unknown state of the catalog. Used when catalog is corrupted.
   UNKNOWN_CATALOG_STATE = 2;
 }
 
-// This enum represents the uniqueness type of an {@link AttributeSchema}. It is used to determine whether the attribute
+// This enum represents the uniqueness type of an `AttributeSchema`. It is used to determine whether the attribute
 // value must be unique among all the entity attributes of this type or whether it must be unique only among attributes
 // of the same locale.
 enum GrpcAttributeUniquenessType {
@@ -33,22 +65,22 @@ enum GrpcAttributeUniquenessType {
   NOT_UNIQUE = 0;
   // The attribute value must be unique among all the entities of the same collection.
   UNIQUE_WITHIN_COLLECTION = 1;
-  // The localized attribute value must be unique among all values of the same {@link Locale} among all the entities
+  // The localized attribute value must be unique among all values of the same `Locale` among all the entities
   // using of the same collection.
   UNIQUE_WITHIN_COLLECTION_LOCALE = 2;
 }
 
-// This enum represents the uniqueness type of an {@link GlobalAttributeSchema}. It is used to determine whether
-// the attribute value must be unique among all the entities using this {@link GlobalAttributeSchema} or whether it
+// This enum represents the uniqueness type of a `GlobalAttributeSchema`. It is used to determine whether
+// the attribute value must be unique among all the entities using this `GlobalAttributeSchema` or whether it
 // must be unique only among entities of the same locale.
 enum GrpcGlobalAttributeUniquenessType {
   // The attribute is not unique (default).
   NOT_GLOBALLY_UNIQUE = 0;
   // The attribute value (either localized or non-localized) must be unique among all values among all the entities
-  // using this {@link GlobalAttributeSchema} in the entire catalog.
+  // using this `GlobalAttributeSchema` in the entire catalog.
   UNIQUE_WITHIN_CATALOG = 1;
-  // The localized attribute value must be unique among all values of the same {@link Locale} among all the entities
-  // using this {@link GlobalAttributeSchema} in the entire catalog.
+  // The localized attribute value must be unique among all values of the same `Locale` among all the entities
+  // using this `GlobalAttributeSchema` in the entire catalog.
   UNIQUE_WITHIN_CATALOG_LOCALE = 2;
 }
 
@@ -94,13 +126,23 @@ enum GrpcAttributeSpecialValue {
   NOT_NULL = 1;
 }
 
-// This enum controls whether FacetSummary should contain only basic statistics about facets - e.g. count only,
+// This enum controls whether ReferenceSummary should contain only basic statistics about facets - e.g. count only,
 // or whether the selection impact should be computed as well.
+//
+// Backward compatibility: `COUNTS` is kept at tag 0 (the proto3 default) and `IMPACT` at tag 1 so existing clients
+// continue to deserialize unchanged. The newer `NONE` option is assigned a fresh tag; older clients that never
+// request it are unaffected, and since this enum is used only as a request parameter (never as a server-emitted
+// response), servers never push `NONE` to an unaware client.
 enum GrpcFacetStatisticsDepth {
   // Only counts of facets will be computed.
   COUNTS = 0;
   // Counts and selection impact for non-selected facets will be computed.
   IMPACT = 1;
+  // No per-facet statistics are computed. The engine returns facet options without counts or impact — the cheapest
+  // option, appropriate when the UI only needs to enumerate available facets without any numeric indicator.
+  // Proto3 enum values share a file-level namespace, so this value is prefixed (plain `NONE` is used by
+  // `GrpcPriceInnerRecordHandling` elsewhere in this file).
+  STATISTICS_NONE = 2;
 }
 
 // The enumeration controls HierarchyOfReference behaviour whether the hierarchical nodes that are not referred
@@ -115,10 +157,15 @@ enum GrpcEmptyHierarchicalEntityBehaviour {
 // The enum specifies whether the hierarchy statistics cardinality will be based on a complete query filter by
 //  constraint or only the part without user defined filter.
 enum GrpcStatisticsBase {
-  // The statistics will be based on a complete query filter by constraint.
+  // Complete `filterBy` constraint output will be considered when calculating statistics of the queried entities.
   COMPLETE_FILTER = 0;
-  // The statistics will be based only on a query without user defined filter.
+  // Contents of the `filterBy` excluding `userFilter` and its children will be considered when calculating statistics
+  // of the queried entities.
   WITHOUT_USER_FILTER = 1;
+  // Complete `filterBy` constraint output excluding constraints within `userFilter` limiting references of the same
+  // hierarchical entity type this constraint is applied to will be considered when calculating statistics of
+  // the queried entities.
+  COMPLETE_FILTER_EXCLUDING_SELF_IN_USER_FILTER = 2;
 }
 
 // The enum specifies whether the HierarchyStatistics should produce the hierarchy children count or referenced
@@ -134,17 +181,27 @@ enum GrpcStatisticsType {
 // or optimized one, which may have less buckets than requested, but is more compact
 enum GrpcHistogramBehavior {
   // Histogram always contains the number of buckets you asked for. This is the default behaviour.
+  // Bucket boundaries are positioned at equal intervals across the value range.
   STANDARD = 0;
   // Histogram will never contain more buckets than you asked for, but may contain less when the data is scarce and
   // there would be big gaps (empty buckets) between buckets. This leads to more compact histograms, which provide
   // better user experience.
+  // Bucket boundaries are positioned at equal intervals across the value range.
   OPTIMIZED = 1;
+  // Histogram always contains the number of buckets you asked for.
+  // Bucket boundaries are positioned based on cumulative frequency distribution, so each bucket covers
+  // approximately equal portion of total records.
+  EQUALIZED = 2;
+  // Histogram will never contain more buckets than you asked for, but may contain less when the data is scarce.
+  // Bucket boundaries are positioned based on cumulative frequency distribution, so each bucket covers
+  // approximately equal portion of total records.
+  EQUALIZED_OPTIMIZED = 3;
 }
 
-// This enumeration controls behavior of the {@link ReferenceContent} related to managed entities.
-// If the target entity is not (yet) present in the database and {@link ManagedReferencesBehaviour#EXISTING} is set,
+// This enumeration controls behavior of the `ReferenceContent` related to managed entities.
+// If the target entity is not (yet) present in the database and `EXISTING` is set,
 // the reference will not be returned as if it does not exist.
-// If {@link ManagedReferencesBehaviour#ANY} is set (default behavior), the reference will be returned if defined regardless
+// If `ANY` is set (default behavior), the reference will be returned if defined regardless
 // of its target entity existence.
 enum GrpcManagedReferencesBehaviour {
   // The reference to managed entity will always be returned regardless of the target entity existence.
@@ -193,6 +250,12 @@ enum GrpcCardinality {
   ZERO_OR_MORE = 3;
   // There is always at least one relation of this type, but there may be also more than one.
   ONE_OR_MORE = 4;
+  // There is always at least one relation of this type, but there may be also more than one.
+  // When there is more than one, they may refer the same target entity (and are distinguished by reference attributes)
+  ZERO_OR_MORE_WITH_DUPLICATES = 5;
+  // There is always at least one relation of this type, but there may be also more than one.
+  // When there is more than one, they may refer the same target entity (and are distinguished by reference attributes)
+  ONE_OR_MORE_WITH_DUPLICATES = 6;
 }
 
 // Evolution mode allows to specify how strict is evitaDB when unknown information is presented to her for the first
@@ -226,6 +289,9 @@ enum GrpcEvolutionMode {
   ADDING_CURRENCIES = 6;
   // When hierarchy placement for the entity is encountered, it is silently added.
   ADDING_HIERARCHY = 7;
+  // When a new duplicate reference is added to the entity, evitaDB automatically updates the schema
+  // to allow such duplicities. By default, references are set up with cardinality ZERO_OR_MORE
+  UPDATING_REFERENCE_CARDINALITY = 8;
 }
 
 // Evolution mode allows to specify how strict is evitaDB when unknown information is presented to her for the first
@@ -240,11 +306,11 @@ enum GrpcCatalogEvolutionMode {
 // Defines the type of the attribute schema
 enum GrpcAttributeSchemaType {
   // attribute schema is GlobalAttributeSchemaContract
-  GLOBAL = 0;
+  GLOBAL_SCHEMA = 0;
   // attribute schema is EntityAttributeSchemaContract
-  ENTITY = 1;
+  ENTITY_SCHEMA = 1;
   // attribute schema is AttributeSchemaContract
-  REFERENCE = 2;
+  REFERENCE_SCHEMA = 2;
 }
 
 // This enum contains all supported types in evitaDB query context.
@@ -342,6 +408,8 @@ enum GrpcEvitaDataType {
 
 // This enum contains all supported data types of AssociatedData.
 message GrpcEvitaAssociatedDataDataType {
+  // Enumerates the value types evitaDB supports for associated data (both scalar and array variants) - a subset
+  // of the general query data types plus `ComplexDataObject` for arbitrary nested structures.
   enum GrpcEvitaDataType {
     // Represents string data type.
     STRING = 0;
@@ -477,6 +545,8 @@ enum GrpcQueryPhase {
   FETCHING_REFERENCES = 19;
   // Fetching parent entities from the storage based on parent primary keys information.
   FETCHING_PARENTS = 20;
+  // Aggregate phase covering orchestration of all referenced entity loads (predicate setup, ID collection, dedup, recursive dispatch).
+  FETCHING_REFERENCE_BODIES = 21;
 }
 
 // Contains set of all possible expected states for the entity.
@@ -501,7 +571,7 @@ enum GrpcCommitBehavior {
   // Changes performed in the transaction are passed to evitaDB server, checked for conflicts and if no conflict
   // is found, they are written to Write Ahead Log (WAL) and transaction waits until the WAL is persisted on disk
   // (fsynced). After that the transaction is marked as completed and commit is finished. This behaviour is
-  // slower than {@link #NO_WAIT} but guarantees that the changes are persisted on disk and durable. The server
+  // slower than `WAIT_FOR_CONFLICT_RESOLUTION` but guarantees that the changes are persisted on disk and durable. The server
   // may decide to fsync changes from multiple transactions at once, so the transaction may wait longer than
   // necessary. This behaviour still does not guarantee that the changes will be visible immediately after
   // the commit - because they still need to be propagated to indexes in order new data can be found by queries.
@@ -514,8 +584,19 @@ enum GrpcCommitBehavior {
   // to indexes. After that the transaction is marked as completed and commit is finished. This behaviour is
   // slowest but guarantees that the changes are persisted on disk and durable and that they are visible
   // immediately after the commit is marked as completed.
-  WAIT_FOR_INDEX_PROPAGATION = 2;
+  WAIT_FOR_CHANGES_VISIBLE = 2;
 
+}
+
+// Contains set of all possible transaction phases each transaction goes through.
+enum GrpcTransactionPhase {
+  // All changes passed conflict resolution steps and are not in conflict with other transactions.
+  CONFLICTS_RESOLVED = 0;
+  // Changes are written to Write Ahead Log (WAL) and are safely persisted on disk. Client might rely on the fact
+  // that the changes will eventually be visible in the database.
+  WAL_PERSISTED = 1;
+  // Changes are visible in shared state of the database and are available to all newly created sessions.
+  CHANGES_VISIBLE = 2;
 }
 
 // Contains set of all supported/used naming conventions in evitaDB APIs.
@@ -618,12 +699,12 @@ enum GrpcTaskSimplifiedState {
 // Enum specifies different modes for reference attributes inheritance in reflected schema.
 enum GrpcAttributeInheritanceBehavior {
   /**
-   * Inherit all attributes by default except those listed in the {@link #getAttributeInheritanceFilter()} array.
+   * Inherit all attributes by default except those listed in the attribute inheritance filter array.
    */
   INHERIT_ALL_EXCEPT = 0;
 
   /**
-   * Do not inherit any attributes by default except those listed in the {@link #getAttributeInheritanceFilter()} array.
+   * Do not inherit any attributes by default except those listed in the attribute inheritance filter array.
    */
   INHERIT_ONLY_SPECIFIED = 1;
 }
@@ -677,5 +758,148 @@ enum GrpcClassifierType {
    * Identification of the reference attribute.
    */
   CLASSIFIER_TYPE_REFERENCE_ATTRIBUTE = 6;
+
+}
+
+// Enum defines the possible scopes where the entities can reside.
+enum GrpcEntityScope {
+
+    // Entities that are currently active and reside in the live data set block.
+    SCOPE_LIVE = 0;
+
+
+    // Entities that are no longer active and reside in the archive block.
+    SCOPE_ARCHIVED = 1;
+
+}
+
+// Enum defines all supported relation type that can be used in the facet summary impact calculation.
+enum GrpcFacetRelationType {
+
+  // Logical OR relation.
+  DISJUNCTION = 0;
+  // Logical AND relation.
+  CONJUNCTION = 1;
+  // Logical AND NOT relation.
+  NEGATION = 2;
+  // Exclusive relations to other facets on the same level, when selected no other facet on that level can be selected.
+  EXCLUSIVITY = 3;
+
+}
+
+// Enum defines various level of relationship for which the facet summary calculation rules are defined.
+enum GrpcFacetGroupRelationLevel {
+
+  // Defines relation type between two facets in the same group and reference.
+  WITH_DIFFERENT_FACETS_IN_GROUP = 0;
+
+  // Defines relation type between two facets in the different groups or references.
+  WITH_DIFFERENT_GROUPS = 1;
+
+}
+
+// Enum defines the two modes of traversing a hierarchy when using the `traverseByEntityProperty` ordering constraint.
+enum GrpcTraversalMode {
+
+  // The depth-first traversal mode traverses the hierarchy in a depth-first manner, meaning it will
+  // explore as far as possible along each branch before backtracking.
+  DEPTH_FIRST = 0;
+
+  // The breadth-first traversal mode traverses the hierarchy in a breadth-first manner, meaning it will
+  // explore all the nodes at the present depth level before moving on to the nodes at the next depth level.
+  BREADTH_FIRST = 1;
+
+}
+
+// Enum represents the type of index that should be created and maintained for a reference.
+enum GrpcReferenceIndexType {
+
+  // Reference has no index available.
+  REFERENCE_INDEX_TYPE_NONE = 0;
+
+  // Reference has only basic index available that is necessary for ReferenceHaving constraint interpretation.
+  REFERENCE_INDEX_TYPE_FOR_FILTERING = 1;
+
+  // Reference has basic index available and also partitioning indexes for the main entity type.
+  REFERENCE_INDEX_TYPE_FOR_FILTERING_AND_PARTITIONING = 2;
+
+}
+
+// Enum represents the reference components that should be indexed for a reference.
+enum GrpcReferenceIndexedComponents {
+
+  // The referenced entity itself is indexed.
+  REFERENCE_INDEXED_COMPONENTS_REFERENCED_ENTITY = 0;
+
+  // The referenced group entity is indexed.
+  REFERENCE_INDEXED_COMPONENTS_REFERENCED_GROUP_ENTITY = 1;
+
+}
+
+// Enum represents time flow direction for time-based filtering.
+enum GrpcTimeFlow {
+
+  // Time flows forward - from past to future.
+  AFTER = 0;
+  // Time flows backward - from future to past.
+  BEFORE = 1;
+
+}
+
+// Enum represents the per-item override of the conflict resolution granularity applied to a schema element
+// (attribute, associated data or reference).
+enum GrpcConflictResolutionOverride {
+
+  // The schema element follows the resolved conflict resolution (no explicit override).
+  CONFLICT_RESOLUTION_OVERRIDE_INHERITED = 0;
+  // Conflicts on this schema element are detected at granular (sub-entity) level.
+  CONFLICT_RESOLUTION_OVERRIDE_GRANULAR = 1;
+  // Conflicts on this schema element are detected at whole-entity level.
+  CONFLICT_RESOLUTION_OVERRIDE_ENTITY = 2;
+
+}
+
+// Enum represents the coarse, mutually exclusive scope at which transaction conflicts are detected.
+enum GrpcConflictPolicy {
+
+  // No conflict detection is performed.
+  CONFLICT_POLICY_NONE = 0;
+  // Conflicts are detected at the catalog level.
+  CONFLICT_POLICY_CATALOG = 1;
+  // Conflicts are detected at the entity collection level.
+  CONFLICT_POLICY_COLLECTION = 2;
+  // Conflicts are detected at the entity level.
+  CONFLICT_POLICY_ENTITY = 3;
+
+}
+
+// Enum represents a sub-entity refinement of entity-level conflict detection. Granularity is legal only when the
+// coarse conflict policy is set to entity level.
+enum GrpcGranularConflictPolicy {
+
+  // Conflicts are detected on entity attributes.
+  GRANULAR_CONFLICT_POLICY_ENTITY_ATTRIBUTE = 0;
+  // Conflicts are detected on references.
+  GRANULAR_CONFLICT_POLICY_REFERENCE = 1;
+  // Conflicts are detected on reference attributes.
+  GRANULAR_CONFLICT_POLICY_REFERENCE_ATTRIBUTE = 2;
+  // Conflicts are detected on associated data.
+  GRANULAR_CONFLICT_POLICY_ASSOCIATED_DATA = 3;
+  // Conflicts are detected on prices.
+  GRANULAR_CONFLICT_POLICY_PRICE = 4;
+  // Conflicts are detected on hierarchy placement.
+  GRANULAR_CONFLICT_POLICY_HIERARCHY = 5;
+
+}
+
+// Represents the conflict resolution setting combining the coarse conflict policy scope with an optional set of
+// sub-entity granular refinements. Used as an optional (nullable) field on catalog and entity schemas — an absent
+// message means the schema inherits the resolved conflict resolution.
+message GrpcConflictResolution {
+
+  // The coarse, mutually exclusive scope at which conflicts are detected.
+  GrpcConflictPolicy policy = 1;
+  // The set of sub-entity refinements; non-empty only when policy is set to entity level.
+  repeated GrpcGranularConflictPolicy granularity = 2;
 
 }

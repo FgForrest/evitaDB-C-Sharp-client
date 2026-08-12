@@ -16,6 +16,16 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- The snippet template is embedded in the assembly, so it always matches the build it came from.
+             It used to be fetched from GitHub master into the temp folder and cached there forever, which meant
+             a locally built validator kept compiling snippets against a stale template and template changes
+             appeared to have no effect. Embedding also means the single-file published binary carries it, so
+             copying that one file is enough. LogicalName is set explicitly so the resource name does not depend
+             on RootNamespace. -->
+        <EmbeddedResource Include="evita-csharp-query-template.txt" LogicalName="evita-csharp-query-template.txt"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Google.Protobuf" Version="3.35.1" />
         <PackageReference Include="Grpc.Net.Client" Version="2.83.0" />
         <PackageReference Include="Grpc.Tools" Version="2.83.0">
@@ -24,6 +34,5 @@
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
-        <PackageReference Include="System.CodeDom" Version="10.0.0"/>
     </ItemGroup>
 </Project>

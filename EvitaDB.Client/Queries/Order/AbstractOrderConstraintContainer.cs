@@ -16,6 +16,18 @@ public abstract class AbstractOrderConstraintContainer : ConstraintContainer<IOr
     {
     }
 
+    protected AbstractOrderConstraintContainer(string? name, object?[] arguments, IOrderConstraint?[] children,
+        params IConstraint?[] additionalChildren)
+        : base(name, arguments, children, additionalChildren)
+    {
+    }
+
+    protected AbstractOrderConstraintContainer(object?[] arguments, IOrderConstraint?[] children,
+        params IConstraint?[] additionalChildren)
+        : base(arguments, children, additionalChildren)
+    {
+    }
+
     public override Type Type => typeof(IOrderConstraint);
 
     public override void Accept(IConstraintVisitor visitor)

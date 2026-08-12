@@ -100,9 +100,10 @@ public static class QueryUtils
 
     public static bool ValueDiffers(object? thisValue, object? otherValue)
     {
-        if (thisValue is object[] thisValueArray)
+        // arrays of value types (e.g. DateTimeOffset[]) are not object[], so compare any array element-wise
+        if (thisValue is Array thisValueArray)
         {
-            if (otherValue is not object[] otherValueArray)
+            if (otherValue is not Array otherValueArray)
             {
                 return true;
             }
@@ -114,7 +115,7 @@ public static class QueryUtils
 
             for (int i = 0; i < thisValueArray.Length; i++)
             {
-                if (ValueDiffersInternal(thisValueArray[i], otherValueArray[i]))
+                if (ValueDiffers(thisValueArray.GetValue(i), otherValueArray.GetValue(i)))
                 {
                     return true;
                 }

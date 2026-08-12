@@ -243,7 +243,7 @@ public class ExistingEntityBuilder : IEntityBuilder
 
     public bool DiffersFrom(IEntity? otherObject)
     {
-        return (this as IEntity).DiffersFrom(otherObject);
+        return IEntity.AnyEntityDataDifferBetween(this, otherObject);
     }
 
     public IEntityBuilder RemoveAttribute(string attributeName)

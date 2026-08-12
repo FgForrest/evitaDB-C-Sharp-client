@@ -15,6 +15,19 @@ public abstract class Range<T>
 
     public abstract bool IsWithin(T valueToCheck);
 
+    public override bool Equals(object? o)
+    {
+        if (ReferenceEquals(this, o)) return true;
+        if (o == null || GetType() != o.GetType()) return false;
+        Range<T> otherRange = (Range<T>)o;
+        return From == otherRange.From && To == otherRange.To;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(From, To);
+    }
+
     public bool Overlaps(Range<T> otherRange)
     {
         Assert.IsTrue(GetType() == otherRange.GetType(), $"Ranges {GetType().Name} and {otherRange.GetType().Name} are not comparable!");

@@ -1,0 +1,39 @@
+@inject StorefrontState State
+
+@* Recursive category navigation. `QueriedEntityCount` counts products because the hierarchy is asked for on
+   the Product collection via hierarchyOfReference - see ProductCatalogService.GetCategoryTreeAsync. *@
+<ul class="category-tree">
+    @foreach (LevelInfo level in Levels)
+    {
+        @* NB: never name a local variable `code` here - it would render as the reserved code-block directive. *@
+        string? categoryCode = (level.Entity as ISealedEntity)?.Code();
+        <li>
+            <div class="category-row @(categoryCode is not null && categoryCode == ActiveCode ? "active" : null)">
+                @if (categoryCode is null)
+                {
+                    <span>@level.Entity.DisplayName(State.Locale)</span>
+                }
+                else
+                {
+                    <a href="category/@categoryCode">@level.Entity.DisplayName(State.Locale)</a>
+                }
+                @if (level.QueriedEntityCount is not null)
+                {
+                    <span class="count">@level.QueriedEntityCount</span>
+                }
+            </div>
+            @if (level.Children.Count > 0)
+            {
+                <CategoryTree Levels="level.Children" ActiveCode="@ActiveCode"/>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+
+    [Parameter, EditorRequired] public IReadOnlyList<LevelInfo> Levels { get; set; } = [];
+
+    [Parameter] public string? ActiveCode { get; set; }
+
+}

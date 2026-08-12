@@ -5,6 +5,7 @@ using EvitaDB.Client.Models;
 using EvitaDB.Client.Models.Data;
 using EvitaDB.Client.Models.ExtraResults;
 using EvitaDB.Client.Models.Schemas;
+using EvitaDB.QueryValidator.Serialization.Json;
 using EvitaDB.QueryValidator.Serialization.Json.Binders;
 using EvitaDB.QueryValidator.Serialization.Json.Converters;
 using EvitaDB.QueryValidator.Serialization.Json.Resolvers;
@@ -19,7 +20,6 @@ namespace EvitaDB.QueryValidator;
 
 public static partial class Program
 {
-    private const string TempFolderName = "evita-query-validator";
     private const string QueryReplacementFileName = "evita-csharp-query-template.txt";
     private static readonly Regex TheQueryReplacement = QueryReplacementRegex();
 
@@ -50,8 +50,57 @@ public static partial class Program
         )
     };
 
-    private static readonly string QueryReplacementPath =
-        Path.Combine(Path.GetTempPath(), TempFolderName, QueryReplacementFileName);
+    /// <summary>
+    /// Serializes with <see cref="JsonSettings"/> through <see cref="JavaStyleJsonTextWriter"/>, so the
+    /// output matches the Jackson-formatted fixtures the evitaDB documentation tests compare against
+    /// (`"key" : value`, with a space before the separator).
+    /// </summary>
+    private static string SerializeJson(object? value)
+    {
+        using StringWriter stringWriter = new(System.Globalization.CultureInfo.InvariantCulture);
+        using (JavaStyleJsonTextWriter jsonWriter = new(stringWriter) { Formatting = JsonSettings.Formatting })
+        {
+            JsonSerializer.Create(JsonSettings).Serialize(jsonWriter, value);
+        }
+        return stringWriter.ToString();
+    }
+
+    /// <summary>
+    /// Environment variable pointing at a template file to use instead of the embedded one. Only for trying out
+    /// template changes against an already-built validator - normal runs use the embedded template.
+    /// </summary>
+    private const string TemplateOverrideVariable = "EVITA_QUERY_VALIDATOR_TEMPLATE";
+
+    /// <summary>
+    /// Reads the snippet template that this build was compiled with.
+    ///
+    /// The template is an embedded resource rather than a file, because it has to stay in lockstep with the
+    /// binary: a snippet referencing a constraint or a `using` that the template does not declare simply fails
+    /// to compile. It used to be downloaded from GitHub `master` into the temp folder and cached there forever,
+    /// so a locally built validator kept using whatever template was cached first and template changes silently
+    /// had no effect. Embedding also means the single-file published binary carries the template, so deploying
+    /// the validator is a single-file copy.
+    /// </summary>
+    private static async Task<string[]> ReadQueryTemplateAsync()
+    {
+        string? overridePath = Environment.GetEnvironmentVariable(TemplateOverrideVariable);
+        if (!string.IsNullOrEmpty(overridePath))
+        {
+            return await File.ReadAllLinesAsync(overridePath);
+        }
+
+        await using Stream? resource = typeof(Program).Assembly
+            .GetManifestResourceStream(QueryReplacementFileName);
+        if (resource is null)
+        {
+            throw new InvalidOperationException(
+                $"Embedded query template `{QueryReplacementFileName}` is missing from the validator assembly.");
+        }
+
+        using StreamReader reader = new(resource);
+        string content = await reader.ReadToEndAsync();
+        return content.Split('\n').Select(theLine => theLine.TrimEnd('\r')).ToArray();
+    }
 
     public static async Task Main(string[] args)
     {
@@ -60,13 +109,7 @@ public static partial class Program
         string outputFormat = args.Length > 2 ? args[2] : throw new ArgumentException("Output format is required!");
         string? sourceVariable = args.Length > 3 ? args[3] : null;
 
-        if (!File.Exists(QueryReplacementPath))
-        {
-            Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), TempFolderName));
-            DownloadQueryTemplate();
-        }
-
-        string[] templateLines = await File.ReadAllLinesAsync(QueryReplacementPath);
+        string[] templateLines = await ReadQueryTemplateAsync();
 
         string code = string.Join('\n', templateLines
             .Select(theLine =>
@@ -145,7 +188,7 @@ public static partial class Program
                             object? value =
                                 ResponseSerializerUtils.ExtractValueFrom(responseAndEntitySchema.response,
                                     sourceVariable.Split('.'));
-                            string stringSerialized = JsonConvert.SerializeObject(value, JsonSettings);
+                            string stringSerialized = SerializeJson(value);
                             serializedOutput = WrapSerializedOutputInCodeBlock("json", stringSerialized);
                             break;
                         }
@@ -199,19 +242,6 @@ public static partial class Program
         int firstDoubleQuote = text.IndexOf('"');
         int secondDoubleQuote = text.IndexOf('"', firstDoubleQuote + 1);
         return text.Substring(firstDoubleQuote + 1, secondDoubleQuote - firstDoubleQuote - 1);
-    }
-
-    private static void DownloadQueryTemplate()
-    {
-        using HttpClient client = new HttpClient();
-        HttpResponseMessage response = client
-            .GetAsync(
-                $"https://raw.githubusercontent.com/FgForrest/evitaDB-C-Sharp-client/master/EvitaDB.QueryValidator/{QueryReplacementFileName}")
-            .GetAwaiter().GetResult();
-        response.EnsureSuccessStatusCode();
-        using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult(),
-            stream = new FileStream(QueryReplacementPath, FileMode.Create);
-        contentStream.CopyTo(stream);
     }
 
     private static string WrapSerializedOutputInCodeBlock(string codeBlockLang, string serializedOutput)

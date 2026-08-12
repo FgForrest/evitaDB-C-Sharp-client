@@ -3,5 +3,16 @@
 public enum CatalogState
 {
     WarmingUp,
-    Alive
+    Alive,
+    UnknownCatalogState,
+    Corrupted,
+    Inactive,
+    GoingAlive,
+    BeingActivated,
+    BeingDeactivated,
+    BeingCreated,
+    BeingDeleted,
+    Missing,
+    OutOfDate,
+    BeingUpgraded
 }

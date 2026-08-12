@@ -108,6 +108,45 @@ public static class ResponseConverter
             );
         }
 
+        // Two wire fields carry the same information, chosen by which requirement the query used:
+        // `referenceSummary` answers with `referenceGroupStatistics`, while the older `facetSummary` answers
+        // with the deprecated `facetGroupStatistics`. Both are folded into one FacetSummary extra result, so
+        // callers read the response the same way whichever constraint they wrote.
+        if (extraResults.ReferenceGroupStatistics.Count > 0)
+        {
+            ReferenceSummary? referenceSummaryDefaults = QueryUtils.FindRequire<ReferenceSummary>(query);
+            EntityFetch? defaultReferenceEntityFetch = referenceSummaryDefaults?.FacetEntityRequirement;
+            EntityGroupFetch? defaultReferenceGroupFetch = referenceSummaryDefaults?.GroupEntityRequirement;
+
+            Dictionary<string, ReferenceSummaryOfReference> referenceSummaryRequestIndex =
+                QueryUtils.FindRequires<ReferenceSummaryOfReference>(query)
+                    .ToDictionary(x => x.ReferenceName, x => x);
+
+            extraResultList.Add(new Client.Models.ExtraResults.FacetSummary(
+                extraResults.ReferenceGroupStatistics.Select(it =>
+                {
+                    EntityFetch? entityFetch;
+                    EntityGroupFetch? entityGroupFetch;
+                    if (referenceSummaryRequestIndex.TryGetValue(it.ReferenceName,
+                            out ReferenceSummaryOfReference? referenceSummaryOfReference))
+                    {
+                        entityFetch = referenceSummaryOfReference.FacetEntityRequirement
+                                      ?? defaultReferenceEntityFetch;
+                        entityGroupFetch = referenceSummaryOfReference.GroupEntityRequirement
+                                           ?? defaultReferenceGroupFetch;
+                    }
+                    else
+                    {
+                        entityFetch = defaultReferenceEntityFetch;
+                        entityGroupFetch = defaultReferenceGroupFetch;
+                    }
+
+                    return ToFacetGroupStatistics(entitySchemaFetcher, evitaRequest, entityFetch, entityGroupFetch, it);
+                }).ToList()
+            ));
+        }
+
+#pragma warning disable CS0612 // the deprecated wire message is still produced for `facetSummary` queries
         if (extraResults.FacetGroupStatistics.Count > 0)
         {
             FacetSummary? facetSummaryRequirementsDefaults = QueryUtils.FindRequire<FacetSummary>(query);
@@ -140,8 +179,39 @@ public static class ResponseConverter
                 }).ToList()
             ));
         }
+#pragma warning restore CS0612
 
         return extraResultList.ToArray();
+    }
+
+    /// <summary>
+    /// Converts the `referenceSummary` form of the group statistics. `GrpcReferenceGroupStatistics` carries
+    /// the same fields as its deprecated predecessor plus per-group histogram statistics, which the C# extra
+    /// result does not model yet - the shared fields are converted identically.
+    /// </summary>
+    private static FacetGroupStatistics ToFacetGroupStatistics(
+        Func<GrpcSealedEntity, ISealedEntitySchema> entitySchemaFetcher,
+        EvitaRequest evitaRequest,
+        EntityFetch? entityFetch,
+        EntityGroupFetch? entityGroupFetch,
+        GrpcReferenceGroupStatistics grpcReferenceGroupStatistics
+    )
+    {
+        return new FacetGroupStatistics(
+            grpcReferenceGroupStatistics.ReferenceName,
+            grpcReferenceGroupStatistics.GroupEntity is not null
+                ? EntityConverter.ToEntity<ISealedEntity>(entitySchemaFetcher,
+                    grpcReferenceGroupStatistics.GroupEntity,
+                    evitaRequest.DeriveCopyWith(grpcReferenceGroupStatistics.GroupEntity.EntityType,
+                        entityGroupFetch!))
+                : grpcReferenceGroupStatistics.GroupEntityReference is not null
+                    ? EntityConverter.ToEntityReference(grpcReferenceGroupStatistics.GroupEntityReference)
+                    : null,
+            grpcReferenceGroupStatistics.Count,
+            grpcReferenceGroupStatistics.FacetStatistics
+                .Select(x => ToFacetStatistics(entitySchemaFetcher, evitaRequest, entityFetch, x))
+                .ToDictionary(x => x.FacetEntity.PrimaryKey!.Value, x => x)
+        );
     }
 
     private static FacetGroupStatistics ToFacetGroupStatistics(
@@ -149,7 +219,9 @@ public static class ResponseConverter
         EvitaRequest evitaRequest,
         EntityFetch? entityFetch,
         EntityGroupFetch? entityGroupFetch,
+#pragma warning disable CS0612 // the deprecated wire message is still produced for `facetSummary` queries
         GrpcFacetGroupStatistics grpcFacetGroupStatistics
+#pragma warning restore CS0612
     )
     {
         return new FacetGroupStatistics(
@@ -266,7 +338,10 @@ public static class ResponseConverter
         return new Bucket(
             EvitaDataTypesConverter.ToDecimal(grpcBucket.Threshold),
             grpcBucket.Occurrences,
-            grpcBucket.Requested
+            grpcBucket.Requested,
+            grpcBucket.RelativeFrequency is null
+                ? 0m
+                : EvitaDataTypesConverter.ToDecimal(grpcBucket.RelativeFrequency)
         );
     }
 }

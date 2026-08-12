@@ -13,5 +13,9 @@ public enum FacetStatisticsDepth
     /// <summary>
     /// Counts and selection impact for non-selected facets will be computed.
     /// </summary>
-    Impact
+    Impact,
+    /// <summary>
+    /// No facet statistics are computed at all.
+    /// </summary>
+    None
 }

@@ -7,18 +7,32 @@ namespace EvitaDB.Client.Models.Schemas.Builders;
 
 public static class SchemaBuilderHelper
 {
-    public static InternalCatalogSchemaBuilder.MutationImpact AddMutations<T>(
+    public static InternalCatalogSchemaBuilder.MutationImpact AddMutations(
         ICatalogSchema currentCatalogSchema,
         IList<ILocalCatalogSchemaMutation> existingMutations,
         params ILocalCatalogSchemaMutation[] newMutations
-    ) where T : ISchemaMutation
+    )
     {
         int existingMutationsCount = existingMutations.Count;
         foreach (ILocalCatalogSchemaMutation localCatalogSchemaMutation in newMutations)
         {
             existingMutations.Add(localCatalogSchemaMutation);
         }
-        return existingMutationsCount < existingMutations.Count;
+        return existingMutationsCount < existingMutations.Count
+            ? InternalCatalogSchemaBuilder.MutationImpact.Added
+            : InternalCatalogSchemaBuilder.MutationImpact.NoImpact;
+    }
+
+    /**
+     * Method updates the impact of the mutation on the schema but only if the impact is more significant than
+     * the existing one.
+     */
+    public static InternalCatalogSchemaBuilder.MutationImpact UpdateMutationImpact(
+        InternalCatalogSchemaBuilder.MutationImpact existingImpactLevel,
+        InternalCatalogSchemaBuilder.MutationImpact newImpactLevel
+    )
+    {
+        return existingImpactLevel < newImpactLevel ? newImpactLevel : existingImpactLevel;
     }
 
     public static bool AddMutations(

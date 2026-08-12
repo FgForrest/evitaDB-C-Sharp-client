@@ -20,15 +20,12 @@ public static partial class MarkdownConverter
         { new CultureInfo("en"), "\uD83C\uDDEC\uD83C\uDDE7" },
         { new CultureInfo("de"), "\uD83C\uDDE9\uD83C\uDDEA" }
     };
-    
+
     private static readonly IDictionary<string, string> CurrencySymbols = new Dictionary<string, string>
     {
-        { "CZK", "Kč" },
-        { "USD", "$" },
-        { "GBP", "£" },
-        { "EUR", "€" }
+        { "CZK", "Kč" }, { "USD", "$" }, { "GBP", "£" }, { "EUR", "€" }
     };
-    
+
     private const string PredecessorHeadSymbol = "⎆";
     private const string PredecessorSymbol = "↻ ";
 
@@ -57,11 +54,6 @@ public static partial class MarkdownConverter
                                   .Any(filterBy => QueryUtils.FindConstraint<EntityLocaleEquals>(filterBy) != null) ||
                               query.Require is not null && query.Require
                                   .Any(require => QueryUtils.FindConstraint<DataInLocales>(require) != null);
-        bool allPriceForSaleConstraintsSet = query.FilterBy is not null &&
-                                             QueryUtils.FindConstraint<PriceInPriceLists>(query.FilterBy) is not null &&
-                                             QueryUtils.FindConstraint<PriceInCurrency>(query.FilterBy) is not null &&
-                                             QueryUtils.FindConstraint<PriceValidIn>(query.FilterBy) is not null;
-
         // collect headers for the MarkDown table
         List<string> headers = new List<string> { EntityPrimaryKey };
         if (entityFetch is not null)
@@ -89,10 +81,9 @@ public static partial class MarkdownConverter
                                 attributeNames =
                                     (localizedQuery ? attributes.Where(attr => attr.Localized()) : attributes)
                                     .Select(attr => attr.Name)
-                                    .Where(
-                                        attrName => response.RecordData
-                                            .SelectMany(entity => entity.GetReferences(referenceSchema.Name))
-                                            .Any(reference => reference.GetAttributeValue(attrName) is not null)
+                                    .Where(attrName => response.RecordData
+                                        .SelectMany(entity => entity.GetReferences(referenceSchema.Name))
+                                        .Any(reference => reference.GetAttributeValue(attrName) is not null)
                                     );
                             }
                             else
@@ -101,8 +92,7 @@ public static partial class MarkdownConverter
                             }
 
                             return attributeNames
-                                .SelectMany(
-                                    attrName => TransformLocalizedAttributes(
+                                .SelectMany(attrName => TransformLocalizedAttributes(
                                         () => response.RecordData, attrName, entitySchema.Locales, referenceSchema,
                                         entity => entity.GetReferences(referenceSchema.Name),
                                         RefLink + referenceSchema.Name + AttrLink
@@ -127,9 +117,13 @@ public static partial class MarkdownConverter
                 {
                     if (priceCnt.FetchMode == PriceContentMode.RespectingFilter)
                     {
-                        return allPriceForSaleConstraintsSet
+                        // Decided from the data, not from which price constraints the query happens to carry.
+                        // Guessing from the constraints rendered a "Price for sale" column full of N/A whenever
+                        // the query omitted `priceValidIn` even though a selling price was resolved anyway - and
+                        // conversely never dropped that column when no row had one.
+                        return AnyPriceForSale(response)
                             ? new List<string> { PriceForSale }
-                            : new List<string> { PriceForSale, Prices };
+                            : new List<string> { Prices };
                     }
 
                     return new List<string>();
@@ -146,8 +140,8 @@ public static partial class MarkdownConverter
         CultureInfo? locale = query.FilterBy?
             .Select(QueryUtils.FindConstraint<EntityLocaleEquals>)
             .Select(f => f?.Locale)
-            .FirstOrDefault() ?? Locales.Keys.FirstOrDefault(x=>x.Name == "en-US");
-        
+            .FirstOrDefault() ?? Locales.Keys.FirstOrDefault(x => x.Name == "en-US");
+
         string currency = query.FilterBy?
             .Select(QueryUtils.FindConstraint<PriceInCurrency>)
             .Select(f =>
@@ -211,12 +205,13 @@ public static partial class MarkdownConverter
 
                     if (header == PriceForSale)
                     {
-                        return sealedEntity.PriceForSale is not null
+                        IPrice? priceForSale = TryGetPriceForSale(sealedEntity);
+                        return priceForSale is not null
                             ? PriceLink +
-                              $"{currency}{sealedEntity.PriceForSale.PriceWithTax:N2}" +
+                              currency + FormatNumber(priceForSale.PriceWithTax) +
                               " (with " +
-                              decimal.Parse(sealedEntity.PriceForSale.TaxRate.ToString("0.#########")) + "%" +
-                              " tax) / " + $"{currency}{sealedEntity.PriceForSale.PriceWithoutTax:N2}"
+                              FormatTaxRate(priceForSale.TaxRate) + "%" +
+                              " tax) / " + currency + FormatNumber(priceForSale.PriceWithoutTax)
                             : "N/A";
                     }
 
@@ -230,7 +225,7 @@ public static partial class MarkdownConverter
 
                         return string.Join(", ",
                                    prices.Take(3).Select(price =>
-                                       PriceLink + $"{currency}{price.PriceWithTax:N2}")) +
+                                       PriceLink + currency + FormatNumber(price.PriceWithTax))) +
                                (prices.Count > 3 ? $" ... and {prices.Count - 3} other prices" : "");
                     }
 
@@ -284,8 +279,7 @@ public static partial class MarkdownConverter
             }
             .Concat(
                 QueryUtils.FindConstraints<EntityFetch, ISeparateEntityContentRequireContainer>(referenceContent)
-                    .SelectMany(
-                        refEntity => GetEntityHeaders(
+                    .SelectMany(refEntity => GetEntityHeaders(
                             refEntity,
                             () => response.RecordData
                                 .SelectMany(theEntity => theEntity.GetReferences(referenceSchema.Name))
@@ -320,8 +314,7 @@ public static partial class MarkdownConverter
 
                 return attributeContent.GetAttributeNames();
             })
-            .SelectMany(
-                attributeName => TransformLocalizedAttributes(
+            .SelectMany(attributeName => TransformLocalizedAttributes(
                     entityCollectionAccessor, attributeName, entitySchema.Locales, entitySchema, x => new[] { x },
                     prefix
                 )
@@ -364,11 +357,51 @@ public static partial class MarkdownConverter
         return prefix is null ? new[] { attributeName } : new[] { prefix + attributeName };
     }
 
+    /// <summary>
+    /// Formats a decimal for the rendered document: `.` as the decimal separator and `,` grouping thousands,
+    /// e.g. `31,234.57`. Pinned to the invariant culture on purpose - without it the output followed whatever
+    /// locale the machine running the validator happened to have, so the same query rendered `30.00` on one
+    /// machine and `30,00` on another and the documentation fixtures could never match both.
+    /// </summary>
+    /// <summary>
+    /// True when at least one returned entity actually resolved a selling price. `PriceForSale` throws
+    /// <c>ContextMissingException</c> when the query carries no price context, so the probe is guarded -
+    /// an entity that cannot answer simply counts as having none.
+    /// </summary>
+    private static bool AnyPriceForSale(EvitaResponse<ISealedEntity> response) =>
+        response.RecordData.Any(entity => TryGetPriceForSale(entity) is not null);
+
+    private static IPrice? TryGetPriceForSale(ISealedEntity entity)
+    {
+        try
+        {
+            return entity.PricesAvailable() ? entity.PriceForSale : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static string FormatNumber(decimal value) => value.ToString("N2", CultureInfo.InvariantCulture);
+
+    /// <summary>Tax rate without trailing zeros - `21` rather than `21.00`.</summary>
+    private static string FormatTaxRate(decimal value) =>
+        value.ToString("0.#########", CultureInfo.InvariantCulture);
+
     private static string FormatValue(object? value)
     {
         if (value is Predecessor predecessor)
         {
-            return (predecessor as IChainableType).IsHead ? PredecessorHeadSymbol : PredecessorSymbol + predecessor.PredecessorPk;
+            return (predecessor as IChainableType).IsHead
+                ? PredecessorHeadSymbol
+                : PredecessorSymbol + predecessor.PredecessorPk;
+        }
+
+        // arrays are rendered element-wise; EvitaDataTypes.FormatValue only knows scalars and would throw
+        if (value is Array array)
+        {
+            return "[" + string.Join(", ", array.Cast<object?>().Select(FormatValue)) + "]";
         }
 
         return EvitaDataTypes.FormatValue(value);

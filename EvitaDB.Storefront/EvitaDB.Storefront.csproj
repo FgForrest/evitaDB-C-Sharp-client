@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <!--
+          Deliberately NOT trimmed: the driver pulls Newtonsoft.Json (reflection-heavy complex data object
+          conversion) and the OpenTelemetry OTLP exporter. Trimming them safely is a rabbit hole with no payoff
+          for a demo; the cost is a larger download.
+        -->
+        <PublishTrimmed>false</PublishTrimmed>
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <!--
+          The driver builds with TreatWarningsAsErrors; this demo does not, so that an unused-parameter warning
+          in a .razor file never blocks running the sample.
+        -->
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+        <!-- gRPC-Web transport: the browser cannot speak plain gRPC over HTTP/2. -->
+        <PackageReference Include="Grpc.Net.Client.Web" Version="2.83.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- local driver, not the NuGet package -->
+        <ProjectReference Include="..\EvitaDB.Client\EvitaDB.Client.csproj" />
+    </ItemGroup>
+
+</Project>

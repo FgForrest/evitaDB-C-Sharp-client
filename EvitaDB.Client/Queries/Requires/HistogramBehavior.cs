@@ -14,5 +14,14 @@ public enum HistogramBehavior
     /// there would be big gaps (empty buckets) between buckets. This leads to more compact histograms, which provide
     /// better user experience.
     /// </summary>
-    Optimized
+    Optimized,
+    /// <summary>
+    /// Histogram buckets are computed so that they contain roughly the same number of records.
+    /// </summary>
+    Equalized,
+    /// <summary>
+    /// Combination of <see cref="Equalized"/> and <see cref="Optimized"/> - equalized buckets that may be fewer
+    /// than requested when the data doesn't fill them.
+    /// </summary>
+    EqualizedOptimized
 }

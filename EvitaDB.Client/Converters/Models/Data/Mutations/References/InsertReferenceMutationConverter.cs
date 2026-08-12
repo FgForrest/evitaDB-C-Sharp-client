@@ -12,7 +12,8 @@ public class InsertReferenceMutationConverter : ILocalMutationConverter<InsertRe
             ReferenceName = mutation.ReferenceKey.ReferenceName,
             ReferencePrimaryKey = mutation.ReferenceKey.PrimaryKey,
             ReferenceCardinality = EvitaEnumConverter.ToGrpcCardinality(mutation.ReferenceCardinality),
-            ReferencedEntityType = mutation.ReferencedEntityType
+            ReferencedEntityType = mutation.ReferencedEntityType,
+            InternalPrimaryKey = mutation.InternalPrimaryKey
         };
 
         return grpcInsertReferenceMutation;
@@ -24,6 +25,6 @@ public class InsertReferenceMutationConverter : ILocalMutationConverter<InsertRe
             new ReferenceKey(mutation.ReferenceName, mutation.ReferencePrimaryKey),
             EvitaEnumConverter.ToCardinality(mutation.ReferenceCardinality),
             mutation.ReferencedEntityType
-        );
+        ) { InternalPrimaryKey = mutation.InternalPrimaryKey };
     }
 }

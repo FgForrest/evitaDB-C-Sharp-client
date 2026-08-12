@@ -32,7 +32,7 @@ public record ComplexDataObject
 
     public virtual bool Equals(ComplexDataObject? other)
     {
-        if (this == other) return true;
+        if (ReferenceEquals(this, other)) return true;
         if (other is null || GetType() != other.GetType()) return false;
         return Equals(Root, other.Root);
     }

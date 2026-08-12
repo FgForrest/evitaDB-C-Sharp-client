@@ -139,6 +139,44 @@ public class EvitaEntitySchemaCache
         );
     }
 
+    /// <summary>
+    /// Stores an externally fetched entity schema under <b>both</b> cache keys - the versioned one used when
+    /// converting query responses (<see cref="GetEntitySchema(string,int,System.Func{string,EntitySchema?})"/>) and
+    /// the "latest" one used by <see cref="GetLatestEntitySchema"/>.
+    ///
+    /// <see cref="SetLatestEntitySchema"/> populates only the latter, which is not enough to keep the response
+    /// conversion path from calling its (blocking) schema accessor. Hosts that cannot block - Blazor WebAssembly -
+    /// prime the cache through this method with schemas fetched asynchronously, so the accessor is never invoked.
+    /// </summary>
+    public void SetEntitySchema(EntitySchema entitySchema)
+    {
+        SchemaWrapper wrapper = new SchemaWrapper(entitySchema, CurrentTimeMillis());
+        CachedSchemas.AddOrUpdate(
+            new EntitySchemaWithVersion(entitySchema.Name, entitySchema.Version),
+            wrapper,
+            (_, _) => wrapper
+        );
+        CachedSchemas.AddOrUpdate(
+            new LatestEntitySchema(entitySchema.Name),
+            wrapper,
+            (_, _) => wrapper
+        );
+    }
+
+    /// <summary>
+    /// Stores an externally fetched catalog schema. Counterpart of <see cref="SetEntitySchema"/> for the catalog
+    /// schema, which <see cref="GetLatestCatalogSchema"/> would otherwise fetch through a blocking accessor.
+    /// </summary>
+    public void SetCatalogSchema(CatalogSchema catalogSchema)
+    {
+        SchemaWrapper wrapper = new SchemaWrapper(catalogSchema, CurrentTimeMillis());
+        CachedSchemas.AddOrUpdate(
+            LatestCatalogSchema.Instance,
+            wrapper,
+            (_, _) => wrapper
+        );
+    }
+
     /**
      * Method resets tha last known {@link EntitySchemaContract} to NULL. This will force to fetch actual schema from
      * the server side next time, it's asked for it.

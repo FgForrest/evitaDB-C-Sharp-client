@@ -28,7 +28,10 @@ public class AttributeSetInFilter : AbstractOrderConstraintLeaf
     {
     }
     
-    public AttributeSetInFilter(string attributeName) : base(attributeName)
+    // NOTE: `base(attributeName)` would bind to AbstractOrderConstraintLeaf(string? name, params object?[])
+    // and consume the attribute name as the *constraint* name, serializing as `code()` instead of
+    // `attributeSetInFilter('code')` - same trap as in AttributeNatural.
+    public AttributeSetInFilter(string attributeName) : this(new object?[] { attributeName })
     {
     }
     

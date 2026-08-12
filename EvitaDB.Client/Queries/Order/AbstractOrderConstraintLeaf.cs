@@ -8,6 +8,10 @@ public class AbstractOrderConstraintLeaf : ConstraintLeaf, IOrderConstraint
     protected AbstractOrderConstraintLeaf(params object?[] arguments) : base(arguments)
     {
     }
+
+    protected AbstractOrderConstraintLeaf(string? name, params object?[] arguments) : base(name, arguments)
+    {
+    }
     public override void Accept(IConstraintVisitor visitor)
     {
         visitor.Visit(this);

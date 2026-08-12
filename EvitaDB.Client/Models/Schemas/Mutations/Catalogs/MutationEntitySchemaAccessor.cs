@@ -56,7 +56,9 @@ public class MutationEntitySchemaAccessor : IEntitySchemaProvider
                 EntitySchemas = new Dictionary<string, IEntitySchema?>(8);
             }
 
-            EntitySchemas.Add(entitySchema.Name, entitySchema);
+            // the indexer keeps the operation idempotent - the catalog schema builder may reapply its mutation
+            // list multiple times when materializing the updated schema
+            EntitySchemas[entitySchema.Name] = entitySchema;
         }
     }
 
@@ -100,7 +102,7 @@ public class MutationEntitySchemaAccessor : IEntitySchemaProvider
                 RemovedEntitySchemas = new HashSet<string>();
             }
 
-            EntitySchemas.Add(entitySchema.Name, entitySchema);
+            EntitySchemas[entitySchema.Name] = entitySchema;
             if (BaseAccessor.GetEntitySchema(oldName) is not null)
             {
                 RemovedEntitySchemas.Add(oldName);

@@ -54,7 +54,7 @@ public class GlobalAttributeSchemaBuilder :
             CatalogSchema!,
             Mutations,
             (ILocalCatalogSchemaMutation) mutation
-        );
+        ) != InternalCatalogSchemaBuilder.MutationImpact.NoImpact;
     }
 
     public override ICollection<IAttributeSchemaMutation> ToAttributeMutation()

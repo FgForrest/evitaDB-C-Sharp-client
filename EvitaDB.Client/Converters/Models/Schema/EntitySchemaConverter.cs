@@ -67,7 +67,7 @@ public static class EntitySchemaConverter
 
     private static T ToAttributeSchema<T>(GrpcAttributeSchema attributeSchema) where T : class, IAttributeSchema
     {
-        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.Global)
+        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.GlobalSchema)
         {
             if (typeof(T).IsAssignableFrom(typeof(GlobalAttributeSchema)))
             {
@@ -76,10 +76,16 @@ public static class EntitySchemaConverter
                     NamingConventionHelper.Generate(attributeSchema.Name),
                     string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
                     string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
-                    EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGlobally),
-                    attributeSchema.Filterable,
-                    attributeSchema.Sortable,
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.UniqueInScopes,
+                        attributeSchema.Unique),
+                    EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGloballyInScopes,
+                        attributeSchema.UniqueGlobally),
+                    EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.FilterableInScopes,
+                        attributeSchema.Filterable),
+                    EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.SortableInScopes,
+                        attributeSchema.Sortable),
+#pragma warning restore CS0612
                     attributeSchema.Localized,
                     attributeSchema.Nullable,
                     attributeSchema.Representative,
@@ -95,7 +101,7 @@ public static class EntitySchemaConverter
                                                  "` was provided!");
         }
 
-        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.Entity)
+        if (attributeSchema.SchemaType == GrpcAttributeSchemaType.EntitySchema)
         {
             if (typeof(T).IsAssignableFrom(typeof(IEntityAttributeSchema)))
             {
@@ -104,9 +110,14 @@ public static class EntitySchemaConverter
                     NamingConventionHelper.Generate(attributeSchema.Name),
                     string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
                     string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
-                    attributeSchema.Filterable,
-                    attributeSchema.Sortable,
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+                    EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.UniqueInScopes,
+                        attributeSchema.Unique),
+                    EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.FilterableInScopes,
+                        attributeSchema.Filterable),
+                    EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.SortableInScopes,
+                        attributeSchema.Sortable),
+#pragma warning restore CS0612
                     attributeSchema.Localized,
                     attributeSchema.Nullable,
                     attributeSchema.Representative,
@@ -127,9 +138,14 @@ public static class EntitySchemaConverter
             NamingConventionHelper.Generate(attributeSchema.Name),
             string.IsNullOrEmpty(attributeSchema.Description) ? null : attributeSchema.Description,
             string.IsNullOrEmpty(attributeSchema.DeprecationNotice) ? null : attributeSchema.DeprecationNotice,
-            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
-            attributeSchema.Filterable,
-            attributeSchema.Sortable,
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.UniqueInScopes,
+                attributeSchema.Unique),
+            EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.FilterableInScopes,
+                attributeSchema.Filterable),
+            EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.SortableInScopes,
+                attributeSchema.Sortable),
+#pragma warning restore CS0612
             attributeSchema.Localized,
             attributeSchema.Nullable,
             EvitaDataTypesConverter.ToEvitaDataType(attributeSchema.Type),
@@ -174,8 +190,11 @@ public static class EntitySchemaConverter
                 ? new Dictionary<NamingConvention, string?>()
                 : NamingConventionHelper.Generate(referenceSchema.GroupType),
             referenceSchema.ReferencedGroupTypeManaged,
-            referenceSchema.Indexed,
-            referenceSchema.Faceted,
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2025.6 / 2024.12
+            EvitaEnumConverter.ToReferenceIndexedFlag(referenceSchema.ScopedIndexTypes,
+                referenceSchema.IndexedInScopes, referenceSchema.Indexed),
+            EvitaEnumConverter.ToScopedBooleanFlag(referenceSchema.FacetedInScopes, referenceSchema.Faceted),
+#pragma warning restore CS0612
             referenceSchema.Attributes.ToDictionary(
                 x => x.Key,
                 x => ToAttributeSchema<IAttributeSchema>(x.Value)
@@ -265,9 +284,11 @@ public static class EntitySchemaConverter
         GrpcAttributeSchema grpcAttributeSchema = new GrpcAttributeSchema
         {
             Name = attributeSchema.Name,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
             Filterable = attributeSchema.Filterable(),
             Sortable = attributeSchema.Sortable(),
+#pragma warning restore CS0612
             Localized = attributeSchema.Localized(),
             Nullable = attributeSchema.Nullable(),
             Type = EvitaDataTypesConverter.ToGrpcEvitaDataType(attributeSchema.Type),
@@ -289,8 +310,38 @@ public static class EntitySchemaConverter
         {
             IGlobalAttributeSchema globalAttributeSchema = (IGlobalAttributeSchema)attributeSchema;
             grpcAttributeSchema.Representative = globalAttributeSchema.Representative;
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             grpcAttributeSchema.UniqueGlobally =
                 EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(globalAttributeSchema.GlobalUniquenessType);
+#pragma warning restore CS0612
+            if (globalAttributeSchema.GlobalUniquenessType != GlobalAttributeUniquenessType.NotUnique)
+            {
+                grpcAttributeSchema.UniqueGloballyInScopes.Add(new GrpcScopedGlobalAttributeUniquenessType
+                {
+                    Scope = GrpcEntityScope.ScopeLive,
+                    UniquenessType = EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(
+                        globalAttributeSchema.GlobalUniquenessType)
+                });
+            }
+        }
+
+        if (attributeSchema.UniquenessType != AttributeUniquenessType.NotUnique)
+        {
+            grpcAttributeSchema.UniqueInScopes.Add(new GrpcScopedAttributeUniquenessType
+            {
+                Scope = GrpcEntityScope.ScopeLive,
+                UniquenessType = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType)
+            });
+        }
+
+        if (attributeSchema.Filterable())
+        {
+            grpcAttributeSchema.FilterableInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        if (attributeSchema.Sortable())
+        {
+            grpcAttributeSchema.SortableInScopes.Add(GrpcEntityScope.ScopeLive);
         }
 
         return grpcAttributeSchema;
@@ -336,7 +387,7 @@ public static class EntitySchemaConverter
 
     private static GrpcReferenceSchema ToGrpcReferenceSchema(IReferenceSchema referenceSchema)
     {
-        return new GrpcReferenceSchema
+        GrpcReferenceSchema grpcReferenceSchema = new GrpcReferenceSchema
         {
             Name = referenceSchema.Name,
             Cardinality = EvitaEnumConverter.ToGrpcCardinality(referenceSchema.Cardinality),
@@ -344,8 +395,10 @@ public static class EntitySchemaConverter
             ReferencedEntityTypeManaged = referenceSchema.ReferencedEntityTypeManaged,
             GroupType = referenceSchema.ReferencedGroupType,
             ReferencedGroupTypeManaged = referenceSchema.ReferencedGroupTypeManaged,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Indexed = referenceSchema.IsIndexed,
             Faceted = referenceSchema.IsFaceted,
+#pragma warning restore CS0612
             Attributes = { ToGrpcAttributeSchemas(referenceSchema.GetAttributes()) },
             SortableAttributeCompounds =
             {
@@ -354,5 +407,24 @@ public static class EntitySchemaConverter
             Description = referenceSchema.Description,
             DeprecationNotice = referenceSchema.DeprecationNotice
         };
+
+        if (referenceSchema.IsIndexed)
+        {
+#pragma warning disable CS0612 // the deprecated scope list is dual-written for servers older than 2025.6
+            grpcReferenceSchema.IndexedInScopes.Add(GrpcEntityScope.ScopeLive);
+#pragma warning restore CS0612
+            grpcReferenceSchema.ScopedIndexTypes.Add(new GrpcScopedReferenceIndexType
+            {
+                Scope = GrpcEntityScope.ScopeLive,
+                IndexType = GrpcReferenceIndexType.ReferenceIndexTypeForFiltering
+            });
+        }
+
+        if (referenceSchema.IsFaceted)
+        {
+            grpcReferenceSchema.FacetedInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcReferenceSchema;
     }
 }

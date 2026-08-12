@@ -1,37 +1,68 @@
-﻿using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
+using EvitaDB.Client.Converters.Models.Schema.Mutations.Catalogs;
 using EvitaDB.Client.Models.Schemas.Mutations;
 using EvitaDB.Client.Models.Schemas.Mutations.Catalogs;
 
 namespace EvitaDB.Client.Converters.Models.Schema.Mutations;
 
-public class DelegatingTopLevelCatalogSchemaMutationConverter : ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcTopLevelCatalogSchemaMutation>
+/// <summary>
+/// Converts top-level (engine) catalog schema mutations to their gRPC representation. Since evitaDB replaced
+/// the dedicated `GrpcTopLevelCatalogSchemaMutation` envelope with the broader `GrpcEngineMutation`, this converter
+/// targets the engine mutation and covers only its catalog-schema related arms.
+/// </summary>
+public class DelegatingTopLevelCatalogSchemaMutationConverter : ISchemaMutationConverter<ITopLevelCatalogSchemaMutation, GrpcEngineMutation>
 {
-    public GrpcTopLevelCatalogSchemaMutation Convert(ITopLevelCatalogSchemaMutation mutation)
+    private static readonly DelegatingLocalCatalogSchemaMutationConverter LocalCatalogSchemaMutationConverter = new();
+
+    public GrpcEngineMutation Convert(ITopLevelCatalogSchemaMutation mutation)
     {
-        GrpcTopLevelCatalogSchemaMutation grpcTopLevelCatalogSchemaMutation = new();
+        GrpcEngineMutation grpcEngineMutation = new();
         switch (mutation)
         {
-            case CreateCatalogSchemaMutation createCatalogSchemaMutation: 
-                grpcTopLevelCatalogSchemaMutation.CreateCatalogSchemaMutation = new CreateCatalogSchemaMutationConverter().Convert(createCatalogSchemaMutation);
+            case CreateCatalogSchemaMutation createCatalogSchemaMutation:
+                grpcEngineMutation.CreateCatalogSchemaMutation = new CreateCatalogSchemaMutationConverter().Convert(createCatalogSchemaMutation);
                 break;
-            case ModifyCatalogSchemaNameMutation modifyCatalogSchemaMutation: 
-                grpcTopLevelCatalogSchemaMutation.ModifyCatalogSchemaNameMutation = new ModifyCatalogSchemaNameMutationConverter().Convert(modifyCatalogSchemaMutation);
+            case ModifyCatalogSchemaNameMutation modifyCatalogSchemaNameMutation:
+                grpcEngineMutation.ModifyCatalogSchemaNameMutation = new ModifyCatalogSchemaNameMutationConverter().Convert(modifyCatalogSchemaNameMutation);
                 break;
-            case RemoveCatalogSchemaMutation removeCatalogSchemaMutation: 
-                grpcTopLevelCatalogSchemaMutation.RemoveCatalogSchemaMutation = new RemoveCatalogSchemaMutationConverter().Convert(removeCatalogSchemaMutation);
+            case ModifyCatalogSchemaMutation modifyCatalogSchemaMutation:
+                GrpcModifyCatalogSchemaMutation grpcModifyCatalogSchemaMutation = new()
+                {
+                    CatalogName = modifyCatalogSchemaMutation.CatalogName
+                };
+                grpcModifyCatalogSchemaMutation.SchemaMutations.AddRange(
+                    modifyCatalogSchemaMutation.SchemaMutations.Select(LocalCatalogSchemaMutationConverter.Convert)
+                );
+                grpcEngineMutation.ModifyCatalogSchemaMutation = grpcModifyCatalogSchemaMutation;
                 break;
+            case RemoveCatalogSchemaMutation removeCatalogSchemaMutation:
+                grpcEngineMutation.RemoveCatalogSchemaMutation = new RemoveCatalogSchemaMutationConverter().Convert(removeCatalogSchemaMutation);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(mutation), mutation.GetType().Name,
+                    "Unsupported top-level catalog schema mutation type.");
         }
-        return grpcTopLevelCatalogSchemaMutation;
+        return grpcEngineMutation;
     }
 
-    public ITopLevelCatalogSchemaMutation Convert(GrpcTopLevelCatalogSchemaMutation mutation)
+    public ITopLevelCatalogSchemaMutation Convert(GrpcEngineMutation mutation)
     {
         return mutation.MutationCase switch
         {
-            GrpcTopLevelCatalogSchemaMutation.MutationOneofCase.CreateCatalogSchemaMutation => new CreateCatalogSchemaMutationConverter().Convert(mutation.CreateCatalogSchemaMutation),  
-            GrpcTopLevelCatalogSchemaMutation.MutationOneofCase.ModifyCatalogSchemaNameMutation => new ModifyCatalogSchemaNameMutationConverter().Convert(mutation.ModifyCatalogSchemaNameMutation),  
-            GrpcTopLevelCatalogSchemaMutation.MutationOneofCase.RemoveCatalogSchemaMutation => new RemoveCatalogSchemaMutationConverter().Convert(mutation.RemoveCatalogSchemaMutation),
-            _ => throw new ArgumentOutOfRangeException()
+            GrpcEngineMutation.MutationOneofCase.CreateCatalogSchemaMutation =>
+                new CreateCatalogSchemaMutationConverter().Convert(mutation.CreateCatalogSchemaMutation),
+            GrpcEngineMutation.MutationOneofCase.ModifyCatalogSchemaNameMutation =>
+                new ModifyCatalogSchemaNameMutationConverter().Convert(mutation.ModifyCatalogSchemaNameMutation),
+            GrpcEngineMutation.MutationOneofCase.ModifyCatalogSchemaMutation =>
+                new ModifyCatalogSchemaMutation(
+                    mutation.ModifyCatalogSchemaMutation.CatalogName,
+                    mutation.ModifyCatalogSchemaMutation.SchemaMutations
+                        .Select(LocalCatalogSchemaMutationConverter.Convert)
+                        .ToArray()
+                ),
+            GrpcEngineMutation.MutationOneofCase.RemoveCatalogSchemaMutation =>
+                new RemoveCatalogSchemaMutationConverter().Convert(mutation.RemoveCatalogSchemaMutation),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation.MutationCase,
+                "Unsupported engine mutation type.")
         };
     }
 }

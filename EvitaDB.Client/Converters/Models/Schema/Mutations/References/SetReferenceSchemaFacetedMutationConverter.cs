@@ -6,15 +6,27 @@ public class SetReferenceSchemaFacetedMutationConverter : ISchemaMutationConvert
 {
     public GrpcSetReferenceSchemaFacetedMutation Convert(SetReferenceSchemaFacetedMutation mutation)
     {
-        return new GrpcSetReferenceSchemaFacetedMutation
+        GrpcSetReferenceSchemaFacetedMutation grpcMutation = new GrpcSetReferenceSchemaFacetedMutation
         {
             Name = mutation.Name,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Faceted = mutation.Faceted
+#pragma warning restore CS0612
         };
+
+        if (mutation.Faceted)
+        {
+            grpcMutation.FacetedInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcMutation;
     }
 
     public SetReferenceSchemaFacetedMutation Convert(GrpcSetReferenceSchemaFacetedMutation mutation)
     {
-        return new SetReferenceSchemaFacetedMutation(mutation.Name, mutation.Faceted);
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+        return new SetReferenceSchemaFacetedMutation(mutation.Name,
+            EvitaEnumConverter.ToScopedBooleanFlag(mutation.FacetedInScopes, mutation.Faceted));
+#pragma warning restore CS0612
     }
 }

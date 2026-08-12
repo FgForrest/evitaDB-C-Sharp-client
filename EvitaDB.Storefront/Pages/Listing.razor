@@ -1,0 +1,279 @@
+@page "/"
+@page "/category/{CategoryCode}"
+@implements IDisposable
+@inject ProductCatalogService Catalog
+@inject EvitaCatalogContext CatalogContext
+@inject StorefrontState State
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+<PageTitle>@(CategoryTitle ?? "All products") — evitaShop</PageTitle>
+
+<div class="listing-layout">
+    <nav class="sidebar">
+        <h2>Categories</h2>
+        @if (_categories is null)
+        {
+            <p class="muted">Loading…</p>
+        }
+        else
+        {
+            <div class="category-row @(CategoryCode is null ? "active" : null)">
+                <a href="">All products</a>
+            </div>
+            <CategoryTree Levels="_categories" ActiveCode="@CategoryCode"/>
+        }
+
+        <FacetPanel FacetSummary="_listing?.FacetSummary"
+                    PriceHistogram="_listing?.PriceHistogram"
+                    AttributeHistograms="_listing?.AttributeHistograms"
+                    CurrentTotal="_listing?.TotalRecordCount ?? 0"/>
+    </nav>
+
+    <section class="results">
+        <header class="results-head">
+            <h1>@(CategoryTitle ?? "All products")</h1>
+            <div class="results-tools">
+                @if (_listing is not null)
+                {
+                    <span class="muted">@_listing.TotalRecordCount products</span>
+                }
+                @if (_reloading)
+                {
+                    <span class="spinner" aria-label="Updating"></span>
+                }
+                <select value="@State.Sort.Key" @onchange="OnSortChanged" aria-label="Sort products by">
+                    @foreach (ProductSort sort in State.AvailableSorts)
+                    {
+                        <option value="@sort.Key">@sort.Label</option>
+                    }
+                </select>
+                <select value="@State.PageSize" @onchange="OnPageSizeChanged" aria-label="Products per page">
+                    @foreach (int size in StorefrontState.PageSizes)
+                    {
+                        <option value="@size">@size per page</option>
+                    }
+                </select>
+                <button class="link" @onclick="CopyLinkAsync" title="@Navigation.Uri">
+                    @(_linkCopied ? "link copied" : "share")
+                </button>
+            </div>
+        </header>
+
+        @if (_error is not null)
+        {
+            <div class="panel error">
+                <h2>Query failed</h2>
+                <p>@_error</p>
+            </div>
+        }
+        else if (_listing is null)
+        {
+            @* skeletons only on the very first load - later reloads keep the previous page visible *@
+            <div class="grid">
+                @for (int i = 0; i < 8; i++)
+                {
+                    <article class="card skeleton"></article>
+                }
+            </div>
+        }
+        else if (_listing.Products.Count == 0)
+        {
+            <div class="panel">
+                <h2>Nothing matches</h2>
+                <p class="muted">
+                    No product satisfies this combination. Note that a handful of options in the demo dataset
+                    belong to two parameter groups at once; because groups combine with AND, selecting one of
+                    those yields no results by design.
+                </p>
+                @if (State.HasActiveFilters)
+                {
+                    <button class="button" @onclick="State.ClearFilters">Clear filters</button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="grid @(_reloading ? "reloading" : null)">
+                @foreach (ISealedEntity product in _listing.Products)
+                {
+                    <ProductCard Product="product"/>
+                }
+            </div>
+
+            @if (_listing.PageCount > 1)
+            {
+                <nav class="pager">
+                    <button class="button" disabled="@(_page <= 1)" @onclick="() => GoToPage(_page - 1)">
+                        Previous
+                    </button>
+                    <span class="muted">Page @_page of @_listing.PageCount</span>
+                    <button class="button" disabled="@(_page >= _listing.PageCount)"
+                            @onclick="() => GoToPage(_page + 1)">
+                        Next
+                    </button>
+                </nav>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter] public string? CategoryCode { get; set; }
+
+    private IReadOnlyList<LevelInfo>? _categories;
+    private ProductListing? _listing;
+    private string? _error;
+    private int _page = 1;
+    private bool _reloading;
+    private bool _linkCopied;
+    /// <summary>Query string this page last wrote, so its own navigation is not mistaken for a user edit.</summary>
+    private string? _writtenQuery;
+
+    /// <summary>Guards against an older in-flight query overwriting a newer result.</summary>
+    private int _requestId;
+
+    protected override void OnInitialized() => State.OnChanged += OnStateChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // A shared link carries the whole selection in its query string. Reapply it, unless this navigation
+        // is the one this page just performed itself (SyncUrl), which would re-parse what we already hold.
+        string query = new Uri(Navigation.Uri).Query;
+        if (query != _writtenQuery)
+        {
+            State.ApplyQueryString(query);
+            _writtenQuery = query;
+        }
+        // navigating to another category restarts paging
+        _page = 1;
+        await ReloadAsync();
+    }
+
+    private void OnStateChanged() => _ = InvokeAsync(async () =>
+    {
+        _page = 1;
+        SyncUrl();
+        await ReloadAsync();
+        StateHasChanged();
+    });
+
+    /// <summary>
+    /// Mirrors the current selection into the address bar so the listing can be shared. `replace: true`
+    /// keeps the back button meaning "previous page" rather than "previous facet click".
+    /// </summary>
+    private void SyncUrl()
+    {
+        _linkCopied = false;
+        string path = CategoryCode is null ? string.Empty : $"category/{CategoryCode}";
+        _writtenQuery = State.ToQueryString();
+        Navigation.NavigateTo($"{path}{_writtenQuery}", forceLoad: false, replace: true);
+    }
+
+    /// <summary>Copies the current URL - which carries the whole filter selection - to the clipboard.</summary>
+    private async Task CopyLinkAsync()
+    {
+        try
+        {
+            _linkCopied = await Js.InvokeAsync<bool>("evitaShop.copyToClipboard", Navigation.Uri);
+        }
+        catch (Exception)
+        {
+            // clipboard access can be denied (insecure origin, permissions); the URL is still in the address
+            // bar, so this is not worth surfacing as an error
+            _linkCopied = false;
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        _page = Math.Max(1, page);
+        await ReloadAsync();
+    }
+
+    private void OnPageSizeChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out int size))
+        {
+            State.SetPageSize(size);
+        }
+    }
+
+    private void OnSortChanged(ChangeEventArgs args) =>
+        // routed through the state so the choice lands in the URL like every other selection
+        State.SetSort(ProductSort.ByKey(args.Value?.ToString(), State.AvailableSorts));
+
+    private async Task ReloadAsync()
+    {
+        if (!CatalogContext.IsReady)
+        {
+            return;
+        }
+
+        int requestId = ++_requestId;
+        _error = null;
+        // deliberately NOT clearing _listing: replacing the grid with skeletons on every facet click makes
+        // the page flicker. The old results stay put, dimmed, until the new ones arrive.
+        _reloading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Sequential on purpose: EvitaClientSession is documented as not thread safe, and this app shares
+            // one long-lived session. Firing both queries concurrently would interleave calls on it.
+            IReadOnlyList<LevelInfo> categories = await Catalog.GetCategoryTreeAsync();
+            ProductListing listing = await Catalog.GetListingAsync(CategoryCode, _page, State.PageSize);
+
+            if (requestId != _requestId)
+            {
+                // a newer request has been issued meanwhile - drop this result
+                return;
+            }
+            _categories = categories;
+            _listing = listing;
+        }
+        catch (Exception exception)
+        {
+            if (requestId == _requestId)
+            {
+                ErrorDetail.LogToConsole("listing query failed", exception);
+                _error = ErrorDetail.Describe(exception);
+            }
+        }
+        finally
+        {
+            if (requestId == _requestId)
+            {
+                _reloading = false;
+            }
+        }
+    }
+
+    private string? CategoryTitle => CategoryCode is null
+        ? null
+        : FindCategoryName(_categories, CategoryCode) ?? CategoryCode;
+
+    private string? FindCategoryName(IReadOnlyList<LevelInfo>? levels, string code)
+    {
+        if (levels is null)
+        {
+            return null;
+        }
+        foreach (LevelInfo level in levels)
+        {
+            if ((level.Entity as ISealedEntity)?.Code() == code)
+            {
+                return level.Entity.DisplayName(State.Locale);
+            }
+            string? nested = FindCategoryName(level.Children, code);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+        return null;
+    }
+
+    public void Dispose() => State.OnChanged -= OnStateChanged;
+
+}

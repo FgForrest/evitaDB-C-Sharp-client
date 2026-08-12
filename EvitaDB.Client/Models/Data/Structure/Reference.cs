@@ -6,6 +6,12 @@ namespace EvitaDB.Client.Models.Data.Structure;
 
 public class Reference : IReference
 {
+    /// <summary>
+    /// Internal primary key of this reference occurrence assigned by the server. Only meaningful for references
+    /// with duplicate cardinality where multiple occurrences of the same referenced entity may exist; zero otherwise.
+    /// </summary>
+    public int InternalPrimaryKey { get; internal set; }
+
     private IEntitySchema EntitySchema { get; }
     public int Version { get; }
     public ReferenceKey ReferenceKey { get; }

@@ -5,5 +5,7 @@ public enum Cardinality
     ZeroOrOne,
     ExactlyOne,
     ZeroOrMore,
-    OneOrMore
+    OneOrMore,
+    ZeroOrMoreWithDuplicates,
+    OneOrMoreWithDuplicates
 }

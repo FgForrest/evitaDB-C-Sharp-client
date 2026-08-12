@@ -53,14 +53,16 @@ public static class CatalogSchemaConverter
     private static GrpcGlobalAttributeSchema ToGrpcGlobalAttributeSchema(
         IGlobalAttributeSchema attributeSchema)
     {
-        return new GrpcGlobalAttributeSchema
+        GrpcGlobalAttributeSchema grpcAttributeSchema = new GrpcGlobalAttributeSchema
         {
             Name = attributeSchema.Name,
+#pragma warning disable CS0612 // deprecated wire fields are dual-written for servers older than 2024.12
             Unique = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType),
             UniqueGlobally =
                 EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(attributeSchema.GlobalUniquenessType),
             Filterable = attributeSchema.Filterable(),
             Sortable = attributeSchema.Sortable(),
+#pragma warning restore CS0612
             Localized = attributeSchema.Localized(),
             Nullable = attributeSchema.Nullable(),
             Type = EvitaDataTypesConverter.ToGrpcEvitaDataType(attributeSchema.Type),
@@ -71,6 +73,37 @@ public static class CatalogSchemaConverter
             Description = attributeSchema.Description,
             DeprecationNotice = attributeSchema.DeprecationNotice
         };
+
+        if (attributeSchema.UniquenessType != AttributeUniquenessType.NotUnique)
+        {
+            grpcAttributeSchema.UniqueInScopes.Add(new GrpcScopedAttributeUniquenessType
+            {
+                Scope = GrpcEntityScope.ScopeLive,
+                UniquenessType = EvitaEnumConverter.ToGrpcAttributeUniquenessType(attributeSchema.UniquenessType)
+            });
+        }
+
+        if (attributeSchema.GlobalUniquenessType != GlobalAttributeUniquenessType.NotUnique)
+        {
+            grpcAttributeSchema.UniqueGloballyInScopes.Add(new GrpcScopedGlobalAttributeUniquenessType
+            {
+                Scope = GrpcEntityScope.ScopeLive,
+                UniquenessType =
+                    EvitaEnumConverter.ToGrpcGlobalAttributeUniquenessType(attributeSchema.GlobalUniquenessType)
+            });
+        }
+
+        if (attributeSchema.Filterable())
+        {
+            grpcAttributeSchema.FilterableInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        if (attributeSchema.Sortable())
+        {
+            grpcAttributeSchema.SortableInScopes.Add(GrpcEntityScope.ScopeLive);
+        }
+
+        return grpcAttributeSchema;
     }
 
     private static IGlobalAttributeSchema ToGlobalAttributeSchema(
@@ -80,10 +113,13 @@ public static class CatalogSchemaConverter
             attributeSchema.Name,
             attributeSchema.Description,
             attributeSchema.DeprecationNotice,
-            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.Unique),
-            EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGlobally),
-            attributeSchema.Filterable,
-            attributeSchema.Sortable,
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2024.12
+            EvitaEnumConverter.ToAttributeUniquenessType(attributeSchema.UniqueInScopes, attributeSchema.Unique),
+            EvitaEnumConverter.ToGlobalAttributeUniquenessType(attributeSchema.UniqueGloballyInScopes,
+                attributeSchema.UniqueGlobally),
+            EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.FilterableInScopes, attributeSchema.Filterable),
+            EvitaEnumConverter.ToScopedBooleanFlag(attributeSchema.SortableInScopes, attributeSchema.Sortable),
+#pragma warning restore CS0612
             attributeSchema.Localized,
             attributeSchema.Nullable,
             attributeSchema.Representative,

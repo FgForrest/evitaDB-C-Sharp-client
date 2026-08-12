@@ -61,31 +61,41 @@ public interface IEntity : IEntityClassifierWithParent, IAttributes<IEntityAttri
     /// <summary>
     /// Method returns true if any entity inner data differs from other entity.
     /// </summary>
-    new bool DiffersFrom(IEntity? otherEntity)
+    new bool DiffersFrom(IEntity? otherEntity) => AnyEntityDataDifferBetween(this, otherEntity);
+
+    /// <summary>
+    /// Returns true if any inner data of the first entity differs from the other entity. Serves as the shared
+    /// implementation of <see cref="DiffersFrom"/> that implementing classes can delegate to.
+    /// </summary>
+    static bool AnyEntityDataDifferBetween(IEntity thisEntity, IEntity? otherEntity)
     {
-        if (Equals(this, otherEntity)) return false;
+        if (ReferenceEquals(thisEntity, otherEntity)) return false;
         if (otherEntity == null) return true;
 
-        if (!Equals(PrimaryKey, otherEntity.PrimaryKey)) return true;
-        if (Version != otherEntity.Version) return true;
-        if (Dropped != otherEntity.Dropped) return true;
-        if (!Type.Equals(otherEntity.Type)) return true;
-        if (ParentAvailable != otherEntity.ParentAvailable) return true;
-        if (ParentAvailable())
+        if (!Equals(thisEntity.PrimaryKey, otherEntity.PrimaryKey)) return true;
+        if (thisEntity.Version != otherEntity.Version) return true;
+        if (thisEntity.Dropped != otherEntity.Dropped) return true;
+        if (!thisEntity.Type.Equals(otherEntity.Type)) return true;
+        if (thisEntity.ParentAvailable() != otherEntity.ParentAvailable()) return true;
+        if (thisEntity.ParentAvailable())
         {
-            if (ParentEntity is not null != otherEntity.ParentEntity is not null) return true;
-            if (ParentEntity is not null &&
-                !Equals(ParentEntity.PrimaryKey, otherEntity.ParentEntity?.PrimaryKey)) return true;
+            if (thisEntity.ParentEntity is not null != otherEntity.ParentEntity is not null) return true;
+            if (thisEntity.ParentEntity is not null &&
+                !Equals(thisEntity.ParentEntity.PrimaryKey, otherEntity.ParentEntity?.PrimaryKey)) return true;
         }
 
-        if (AnyAttributeDifferBetween(this, otherEntity)) return true;
-        if (AnyAssociatedDataDifferBetween(this, otherEntity)) return true;
-        if (InnerRecordHandling != otherEntity.InnerRecordHandling) return true;
-        if (AnyPriceDifferBetween(this, otherEntity)) return true;
-        if (!GetAllLocales().Equals(otherEntity.GetAllLocales())) return true;
+        if (AnyAttributeDifferBetween(thisEntity, otherEntity)) return true;
+        if (AnyAssociatedDataDifferBetween(thisEntity, otherEntity)) return true;
+        if (thisEntity.InnerRecordHandling != otherEntity.InnerRecordHandling) return true;
+        if (AnyPriceDifferBetween(thisEntity, otherEntity)) return true;
+        if (!thisEntity.GetAllLocales().SetEquals(otherEntity.GetAllLocales())) return true;
 
-        IEnumerable<IReference> thisReferences = GetReferences().ToList();
-        IEnumerable<IReference> otherReferences = otherEntity.GetReferences().ToList();
+        IEnumerable<IReference> thisReferences = thisEntity.ReferencesAvailable()
+            ? thisEntity.GetReferences().ToList()
+            : Enumerable.Empty<IReference>();
+        IEnumerable<IReference> otherReferences = otherEntity.ReferencesAvailable()
+            ? otherEntity.GetReferences().ToList()
+            : Enumerable.Empty<IReference>();
         if (thisReferences.Count() != otherReferences.Count()) return true;
         foreach (IReference thisReference in thisReferences)
         {

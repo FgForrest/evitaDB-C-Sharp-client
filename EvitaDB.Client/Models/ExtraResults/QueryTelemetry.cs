@@ -183,6 +183,7 @@ public class QueryTelemetry : IEvitaResponseExtraResult
         /**
 		 * Fetching parent entities from the storage based on parent primary keys information.
 		 */
-        FetchingParents
+        FetchingParents,
+        FetchingReferenceBodies
     }
 }

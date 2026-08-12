@@ -56,7 +56,9 @@ public class FacetSummary : IEvitaResponseExtraResult, IPrettyPrintable
     public ICollection<FacetGroupStatistics> GetFacetGroupStatistics() =>
         _referenceStatistics.Values.SelectMany(x =>
             {
-                ICollection<FacetGroupStatistics> rs = x.GroupedStatistics.Values;
+                // `Dictionary<,>.Values` is a read-only view in C# - appending to it throws
+                // NotSupportedException, unlike the mutable list the Java counterpart builds here.
+                List<FacetGroupStatistics> rs = [..x.GroupedStatistics.Values];
                 if (x.NonGroupedStatistics is not null)
                 {
                     rs.Add(x.NonGroupedStatistics);

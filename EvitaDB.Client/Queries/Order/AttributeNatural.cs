@@ -44,11 +44,16 @@ public class AttributeNatural : AbstractOrderConstraintLeaf
     {
     }
 
-    public AttributeNatural(string attributeName) : base(attributeName, OrderDirection.Asc)
+    public AttributeNatural(string attributeName) : this(attributeName, OrderDirection.Asc)
     {
     }
-    
-    public AttributeNatural(string attributeName, OrderDirection direction) : base(attributeName, direction)
+
+    // NOTE: delegates through the object?[] constructor on purpose. `base(attributeName, direction)` binds to
+    // AbstractOrderConstraintLeaf(string? name, params object?[] arguments) - because the first argument is a
+    // string - which consumes the attribute name as the *constraint* name. The constraint then serialized as
+    // `orderedQuantity(DESC)` instead of `attributeNatural('orderedQuantity', DESC)`, which the server rejects.
+    public AttributeNatural(string attributeName, OrderDirection direction)
+        : this(new object?[] { attributeName, direction })
     {
     }
 }

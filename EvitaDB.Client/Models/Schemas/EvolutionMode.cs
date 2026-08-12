@@ -9,5 +9,6 @@ public enum EvolutionMode
     AddingPrices,
     AddingLocales,
     AddingCurrencies,
-    AddingHierarchy
+    AddingHierarchy,
+    UpdatingReferenceCardinality
 }

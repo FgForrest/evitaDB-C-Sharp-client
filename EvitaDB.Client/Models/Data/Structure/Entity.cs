@@ -24,6 +24,15 @@ public class Entity : ISealedEntity
     public int? PrimaryKey { get; }
     [JsonIgnore] public IEntitySchema Schema { get; }
     public IDictionary<ReferenceKey, IReference> References { get; }
+
+    /// <summary>
+    /// References in the order the server returned them, which is what `referenceContent(orderBy(...))` sorts.
+    ///
+    /// <see cref="References"/> stays an <see cref="ImmutableDictionary{TKey,TValue}"/> for lookup and immutability,
+    /// but its enumeration order is hash-derived, so it cannot carry a requested ordering. Java keeps the fetched
+    /// references in a plain array for exactly this reason - the ordering is a property of the response, not of the key.
+    /// </summary>
+    [JsonIgnore] private readonly ImmutableArray<IReference> _referencesInOrder;
     public EntityAttributes Attributes { get; }
     public AssociatedData AssociatedData { get; }
     public Prices Prices { get; }
@@ -270,7 +279,8 @@ public class Entity : ISealedEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToImmutableDictionary(x => x.ReferenceKey, x => x);
+        _referencesInOrder = references.ToImmutableArray();
+        References = _referencesInOrder.ToImmutableDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;
@@ -311,7 +321,8 @@ public class Entity : ISealedEntity
         PrimaryKey = primaryKey;
         _parent = parent;
         _parentEntity = parentEntity;
-        References = references.ToImmutableDictionary(x => x.ReferenceKey, x => x);
+        _referencesInOrder = references.ToImmutableArray();
+        References = _referencesInOrder.ToImmutableDictionary(x => x.ReferenceKey, x => x);
         Attributes = attributes;
         AssociatedData = associatedData;
         Prices = prices;
@@ -348,6 +359,7 @@ public class Entity : ISealedEntity
         PrimaryKey = primaryKey;
         _parent = null;
         _parentEntity = null;
+        _referencesInOrder = ImmutableArray<IReference>.Empty;
         References = new Dictionary<ReferenceKey, IReference>();
         Attributes = new EntityAttributes(Schema);
         AssociatedData = new AssociatedData(Schema);
@@ -787,12 +799,13 @@ public class Entity : ISealedEntity
 
     public IEnumerable<IReference> GetReferences()
     {
-        return References.Values;
+        // enumerate the ordered copy, never the dictionary - see _referencesInOrder
+        return _referencesInOrder.IsDefault ? References.Values : _referencesInOrder;
     }
 
     public IEnumerable<IReference> GetReferences(string referenceName)
     {
-        return References.Values
+        return GetReferences()
             .Where(x => x.ReferenceName == referenceName)
             .ToList();
     }
@@ -1020,7 +1033,7 @@ public class Entity : ISealedEntity
 
     public bool DiffersFrom(IEntity? otherObject)
     {
-        return (this as IEntity).DiffersFrom(otherObject);
+        return IEntity.AnyEntityDataDifferBetween(this, otherObject);
     }
 
     public override bool Equals(object? o)

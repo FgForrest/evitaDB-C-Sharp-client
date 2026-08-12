@@ -1,4 +1,5 @@
-﻿using EvitaDB.Client.Models.Schemas;
+﻿using EvitaDB.Client.Exceptions;
+using EvitaDB.Client.Models.Schemas;
 using EvitaDB.Client.Queries.Filter;
 
 namespace EvitaDB.Client.Models.Data;
@@ -22,4 +23,12 @@ public interface IEntityClassifier
     /// Entities can be looked up by primary key by using query <see cref="EntityPrimaryKeyInSet"/>
     /// </summary>
     public int? PrimaryKey { get; }
+
+    /// <summary>
+    /// The primary key, failing loudly when it has not been assigned yet - the counterpart of Java's
+    /// `EntityClassifier.getPrimaryKeyOrThrowException()`, for the many call sites that legitimately require
+    /// a stored entity.
+    /// </summary>
+    /// <exception cref="PrimaryKeyNotAssignedException">when the entity has not been stored yet</exception>
+    public int PrimaryKeyOrThrowException => PrimaryKey ?? throw new PrimaryKeyNotAssignedException(Type);
 }

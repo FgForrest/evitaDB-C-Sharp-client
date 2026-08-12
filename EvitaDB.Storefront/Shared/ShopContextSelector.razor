@@ -1,0 +1,119 @@
+@inject EvitaCatalogContext Catalog
+@inject StorefrontState State
+
+@*
+    On a production site none of this is a control: the language comes from the domain or Accept-Language,
+    the currency and price lists from the customer's profile or country, the tax mode from B2C vs B2B. The
+    demo makes them explicit so their effect on the evitaDB query is visible.
+*@
+<div class="context-selector">
+    <label>
+        <span class="field-caption">Language</span>
+        <select value="@State.Locale.Name" @onchange="OnLocaleChanged">
+            @foreach (CultureInfo locale in Catalog.Locales)
+            {
+                <option value="@locale.Name">@DescribeLocale(locale)</option>
+            }
+        </select>
+    </label>
+
+    <label>
+        <span class="field-caption">Currency</span>
+        <select value="@State.Currency.CurrencyCode" @onchange="OnCurrencyChanged">
+            @foreach (Currency currency in Catalog.Currencies)
+            {
+                <option value="@currency.CurrencyCode">@currency.CurrencyCode</option>
+            }
+        </select>
+    </label>
+
+    @* Several price lists can be held at once; their order is the resolution priority. *@
+    <div class="pricelist-picker">
+        <span class="field-caption">Price lists</span>
+        <button type="button" class="pricelist-toggle" @onclick="() => _open = !_open"
+                aria-expanded="@_open" title="@string.Join(" → ", State.SelectedPriceLists)">
+            @Summary
+            <span class="caret">@(_open ? "▴" : "▾")</span>
+        </button>
+
+        @if (_open)
+        {
+            <div class="pricelist-menu">
+                <p class="muted">
+                    Applied in order — the first list holding a price for a product wins.
+                </p>
+                <ul>
+                    @foreach (string priceList in Catalog.PriceLists)
+                    {
+                        int position = State.SelectedPriceLists.IndexOf(priceList);
+                        <li>
+                            <label class="@(position >= 0 ? "selected" : null)">
+                                <input type="checkbox" checked="@(position >= 0)"
+                                       @onchange="() => State.TogglePriceList(priceList)"/>
+                                <span class="pricelist-name">@priceList</span>
+                                @if (position >= 0)
+                                {
+                                    <span class="pricelist-order">@(position + 1)</span>
+                                }
+                            </label>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+
+    <label>
+        <span class="field-caption">Prices</span>
+        <select value="@State.PriceMode" @onchange="OnPriceModeChanged">
+            <option value="@QueryPriceMode.WithTax">with tax</option>
+            <option value="@QueryPriceMode.WithoutTax">without tax</option>
+        </select>
+    </label>
+</div>
+
+@code {
+    private bool _open;
+
+    private string Summary => State.SelectedPriceLists.Count switch
+    {
+        0 => "none",
+        1 => State.SelectedPriceLists[0],
+        _ => $"{State.SelectedPriceLists[0]} +{State.SelectedPriceLists.Count - 1}"
+    };
+
+    private void OnLocaleChanged(ChangeEventArgs args)
+    {
+        string? name = args.Value?.ToString();
+        CultureInfo? locale = Catalog.Locales.FirstOrDefault(x => x.Name == name);
+        if (locale is not null)
+        {
+            State.SetLocale(locale);
+        }
+    }
+
+    private void OnCurrencyChanged(ChangeEventArgs args)
+    {
+        string? code = args.Value?.ToString();
+        Currency? currency = Catalog.Currencies.FirstOrDefault(x => x.CurrencyCode == code);
+        if (currency is not null)
+        {
+            State.SetCurrency(currency);
+        }
+    }
+
+    private void OnPriceModeChanged(ChangeEventArgs args)
+    {
+        if (Enum.TryParse(args.Value?.ToString(), out QueryPriceMode mode))
+        {
+            State.SetPriceMode(mode);
+        }
+    }
+
+    /// <summary>Language tags in this dataset are bare (`cs`, `de`, `en`), so show the native name too.</summary>
+    private static string DescribeLocale(CultureInfo locale) =>
+        string.IsNullOrEmpty(locale.NativeName) || locale.NativeName == locale.Name
+            ? locale.Name
+            : $"{locale.Name} — {locale.NativeName}";
+
+}

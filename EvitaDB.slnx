@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EvitaDB.Client/EvitaDB.Client.csproj" />
+  <Project Path="EvitaDB.QueryValidator/EvitaDB.QueryValidator.csproj" />
+  <Project Path="EvitaDB.Storefront/EvitaDB.Storefront.csproj" />
+  <Project Path="EvitaDB.Test/EvitaDB.Test.csproj" />
+</Solution>

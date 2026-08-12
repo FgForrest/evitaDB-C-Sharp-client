@@ -7,5 +7,6 @@
 public enum StatisticsBase
 {
     CompleteFilter,
-    WithoutUserFilter
+    WithoutUserFilter,
+    CompleteFilterExcludingSelfInUserFilter
 }

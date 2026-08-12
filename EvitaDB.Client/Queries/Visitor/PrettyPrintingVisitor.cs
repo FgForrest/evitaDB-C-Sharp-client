@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
 using EvitaDB.Client.DataTypes;
+using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Utils;
 
 namespace EvitaDB.Client.Queries.Visitor;
@@ -216,17 +217,49 @@ public class PrettyPrintingVisitor : IConstraintVisitor
 
     private void PrintLeaf(IConstraint constraint)
     {
-        var arguments = constraint.Arguments;
+        object?[] arguments = constraint.Arguments;
+
+        // work out which argument positions actually get printed, so the separator can be decided by
+        // "is another argument still coming" rather than by the raw index - the latter emitted a dangling
+        // `priceBetween(?, )` whenever the last argument was null
+        List<int> printable = [];
         for (int i = 0; i < arguments.Length; i++)
         {
-            var argument = arguments[i];
+            object? argument = arguments[i];
             if (argument is null)
+            {
                 continue;
+            }
             if (constraint is IConstraintWithSuffix cws && cws.ArgumentImplicitForSuffix(argument))
             {
                 continue;
             }
+            printable.Add(i);
+        }
 
+        // A null sitting *before* a printed argument cannot be represented: evitaQL has no null literal and
+        // no empty argument slot (`priceBetween(null,500)`, `priceBetween(100,)` and `priceBetween(100)` are
+        // all rejected by the grammar). Silently omitting it would shift every later value one position to
+        // the left - e.g. `priceBetween(null, 500)` would be sent as `priceBetween(500)`, filtering
+        // "from 500" instead of "up to 500". Fail loudly instead of querying for the wrong thing.
+        if (printable.Count > 0)
+        {
+            for (int i = 0; i < printable[^1]; i++)
+            {
+                if (arguments[i] is null)
+                {
+                    throw new EvitaInvalidUsageException(
+                        $"Constraint `{constraint.Name}` has an undefined argument at position {i} followed by " +
+                        "a defined one. evitaQL cannot express a missing argument in the middle of an argument " +
+                        "list - supply the argument, or use a one-sided constraint instead."
+                    );
+                }
+            }
+        }
+
+        for (int p = 0; p < printable.Count; p++)
+        {
+            object argument = arguments[printable[p]]!;
             if (_extractParameters)
             {
                 _result.Append('?');
@@ -237,7 +270,7 @@ public class PrettyPrintingVisitor : IConstraintVisitor
                 _result.Append(EvitaDataTypes.FormatValue(argument));
             }
 
-            if (i + 1 < arguments.Length)
+            if (p + 1 < printable.Count)
             {
                 _result.Append(", ");
             }

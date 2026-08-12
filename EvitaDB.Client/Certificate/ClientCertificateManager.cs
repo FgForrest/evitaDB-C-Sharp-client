@@ -182,25 +182,26 @@ public class ClientCertificateManager
         }
     }
 
-    public HttpClientHandler BuildHttpClientHandler()
+    /// <summary>
+    /// Attaches the custom server certificate validation (used with self-signed generated certificates) to
+    /// the channel's HTTP handler.
+    /// </summary>
+    public void ConfigureSslOptions(SocketsHttpHandler handler)
     {
-        var handler = new HttpClientHandler();
         if (!TrustedServerCertificate)
         {
-            handler.ServerCertificateCustomValidationCallback = RemoteCertificateValidationCallback;
+            handler.SslOptions.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
         }
-
-        return handler;
     }
 
     private bool RemoteCertificateValidationCallback(
-        HttpRequestMessage message, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors errors)
+        object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors)
     {
         var usedCert =
-            new X509Certificate2(
+            X509CertificateLoader.LoadCertificate(
                 File.ReadAllBytes($"{ClientCertificateFolderPath}/{CertificateUtils.GeneratedCertificateFileName}"));
         if (cert == null)
             return false;
-        return cert.Thumbprint == usedCert.Thumbprint;
+        return cert.GetCertHashString() == usedCert.Thumbprint;
     }
 }

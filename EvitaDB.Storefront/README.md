@@ -19,7 +19,7 @@ A prebuilt image is published to GitHub Container Registry on every release, for
 `linux/arm64`:
 
 ```shell
-docker run --rm -p 8080:8080 ghcr.io/fgforrest/evitadb-storefront:latest
+docker run --rm -p 8080:8080 ghcr.io/fgforrest/evitadb-c-sharp-client/storefront:latest
 ```
 
 Tags are `latest`, the release version (`1.2.3`), the minor line (`1.2`) and the commit (`sha-abc1234`).
@@ -28,7 +28,7 @@ Point it elsewhere with the same environment variables the compose file uses:
 ```shell
 docker run --rm -p 8080:8080 \
   -e EVITA_HOST=my-server.example.com -e EVITA_PORT=5555 \
-  ghcr.io/fgforrest/evitadb-storefront:latest
+  ghcr.io/fgforrest/evitadb-c-sharp-client/storefront:latest
 ```
 
 Or build it yourself:

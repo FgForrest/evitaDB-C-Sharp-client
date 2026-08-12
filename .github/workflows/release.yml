@@ -249,8 +249,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # metadata-action lowercases the image name, which GHCR requires and the owner (FgForrest) is not
-          images: ghcr.io/${{ github.repository_owner }}/evitadb-storefront
+          # Scoped under the repository path rather than sitting at the organisation root. GHCR package names
+          # are unique per owner, so a flat `evitadb-storefront` collides with the identically named package
+          # already published by another project - and write access is checked against that existing package,
+          # which is why pushing to it failed with `permission_denied: write_package`. A repo-scoped name can
+          # never collide, and because this workflow creates the package it inherits this repository's
+          # permissions. metadata-action lowercases the whole name, which GHCR requires and the owner is not.
+          images: ghcr.io/${{ github.repository }}/storefront
           # The git tag does not exist at checkout time - release-drafter creates it during the job above -
           # so the semver tags are fed the resolved version explicitly rather than read from the ref.
           #
@@ -301,6 +306,6 @@ jobs:
             echo "Run it against the public demo dataset:"
             echo
             echo '```shell'
-            echo "docker run --rm -p 8080:8080 ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/evitadb-storefront:latest"
+            echo "docker run --rm -p 8080:8080 ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/storefront:latest"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

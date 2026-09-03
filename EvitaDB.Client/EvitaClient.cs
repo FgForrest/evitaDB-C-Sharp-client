@@ -52,7 +52,9 @@ public partial class EvitaClient : IDisposable
 
     private readonly Action? _terminationCallback;
     
+#if EVITA_TELEMETRY
     private OpenTelemetrySetup? _openTelemetrySetup;
+#endif
 
     public EvitaClientConfiguration Configuration { get; }
 
@@ -110,7 +112,17 @@ public partial class EvitaClient : IDisposable
         string? traceEndpointUrl = configuration.TraceEndpointUrl;
         if (traceEndpointUrl is not null)
         {
+#if EVITA_TELEMETRY
             _openTelemetrySetup = new OpenTelemetrySetup(configuration.TraceEndpointUrl!, configuration.TraceEndpointProtocol);
+#else
+            // Telemetry was compiled out of this build (EvitaTelemetry=false), so a configured trace
+            // endpoint cannot be honoured. Failing loudly beats silently never exporting a span.
+            throw new EvitaInvalidUsageException(
+                $"Trace endpoint `{traceEndpointUrl}` is configured, but this build of the driver was " +
+                $"compiled without telemetry (EvitaTelemetry=false). Rebuild with telemetry enabled, or " +
+                $"leave TraceEndpointUrl unset."
+            );
+#endif
         }
 
         void TerminationCallback()

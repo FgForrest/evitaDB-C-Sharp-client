@@ -69,4 +69,10 @@ Re-check these against each new server release and un-skip when fixed.
 dotnet test EvitaDB.Test/EvitaDB.Test.csproj                     # full suite (needs Docker + network)
 dotnet test --filter FullyQualifiedName~EvitaClientReadTest       # one suite
 EVITA_IMAGE_TAG=canary dotnet test                                # against a different server build
+TESTCONTAINERS_RYUK_DISABLED=true dotnet test                     # remote Docker daemon (no /var/run/docker.sock)
 ```
+
+With a remote daemon (`DOCKER_HOST`, OrbStack from a sandbox, CI runners without a local socket) Testcontainers'
+resource reaper fails to start with `bind source path does not exist: /var/run/docker.sock`, and every
+container-backed test then fails in `SetupFixture.InitializeAsync`. Disabling the reaper is the documented
+Testcontainers answer; the fixture disposes its own container anyway.

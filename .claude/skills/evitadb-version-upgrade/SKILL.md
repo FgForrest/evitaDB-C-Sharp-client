@@ -117,7 +117,7 @@ For each build error / changed message, open the Java converter counterpart and 
 - Zero-warning build (`dotnet build` → `0 Warning(s), 0 Error(s)`), full green test run (modulo
   documented skips and environment-blocked demo tests — report both explicitly).
 - Update: README compatibility table, `documentation/wire-compatibility.md` (new version boundaries,
-  new intentional gaps), `documentation/testing.md` (skips), `IMPLEMENTATION_PLAN.md` if present.
+  new intentional gaps), `documentation/testing.md` (skips).
 - Verify `.github/workflows/release.yml` still matches the project (SDK version, project paths).
 - List GitHub issues the upgrade resolves; report everything to the user. Do not commit unless the
   user approves.

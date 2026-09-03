@@ -15,6 +15,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!--
+            SSH.NET 2025.1.0 arrives transitively through Testcontainers 4.13.0 and carries advisory
+            GHSA-q939-rpr3-3284, which TreatWarningsAsErrors turns into a build failure (NU1903).
+            Testcontainers pulls SSH.NET in only to reach a Docker daemon over SSH; this suite talks to a
+            local daemon, and the package is test-only - it is never part of the shipped client.
+            Suppressed by advisory URL rather than by warning code, so every other advisory still fails the
+            build. Remove this once Testcontainers ships a release referencing a patched SSH.NET (or pin a
+            patched SSH.NET directly here), which needs checking against nuget.org.
+        -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-q939-rpr3-3284" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1"/>
         <PackageReference Include="Testcontainers" Version="4.13.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">

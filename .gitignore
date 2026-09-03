@@ -368,3 +368,5 @@ FodyWeavers.xsd
 
 # project .hole directory
 .hole
+# macOS Finder metadata
+.DS_Store

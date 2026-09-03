@@ -209,20 +209,34 @@ public class FacetSummary : IEvitaResponseExtraResult, IPrettyPrintable
     }
 }
 
-public record RequestImpact(int Difference, int MatchCount)
+/// <summary>
+/// What adding one facet to the filter would do to the current result.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Every figure here is measured against the query <em>as it stands</em>, the contents of its
+/// <c>userFilter</c> included — so a price band or another group's selection is reflected in
+/// <see cref="MatchCount"/>, and <see cref="Difference"/> is the change from the count the client is currently
+/// showing. That is what separates these from <see cref="FacetStatistics.Count"/>, which is computed with the
+/// whole <c>userFilter</c> stripped and therefore stays still while the customer works.
+/// </para>
+/// <para>
+/// <see cref="Difference"/> is positive when adding the facet <em>widens</em> the result, which happens for
+/// another option in a group that already has one: evitaDB ORs facets within a group and ANDs between groups.
+/// </para>
+/// </remarks>
+/// <param name="Difference">
+/// How many entities would be added to, or removed from, the current result.
+/// </param>
+/// <param name="MatchCount">How many would match if the facet were added.</param>
+/// <param name="HasSense">
+/// Whether offering the facet leads anywhere: false when adding it would match nothing, and also when it would
+/// change nothing and matches nothing on its own within its group.
+/// <b>The server's answer, not a local guess.</b> This was <c>MatchCount &gt; 0</c> for a long time while the
+/// wire carried <c>hasSense</c> — see <c>documentation/upgrading-evitadb.md#known-porting-pitfalls</c>.
+/// </param>
+public record RequestImpact(int Difference, int MatchCount, bool HasSense)
 {
-    public bool HasSense => MatchCount > 0;
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Difference, MatchCount);
-    }
-
-    public virtual bool Equals(RequestImpact? other)
-    {
-        return Difference == other?.Difference && MatchCount == other.MatchCount;
-    }
-
     public override string ToString()
     {
         return Difference switch

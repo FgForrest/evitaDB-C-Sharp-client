@@ -19,6 +19,21 @@ public interface IPrices : IVersioned
     /// </summary>
     public IPrice? PriceForSale { get; }
     /// <summary>
+    /// Returns the range of prices for which the entity could be sold, when the server computed one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The counterpart of Java's <c>PricesContract.getPriceRangeForSaleIfAvailable()</c> — null rather than an
+    /// exception when unavailable, because a query without price constraints legitimately has no range.
+    /// </para>
+    /// <para>
+    /// Only a fetched entity can carry one; the default implementation returns null so that price containers
+    /// outside a query context, and every builder, keep their current behaviour. See <see cref="PriceRangeForSale"/>
+    /// for what the bounds mean per inner-record-handling strategy, and why they are not computed client-side.
+    /// </para>
+    /// </remarks>
+    PriceRangeForSale? PriceRangeForSale => null;
+    /// <summary>
     /// Returns price by its business key identification.
     /// </summary>
     IPrice? GetPrice(PriceKey priceKey);

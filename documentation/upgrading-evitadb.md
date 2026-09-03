@@ -90,7 +90,7 @@ For each changed message, open the corresponding Java converter and mirror it:
 
 ## 8. Finalize
 
-* README compatibility table, `documentation/` updates, `IMPLEMENTATION_PLAN.md` (if still tracked).
+* README compatibility table, `documentation/` updates.
 * Verify the release workflow still packs and publishes (`release.yml`).
 * Check open GitHub issues that the upgrade resolves.
 
@@ -106,6 +106,11 @@ Learned the hard way during 2024.4 → 2026.2.4:
    `(this as IFace).Method()` (self-recursion — hoist the default body into a static interface helper),
    bare method-group comparisons (`A != B` compiles since C# 10 and is always true), and
    `value is object[]` missing value-type arrays (test with `DateTimeOffset[]`).
+   The same family covers `DiffersFrom`: Java's `differsFrom` on a `Droppable` value ends with
+   `this.dropped != other.dropped`, and dropping that clause is invisible until something is *removed* —
+   a removal keeps the value and only raises the tombstone, so the tombstone compares equal to the value
+   it removes and the read falls back to the pre-removal value. `AttributeValue` and `AssociatedDataValue`
+   both had it missing; `IPrice`, `IReference` and `GroupEntityReference` did not.
 2. **Stubs must be built on the interceptor channel** (`channel.Invoker`), never the raw channel —
    otherwise calls go out without `sessionId`/`clientVersion` headers and fail `UNAUTHENTICATED`.
 3. **Session identity:** sessions are identified by the `sessionId` header alone; catalog name travels
@@ -115,3 +120,34 @@ Learned the hard way during 2024.4 → 2026.2.4:
 5. **Restored/attached catalogs may arrive `INACTIVE`** since 2026 — activate them explicitly.
 6. **Random seed data:** fixture entity caches are only valid for the current seeding round — refresh
    caches whenever the catalog is re-seeded.
+7. **`Map.put` is not `Dictionary.Add`.** `put` overwrites, `Add` throws on a key that is already
+   present. Every `Existing*Builder` registered its change set with `Add`, so the *second* write to the
+   same attribute, associated data, price or reference threw `ArgumentException: An item with the same
+   key has already been added` — and in `buildChangeSet`, where the accumulator is seeded from the base
+   entity, the *first* write to an existing value threw. Use the indexer (`dict[key] = value`) wherever
+   Java uses `put`. `putIfAbsent` is the one that maps to a guarded `Add`.
+8. **Builder reads must go through the pending mutations.** Several `Existing*Builder` accessors were
+   ported as straight delegations to the base container, which silently ignores everything written to the
+   builder (`ExistingAssociatedDataBuilder.GetAssociatedData<T>`), or as "answer only if this key has a
+   mutation", which makes every *untouched* value read back as `null` once anything else is written
+   (`ExistingAttributesBuilder.GetAttributeValueInternal`). Java's shape is: take the base value, apply
+   this key's mutation if there is one, keep the base when the result does not differ, fall back to
+   mutating `null` when there is no base value at all, then filter the result through the container's
+   predicate (which defaults to `Droppable::exists`). The **collection** accessors
+   (`getAttributeValues()`, `getAssociatedDataValues()`, and the names/keys/locales derived from them)
+   filter through that predicate too — but the `…WithoutPredicate` helper they build on must keep the
+   tombstones, because `Build()` needs them.
+9. **A guarded property is not a field.** Java reads bare fields in places where the C# port reached for
+   the accessor of the same name — and several accessors assert first. `Entity.MutateEntity` reading
+   `entity.Parent` (which asserts `WithHierarchy`) instead of the backing field made `ToInstance()` throw
+   for every non-hierarchical entity opened for write.
+10. **A wire field the port re-derives locally will drift.** `GrpcFacetStatistics.hasSense` was on the
+    wire and read by nothing: `RequestImpact` computed `HasSense => MatchCount > 0` instead. The server's
+    rule is `matchCount > 0 && (difference != 0 || hasSenseAlone)`, so an option that matches something
+    but would change nothing — every match already in the result, and nothing of its own within its
+    group — came back "worth offering" from the client and "not worth offering" from the server. Nothing
+    failed; a facet panel just kept offering options that do nothing. When converting a message, account
+    for **every** field it carries: one the client answers for itself is the one that silently diverges
+    on the next release. (Same family as a discarded exception: `Attributes` had seven
+    `CreateAttributeNotFoundException(name);` statements whose result was never thrown, so an unknown
+    attribute read `null` instead of failing.)

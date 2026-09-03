@@ -259,7 +259,11 @@ public static class ResponseConverter
             grpcFacetStatistics is { Impact: not null, MatchCount: not null }
                 ? new RequestImpact(
                     grpcFacetStatistics.Impact.Value,
-                    grpcFacetStatistics.MatchCount.Value
+                    grpcFacetStatistics.MatchCount.Value,
+                    // Carried, not re-derived: the server computes it as "matches something, and either changes
+                    // the result or matches something on its own within its group", which `MatchCount > 0` alone
+                    // cannot express.
+                    grpcFacetStatistics.HasSense
                 )
                 : null
         );

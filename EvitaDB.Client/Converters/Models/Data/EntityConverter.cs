@@ -110,7 +110,12 @@ public static class EntityConverter
                 .ToHashSet(),
             evitaRequest,
             false,
-            ToPrice(grpcEntity.PriceForSale)
+            ToPrice(grpcEntity.PriceForSale),
+            // The price range the server computed alongside the selling price - the "from X to Y" a product with
+            // variants shows. Message fields, so an unset one arrives as null and PriceRangeForSale.Of then
+            // yields no range, which is the correct answer for a query carrying no price constraints.
+            ToPrice(grpcEntity.PriceForSaleMin),
+            ToPrice(grpcEntity.PriceForSaleMax)
         );
     }
 

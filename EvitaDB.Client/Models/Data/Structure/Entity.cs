@@ -119,6 +119,17 @@ public class Entity : ISealedEntity
     private ISet<string> ReferencesDefined { get; set; }
     public IPrice? PriceForSale { get; }
 
+    /// <summary>
+    /// The cheapest and most expensive selling price, when the server computed them.
+    /// </summary>
+    /// <remarks>
+    /// Populated from the response's <c>priceForSaleMin</c> / <c>priceForSaleMax</c>, which the server calculates
+    /// with the same filters as <see cref="PriceForSale"/>. Null when the query carried no price constraints, or
+    /// when the entity's prices were not fetched. See <see cref="Data.PriceRangeForSale"/> for what the bounds mean
+    /// for a product with variants versus a product set.
+    /// </remarks>
+    public PriceRangeForSale? PriceRangeForSale { get; }
+
     public int? Parent
     {
         get
@@ -154,7 +165,9 @@ public class Entity : ISealedEntity
         ISet<CultureInfo> locales,
         EvitaRequest evitaRequest,
         bool dropped = false,
-        IPrice? pricesForSale = null)
+        IPrice? pricesForSale = null,
+        IPrice? priceForSaleMin = null,
+        IPrice? priceForSaleMax = null)
     {
         return new Entity(
             version ?? 1,
@@ -171,7 +184,9 @@ public class Entity : ISealedEntity
             entitySchema.References.Keys.ToHashSet(),
             entitySchema.WithHierarchy(),
             dropped,
-            pricesForSale
+            pricesForSale,
+            priceForSaleMin,
+            priceForSaleMax
         );
     }
 
@@ -227,7 +242,9 @@ public class Entity : ISealedEntity
         ReferencePredicate referencePredicate,
         PricePredicate pricePredicate,
         bool dropped = false,
-        IPrice? priceForSale = null
+        IPrice? priceForSale = null,
+        IPrice? priceForSaleMin = null,
+        IPrice? priceForSaleMax = null
     )
     {
         return new Entity(
@@ -243,6 +260,8 @@ public class Entity : ISealedEntity
             locales,
             dropped,
             priceForSale,
+            priceForSaleMin,
+            priceForSaleMax,
             localePredicate,
             hierarchyPredicate,
             attributePredicate,
@@ -265,6 +284,8 @@ public class Entity : ISealedEntity
         IEnumerable<CultureInfo> locales,
         bool dropped,
         IPrice? priceForSale,
+        IPrice? priceForSaleMin,
+        IPrice? priceForSaleMax,
         LocalePredicate localePredicate,
         HierarchyPredicate hierarchyPredicate,
         AttributeValuePredicate attributePredicate,
@@ -289,6 +310,7 @@ public class Entity : ISealedEntity
         WithHierarchy = Schema.WithHierarchy();
         ReferencesDefined = Schema.References.Keys.ToHashSet();
         PriceForSale = priceForSale;
+        PriceRangeForSale = PriceRangeForSale.Of(priceForSale, priceForSaleMin, priceForSaleMax);
         LocalePredicate = localePredicate;
         HierarchyPredicate = hierarchyPredicate;
         AttributePredicate = attributePredicate;
@@ -312,7 +334,9 @@ public class Entity : ISealedEntity
         ISet<string> referencesDefined,
         bool withHierarchy,
         bool dropped = false,
-        IPrice? priceForSale = null
+        IPrice? priceForSale = null,
+        IPrice? priceForSaleMin = null,
+        IPrice? priceForSaleMax = null
     )
     {
         Version = version;
@@ -331,6 +355,7 @@ public class Entity : ISealedEntity
         ReferencesDefined = referencesDefined;
         WithHierarchy = withHierarchy;
         PriceForSale = priceForSale;
+        PriceRangeForSale = PriceRangeForSale.Of(priceForSale, priceForSaleMin, priceForSaleMax);
         if (evitaRequest is null)
         {
             LocalePredicate = LocalePredicate.DefaultInstance;
@@ -408,7 +433,10 @@ public class Entity : ISealedEntity
         ICollection<ILocalMutation> localMutations
     )
     {
-        int? oldParent = entity?.Parent;
+        // Java reads the `parent` field here, not the accessor; the C# property asserts WithHierarchy, so
+        // going through it made ToInstance() throw EntityIsNotHierarchicalException for every
+        // non-hierarchical entity opened for write
+        int? oldParent = entity?._parent;
         int? newParent = oldParent;
         PriceInnerRecordHandling? newPriceInnerRecordHandling = null;
         Dictionary<AttributeKey, AttributeValue> newAttributes =

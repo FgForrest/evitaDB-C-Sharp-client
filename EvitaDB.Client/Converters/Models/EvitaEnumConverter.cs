@@ -342,6 +342,32 @@ public static class EvitaEnumConverter
         };
     }
 
+    /// <summary>How a reflected reference inherits the original's reference attributes, on the wire.</summary>
+    /// <remarks>
+    /// Added with the reflected-reference schema support: the mutation and its proto message had existed for
+    /// some time with nothing constructing them, so this pair had never been needed.
+    /// </remarks>
+    public static GrpcAttributeInheritanceBehavior ToGrpcAttributeInheritanceBehavior(
+        AttributeInheritanceBehavior behavior) =>
+        behavior switch
+        {
+            AttributeInheritanceBehavior.InheritAllExcept => GrpcAttributeInheritanceBehavior.InheritAllExcept,
+            AttributeInheritanceBehavior.InheritOnlySpecified =>
+                GrpcAttributeInheritanceBehavior.InheritOnlySpecified,
+            _ => throw new NotSupportedException($"Unknown attribute inheritance behavior: `{behavior}`.")
+        };
+
+    /// <inheritdoc cref="ToGrpcAttributeInheritanceBehavior" />
+    public static AttributeInheritanceBehavior ToAttributeInheritanceBehavior(
+        GrpcAttributeInheritanceBehavior behavior) =>
+        behavior switch
+        {
+            GrpcAttributeInheritanceBehavior.InheritAllExcept => AttributeInheritanceBehavior.InheritAllExcept,
+            GrpcAttributeInheritanceBehavior.InheritOnlySpecified =>
+                AttributeInheritanceBehavior.InheritOnlySpecified,
+            _ => throw new NotSupportedException($"Unknown attribute inheritance behavior: `{behavior}`.")
+        };
+
     public static GrpcCardinality ToGrpcCardinality(Cardinality? cardinality)
     {
         if (cardinality == null)

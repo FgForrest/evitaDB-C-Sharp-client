@@ -131,6 +131,9 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             case CreateReferenceSchemaMutation createReferenceSchemaMutation:
                 grpcEntitySchemaMutation.CreateReferenceSchemaMutation = new CreateReferenceSchemaMutationConverter().Convert(createReferenceSchemaMutation);
                 break;
+            case CreateReflectedReferenceSchemaMutation createReflectedReferenceSchemaMutation:
+                grpcEntitySchemaMutation.CreateReflectedReferenceSchemaMutation = new CreateReflectedReferenceSchemaMutationConverter().Convert(createReflectedReferenceSchemaMutation);
+                break;
             case ModifyReferenceAttributeSchemaMutation modifyReferenceAttributeSchemaMutation:
                 grpcEntitySchemaMutation.ModifyReferenceAttributeSchemaMutation = new ModifyReferenceAttributeSchemaMutationConverter().Convert(modifyReferenceAttributeSchemaMutation);
                 break;
@@ -232,6 +235,7 @@ public class DelegatingEntitySchemaMutationConverter : ISchemaMutationConverter<
             GrpcEntitySchemaMutation.MutationOneofCase.SetEntitySchemaWithPriceMutation => new SetEntitySchemaWithPriceMutationConverter().Convert(mutation.SetEntitySchemaWithPriceMutation),
             
             GrpcEntitySchemaMutation.MutationOneofCase.CreateReferenceSchemaMutation => new CreateReferenceSchemaMutationConverter().Convert(mutation.CreateReferenceSchemaMutation),
+            GrpcEntitySchemaMutation.MutationOneofCase.CreateReflectedReferenceSchemaMutation => new CreateReflectedReferenceSchemaMutationConverter().Convert(mutation.CreateReflectedReferenceSchemaMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.ModifyReferenceAttributeSchemaMutation => new ModifyReferenceAttributeSchemaMutationConverter().Convert(mutation.ModifyReferenceAttributeSchemaMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.ModifyReferenceSchemaCardinalityMutation => new ModifyReferenceSchemaCardinalityMutationConverter().Convert(mutation.ModifyReferenceSchemaCardinalityMutation),
             GrpcEntitySchemaMutation.MutationOneofCase.ModifyReferenceSchemaDeprecationNoticeMutation => new ModifyReferenceSchemaDeprecationNoticeMutationConverter().Convert(mutation.ModifyReferenceSchemaDeprecationNoticeMutation),

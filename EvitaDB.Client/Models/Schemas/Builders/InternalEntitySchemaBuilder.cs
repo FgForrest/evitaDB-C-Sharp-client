@@ -566,6 +566,39 @@ public class InternalEntitySchemaBuilder : IEntitySchemaBuilder
         return this;
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Straight to the mutation, with no intermediate builder: <c>ReflectedReferenceSchemaBuilder</c> is a stub
+    /// and there is nothing for a configurator to configure that this signature does not already carry. That is
+    /// why the driver refused these until now - the mutation existed and nothing reached it.
+    /// </remarks>
+    public IEntitySchemaBuilder WithReflectedReferenceToEntity(
+        string name,
+        string entityType,
+        string reflectedReferenceName,
+        Cardinality? cardinality = null,
+        bool? faceted = null,
+        AttributeInheritanceBehavior attributeInheritance = AttributeInheritanceBehavior.InheritAllExcept,
+        string[]? attributeInheritanceFilter = null)
+    {
+        UpdatedSchemaDirty = AddMutations(
+            CatalogSchemaAccessor.Invoke(),
+            BaseSchema,
+            Mutations,
+            new CreateReflectedReferenceSchemaMutation(
+                name,
+                null,
+                null,
+                cardinality,
+                entityType,
+                reflectedReferenceName,
+                faceted,
+                attributeInheritance,
+                attributeInheritanceFilter));
+
+        return this;
+    }
+
     public IEntitySchemaBuilder WithoutReferenceTo(string name)
     {
         UpdatedSchemaDirty = AddMutations(

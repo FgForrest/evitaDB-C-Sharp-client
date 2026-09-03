@@ -400,6 +400,131 @@ public class ReferenceSchema : IReferenceSchema
             : new List<SortableAttributeCompoundSchema>();
     }
 
+    /// <summary>
+    /// Structural equality, mirroring the Java <c>ReferenceSchema.equals</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This was missing entirely, and the consequence was not a wrong comparison but a broken feature.</b>
+    /// <see cref="Mutations.References.CreateReflectedReferenceSchemaMutation"/> compares an existing
+    /// reference schema with the one a mutation would produce and treats equality as "already applied, nothing
+    /// to do". <see cref="ReflectedReferenceSchema.Equals"/> delegates here through <c>base.Equals</c> — which,
+    /// without this override, was <see cref="object"/>'s reference equality and therefore false for two
+    /// separately-built instances describing the very same reference. So that no-op path was unreachable and
+    /// defining a reflected reference a second time always threw "already exists and has different definition".
+    /// </para>
+    /// <para>
+    /// That is invisible until something defines a schema twice, which is exactly what an idempotent
+    /// catalog preparation does. The platform's two-pass definition — needed because reflected references
+    /// point at collections that may not exist yet — hit it the moment a reference reflected its <em>own</em>
+    /// collection and so could be created on the first pass as well as the second.
+    /// </para>
+    /// <para>
+    /// The Java field set is followed rather than the C# property set where they differ: this port models
+    /// indexed and faceted as plain booleans instead of Java's per-scope collections, so those two stand in
+    /// for the six scope collections Java compares.
+    /// </para>
+    /// </remarks>
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(this, obj))
+        {
+            return true;
+        }
+
+        // GetType rather than `is`, so a reflected reference is never equal to a plain one that happens to
+        // carry the same values - the subclass compares more, and Java draws the line in the same place.
+        if (obj is null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        ReferenceSchema that = (ReferenceSchema)obj;
+
+        return ReferencedEntityTypeManaged == that.ReferencedEntityTypeManaged
+            && ReferencedGroupTypeManaged == that.ReferencedGroupTypeManaged
+            && IsIndexed == that.IsIndexed
+            && IsFaceted == that.IsFaceted
+            && Name == that.Name
+            && Description == that.Description
+            && DeprecationNotice == that.DeprecationNotice
+            && Cardinality == that.Cardinality
+            && ReferencedEntityType == that.ReferencedEntityType
+            && ReferencedGroupType == that.ReferencedGroupType
+            && SameKeyedValues(NameVariants, that.NameVariants)
+            && SameKeyedValues(EntityTypeNameVariants, that.EntityTypeNameVariants)
+            && SameKeyedValues(GroupTypeNameVariants, that.GroupTypeNameVariants)
+            && SameAttributes(Attributes, that.Attributes)
+            && SameKeys(SortableAttributeCompounds, that.SortableAttributeCompounds);
+    }
+
+    public override int GetHashCode() =>
+        HashCode.Combine(
+            Name,
+            Cardinality,
+            ReferencedEntityType,
+            ReferencedGroupType,
+            ReferencedEntityTypeManaged,
+            ReferencedGroupTypeManaged,
+            IsIndexed,
+            IsFaceted);
+
+    /// <summary>Two dictionaries hold the same keys mapped to the same values, in any order.</summary>
+    private static bool SameKeyedValues<TKey, TValue>(
+        IDictionary<TKey, TValue> left,
+        IDictionary<TKey, TValue> right)
+        where TKey : notnull =>
+        left.Count == right.Count
+        && left.All(it => right.TryGetValue(it.Key, out TValue? other)
+            && EqualityComparer<TValue>.Default.Equals(it.Value, other));
+
+    /// <summary>
+    /// Two attribute maps describe the same attributes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Compared field by field rather than with <see cref="object.Equals(object)"/>, because
+    /// <see cref="AttributeSchema"/> does not override it and would compare by reference — which is the very
+    /// bug this file exists to fix, one level down.
+    /// </para>
+    /// <para>
+    /// <b>Comparing only the names is not good enough</b>, and the way that fails is worth recording: callers
+    /// treat equality as "nothing changed, skip the update", so a reference whose attribute merely changed
+    /// from non-filterable to filterable would compare equal and the change would be silently dropped.
+    /// </para>
+    /// </remarks>
+    private static bool SameAttributes(
+        IDictionary<string, AttributeSchema> left,
+        IDictionary<string, AttributeSchema> right) =>
+        left.Count == right.Count
+        && left.All(it => right.TryGetValue(it.Key, out AttributeSchema? other) && SameAttribute(it.Value, other));
+
+    private static bool SameAttribute(IAttributeSchema left, IAttributeSchema right) =>
+        left.Name == right.Name
+        && left.Type == right.Type
+        && left.Description == right.Description
+        && left.DeprecationNotice == right.DeprecationNotice
+        && left.Unique() == right.Unique()
+        && left.UniqueWithinLocale() == right.UniqueWithinLocale()
+        && left.Filterable() == right.Filterable()
+        && left.Sortable() == right.Sortable()
+        && left.Localized() == right.Localized()
+        && left.Nullable() == right.Nullable()
+        && left.IndexedDecimalPlaces == right.IndexedDecimalPlaces
+        && Equals(left.DefaultValue, right.DefaultValue);
+
+    /// <summary>
+    /// Two dictionaries hold the same keys.
+    /// </summary>
+    /// <remarks>
+    /// Names only, for sortable attribute compounds: their schema type has no structural equality either, and
+    /// unlike an attribute it carries nothing a mutation edits in place — a compound is added or removed.
+    /// </remarks>
+    private static bool SameKeys<TValue>(
+        IDictionary<string, TValue> left,
+        IDictionary<string, TValue> right) =>
+        left.Count == right.Count && left.Keys.All(right.ContainsKey);
+
     public override string ToString()
     {
         return "ReferenceSchema{" +

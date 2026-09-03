@@ -172,8 +172,65 @@ public static class EntitySchemaConverter
         );
     }
 
+    /// <summary>
+    /// Builds a reference schema from the wire, reflected or plain.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The reflected half was missing.</b> The proto has carried <c>reflectedReferenceName</c> and its
+    /// inheritance flags for a long time, and this converter read none of them: every reference the server
+    /// described came back as a plain <see cref="ReferenceSchema"/>, including reflected ones. Nothing
+    /// obviously broke, because a reflected reference still reads and queries correctly as a plain one.
+    /// </para>
+    /// <para>
+    /// What it broke was <em>comparison</em>.
+    /// <see cref="Mutations.References.CreateReflectedReferenceSchemaMutation"/> asks "does the reference
+    /// already there equal the one I would create?" to decide whether it is a no-op — and the two could never
+    /// be equal, because one was a <see cref="ReflectedReferenceSchema"/> and the other was not. So defining
+    /// a reflected reference a second time always threw "already exists and has different definition", which
+    /// made preparing a catalog non-idempotent and made a reference that reflects its own collection
+    /// impossible to define at all through a two-pass definition.
+    /// </para>
+    /// </remarks>
     private static IReferenceSchema ToReferenceSchema(GrpcReferenceSchema referenceSchema)
     {
+        if (!string.IsNullOrEmpty(referenceSchema.ReflectedReferenceName))
+        {
+            return ReflectedReferenceSchema.InternalBuild(
+                referenceSchema.Name,
+                new Dictionary<NamingConvention, string?>(NamingConventionHelper.Generate(referenceSchema.Name)),
+                string.IsNullOrEmpty(referenceSchema.Description) ? null : referenceSchema.Description,
+                string.IsNullOrEmpty(referenceSchema.DeprecationNotice)
+                    ? null
+                    : referenceSchema.DeprecationNotice,
+                referenceSchema.EntityType,
+                referenceSchema.ReflectedReferenceName,
+
+                // Null where the value is inherited, which is what marks it inherited: the constructor derives
+                // each `…Inherited` flag from the absence of the value, so passing the resolved value through
+                // would record it as this reference's own declaration and no longer match the declaration a
+                // mutation builds.
+                referenceSchema.CardinalityInherited
+                    ? null
+                    : EvitaEnumConverter.ToCardinality(referenceSchema.Cardinality),
+                referenceSchema.FacetedInherited
+                    ? null
+#pragma warning disable CS0612 // deprecated wire fields are read as fallback for servers older than 2025.6
+                    : EvitaEnumConverter.ToScopedBooleanFlag(
+                        referenceSchema.FacetedInScopes, referenceSchema.Faceted),
+#pragma warning restore CS0612
+                referenceSchema.Attributes.ToDictionary(
+                    x => x.Key,
+                    x => ToAttributeSchema<IAttributeSchema>(x.Value)
+                ),
+                referenceSchema.SortableAttributeCompounds.ToDictionary(
+                    x => x.Key,
+                    x => ToSortableAttributeCompoundSchema(x.Value)
+                ),
+                EvitaEnumConverter.ToAttributeInheritanceBehavior(referenceSchema.AttributeInheritanceBehavior),
+                [.. referenceSchema.AttributeInheritanceFilter]);
+        }
+
         return ReferenceSchema.InternalBuild(
             referenceSchema.Name,
             NamingConventionHelper.Generate(referenceSchema.Name),

@@ -420,26 +420,74 @@ public class ReflectedReferenceSchema : ReferenceSchema, IReflectedReferenceSche
         );
     }
 
+    /// <summary>
+    /// Equality of what was <em>declared</em>, not of what the declaration currently resolves to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The distinction is the whole point of this override. A reflected reference exists twice: as declared
+    /// (<c>InternalBuild</c>) and as resolved against the reference it reflects
+    /// (<see cref="WithReferencedSchema"/>, which fills in whatever is inherited). Those two describe the same
+    /// declaration and must compare equal, because the one question anybody asks this method is
+    /// <see cref="Mutations.References.CreateReflectedReferenceSchemaMutation"/>'s: <em>has this mutation
+    /// already been applied?</em> — where the stored side is resolved and the incoming side is not.
+    /// </para>
+    /// <para>
+    /// So the inherited-value getters are deliberately not compared: on a resolved instance they answer with
+    /// the original's values and on a declared one with nothing, which made every redefinition of a reflected
+    /// reference throw "already exists and has different definition". What is compared is the pair that is
+    /// stable across resolution — the inheritance flags, and the values that are <em>not</em> inherited.
+    /// </para>
+    /// <para>
+    /// The consequence of getting this wrong is not a subtly wrong answer: preparing a catalog twice, which
+    /// every host restart does, failed outright, and a two-pass schema definition could not define a
+    /// reference that reflected its own collection at all.
+    /// </para>
+    /// </remarks>
     public override bool Equals(object? obj)
     {
-        if (this == obj) return true;
-        if (obj == null || GetType() != obj.GetType()) return false;
-        if (!base.Equals(obj)) return false;
+        if (ReferenceEquals(this, obj))
+        {
+            return true;
+        }
+
+        if (obj is null || GetType() != obj.GetType())
+        {
+            return false;
+        }
 
         ReflectedReferenceSchema that = (ReflectedReferenceSchema)obj;
-        return DescriptionInherited == that.DescriptionInherited &&
-               DeprecatedInherited == that.DeprecatedInherited &&
-               CardinalityInherited == that.CardinalityInherited &&
-               FacetedInherited == that.FacetedInherited &&
-               AttributeInheritanceBehavior == that.AttributeInheritanceBehavior &&
-               AttributeInheritanceFilter.SequenceEqual(that.AttributeInheritanceFilter);
+
+        return Name == that.Name
+            && ReferencedEntityType == that.ReferencedEntityType
+            && ReflectedReferenceName == that.ReflectedReferenceName
+            && DescriptionInherited == that.DescriptionInherited
+            && DeprecatedInherited == that.DeprecatedInherited
+            && CardinalityInherited == that.CardinalityInherited
+            && FacetedInherited == that.FacetedInherited
+            && AttributeInheritanceBehavior == that.AttributeInheritanceBehavior
+            && AttributeInheritanceFilter.SequenceEqual(that.AttributeInheritanceFilter)
+
+            // Only where the value is the declaration's own. Where it is inherited both sides agree by
+            // definition, and reading the getter would compare the original's value against nothing.
+            && (DescriptionInherited || Description == that.Description)
+            && (DeprecatedInherited || DeprecationNotice == that.DeprecationNotice)
+            && (CardinalityInherited || Cardinality == that.Cardinality)
+            && (FacetedInherited || IsFaceted == that.IsFaceted);
     }
 
+    /// <remarks>
+    /// Only fields <see cref="Equals"/> compares, and only ones stable across resolution - a hash that folded
+    /// in an inherited value would disagree with equality. <see cref="AttributeInheritanceFilter"/> is an
+    /// array, so it is folded in by length rather than by identity: an array's own hash is its reference,
+    /// which would make two equal schemas hash differently and break every hashed lookup. It was previously
+    /// counted twice while <see cref="AttributeInheritanceBehavior"/> was omitted.
+    /// </remarks>
     public override int GetHashCode()
     {
         return HashCode.Combine(
-            ReflectedReferenceName, DescriptionInherited, DeprecatedInherited,
-            CardinalityInherited, FacetedInherited, AttributeInheritanceFilter,
-            AttributeInheritanceFilter);
+            Name, ReferencedEntityType, ReflectedReferenceName, DescriptionInherited,
+            DeprecatedInherited, CardinalityInherited, FacetedInherited,
+            AttributeInheritanceFilter.Length);
     }
 }

@@ -5,11 +5,21 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <!--
-          Deliberately NOT trimmed: the driver pulls Newtonsoft.Json (reflection-heavy complex data object
-          conversion) and the OpenTelemetry OTLP exporter. Trimming them safely is a rabbit hole with no payoff
-          for a demo; the cost is a larger download.
+          Trimmed in PARTIAL mode: only assemblies that declare themselves trimmable are trimmed, which means
+          the framework. EvitaDB.Client and Newtonsoft.Json are left whole, so the reflection-heavy complex
+          data object conversion keeps working - that was the reason trimming was off entirely before.
+          Where the payload actually goes is the framework tail: 215 assemblies ship untrimmed today, and the
+          XML/DataContract/DataSet stack alone is 1.44 MB compressed in a browser app that never touches it.
+
+          Full trimming would need Newtonsoft.Json replaced by System.Text.Json in the driver. That is
+          deliberately NOT done: EvitaDB.QueryValidator serializes driver models with Newtonsoft converters
+          and relies on the [JsonIgnore] attributes those models carry, and its output is diffed against the
+          evitaDB documentation fixtures - so the swap changes a contract well outside this project.
+
+          AOT stays off: it trades size for speed and typically doubles the download.
         -->
-        <PublishTrimmed>false</PublishTrimmed>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
         <RunAOTCompilation>false</RunAOTCompilation>
         <!--
           The driver builds with TreatWarningsAsErrors; this demo does not, so that an unused-parameter warning
@@ -26,11 +36,40 @@
           asset fingerprinted a redeploy is picked up immediately.
         -->
         <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+
+        <!--
+          Runtime feature switches. Each one lets the runtime drop code paths the storefront never uses;
+          individually they are small, but they also remove reflection roots that would otherwise keep
+          trimming from paying off.
+
+          Deliberately NOT set here:
+            * InvariantGlobalization - would delete the ICU data, and with it correct locale/currency
+              formatting, which the storefront offers as a feature.
+            * RunAOTCompilation - trades size for speed and typically doubles the download.
+        -->
+        <!-- no EventSource/EventPipe listener exists in a browser -->
+        <EventSourceSupport>false</EventSourceSupport>
+        <!-- System.Diagnostics.Metrics instruments are never collected here -->
+        <MetricsSupport>false</MetricsSupport>
+        <!-- no distributed trace to propagate once telemetry is compiled out of the driver -->
+        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+        <!-- framework exception messages become resource keys instead of localized prose -->
+        <UseSystemResourceKeys>true</UseSystemResourceKeys>
     </PropertyGroup>
 
+    <!--
+      Explicit roots. Partial mode already keeps these whole, but naming them means a later switch to
+      TrimMode=full degrades into "everything else is trimmed" rather than silently stripping the reflection
+      paths these two depend on.
+    -->
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+        <TrimmerRootAssembly Include="EvitaDB.Client" />
+        <TrimmerRootAssembly Include="Newtonsoft.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
         <!-- gRPC-Web transport: the browser cannot speak plain gRPC over HTTP/2. -->
         <PackageReference Include="Grpc.Net.Client.Web" Version="2.83.0" />
     </ItemGroup>

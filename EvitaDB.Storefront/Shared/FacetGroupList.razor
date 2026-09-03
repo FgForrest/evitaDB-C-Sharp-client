@@ -38,18 +38,35 @@
 
                         @* what ticking it would do to the CURRENT result count. Hidden once applied:
                            evitaDB reports impact for adding an option, so for an applied one the figure
-                           has no unambiguous reading. *@
-                        @if (!facet.Requested && facet.Impact is { HasSense: true })
+                           has no unambiguous reading.
+
+                           Three cases, because `hasSense` is the server's own verdict and not `MatchCount > 0`:
+                           an option that would yield nothing, an option that matches something but would change
+                           nothing (already implied by what is ticked), and an ordinary one. Keyed off MatchCount
+                           for the first, so a no-impact response - `FacetStatisticsDepth.Counts` - renders no
+                           badge rather than a fabricated zero. *@
+                        @if (facet.Requested || facet.Impact is null)
+                        {
+                            @* nothing: applied, or no impact was asked for *@
+                        }
+                        else if (facet.Impact.MatchCount == 0)
+                        {
+                            <span class="facet-impact empty" title="Selecting this yields no products">
+                                <span class="arrow">↓</span>0
+                            </span>
+                        }
+                        else if (!facet.Impact.HasSense)
+                        {
+                            <span class="facet-impact inert"
+                                  title="Selecting this changes nothing - these products are already in the result">
+                                <span class="arrow">=</span>@Number(facet.Impact.MatchCount)
+                            </span>
+                        }
+                        else
                         {
                             <span class="facet-impact @(facet.Impact.Difference >= 0 ? "widens" : "narrows")"
                                   title="@ImpactTooltip(facet)">
                                 <span class="arrow">@(facet.Impact.Difference >= 0 ? "↑" : "↓")</span>@Number(facet.Impact.MatchCount)
-                            </span>
-                        }
-                        else if (!facet.Requested)
-                        {
-                            <span class="facet-impact empty" title="Selecting this yields no products">
-                                <span class="arrow">↓</span>0
                             </span>
                         }
                     </label>

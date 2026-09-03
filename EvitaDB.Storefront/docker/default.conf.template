@@ -42,6 +42,7 @@ server {
 
     # Blazor publishes a .gz next to every asset; the official nginx images are built with
     # http_gzip_static_module, so those are served directly instead of compressing per request.
+    # Brotli is handled separately below - see the /_framework/ locations.
     gzip_static on;
     gzip on;
     gzip_comp_level 5;
@@ -52,6 +53,77 @@ server {
     add_header Cache-Control $storefront_cache always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # --- Brotli for the framework payload -------------------------------------------------------------
+    #
+    # Publish emits a .br next to every compressible asset, and Brotli is ~21% smaller than gzip on this
+    # payload (measured: 11.5 MB gzip vs 9.1 MB Brotli across the framework files). The official nginx
+    # image has no ngx_brotli module, so `brotli_static` is unavailable - but serving the pre-built file is
+    # just as good: pick it and label the response.
+    #
+    # The `.br` must only be claimed when it ACTUALLY EXISTS. Deciding purely from Accept-Encoding sends
+    # the raw file stamped `Content-Encoding: br`, and the browser then tries to Brotli-decode plain bytes
+    # and fails - publish skips compressing very small or already-compressed assets, so this case is real.
+    # Hence the `-f` test. Assignment-only `if` plus `rewrite ... break` is the safe subset of `if`.
+    #
+    # `add_header` inside the `if` replaces every inherited header, so the server-level ones are repeated
+    # there - the same trap the cache-policy map above avoids.
+    #
+    # One location per extension because a `types` block maps only the LAST extension: inside a location
+    # that can only ever serve `X` or `X.br`, mapping `br` to X's type is exact. A single shared location
+    # would have to give .js.br and .dat.br the wasm type.
+
+    location ~ ^/_framework/.+\.wasm$ {
+        default_type application/wasm;
+        types { application/wasm br; }
+
+        set $storefront_br "";
+        if ($http_accept_encoding ~* "\bbr\b") { set $storefront_br "${request_filename}.br"; }
+        if (-f $storefront_br) {
+            add_header Content-Encoding "br" always;
+            add_header Cache-Control $storefront_cache always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+            add_header Vary "Accept-Encoding" always;
+            rewrite ^(.*)$ $1.br break;
+        }
+    }
+
+    location ~ ^/_framework/.+\.js$ {
+        default_type text/javascript;
+        types { text/javascript br; }
+
+        set $storefront_br "";
+        if ($http_accept_encoding ~* "\bbr\b") { set $storefront_br "${request_filename}.br"; }
+        if (-f $storefront_br) {
+            add_header Content-Encoding "br" always;
+            add_header Cache-Control $storefront_cache always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+            add_header Vary "Accept-Encoding" always;
+            rewrite ^(.*)$ $1.br break;
+        }
+    }
+
+    # ICU shards and any other opaque framework payload
+    location ~ ^/_framework/.+\.(?:dat|json|blat)$ {
+        default_type application/octet-stream;
+        types { application/octet-stream br; }
+
+        set $storefront_br "";
+        if ($http_accept_encoding ~* "\bbr\b") { set $storefront_br "${request_filename}.br"; }
+        if (-f $storefront_br) {
+            add_header Content-Encoding "br" always;
+            add_header Cache-Control $storefront_cache always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+            add_header Vary "Accept-Encoding" always;
+            rewrite ^(.*)$ $1.br break;
+        }
+    }
+
+    # Caches must key on Accept-Encoding now that one URL has several representations.
+    add_header Vary "Accept-Encoding" always;
 
     # Client-side routing: /category/phones and /product/nokia-c3 are not files on disk, so anything that
     # does not resolve falls through to index.html for the Blazor router to pick up.

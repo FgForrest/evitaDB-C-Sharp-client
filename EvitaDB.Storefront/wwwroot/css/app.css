@@ -234,6 +234,8 @@ select, input[type="number"] {
 .facet-impact.narrows { background: var(--bg); border-color: var(--border); color: var(--muted); }
 .facet-impact.widens { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
 .facet-impact.empty { background: none; border-color: transparent; color: var(--muted); opacity: .45; }
+/* would match, but the server says ticking it changes nothing - shown, and shown as inert */
+.facet-impact.inert { background: none; border-color: var(--border); color: var(--muted); opacity: .6; }
 
 .facet-legend {
     display: flex; gap: .75rem; flex-wrap: wrap;

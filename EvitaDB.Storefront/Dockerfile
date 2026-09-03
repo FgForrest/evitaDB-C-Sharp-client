@@ -34,7 +34,11 @@ COPY EvitaDB.Storefront/ EvitaDB.Storefront/
 
 # No wasm-tools workload is needed: the app is published untrimmed and without AOT (see PublishTrimmed /
 # RunAOTCompilation in the csproj), so the browser-wasm runtime arrives as an ordinary NuGet package.
-RUN dotnet publish EvitaDB.Storefront/EvitaDB.Storefront.csproj -c Release -o /publish --no-restore
+# EvitaTelemetry=false drops the OpenTelemetry/OTLP stack from the driver: a browser has no collector to
+# export spans to, and the exporter plus its protobuf dependency is ~0.48 MB of the compressed download.
+# The property flows to the referenced driver project as a global property of this build only.
+RUN dotnet publish EvitaDB.Storefront/EvitaDB.Storefront.csproj -c Release -o /publish --no-restore \
+        -p:EvitaTelemetry=false
 
 # ---------------------------------------------------------------- runtime
 # nginx-unprivileged rather than plain nginx: it already listens on 8080, runs as uid 101 and keeps its

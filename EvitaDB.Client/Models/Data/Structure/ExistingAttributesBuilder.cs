@@ -85,7 +85,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                 );
             }
 
-            AttributeMutations.Add(attributeKey, upsertAttributeMutation);
+            AttributeMutations[attributeKey] = upsertAttributeMutation;
         }
         else if (localMutation is RemoveAttributeMutation removeAttributeMutation)
         {
@@ -97,7 +97,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
             }
             else
             {
-                AttributeMutations.Add(attributeKey, removeAttributeMutation);
+                AttributeMutations[attributeKey] = removeAttributeMutation;
             }
         }
         else if (localMutation is ApplyDeltaAttributeMutation applyDeltaAttributeMutation)
@@ -114,11 +114,11 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
             AttributeValue updatedValue = applyDeltaAttributeMutation.MutateLocal(EntitySchema, attributeValue);
             if (!AttributeMutations.TryGetValue(attributeKey, out _))
             {
-                AttributeMutations.Add(attributeKey, applyDeltaAttributeMutation);
+                AttributeMutations[attributeKey] = applyDeltaAttributeMutation;
             }
             else
             {
-                AttributeMutations.Add(attributeKey, new UpsertAttributeMutation(attributeKey, updatedValue.Value!));
+                AttributeMutations[attributeKey] = new UpsertAttributeMutation(attributeKey, updatedValue.Value!);
             }
         }
         else
@@ -186,12 +186,14 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
 
     public ICollection<AttributeValue> GetAttributeValues()
     {
-        return GetAttributeValuesWithoutPredicate().ToList();
+        // Java filters through attributePredicate (Droppable::exists) here, so a removed attribute stops
+        // being listed - Build() keeps using the unfiltered helper because it needs the tombstones
+        return GetAttributeValuesWithoutPredicate().Where(it => !it.Dropped).ToList();
     }
 
     public ICollection<AttributeValue> GetAttributeValues(string attributeName)
     {
-        return GetAttributeValuesWithoutPredicate()
+        return GetAttributeValues()
             .Where(x => x.Key.AttributeName == attributeName).ToList();
     }
 
@@ -207,10 +209,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
     {
         AttributeKey attributeKey = new AttributeKey(attributeName);
         VerifyAttributeExists(attributeKey);
-        AttributeMutations.Add(
-            attributeKey,
-            new RemoveAttributeMutation(attributeKey)
-        );
+        AttributeMutations[attributeKey] = new RemoveAttributeMutation(attributeKey);
         return this;
     }
 
@@ -228,10 +227,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                 attributeValue.GetType(), GetLocationResolver());
         }
 
-        AttributeMutations.Add(
-            attributeKey,
-            new UpsertAttributeMutation(attributeKey, attributeValue)
-        );
+        AttributeMutations[attributeKey] = new UpsertAttributeMutation(attributeKey, attributeValue);
         return this;
     }
 
@@ -249,10 +245,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                 attributeValue.GetType(), GetLocationResolver());
         }
 
-        AttributeMutations.Add(
-            attributeKey,
-            new UpsertAttributeMutation(attributeKey, attributeValue)
-        );
+        AttributeMutations[attributeKey] = new UpsertAttributeMutation(attributeKey, attributeValue);
         return this;
     }
 
@@ -260,10 +253,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
     {
         AttributeKey attributeKey = new AttributeKey(attributeName, locale);
         VerifyAttributeExists(attributeKey);
-        AttributeMutations.Add(
-            attributeKey,
-            new RemoveAttributeMutation(attributeKey)
-        );
+        AttributeMutations[attributeKey] = new RemoveAttributeMutation(attributeKey);
         return this;
     }
 
@@ -281,10 +271,7 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
 
-        AttributeMutations.Add(
-            attributeKey,
-            new UpsertAttributeMutation(attributeKey, attributeValue)
-        );
+        AttributeMutations[attributeKey] = new UpsertAttributeMutation(attributeKey, attributeValue);
         return this;
     }
 
@@ -302,16 +289,13 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                 attributeName, attributeValue.GetType(), locale, GetLocationResolver());
         }
 
-        AttributeMutations.Add(
-            attributeKey,
-            new UpsertAttributeMutation(attributeKey, attributeValue)
-        );
+        AttributeMutations[attributeKey] = new UpsertAttributeMutation(attributeKey, attributeValue);
         return this;
     }
 
     public IAttributesBuilder<TS> MutateAttribute(AttributeMutation mutation)
     {
-        AttributeMutations.Add(mutation.AttributeKey, mutation);
+        AttributeMutations[mutation.AttributeKey] = mutation;
         return this;
     }
 
@@ -326,7 +310,9 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
                     ? value
                     : null;
                 AttributeValue newAttribute = it.MutateLocal(EntitySchema, existingValue);
-                builtAttributes.Add(it.AttributeKey, newAttribute);
+                // Java accumulates with Map.put, which overwrites; Dictionary.Add throws on a key that is
+                // already there - and it always is when an existing attribute is the one being mutated
+                builtAttributes[it.AttributeKey] = newAttribute;
                 return existingValue == null || newAttribute.Version > existingValue.Version;
             });
     }
@@ -385,11 +371,26 @@ public abstract class ExistingAttributesBuilder<TS, T> : IAttributesBuilder<TS>
 
     private AttributeValue? GetAttributeValueInternal(AttributeKey attributeKey)
     {
-        AttributeValue? attributeValue =
+        AttributeValue? baseValue =
             BaseAttributes.AttributeValues.TryGetValue(attributeKey, out AttributeValue? value) ? value : null;
-        return AttributeMutations.TryGetValue(attributeKey, out AttributeMutation? mutation)
-            ? mutation.MutateLocal(EntitySchema, attributeValue)
-            : null;
+        AttributeMutations.TryGetValue(attributeKey, out AttributeMutation? mutation);
+
+        AttributeValue? result;
+        if (baseValue is not null)
+        {
+            // an unmutated attribute reads as it stands; the port returned null here, so every attribute
+            // left alone disappeared as soon as any other one was written
+            AttributeValue? mutated = mutation?.MutateLocal(EntitySchema, baseValue);
+            result = mutated is not null && mutated.DiffersFrom(baseValue) ? mutated : baseValue;
+        }
+        else
+        {
+            result = mutation?.MutateLocal(EntitySchema, null);
+        }
+
+        // Java filters the result through attributePredicate, which defaults to Droppable::exists - without
+        // it a removed attribute reads back as its pre-removal value
+        return result is null || result.Dropped ? null : result;
     }
 
     /// <summary>

@@ -19,7 +19,9 @@ public class AllowLocaleInEntitySchemaMutation : IEntitySchemaMutation
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (entitySchema!.Locales.All(Locales.Contains)) {
+        // the schema needs no change only when every locale this mutation adds is already supported;
+        // comparing the other way round is vacuously true for a schema with no locales yet
+        if (Locales.All(entitySchema!.SupportsLocale)) {
             // no need to change the schema
             return entitySchema;
         }

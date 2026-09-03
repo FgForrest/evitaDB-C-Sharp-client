@@ -22,7 +22,9 @@ public class DisallowEvolutionModeInEntitySchemaMutation : IEntitySchemaMutation
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (entitySchema!.EvolutionModes.All(EvolutionModes.Contains))
+        // there is nothing to remove only when the schema allows none of the listed modes; `All` would
+        // also skip when the schema's modes are a subset, leaving them in place
+        if (!entitySchema!.EvolutionModes.Any(EvolutionModes.Contains))
         {
             // no need to change the schema
             return entitySchema;

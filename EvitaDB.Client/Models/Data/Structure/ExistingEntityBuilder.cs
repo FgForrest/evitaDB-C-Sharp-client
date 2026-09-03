@@ -538,10 +538,7 @@ public class ExistingEntityBuilder : IEntityBuilder
             if (referenceInBaseEntity is not null && referenceInBaseEntity.Dropped &&
                 !RemovedReferences.Contains(referenceKey))
             {
-                ReferenceMutations.Add(
-                    referenceKey,
-                    changeSet
-                );
+                ReferenceMutations[referenceKey] = changeSet;
             }
             else
             {
@@ -559,18 +556,12 @@ public class ExistingEntityBuilder : IEntityBuilder
                 );
 
 
-                ReferenceMutations.Add(
-                    referenceKey,
-                    changeSet
-                );
+                ReferenceMutations[referenceKey] = changeSet;
             }
         }
         else
         {
-            ReferenceMutations.Add(
-                referenceKey,
-                referenceBuilder.BuildChangeSet().ToList()
-            );
+            ReferenceMutations[referenceKey] = referenceBuilder.BuildChangeSet().ToList();
         }
 
         return this;
@@ -592,10 +583,7 @@ public class ExistingEntityBuilder : IEntityBuilder
             " is not present on the entity " + BaseEntity.Type + " and id " +
             BaseEntity.PrimaryKey + "!"
         );
-        ReferenceMutations.Add(
-            referenceKey,
-            new List<ReferenceMutation> { new RemoveReferenceMutation(referenceKey) }
-        );
+        ReferenceMutations[referenceKey] = new List<ReferenceMutation> { new RemoveReferenceMutation(referenceKey) };
         RemovedReferences.Add(referenceKey);
         return this;
     }
@@ -624,7 +612,9 @@ public class ExistingEntityBuilder : IEntityBuilder
                         ? exReference
                         : null;
                 IReference newReference = referenceMutation.MutateLocal(BaseEntity.Schema, existingReference);
-                builtReferences.Add(referenceMutation.ReferenceKey, newReference);
+                // overwrite, as Java's Map.put does - Dictionary.Add throws both when the reference already
+                // exists on the entity and when a second mutation for the same key is applied
+                builtReferences[referenceMutation.ReferenceKey] = newReference;
                 if (existingReference == null || newReference.Version > existingReference.Version)
                 {
                     mutations.Add(referenceMutation);
@@ -632,6 +622,11 @@ public class ExistingEntityBuilder : IEntityBuilder
             }
         }
 
+        // Java's toMutation has no such filter because its price change set ends in filter(Objects::nonNull)
+        // and cannot leak one; the ported price builder does the same now. This is defence in depth for the
+        // next contributor, because a null here is doubly damaging: the entity looks changed when it is not,
+        // so it is upserted needlessly, and the mutation sent over the wire carries a null element.
+        mutations.RemoveAll(it => it is null);
         mutations.Sort();
 
         if (!mutations.Any())

@@ -83,14 +83,14 @@ public class ExistingPricesBuilder : IPricesBuilder
                     upsertPriceMutation.Indexed
                 )
             );
-            PriceMutations.Add(priceKey, upsertPriceMutation);
+            PriceMutations[priceKey] = upsertPriceMutation;
         }
         else if (localMutation is RemovePriceMutation removePriceMutation)
         {
             PriceKey priceKey = removePriceMutation.PriceKey;
             Assert.NotNull(BasePrices.GetPriceWithoutSchemaCheck(priceKey), "Price " + priceKey + " doesn't exist!");
             RemovePriceMutation mutation = new RemovePriceMutation(priceKey);
-            PriceMutations.Add(priceKey, mutation);
+            PriceMutations[priceKey] = mutation;
         }
         else
         {
@@ -112,8 +112,11 @@ public class ExistingPricesBuilder : IPricesBuilder
             .Where(it => it.Currency.Equals(price.Currency))
             .Where(it => it.PriceId != price.PriceId)
             .Where(it => Equals(it.InnerRecordId, price.InnerRecordId))
-            .Where(it => it.Validity == null || it.Validity is not null && price.Validity is not null &&
-                it.Validity.Overlaps(price.Validity)
+            // same rule as InitialPricesBuilder: an unbounded validity on either side is a conflict. The
+            // original port omitted the "incoming price has no validity" case and so missed ambiguities.
+            .Where(it => price.Validity is null
+                         || it.Validity is null
+                         || it.Validity.Overlaps(price.Validity)
             )
             // the conflicting prices don't play role if they're going to be removed in the same update
             .FirstOrDefault(it =>
@@ -250,7 +253,7 @@ public class ExistingPricesBuilder : IPricesBuilder
         PriceKey priceKey = new PriceKey(priceId, priceList, currency);
         UpsertPriceMutation mutation = new UpsertPriceMutation(priceKey, innerRecordId, priceWithoutTax, taxRate, priceWithTax, validity, sellable);
         AssertPriceNotAmbiguousBeforeAdding(new Price(priceKey, innerRecordId, priceWithoutTax, taxRate, priceWithTax, validity, sellable));
-        PriceMutations.Add(priceKey, mutation);
+        PriceMutations[priceKey] = mutation;
         return this;
     }
 
@@ -259,7 +262,7 @@ public class ExistingPricesBuilder : IPricesBuilder
         PriceKey priceKey = new PriceKey(priceId, priceList, currency);
         Assert.NotNull(BasePrices.GetPriceWithoutSchemaCheck(priceKey), "Price " + priceKey + " doesn't exist!");
         RemovePriceMutation mutation = new RemovePriceMutation(priceKey);
-        PriceMutations.Add(priceKey, mutation);
+        PriceMutations[priceKey] = mutation;
         return this;
     }
 
@@ -292,17 +295,21 @@ public class ExistingPricesBuilder : IPricesBuilder
         IDictionary<PriceKey, IPrice> builtPrices = new Dictionary<PriceKey, IPrice>();
         foreach (IPrice originalPrice in originalPrices)
         {
-            builtPrices.Add(originalPrice.Key, originalPrice);
+            builtPrices[originalPrice.Key] = originalPrice;
         }
 
         List<ILocalMutation> localMutations = new List<ILocalMutation>();
         
         if (RemoveAllNonModifiedPrices)
         {
-            if (!Equals(BasePrices.InnerRecordHandling,
-                    PriceInnerRecordHandlingEntityMutation?.PriceInnerRecordHandling))
+            // the mutation is only emitted when it exists AND actually changes the handling; Java guards
+            // this with a trailing filter(Objects::nonNull) which this port dropped, so an unchanged
+            // builder used to contribute a null local mutation
+            if (PriceInnerRecordHandlingEntityMutation is not null
+                && !Equals(BasePrices.InnerRecordHandling,
+                    PriceInnerRecordHandlingEntityMutation.PriceInnerRecordHandling))
             {
-                localMutations.Add(PriceInnerRecordHandlingEntityMutation!);
+                localMutations.Add(PriceInnerRecordHandlingEntityMutation);
             }
 
             localMutations.AddRange(PriceMutations.Values
@@ -310,7 +317,8 @@ public class ExistingPricesBuilder : IPricesBuilder
                 {
                     IPrice? existingValue = builtPrices.TryGetValue(it.PriceKey, out IPrice? price) ? price : null;
                     IPrice newPrice = it.MutateLocal(EntitySchema, existingValue);
-                    builtPrices.Add(it.PriceKey, newPrice);
+                    // overwrite, as Java's Map.put does - Dictionary.Add throws when an existing price is mutated
+                    builtPrices[it.PriceKey] = newPrice;
                     return existingValue == null || newPrice.Version > existingValue.Version;
                 }));
 
@@ -320,10 +328,14 @@ public class ExistingPricesBuilder : IPricesBuilder
         }
         else
         {
-            if (!Equals(BasePrices.InnerRecordHandling,
-                    PriceInnerRecordHandlingEntityMutation?.PriceInnerRecordHandling))
+            // the mutation is only emitted when it exists AND actually changes the handling; Java guards
+            // this with a trailing filter(Objects::nonNull) which this port dropped, so an unchanged
+            // builder used to contribute a null local mutation
+            if (PriceInnerRecordHandlingEntityMutation is not null
+                && !Equals(BasePrices.InnerRecordHandling,
+                    PriceInnerRecordHandlingEntityMutation.PriceInnerRecordHandling))
             {
-                localMutations.Add(PriceInnerRecordHandlingEntityMutation!);
+                localMutations.Add(PriceInnerRecordHandlingEntityMutation);
             }
 
             localMutations.AddRange(PriceMutations.Values
@@ -331,7 +343,8 @@ public class ExistingPricesBuilder : IPricesBuilder
                 {
                     IPrice? existingValue = builtPrices.TryGetValue(it.PriceKey, out IPrice? price) ? price : null;
                     IPrice newPrice = it.MutateLocal(EntitySchema, existingValue);
-                    builtPrices.Add(it.PriceKey, newPrice);
+                    // overwrite, as Java's Map.put does - Dictionary.Add throws when an existing price is mutated
+                    builtPrices[it.PriceKey] = newPrice;
                     return existingValue == null || newPrice.Version > existingValue.Version;
                 }));
         }

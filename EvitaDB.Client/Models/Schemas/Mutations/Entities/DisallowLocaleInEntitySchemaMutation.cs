@@ -23,7 +23,9 @@ public class DisallowLocaleInEntitySchemaMutation : IEntitySchemaMutation
     public IEntitySchema? Mutate(ICatalogSchema catalogSchema, IEntitySchema? entitySchema)
     {
         Assert.IsPremiseValid(entitySchema != null, "Entity schema is mandatory!");
-        if (entitySchema!.Locales.All(Locales.Contains))
+        // there is nothing to remove only when the schema supports none of the listed locales; `All`
+        // would also skip when the schema's locales are a subset, leaving them in place
+        if (!entitySchema!.Locales.Any(Locales.Contains))
         {
             // no need to change the schema
             return entitySchema;

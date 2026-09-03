@@ -28,7 +28,10 @@ public record AttributeValue : IComparable<AttributeValue>, IDroppable, IContent
     {
         if (otherAttributeValue == null) return true;
         if (!Equals(Key, otherAttributeValue.Key)) return true;
-        return !Equals(Value, otherAttributeValue.Value);
+        if (!Equals(Value, otherAttributeValue.Value)) return true;
+        // removal keeps the value and only raises the tombstone, so without this a removed attribute does
+        // not differ from the one it removes - and reads fall back to the pre-removal value
+        return Dropped != otherAttributeValue.Dropped;
     }
     
     public override string ToString()

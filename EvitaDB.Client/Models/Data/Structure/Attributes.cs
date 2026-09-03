@@ -63,7 +63,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -80,7 +80,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -115,7 +115,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -130,7 +130,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -149,7 +149,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -165,7 +165,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
     {
         if (!AttributeTypes.TryGetValue(attributeName, out TS? attributeSchema))
         {
-            CreateAttributeNotFoundException(attributeName);
+            throw CreateAttributeNotFoundException(attributeName);
         }
 
         AttributeKey attributeKey = attributeSchema!.Localized()
@@ -218,7 +218,7 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         {
             if (attributeSchema is null)
             {
-                CreateAttributeNotFoundException(attributeName);
+                throw CreateAttributeNotFoundException(attributeName);
             }
         }
 
@@ -262,5 +262,16 @@ public abstract class Attributes<TS> : IAttributes<TS> where TS : IAttributeSche
         return Empty ? "no attributes present" : string.Join("; ", GetAttributeValues().Select(x => x.ToString()));
     }
     
+    /// <summary>
+    /// The exception for an attribute this container's schema does not declare.
+    /// </summary>
+    /// <remarks>
+    /// It <em>returns</em> the exception and every caller must <c>throw</c> it. All seven of them used to call it
+    /// as a statement and discard the result, then dereference the null schema on the next line - so asking for an
+    /// attribute a collection does not have produced a <see cref="NullReferenceException"/> from inside the driver
+    /// instead of the named error. The Java original throws; this is the porting shape
+    /// <c>documentation/upgrading-evitadb.md</c> calls out, where a `throw` in front of a factory call is the
+    /// entire difference between a diagnosis and a mystery.
+    /// </remarks>
     protected abstract AttributeNotFoundException CreateAttributeNotFoundException(string attributeName);
 }

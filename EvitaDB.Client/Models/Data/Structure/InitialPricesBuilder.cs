@@ -170,8 +170,12 @@ public class InitialPricesBuilder : IPricesBuilder
             .Where(it =>
                 Equals(it.InnerRecordId, price.InnerRecordId)
             )
-            .FirstOrDefault(it => price.Validity != null &&
-                (it.Validity is null || price.Validity is null) || it.Validity!.Overlaps(price.Validity!));
+            // a price without validity is always valid, so it conflicts with any other price in the same
+            // price list and currency; only two bounded ranges need an overlap test. The precedence of the
+            // original port made this dereference a null Validity instead.
+            .FirstOrDefault(it => price.Validity is null
+                                  || it.Validity is null
+                                  || it.Validity.Overlaps(price.Validity));
         if (conflictingPrice != null)
         {
             throw new AmbiguousPriceException(conflictingPrice, price);

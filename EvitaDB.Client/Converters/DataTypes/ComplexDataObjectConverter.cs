@@ -85,7 +85,12 @@ public static class ComplexDataObjectConverter
             // Add each key-value pair in the dictionary to the DataItemMap
             foreach (DictionaryEntry entry in dictionary)
             {
-                dataItemMap.Add(entry.Key.ToString()!, ConvertToIDataItem(entry.Value!)!);
+                if (entry.Value is null)
+                {
+                    continue;
+                }
+
+                dataItemMap.Add(entry.Key.ToString()!, ConvertToIDataItem(entry.Value)!);
             }
 
             return new DataItemMap(dataItemMap!);
@@ -102,8 +107,15 @@ public static class ComplexDataObjectConverter
                 // Get the value of the property
                 object? value = property.GetValue(obj);
 
+                // "only non-null properties are persisted and recovered" (ComplexDataObjectConverter in the
+                // Java module); recursing on a null instead threw a NullReferenceException
+                if (value is null)
+                {
+                    continue;
+                }
+
                 // Add the property to the DataItemMap
-                dataItemMap.Add(property.Name, ConvertToIDataItem(value!)!);
+                dataItemMap.Add(property.Name, ConvertToIDataItem(value)!);
             }
 
             return new DataItemMap(dataItemMap!);

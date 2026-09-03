@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
 using EvitaDB.Client.Converters.DataTypes;
+using EvitaDB.Client.DataTypes;
 using EvitaDB.Client.Exceptions;
 using EvitaDB.Client.Models.Data.Mutations.AssociatedData;
 using EvitaDB.Client.Models.Schemas;
@@ -61,7 +62,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
                 associatedDataKey.AssociatedDataName, associatedDataValue.GetType(), associatedDataKey.Locale!
             );
 
-            AssociatedDataMutations.Add(associatedDataKey, upsertAssociatedDataMutation);
+            AssociatedDataMutations[associatedDataKey] = upsertAssociatedDataMutation;
         }
         else if (localMutation is RemoveAssociatedDataMutation removeAssociatedDataMutation)
         {
@@ -73,7 +74,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
             }
             else
             {
-                AssociatedDataMutations.Add(associatedDataKey, removeAssociatedDataMutation);
+                AssociatedDataMutations[associatedDataKey] = removeAssociatedDataMutation;
             }
         }
         else
@@ -90,7 +91,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
 
     public T? GetAssociatedData<T>(string associatedDataName) where T : class
     {
-        return BaseAssociatedData.GetAssociatedData<T>(associatedDataName);
+        return DeserializeAssociatedData<T>(new AssociatedDataKey(associatedDataName));
     }
 
     public object? GetAssociatedData(string associatedDataName, CultureInfo locale)
@@ -100,7 +101,28 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
 
     public T? GetAssociatedData<T>(string associatedDataName, CultureInfo locale) where T : class
     {
-        return BaseAssociatedData.GetAssociatedData<T>(associatedDataName, locale);
+        return DeserializeAssociatedData<T>(new AssociatedDataKey(associatedDataName, locale));
+    }
+
+    /// <summary>
+    /// Reads associated data through the pending mutations and deserializes it into <typeparamref name="T"/>.
+    /// <remarks>
+    /// The port read the base container here instead, so associated data written on this builder was invisible
+    /// to the typed getter - and asking for data the fetched entity never carried threw rather than returning
+    /// what was just written.
+    /// </remarks>
+    /// </summary>
+    private T? DeserializeAssociatedData<T>(AssociatedDataKey associatedDataKey) where T : class
+    {
+        object? value = GetAssociatedDataValueInternal(associatedDataKey)?.Value;
+
+        return value switch
+        {
+            null => null,
+            ComplexDataObject complexDataObject =>
+                ComplexDataObjectConverter.ConvertFromComplexDataObject<T>(complexDataObject),
+            _ => (T)value
+        };
     }
 
     public object[]? GetAssociatedDataArray(string associatedDataName)
@@ -148,12 +170,13 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
 
     public ICollection<AssociatedDataValue> GetAssociatedDataValues()
     {
-        return GetAssociatedDataValuesWithoutPredicate().ToList();
+        // see the same filter in ExistingAttributesBuilder.GetAttributeValues
+        return GetAssociatedDataValuesWithoutPredicate().Where(it => !it.Dropped).ToList();
     }
 
     public ICollection<AssociatedDataValue> GetAssociatedDataValues(string associatedDataName)
     {
-        return GetAssociatedDataValuesWithoutPredicate()
+        return GetAssociatedDataValues()
             .Where(x=>x.Key.AssociatedDataName == associatedDataName).ToList();
     }
 
@@ -167,13 +190,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
 
     public IAssociatedDataBuilder RemoveAssociatedData(string associatedDataName)
     {
-        AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName);
-        VerifyAssociatedDataExists(associatedDataKey);
-        AssociatedDataMutations.Add(
-            associatedDataKey,
-            new RemoveAssociatedDataMutation(associatedDataKey)
-        );
-        return this;
+        return RemoveAssociatedDataInternal(new AssociatedDataKey(associatedDataName));
     }
 
     public IAssociatedDataBuilder SetAssociatedData(string associatedDataName, object? associatedDataValue)
@@ -185,7 +202,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
         object valueToStore = ComplexDataObjectConverter.GetSerializableForm(associatedDataValue);
         AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName);
         InitialAssociatedDataBuilder.VerifyAssociatedDataIsInSchemaAndTypeMatch(EntitySchema, associatedDataName, valueToStore.GetType());
-        AssociatedDataMutations.Add(associatedDataKey, new UpsertAssociatedDataMutation(associatedDataKey, valueToStore));
+        AssociatedDataMutations[associatedDataKey] = new UpsertAssociatedDataMutation(associatedDataKey, valueToStore);
         return this;
     }
 
@@ -198,18 +215,39 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
         object valueToStore = ComplexDataObjectConverter.GetSerializableForm(associatedDataValue);
         AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName);
         InitialAssociatedDataBuilder.VerifyAssociatedDataIsInSchemaAndTypeMatch(EntitySchema, associatedDataName, valueToStore.GetType());
-        AssociatedDataMutations.Add(associatedDataKey, new UpsertAssociatedDataMutation(associatedDataKey, valueToStore));
+        AssociatedDataMutations[associatedDataKey] = new UpsertAssociatedDataMutation(associatedDataKey, valueToStore);
         return this;
     }
 
     public IAssociatedDataBuilder RemoveAssociatedData(string associatedDataName, CultureInfo locale)
     {
-        AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName, locale);
+        return RemoveAssociatedDataInternal(new AssociatedDataKey(associatedDataName, locale));
+    }
+
+    /// <summary>
+    /// Removes associated data the way Java's <c>removeAssociatedData</c> does.
+    /// <remarks>
+    /// When the fetched entity never carried this data there is nothing to tombstone, so the pending
+    /// mutation is simply discarded. Recording a removal instead - which the port did - made the change
+    /// set throw <c>InvalidMutationException: it doesn't exist</c> as soon as anything read it back.
+    /// </remarks>
+    /// </summary>
+    private IAssociatedDataBuilder RemoveAssociatedDataInternal(AssociatedDataKey associatedDataKey)
+    {
         VerifyAssociatedDataExists(associatedDataKey);
-        AssociatedDataMutations.Add(
-            associatedDataKey,
-            new RemoveAssociatedDataMutation(associatedDataKey)
-        );
+
+        AssociatedDataValue? baseValue =
+            BaseAssociatedData.GetAssociatedDataValueWithoutSchemaCheck(associatedDataKey);
+
+        if (baseValue is null || baseValue.Dropped)
+        {
+            AssociatedDataMutations.Remove(associatedDataKey);
+        }
+        else
+        {
+            AddMutation(new RemoveAssociatedDataMutation(associatedDataKey));
+        }
+
         return this;
     }
 
@@ -223,7 +261,7 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
         object valueToStore = ComplexDataObjectConverter.GetSerializableForm(associatedDataValue);
         AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName, locale);
         InitialAssociatedDataBuilder.VerifyAssociatedDataIsInSchemaAndTypeMatch(EntitySchema, associatedDataName, valueToStore.GetType(), locale);
-        AssociatedDataMutations.Add(associatedDataKey, new UpsertAssociatedDataMutation(associatedDataKey, valueToStore));
+        AssociatedDataMutations[associatedDataKey] = new UpsertAssociatedDataMutation(associatedDataKey, valueToStore);
         return this;
     }
 
@@ -237,13 +275,13 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
         object valueToStore = ComplexDataObjectConverter.GetSerializableForm(associatedDataValue);
         AssociatedDataKey associatedDataKey = new AssociatedDataKey(associatedDataName, locale);
         InitialAssociatedDataBuilder.VerifyAssociatedDataIsInSchemaAndTypeMatch(EntitySchema, associatedDataName, valueToStore.GetType(), locale);
-        AssociatedDataMutations.Add(associatedDataKey, new UpsertAssociatedDataMutation(associatedDataKey, valueToStore));
+        AssociatedDataMutations[associatedDataKey] = new UpsertAssociatedDataMutation(associatedDataKey, valueToStore);
         return this;
     }
 
     public IAssociatedDataBuilder MutateAssociatedData(AssociatedDataMutation mutation)
     {
-        AssociatedDataMutations.Add(mutation.AssociatedDataKey, mutation);
+        AssociatedDataMutations[mutation.AssociatedDataKey] = mutation;
         return this;
     }
 
@@ -257,7 +295,8 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
                 AssociatedDataValue? existingValue = builtAssociatedData.TryGetValue(it.AssociatedDataKey, out AssociatedDataValue? value)
                     ? value : null;
                 AssociatedDataValue newAssociatedData = it.MutateLocal(EntitySchema, existingValue);
-                builtAssociatedData.Add(it.AssociatedDataKey, newAssociatedData);
+                // overwrite, as Java's Map.put does - Dictionary.Add throws when an existing value is mutated
+                builtAssociatedData[it.AssociatedDataKey] = newAssociatedData;
                 return existingValue == null || newAssociatedData.Version > existingValue.Version;
             });
     }
@@ -291,8 +330,26 @@ public class ExistingAssociatedDataBuilder : IAssociatedDataBuilder
     }
     
     private AssociatedDataValue? GetAssociatedDataValueInternal(AssociatedDataKey associatedDataKey) {
-        AssociatedDataValue? associatedDataValue = BaseAssociatedData.AssociatedDataValues.TryGetValue(associatedDataKey, out AssociatedDataValue? value) ? value : null;
-        return AssociatedDataMutations.TryGetValue(associatedDataKey, out AssociatedDataMutation? mutation) ? mutation.MutateLocal(EntitySchema, associatedDataValue) : null;
+        AssociatedDataValue? baseValue =
+            BaseAssociatedData.AssociatedDataValues.TryGetValue(associatedDataKey, out AssociatedDataValue? value)
+                ? value
+                : null;
+        AssociatedDataMutations.TryGetValue(associatedDataKey, out AssociatedDataMutation? mutation);
+
+        AssociatedDataValue? result;
+        if (baseValue is not null)
+        {
+            // unmutated associated data reads as it stands - see the same fix in ExistingAttributesBuilder
+            AssociatedDataValue? mutated = mutation?.MutateLocal(EntitySchema, baseValue);
+            result = mutated is not null && mutated.DiffersFrom(baseValue) ? mutated : baseValue;
+        }
+        else
+        {
+            result = mutation?.MutateLocal(EntitySchema, null);
+        }
+
+        // Java's associatedDataPredicate defaults to Droppable::exists
+        return result is null || result.Dropped ? null : result;
     }
     
     private List<AssociatedDataValue> GetAssociatedDataValuesWithoutPredicate()

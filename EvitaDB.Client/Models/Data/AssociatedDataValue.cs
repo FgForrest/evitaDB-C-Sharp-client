@@ -22,7 +22,9 @@ public record AssociatedDataValue(int Version, AssociatedDataKey Key, object? Va
     {
         if (otherAttributeValue == null) return true;
         if (!Equals(Key, otherAttributeValue.Key)) return true;
-        return !Equals(Value, otherAttributeValue.Value);
+        if (!Equals(Value, otherAttributeValue.Value)) return true;
+        // see AttributeValue.DiffersFrom - a tombstone differs from the value it drops
+        return Dropped != otherAttributeValue.Dropped;
     }
 
     public override string ToString()

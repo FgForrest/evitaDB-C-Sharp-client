@@ -8,6 +8,7 @@ quickstart, API examples) see the repository [README](../README.md) and the offi
 |---|---|
 | [architecture.md](architecture.md) | How the driver is layered: channels, interceptors, sessions, converters, models |
 | [async-api.md](async-api.md) | The async-core / sync-facade convention and streaming APIs |
+| [typed-models.md](typed-models.md) | Annotated entity contracts: reading entities as typed models and deriving schemas from them |
 | [wire-compatibility.md](wire-compatibility.md) | Protocol pinning, deprecated wire fields, scoped-field fallbacks, version gating |
 | [testing.md](testing.md) | Test suite layout, fixtures, environment variables, equivalence contract, known skips |
 | [upgrading-evitadb.md](upgrading-evitadb.md) | Step-by-step process for adapting the driver to a newer evitaDB version |

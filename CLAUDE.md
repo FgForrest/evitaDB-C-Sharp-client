@@ -68,4 +68,6 @@ read the Java driver's handling before classifying anything as a server bug.
 
 - `documentation/` — architecture, async conventions, wire compatibility, testing, upgrade guide.
 - `/evitadb-version-upgrade` skill — the step-by-step process for adapting to a new evitaDB release.
-- `IMPLEMENTATION_PLAN.md` — history and status of the 2024.4 → 2026.2.4 migration.
+- `documentation/typed-models.md` — the annotated typed entity-contract layer (`Models/Typed`) and its
+  source generator; `documentation/java-driver-differences.md` — where C# behaviour deliberately or
+  accidentally diverges from the Java driver.
